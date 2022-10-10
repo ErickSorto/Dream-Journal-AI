@@ -5,7 +5,7 @@ import org.ballistic.dreamcatcherai.feature_note.domain.model.Note
 
 interface NoteRepository {
 
-    fun getNOtes(): Flow<List<Note>>
+    fun getNotes(): Flow<List<Note>>
 
     suspend fun getNoteById(id: Int): Note?
 
