@@ -25,3 +25,5 @@ data class Dream(
         )
     }
 }
+
+class InvalidDreamException(message: String): Exception(message)
