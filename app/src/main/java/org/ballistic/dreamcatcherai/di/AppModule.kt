@@ -9,6 +9,7 @@ import dagger.hilt.components.SingletonComponent
 import org.ballistic.dreamcatcherai.feature_dream.data.data_source.DreamDatabase
 import org.ballistic.dreamcatcherai.feature_dream.data.repository.DreamRepositoryImplementation
 import org.ballistic.dreamcatcherai.feature_dream.domain.repository.DreamRepository
+import org.ballistic.dreamcatcherai.feature_dream.domain.use_case.AddDream
 import org.ballistic.dreamcatcherai.feature_dream.domain.use_case.DeleteDream
 import org.ballistic.dreamcatcherai.feature_dream.domain.use_case.DreamUseCases
 import org.ballistic.dreamcatcherai.feature_dream.domain.use_case.GetDreams
@@ -47,8 +48,10 @@ object AppModule {
         return DreamUseCases(
             getDreams = GetDreams(repository),
             deleteDream = DeleteDream(repository),
-
+            addDream = AddDream(repository)
         )
     }
+
+
 
 }
