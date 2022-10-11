@@ -4,6 +4,7 @@
     package="org.ballistic.dreamcatcherai">
 
     <application
+        android:name=".DreamCatcherAiApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -14,9 +15,8 @@
         android:theme="@style/Theme.DreamCatcherAI"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".feature_dream.presentation.MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.DreamCatcherAI">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

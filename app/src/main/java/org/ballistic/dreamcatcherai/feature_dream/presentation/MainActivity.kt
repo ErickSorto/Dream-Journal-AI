@@ -1,4 +1,4 @@
-package org.ballistic.dreamcatcherai.feature_note.presentation
+package org.ballistic.dreamcatcherai.feature_dream.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

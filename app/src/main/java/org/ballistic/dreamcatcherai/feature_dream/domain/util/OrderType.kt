@@ -1,4 +1,4 @@
-package org.ballistic.dreamcatcherai.feature_note.domain.util
+package org.ballistic.dreamcatcherai.feature_dream.domain.util
 
 sealed class OrderType{
     object Ascending: OrderType()

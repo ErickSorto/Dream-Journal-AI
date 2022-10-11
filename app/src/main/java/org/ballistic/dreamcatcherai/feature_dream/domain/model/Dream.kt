@@ -1,4 +1,4 @@
-package org.ballistic.dreamcatcherai.feature_note.domain.model
+package org.ballistic.dreamcatcherai.feature_dream.domain.model
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Gray
@@ -8,7 +8,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity
-data class Note(
+data class Dream(
     val title:String,
     val content:String,
     val timestamp:Long,
@@ -16,7 +16,7 @@ data class Note(
     @PrimaryKey val id:Int? = null
 ){
     companion object{
-        val noteColors = listOf(
+        val dreamColors = listOf(
             Red,
             Gray,
             Color.Magenta,
