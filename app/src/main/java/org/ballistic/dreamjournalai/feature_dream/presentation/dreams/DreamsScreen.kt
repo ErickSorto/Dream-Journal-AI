@@ -18,6 +18,7 @@ import androidx.navigation.NavController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.feature_dream.presentation.dreams.components.DreamItem
+import org.ballistic.dreamjournalai.feature_dream.presentation.util.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +32,9 @@ fun DreamsScreen(
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { /*TODO*/ },
+            FloatingActionButton(onClick = {
+                navController.navigate(Screen.AddEditDreamScreen.route)
+            },
                 containerColor = MaterialTheme.colorScheme.background,
                 ) {
                 Icon(Icons.Filled.Add, contentDescription = "Add dream")
