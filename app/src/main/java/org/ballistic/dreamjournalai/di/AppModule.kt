@@ -9,10 +9,7 @@ import dagger.hilt.components.SingletonComponent
 import org.ballistic.dreamjournalai.feature_dream.data.data_source.DreamDatabase
 import org.ballistic.dreamjournalai.feature_dream.data.repository.DreamRepositoryImplementation
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.DreamRepository
-import org.ballistic.dreamjournalai.feature_dream.domain.use_case.AddDream
-import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DeleteDream
-import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DreamUseCases
-import org.ballistic.dreamjournalai.feature_dream.domain.use_case.GetDreams
+import org.ballistic.dreamjournalai.feature_dream.domain.use_case.*
 import javax.inject.Singleton
 
 
@@ -48,7 +45,9 @@ object AppModule {
         return DreamUseCases(
             getDreams = GetDreams(repository),
             deleteDream = DeleteDream(repository),
-            addDream = AddDream(repository)
+            addDream = AddDream(repository),
+            getDream = GetDream(repository)
+
         )
     }
 
