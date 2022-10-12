@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="org.ballistic.dreamcatcherai">
+    package="org.ballistic.dreamjournalai">
 
     <application
-        android:name=".DreamCatcherAiApp"
+        android:name="org.ballistic.dreamjournalai.DreamCatcherAiApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -15,7 +15,7 @@
         android:theme="@style/Theme.DreamCatcherAI"
         tools:targetApi="31">
         <activity
-            android:name=".feature_dream.presentation.MainActivity"
+            android:name="org.ballistic.dreamjournalai.feature_dream.presentation.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.DreamCatcherAI">
             <intent-filter>
