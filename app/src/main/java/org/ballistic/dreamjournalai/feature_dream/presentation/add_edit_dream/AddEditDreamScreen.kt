@@ -26,6 +26,7 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components.TabLayout
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components.TransparentHintTextField
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,6 +91,7 @@ fun AddEditDreamScreen(
                 .background(dreamBackGroundAnimatable.value)
                 .padding(16.dp)
         ) {
+            TabLayout()
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

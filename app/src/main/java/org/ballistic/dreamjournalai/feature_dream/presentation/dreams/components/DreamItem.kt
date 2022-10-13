@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.dreams.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,9 +31,8 @@ fun DreamItem(
 ) {
 
     Box(
-        modifier = modifier.border( width = 2.dp,
-            color = Color.Red,
-            shape = RoundedCornerShape(cornerRadius))
+        modifier = modifier.clip(RoundedCornerShape(cornerRadius)).background(Color.White.copy(alpha = 0.2f))
+
 
     ) {
         Column(
@@ -44,7 +45,7 @@ fun DreamItem(
             Text(
                 text = dream.title,
                 style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = Color.Black,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -54,7 +55,7 @@ fun DreamItem(
             Text(
                 text = dream.content,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = Color.Black,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
