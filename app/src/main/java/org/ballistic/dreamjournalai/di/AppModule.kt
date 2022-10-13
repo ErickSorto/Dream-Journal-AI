@@ -25,7 +25,7 @@ object AppModule {
         return Room.databaseBuilder(
             app,
             DreamDatabase::class.java,
-            "DreamDatabase"
+            DreamDatabase.DATABASE_NAME
         ).build()
     }
 
@@ -50,7 +50,6 @@ object AppModule {
 
         )
     }
-
 
 
 }

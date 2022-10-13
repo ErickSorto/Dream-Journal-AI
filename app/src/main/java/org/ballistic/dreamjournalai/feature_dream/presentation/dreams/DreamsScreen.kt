@@ -45,7 +45,7 @@ fun DreamsScreen(
             SnackbarHost(snackbarHostState)
         }
     )
-    {
+    { padding ->
         Column(
             modifier = Modifier
                 .padding(16.dp)
@@ -53,7 +53,7 @@ fun DreamsScreen(
         ){
             Row(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -73,7 +73,9 @@ fun DreamsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 16.dp)
-                            .clickable {},
+                            .clickable {
+                                navController.navigate(Screen.AddEditDreamScreen.route + "?noteId=${dream.id}&noteColor=${dream.color}")
+                            },
                         onDeleteClick = {
                             viewModel.onEvent(DreamsEvent.DeleteDream(dream))
                             scope.launch {

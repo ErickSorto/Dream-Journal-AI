@@ -7,8 +7,13 @@ import org.ballistic.dreamjournalai.feature_dream.domain.repository.DreamReposit
 import org.ballistic.dreamjournalai.feature_dream.domain.util.DreamOrder
 import org.ballistic.dreamjournalai.feature_dream.domain.util.OrderType
 
-class GetDreams (private val repository: DreamRepository){
-    operator fun invoke(dreamOrder: DreamOrder = DreamOrder.Date(OrderType.Descending)): Flow<List<Dream>> {
+class GetDreams (
+    private val repository: DreamRepository
+    ){
+
+    operator fun invoke(
+        dreamOrder: DreamOrder = DreamOrder.Date(OrderType.Descending)
+    ): Flow<List<Dream>> {
         return repository.getDreams().map { dreams ->
             when(dreamOrder.orderType) {
                 is OrderType.Ascending -> {

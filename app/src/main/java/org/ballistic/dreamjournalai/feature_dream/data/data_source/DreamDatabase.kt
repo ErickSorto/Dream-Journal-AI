@@ -8,5 +8,9 @@ import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 abstract class DreamDatabase: RoomDatabase() {
 
     abstract val dreamDao: DreamDao
+
+    companion object {
+        const val DATABASE_NAME = "dreams_db"
+    }
 }
 

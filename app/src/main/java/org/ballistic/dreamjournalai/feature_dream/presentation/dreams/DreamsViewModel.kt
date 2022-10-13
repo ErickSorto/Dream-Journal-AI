@@ -41,7 +41,7 @@ class DreamsViewModel @Inject constructor(
             }
             is DreamsEvent.ToggleOrderSection -> {
                 _state.value = _state.value.copy(
-                    isOrderSectionVisible = !_state.value.isOrderSectionVisible)
+                    isOrderSectionVisible = !state.value.isOrderSectionVisible)
             }
             is DreamsEvent.RestoreDream -> {
                 viewModelScope.launch {

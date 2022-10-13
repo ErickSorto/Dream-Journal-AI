@@ -70,17 +70,18 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             }
             is AddEditDreamEvent.ChangeTitleFocus -> {
                 _dreamTitle.value = dreamTitle.value.copy(
-                    isHintVisible = !event.focusState.isFocused && dreamTitle.value.text.isBlank()
+                    isHintVisible = !event.focusState.isFocused &&
+                            dreamTitle.value.text.isBlank()
                 )
             }
             is AddEditDreamEvent.EnteredContent -> {
-                _dreamContent.value = dreamContent.value.copy(
+                _dreamContent.value = _dreamContent.value.copy(
                     text = event.value
                 )
             }
             is AddEditDreamEvent.ChangeContentFocus -> {
-                _dreamContent.value = dreamContent.value.copy(
-                    isHintVisible = !event.focusState.isFocused && dreamContent.value.text.isBlank()
+                _dreamContent.value = _dreamContent.value.copy(
+                    isHintVisible = !event.focusState.isFocused && _dreamContent.value.text.isBlank()
                 )
             }
             is AddEditDreamEvent.ChangeColor -> {
@@ -104,9 +105,6 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                     }
                 }
             }
-
-
-
         }
     }
 

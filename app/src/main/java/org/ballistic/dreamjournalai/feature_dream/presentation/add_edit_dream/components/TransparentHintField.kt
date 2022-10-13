@@ -1,7 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
@@ -21,7 +20,7 @@ fun TransparentHintTextField(
     onValueChange: (String) -> Unit,
     textStyle: TextStyle = TextStyle(),
     singleLine: Boolean = false,
-    onFocusChange: (FocusState) -> Unit = {},
+    onFocusChange: (FocusState) -> Unit
 ) {
     Box(modifier = modifier)
     {
@@ -36,12 +35,9 @@ fun TransparentHintTextField(
                     onFocusChange(it)
                 }
         )
-        {
-            if(isHintVisible) {
-                Text(text = hint, style = textStyle, color = Color.DarkGray)
-            }
+
+        if (isHintVisible) {
+            Text(text = hint, style = textStyle, color = Color.DarkGray)
         }
     }
-
-
 }

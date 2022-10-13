@@ -153,7 +153,8 @@ fun AddEditDreamScreen(
                     viewModel.onEvent(AddEditDreamEvent.ChangeContentFocus(it))
                 },
                 isHintVisible = contentState.isHintVisible,
-                textStyle = MaterialTheme.typography.bodyLarge
+                textStyle = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.fillMaxHeight()
             )
         }
 

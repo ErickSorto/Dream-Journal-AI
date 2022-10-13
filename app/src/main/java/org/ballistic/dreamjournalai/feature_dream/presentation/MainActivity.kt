@@ -41,12 +41,14 @@ class MainActivity : ComponentActivity() {
                                 "?dreamId={dreamId}&dreamColor={dreamColor}",
                             arguments = listOf(
                                 navArgument(
-                                    name = "dreamId") {
+                                    name = "dreamId"
+                                ) {
                                     type = NavType.IntType
                                     defaultValue = -1
                                 },
                                 navArgument(
-                                    name = "dreamColor") {
+                                    name = "dreamColor"
+                                ) {
                                     type = NavType.IntType
                                     defaultValue = -1
                                 },
