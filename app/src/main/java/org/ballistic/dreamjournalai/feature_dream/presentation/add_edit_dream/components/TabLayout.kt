@@ -1,39 +1,75 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components
 
-import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.runtime.*
+import androidx.compose.foundation.background
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.UiComposable
+import androidx.compose.ui.graphics.Color
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.rememberPagerState
+import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages.DescriptionPage
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages.InfoPage
 
 
-
-
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 @UiComposable
 fun TabLayout(
-    modifier: Modifier = Modifier
+    dreamColor: Int
 ) {
-    var state by remember { mutableStateOf(0) }
-    val titles = listOf("TAB 1", "TAB 2", "TAB 3")
 
-    val indicator = @Composable { tabPositions: List<TabPosition> ->
-        TabRowDefaults.Indicator( // custom indicator
-            Modifier.tabIndicatorOffset(tabPositions[state])
-        )
-    }
+
+    val pages = listOf("Description", "Ai", "Info")
+    val pagerState = rememberPagerState()
+    val scope = rememberCoroutineScope()
+
     //create tab layout with 3 tabs, one for dream title and content, one for dream information and one for dream artificial intelligence
     TabRow(
-        selectedTabIndex = 0,
-        indicator = indicator
+        modifier = Modifier,
+        selectedTabIndex = pagerState.currentPage,
+        indicator = { tabPositions ->
+            TabRowDefaults.Indicator( // custom indicator
+                Modifier.pagerTabIndicatorOffset(pagerState, tabPositions),
+                color = Color.Black,
+            )
+        },
+        contentColor = Color.Black,
+        containerColor = Color.White.copy(alpha = 0.4f),
     ) {
-        titles.forEachIndexed { index, title ->
+        pages.forEachIndexed { index, page ->
             Tab(
-                text = { Text(title) },
-                selected = state == index,
-                onClick = { state = index }
+                text = { Text(page) },
+                selected = pagerState.currentPage == index,
+                onClick = {
+                    scope.launch { pagerState.animateScrollToPage(index) }
+
+                }
             )
         }
-    }
 
+
+    }
+    HorizontalPager(
+        count = pages.size,
+        state = pagerState,
+    ) { page ->
+        when (page) {
+            0 -> {
+                DescriptionPage()
+            }
+            1 -> {
+
+            }
+            2 -> {
+                InfoPage()
+            }
+        }
+    }
 }

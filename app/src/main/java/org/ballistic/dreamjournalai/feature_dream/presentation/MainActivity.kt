@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(
                             route = Screen.AddEditDreamScreen.route +
-                                "?dreamId={dreamId}&dreamColor={dreamColor}",
+                                "?dreamId={dreamId}&dreamImageBackground={dreamImageBackground}",
                             arguments = listOf(
                                 navArgument(
                                     name = "dreamId"
@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
                                     defaultValue = -1
                                 },
                                 navArgument(
-                                    name = "dreamColor"
+                                    name = "dreamImageBackground"
                                 ) {
                                     type = NavType.IntType
                                     defaultValue = -1
@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
                             )
 
                         ) {
-                            val color = it.arguments?.getInt("dreamColor") ?: -1
+                            val color = it.arguments?.getInt("dreamImageBackground") ?: -1
                             AddEditDreamScreen(
                                 navController = navController,
                                 dreamColor = color)

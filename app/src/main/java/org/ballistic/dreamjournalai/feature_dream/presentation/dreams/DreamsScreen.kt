@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -19,7 +18,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.feature_dream.presentation.dreams.components.DreamItem
@@ -89,7 +87,7 @@ fun DreamsScreen(
                                 .clickable {
                                     navController.navigate(
                                         Screen.AddEditDreamScreen.route +
-                                                "?dreamId=${dream.id}&dreamColor=${dream.color}"
+                                                "?dreamId=${dream.id}&dreamColor=${dream.dreamImageBackground}"
                                     )
                                 },
                             onDeleteClick = {

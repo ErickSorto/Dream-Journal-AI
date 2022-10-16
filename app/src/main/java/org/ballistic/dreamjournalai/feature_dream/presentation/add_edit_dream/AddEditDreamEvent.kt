@@ -7,6 +7,6 @@ sealed class AddEditDreamEvent{
     data class ChangeTitleFocus(val focusState: FocusState) : AddEditDreamEvent()
     data class EnteredContent(val value: String) : AddEditDreamEvent()
     data class ChangeContentFocus(val focusState: FocusState) : AddEditDreamEvent()
-    data class ChangeColor(val color: Int) : AddEditDreamEvent()
+    data class ChangeColorBackground(val colorBackGroundImage: Int) : AddEditDreamEvent()
     object SaveDream : AddEditDreamEvent()
 }

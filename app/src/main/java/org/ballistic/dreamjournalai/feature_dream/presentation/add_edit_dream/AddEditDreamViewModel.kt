@@ -1,9 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream
 
 import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,8 +30,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     ))
     val dreamContent: State<DreamTextFieldState> = _dreamContent
 
-    private val _dreamColor = mutableStateOf<Int>(Dream.dreamColors.random().toArgb())
-    val dreamColor: State<Int> = _dreamColor
+    private val _dreamBackgroundColor = mutableStateOf<Int>(Dream.dreamBackgroundColors.random())
+    val dreamBackgroundColor: State<Int> = _dreamBackgroundColor
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
@@ -54,7 +52,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                             text = dream.content,
                             isHintVisible = false
                         )
-                        _dreamColor.value = dream.color
+                        _dreamBackgroundColor.value = dream.dreamImageBackground
                     }
                 }
             }
@@ -84,8 +82,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                     isHintVisible = !event.focusState.isFocused && _dreamContent.value.text.isBlank()
                 )
             }
-            is AddEditDreamEvent.ChangeColor -> {
-                _dreamColor.value = event.color
+            is AddEditDreamEvent.ChangeColorBackground -> {
+                _dreamBackgroundColor.value = event.colorBackGroundImage
             }
             is AddEditDreamEvent.SaveDream -> {
                 viewModelScope.launch {
@@ -95,7 +93,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                 title = dreamTitle.value.text,
                                 content = dreamContent.value.text,
                                 timestamp = System.currentTimeMillis(),
-                                color = dreamColor.value,
+                                dreamImageBackground = dreamBackgroundColor.value,
                                 id = currentDreamId
                             )
                         )

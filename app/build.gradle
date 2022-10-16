@@ -94,4 +94,12 @@ dependencies {
 
     // Kotlin Extensions and Coroutines support for Room
     implementation "androidx.room:room-ktx:2.4.3"
+
+    implementation "com.google.accompanist:accompanist-pager:0.19.0"
+    implementation "com.google.accompanist:accompanist-pager-indicators:0.19.0"
+    implementation 'androidx.appcompat:appcompat:1.5.1'
+  //  implementation 'com.Github.SmartToolFactory:Compose-AnimatedList:0.5.1'
+
+
+
 }
