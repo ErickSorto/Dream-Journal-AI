@@ -31,14 +31,9 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     val dreamContent: State<DreamTextFieldState> = _dreamContent
 
     private val _dreamAIResult = mutableStateOf(DreamTextFieldState(
-        hint = "Enter Dream AI Result..."
+        hint = "Dream AI Result..."
     ))
     val dreamAIResult: State<DreamTextFieldState> = _dreamAIResult
-
-    private val _dreamDate = mutableStateOf(DreamTextFieldState(
-        hint = "Enter Dream Date..."
-    ))
-    val dreamDate: State<DreamTextFieldState> = _dreamDate
 
     private val _dreamTime = mutableStateOf(DreamTextFieldState(
         hint = "Enter Dream Time..."
@@ -54,6 +49,11 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
         rating = 0
     ))
     val dreamVividness: State<DreamIntRating> = _dreamVividness
+
+    private val _dreamRealism = mutableStateOf(DreamIntRating(
+        rating = 0
+    ))
+    val dreamRealism: State<DreamIntRating> = _dreamRealism
 
     private val _dreamEmotion = mutableStateOf(DreamIntRating(
         rating = 0
@@ -79,6 +79,12 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
         value = false
     ))
     val dreamIsFavourite: State<DreamPropertyBoolean> = _dreamIsFavourite
+
+    private val _isFalseAwakening = mutableStateOf(DreamPropertyBoolean(
+        value = false
+    ))
+    val isFalseAwakening: State<DreamPropertyBoolean> = _isFalseAwakening
+
 
     private val _dreamBackgroundColor = mutableStateOf<Int>(Dream.dreamBackgroundColors.random())
     val dreamBackgroundColor: State<Int> = _dreamBackgroundColor
@@ -135,6 +141,62 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             is AddEditDreamEvent.ChangeColorBackground -> {
                 _dreamBackgroundColor.value = event.colorBackGroundImage
             }
+            is AddEditDreamEvent.AIResponse -> {
+                _dreamAIResult.value = _dreamAIResult.value.copy(
+                    text = event.response
+                )
+            }
+            is AddEditDreamEvent.ChangeRealism -> {
+                _dreamRealism.value = _dreamRealism.value.copy(
+                    rating = event.realism
+                )
+            }
+            is AddEditDreamEvent.ChangeLucidity -> {
+                _dreamLucidity.value = _dreamLucidity.value.copy(
+                    rating = event.lucidity
+                )
+            }
+            is AddEditDreamEvent.ChangeVividness -> {
+                _dreamVividness.value = _dreamVividness.value.copy(
+                    rating = event.vividness
+                )
+            }
+            is AddEditDreamEvent.ChangeMood -> {
+                _dreamEmotion.value = _dreamEmotion.value.copy(
+                    rating = event.mood
+                )
+            }
+            is AddEditDreamEvent.ChangeNightmare -> {
+                _dreamIsNightmare.value = _dreamIsNightmare.value.copy(
+                    value = event.boolean
+                )
+            }
+            is AddEditDreamEvent.ChangeRecurrence -> {
+                _dreamIsRecurring.value = _dreamIsRecurring.value.copy(
+                    value = event.boolean
+                )
+            }
+            is AddEditDreamEvent.ChangeIsLucid -> {
+                _dreamIsLucid.value = _dreamIsLucid.value.copy(
+                    value = event.boolean
+                )
+            }
+            is AddEditDreamEvent.ChangeFavorite -> {
+                _dreamIsFavourite.value = _dreamIsFavourite.value.copy(
+                    value = event.boolean
+                )
+            }
+            is AddEditDreamEvent.ChangeFalseAwakening -> {
+                _isFalseAwakening.value = _isFalseAwakening.value.copy(
+                    value = event.boolean
+                )
+            }
+            is AddEditDreamEvent.ChangeTimeOfDay -> {
+                _dreamTime.value = _dreamTime.value.copy(
+                    text = event.timeOfDay
+                )
+            }
+
 
             is AddEditDreamEvent.SaveDream -> {
                 viewModelScope.launch {
@@ -145,9 +207,18 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                 content = dreamContent.value.text,
                                 timestamp = System.currentTimeMillis(),
                                 dreamImageBackground = dreamBackgroundColor.value,
-                                id = currentDreamId
-
-
+                                id = currentDreamId,
+                                isLucid = dreamIsLucid.value.value,
+                                isNightmare = dreamIsNightmare.value.value,
+                                isRecurring = dreamIsRecurring.value.value,
+                                isFavorite = dreamIsFavourite.value.value,
+                                lucidityRating = dreamLucidity.value.rating,
+                                vividityRating = dreamVividness.value.rating,
+                                moodRating = dreamEmotion.value.rating,
+                                timeOfDay = dreamTime.value.text,
+                                realismRating = dreamRealism.value.rating,
+                                falseAwakening = isFalseAwakening.value.value,
+                                AIResponse = dreamAIResult.value.text
                             )
                         )
                         _eventFlow.emit(UiEvent.SaveDream)
