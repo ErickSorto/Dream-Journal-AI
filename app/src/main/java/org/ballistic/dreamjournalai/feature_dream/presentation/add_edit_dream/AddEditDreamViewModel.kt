@@ -30,6 +30,56 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     ))
     val dreamContent: State<DreamTextFieldState> = _dreamContent
 
+    private val _dreamAIResult = mutableStateOf(DreamTextFieldState(
+        hint = "Enter Dream AI Result..."
+    ))
+    val dreamAIResult: State<DreamTextFieldState> = _dreamAIResult
+
+    private val _dreamDate = mutableStateOf(DreamTextFieldState(
+        hint = "Enter Dream Date..."
+    ))
+    val dreamDate: State<DreamTextFieldState> = _dreamDate
+
+    private val _dreamTime = mutableStateOf(DreamTextFieldState(
+        hint = "Enter Dream Time..."
+    ))
+    val dreamTime: State<DreamTextFieldState> = _dreamTime
+
+    private val _dreamLucidity = mutableStateOf(DreamIntRating(
+        rating = 0
+    ))
+    val dreamLucidity: State<DreamIntRating> = _dreamLucidity
+
+    private val _dreamVividness = mutableStateOf(DreamIntRating(
+        rating = 0
+    ))
+    val dreamVividness: State<DreamIntRating> = _dreamVividness
+
+    private val _dreamEmotion = mutableStateOf(DreamIntRating(
+        rating = 0
+    ))
+    val dreamEmotion: State<DreamIntRating> = _dreamEmotion
+
+    private val _dreamIsNightmare = mutableStateOf(DreamPropertyBoolean(
+        value = false
+    ))
+    val dreamIsNightmare: State<DreamPropertyBoolean> = _dreamIsNightmare
+
+    private val _dreamIsRecurring = mutableStateOf(DreamPropertyBoolean(
+        value = false
+    ))
+    val dreamIsRecurring: State<DreamPropertyBoolean> = _dreamIsRecurring
+
+    private val _dreamIsLucid = mutableStateOf(DreamPropertyBoolean(
+        value = false
+    ))
+    val dreamIsLucid: State<DreamPropertyBoolean> = _dreamIsLucid
+
+    private val _dreamIsFavourite = mutableStateOf(DreamPropertyBoolean(
+        value = false
+    ))
+    val dreamIsFavourite: State<DreamPropertyBoolean> = _dreamIsFavourite
+
     private val _dreamBackgroundColor = mutableStateOf<Int>(Dream.dreamBackgroundColors.random())
     val dreamBackgroundColor: State<Int> = _dreamBackgroundColor
 
@@ -85,6 +135,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             is AddEditDreamEvent.ChangeColorBackground -> {
                 _dreamBackgroundColor.value = event.colorBackGroundImage
             }
+
             is AddEditDreamEvent.SaveDream -> {
                 viewModelScope.launch {
                     try {
@@ -95,6 +146,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                 timestamp = System.currentTimeMillis(),
                                 dreamImageBackground = dreamBackgroundColor.value,
                                 id = currentDreamId
+
+
                             )
                         )
                         _eventFlow.emit(UiEvent.SaveDream)
