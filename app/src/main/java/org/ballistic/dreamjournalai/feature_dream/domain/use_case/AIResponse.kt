@@ -8,24 +8,28 @@ import com.android.volley.toolbox.JsonObjectRequest
 import org.json.JSONArray
 import org.json.JSONObject
 
-class AIResponse() {
-
-
+class AIResponse(userDream: String) {
     private lateinit var volleyRequestQueue: RequestQueue
-    val demoConversation: String =
-        "The following is a conversation between the AI and a user. The AI acts as a dream interpreter trying to find meaning in the dream and explains it to the user, if the user begins to take the topic away from dreams, the ai cleverly brings the topic of dreams back\n" +
+    private val text = userDream
+
+    private val demoConversation: String =
+        "The following is a conversation between the AI and a user. " +
+                "The AI acts as a dream interpreter trying to find meaning in the dream and explains it to the user," +
+                " if the user begins to take the topic away from dreams, the ai cleverly brings the topic of dreams back\n" +
                 "User: Hello!!\n" +
                 "AI: Hello, do you have a dream you want to talk about? \n" +
                 "User: I had a dream that I gave birth to a pikachu.\n" +
 
                 "\n\n###\n\n" // add more examples with this as pad token
 
-    private fun requestResponse(text: String, engine: String) {
+    fun requestResponse(): String {
 
+        val engine = "text-davinci-002"
         val apiKey = org.ballistic.dreamjournalai.BuildConfig.API_KEY
         //sends request to OpenAI
         val modelType = "OpenAI"
         val json = JSONObject()
+        var responseAI = ""
 
         json.put("prompt", demoConversation + text)
         json.put("temperature", 0.7)
@@ -40,7 +44,7 @@ class AIResponse() {
         val req = object : JsonObjectRequest(
             Request.Method.POST, url, json,
             Response.Listener { response ->
-                saveResponse(response)
+                responseAI = getTextFromResponseOpenAI(response)
             },
             Response.ErrorListener {
                 //   error -> conveyError(error)
@@ -56,12 +60,7 @@ class AIResponse() {
             }
         }
         volleyRequestQueue.add(req)
-    }
-
-    //save response to room database
-    private fun saveResponse(response: JSONObject) {
-        getTextFromResponseOpenAI(response)
-        //add response to room database
+        return responseAI
     }
 
 

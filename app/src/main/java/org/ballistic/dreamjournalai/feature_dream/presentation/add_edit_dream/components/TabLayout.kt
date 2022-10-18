@@ -14,6 +14,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages.AIPage
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages.DescriptionPage
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages.InfoPage
 
@@ -65,7 +66,7 @@ fun TabLayout(
                 DescriptionPage()
             }
             1 -> {
-
+                AIPage()
             }
             2 -> {
                 InfoPage()

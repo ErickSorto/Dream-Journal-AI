@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.domain.model.InvalidDreamException
+import org.ballistic.dreamjournalai.feature_dream.domain.use_case.AIResponse
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DreamUseCases
 import javax.inject.Inject
 
@@ -19,6 +20,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     private val dreamUseCases: DreamUseCases,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+
 
     private val _dreamTitle = mutableStateOf(DreamTextFieldState(
         hint = "Enter Dream Title..."
@@ -143,7 +146,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             }
             is AddEditDreamEvent.AIResponse -> {
                 _dreamAIResult.value = _dreamAIResult.value.copy(
-                    text = event.response
+                  text = AIResponse(event.response).requestResponse()
                 )
             }
             is AddEditDreamEvent.ChangeRealism -> {

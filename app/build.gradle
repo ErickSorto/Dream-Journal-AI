@@ -26,7 +26,7 @@ android {
         Properties properties = new Properties()
         properties.load(project.rootProject.file('local.properties').newDataInputStream())
 
-        buildConfigField "String", "API_KEY", properties['API_KEY']
+        buildConfigField "String", "API_KEY", "\"${properties.getProperty('API_KEY')}\""
 
     }
 
