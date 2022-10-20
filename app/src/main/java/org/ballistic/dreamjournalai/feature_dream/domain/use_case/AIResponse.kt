@@ -1,10 +1,12 @@
 package org.ballistic.dreamjournalai.feature_dream.domain.use_case
 
+import android.content.Context
 import android.util.Log
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -23,7 +25,8 @@ class AIResponse(userDream: String) {
                 "\n\n###\n\n" // add more examples with this as pad token
 
     fun requestResponse(): String {
-
+        //volleyRequestQueue = Volley.newRequestQueue()
+        //volleyRequestQueue.start()
         val engine = "text-davinci-002"
         val apiKey = org.ballistic.dreamjournalai.BuildConfig.API_KEY
         //sends request to OpenAI
