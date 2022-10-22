@@ -1,13 +1,19 @@
 package org.ballistic.dreamjournalai.feature_dream.data.remote
 
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Query
 
 
 interface OpenAIApi {
 
-    @GET("v1/models/text-davinci-002")
-    fun getModel(text: String): Response <String>
+
+    @POST("v1/completions")
+    fun getCompletion(@Query ("api_key") apiKey: String,
+                      @Body model:String, @Body prompt: String,
+                      @Body maxTokens: Int, @Body temperature: Int): Response <String>
 
 
 }

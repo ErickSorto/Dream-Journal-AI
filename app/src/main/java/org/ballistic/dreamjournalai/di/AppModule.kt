@@ -12,6 +12,7 @@ import org.ballistic.dreamjournalai.feature_dream.data.repository.DreamRepositor
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.DreamRepository
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.*
 import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 
@@ -56,14 +57,14 @@ object AppModule {
     @Provides
     @Singleton
     fun provideOpenAIApi(
-
     ): OpenAIApi {
-        Retrofit.Builder()
+        return Retrofit.Builder()
             .baseUrl("https://api.openai.com/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(OpenAIApi::class.java)
     }
+
 
 
 }
