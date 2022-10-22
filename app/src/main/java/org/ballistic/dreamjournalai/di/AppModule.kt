@@ -7,9 +7,11 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import org.ballistic.dreamjournalai.feature_dream.data.data_source.DreamDatabase
+import org.ballistic.dreamjournalai.feature_dream.data.remote.OpenAIApi
 import org.ballistic.dreamjournalai.feature_dream.data.repository.DreamRepositoryImplementation
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.DreamRepository
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.*
+import retrofit2.Retrofit
 import javax.inject.Singleton
 
 
@@ -49,6 +51,18 @@ object AppModule {
             getDream = GetDream(repository)
 
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideOpenAIApi(
+
+    ): OpenAIApi {
+        Retrofit.Builder()
+            .baseUrl("https://api.openai.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(OpenAIApi::class.java)
     }
 
 
