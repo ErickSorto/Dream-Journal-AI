@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.feature_dream.data.remote.OpenAIApi
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.domain.model.InvalidDreamException
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.AIResponse
@@ -146,7 +147,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             }
             is AddEditDreamEvent.AIResponse -> {
                 _dreamAIResult.value = _dreamAIResult.value.copy(
-                  text = AIResponse(event.response).requestResponse()
+                 // text = openAIApi.getAIResponse(event.value)
                 )
             }
             is AddEditDreamEvent.ChangeRealism -> {
