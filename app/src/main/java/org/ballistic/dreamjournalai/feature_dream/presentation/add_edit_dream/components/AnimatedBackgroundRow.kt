@@ -36,7 +36,7 @@ internal fun AnimatedAspectRatioSelection(
         items = Dream.dreamBackgroundColors,
         inactiveItemPercent = 80,
         initialFirstVisibleIndex = initialSelectedIndex - 2
-    ) { animationProgress: AnimationProgress, index: Int,item:  ,width: Dp ->
+    ) { animationProgress: AnimationProgress, index: Int, height: Dp, width: Dp ->
 
         val scale = animationProgress.scale
         val color = animationProgress.color
