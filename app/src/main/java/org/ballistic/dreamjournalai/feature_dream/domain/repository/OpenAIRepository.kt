@@ -4,6 +4,7 @@ import org.ballistic.dreamjournalai.feature_dream.data.remote.dto.CompletionDTO
 
 interface OpenAIRepository {
     suspend fun getCompletion(
-        apiKey: String, model: String, prompt:String,
-        maxTokens: Int, temperature: Int): CompletionDTO
+        apiKey: String, model: String, prompt: String,
+        maxTokens: Int, temperature: Int, frequencyPenalty: Int
+    ): CompletionDTO
 }

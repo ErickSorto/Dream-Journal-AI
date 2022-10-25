@@ -1,5 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.data.remote.dto
 
+import org.ballistic.dreamjournalai.feature_dream.domain.model.Completion
+
 data class CompletionDTO(
     val choices: List<Choice>,
     val created: Int,
@@ -7,4 +9,13 @@ data class CompletionDTO(
     val model: String,
     val `object`: String,
     val usage: Usage
+)
+
+fun CompletionDTO.toCompletion() = Completion(
+    choices = choices,
+    created = created,
+    id = id,
+    model = model,
+    `object` = `object`,
+    usage = usage
 )
