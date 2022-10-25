@@ -5,7 +5,7 @@ import org.ballistic.dreamjournalai.feature_dream.data.data_source.DreamDao
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.DreamRepository
 
-class DreamRepositoryImplementation (private val dao: DreamDao) : DreamRepository {
+class DreamRepositoryImpl (private val dao: DreamDao) : DreamRepository {
     override fun getDreams(): Flow<List<Dream>> {
         return dao.getDreams()
     }
