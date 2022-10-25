@@ -2,6 +2,7 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.c
 
 import android.graphics.drawable.Drawable
 import android.media.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import com.smarttoolfactory.animatedlist.AnimatedInfiniteLazyRow
@@ -22,26 +23,40 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.Ad
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamViewModel
 
 
-@Composable
-internal fun AnimatedAspectRatioSelection(
-    modifier: Modifier = Modifier,
-    initialSelectedIndex: Int = 2,
-    viewModel: AddEditDreamViewModel = hiltViewModel(),
-) {
-
-    var currentIndex by remember { mutableStateOf(initialSelectedIndex) }
-
-    AnimatedInfiniteLazyRow(
-        modifier = modifier.padding(horizontal = 10.dp),
-        items = Dream.dreamBackgroundColors,
-        inactiveItemPercent = 80,
-        initialFirstVisibleIndex = initialSelectedIndex - 2
-    ) { animationProgress: AnimationProgress, index: Int, height: Dp, width: Dp ->
-
-        val scale = animationProgress.scale
-        val color = animationProgress.color
-        val selectedLocalIndex = animationProgress.itemIndex
-
-
-    }
-}
+//@Composable
+//internal fun AnimatedAspectRatioSelection(
+//    modifier: Modifier = Modifier,
+//    initialSelectedIndex: Int = 2,
+//    //dreamViewMo,
+//) {
+//
+//    var currentIndex by remember { mutableStateOf(initialSelectedIndex) }
+//
+//    AnimatedInfiniteLazyRow(
+//        modifier = modifier.padding(horizontal = 10.dp),
+//        items = Dream.dreamBackgroundColors,
+//        inactiveItemPercent = 80,
+//        initialFirstVisibleIndex = initialSelectedIndex - 2
+//    ) { animationProgress: AnimationProgress, index: Int,item:  , width: Dp ->
+//
+//        val scale = animationProgress.scale
+//        val color = animationProgress.color
+//        val selectedLocalIndex = animationProgress.itemIndex
+//
+//        Box(modifier = Modifier
+//            .graphicsLayer {
+//                scaleX = scale
+//                scaleY = scale
+//            }
+//            .width(width),
+//
+//        )
+//
+//        if (currentIndex != selectedLocalIndex) {
+//            currentIndex = selectedLocalIndex
+//            onAspectRatioChange(aspectRatios[selectedLocalIndex])
+//        }
+//
+//
+//    }
+//}
