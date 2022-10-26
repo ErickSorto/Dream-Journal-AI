@@ -12,16 +12,18 @@ import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.feature_dream.data.remote.OpenAIApi
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.domain.model.InvalidDreamException
+import org.ballistic.dreamjournalai.feature_dream.domain.model.Prompt
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.AIResponse
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DreamUseCases
+import org.ballistic.dreamjournalai.feature_dream.domain.use_case.GetOpenAITextResponse
 import javax.inject.Inject
 
 @HiltViewModel
 class AddEditDreamViewModel @Inject constructor( //add ai state later on
     private val dreamUseCases: DreamUseCases,
+    private val getOpenAITextResponse: GetOpenAITextResponse,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-
 
 
     private val _dreamTitle = mutableStateOf(DreamTextFieldState(
@@ -145,9 +147,10 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             is AddEditDreamEvent.ChangeColorBackground -> {
                 _dreamBackgroundColor.value = event.colorBackGroundImage
             }
-            is AddEditDreamEvent.AIResponse -> {
+            is AddEditDreamEvent.ClickGenerateAIResponse -> {
                 _dreamAIResult.value = _dreamAIResult.value.copy(
-                 // text = openAIApi.getAIResponse(event.value)
+                 text = getOpenAITextResponse.invoke(prompt = Prompt(
+                     "text-davinci-002",_dreamContent.value.text,250,1,0)).toString()
                 )
             }
             is AddEditDreamEvent.ChangeRealism -> {

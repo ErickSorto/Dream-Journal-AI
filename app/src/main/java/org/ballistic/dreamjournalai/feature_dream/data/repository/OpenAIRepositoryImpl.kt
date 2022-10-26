@@ -7,19 +7,16 @@ import javax.inject.Inject
 
 class OpenAIRepositoryImpl @Inject constructor(
     private val api: OpenAIApi
-
 ): OpenAIRepository {
 
-
     override suspend fun getCompletion(
-        apiKey: String,
         model: String,
         prompt: String,
         maxTokens: Int,
         temperature: Int,
         frequencyPenalty: Int
     ): CompletionDTO {
-        return api.getCompletion(apiKey, model, prompt, maxTokens, temperature).body()!!
+        return api.getCompletion(model, prompt, maxTokens, temperature).body()!!
     }
 }
 

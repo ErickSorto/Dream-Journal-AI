@@ -17,7 +17,6 @@ class GetOpenAITextResponse @Inject constructor(
         try {
             emit(Resource.Loading())
             val response = repository.getCompletion(
-                prompt.api_key,
                 prompt.model,
                 prompt.prompt,
                 prompt.max_tokens,
