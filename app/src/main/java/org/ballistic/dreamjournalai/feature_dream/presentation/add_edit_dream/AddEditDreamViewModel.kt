@@ -37,7 +37,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     val dreamContent: State<DreamTextFieldState> = _dreamContent
 
     private val _dreamAIResult = mutableStateOf(DreamTextFieldState(
-        hint = "Dream AI Result..."
+        hint = "AI Generated Content..."
     ))
     val dreamAIResult: State<DreamTextFieldState> = _dreamAIResult
 
@@ -148,10 +148,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 _dreamBackgroundColor.value = event.colorBackGroundImage
             }
             is AddEditDreamEvent.ClickGenerateAIResponse -> {
-                _dreamAIResult.value = _dreamAIResult.value.copy(
-                 text = getOpenAITextResponse.invoke(prompt = Prompt(
-                     "text-davinci-002",_dreamContent.value.text,250,1,0)).toString()
-                )
+                getAIResponse()
             }
             is AddEditDreamEvent.ChangeRealism -> {
                 _dreamRealism.value = _dreamRealism.value.copy(
@@ -240,6 +237,15 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     sealed class UiEvent {
         data class ShowSnackBar(val message: String) : UiEvent()
         object SaveDream : UiEvent()
+    }
+
+    fun getAIResponse() {
+        viewModelScope.launch {
+            val response = getOpenAITextResponse.invoke(Prompt("text-davinci-002", dreamContent.value.text, 100,0,0))
+            _dreamAIResult.value = _dreamAIResult.value.copy(
+                text = response
+            )
+        }
     }
 
 }

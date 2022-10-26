@@ -1,9 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import android.util.Log
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -19,20 +17,28 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.Ad
 fun AIPage(
     viewModel: AddEditDreamViewModel = hiltViewModel()
 ) {
+   
 
+    Column() {
+        Text(text = "TEST" + viewModel.dreamAIResult.value.text, modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally))
 
-    Box(contentAlignment = Alignment.BottomCenter) {
-        Button(onClick = {
-            viewModel.onEvent(AddEditDreamEvent.AIResponse(viewModel.dreamContent.value.text))
-        },
-            modifier = Modifier.fillMaxWidth().padding(16.dp)
+        Box(contentAlignment = Alignment.BottomCenter) {
+            Button(onClick = {
+                viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamContent.value.text))
 
-        ) {
-            Text(text = "Generate AI Response", modifier = Modifier
-                .padding(16.dp)
-                .size(100.dp))
+            },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+
+            ) {
+                Text(text = "Generate AI Response", modifier = Modifier
+                    .padding(16.dp)
+                    .size(100.dp))
+            }
         }
     }
+
 
 
 

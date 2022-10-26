@@ -61,7 +61,7 @@ object AppModule {
     fun provideOpenAIApi(
     ): OpenAIApi {
         return Retrofit.Builder()
-            .baseUrl("https://api.openai.com/")
+            .baseUrl("https://api.openai.com/v1/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(OpenAIApi::class.java)

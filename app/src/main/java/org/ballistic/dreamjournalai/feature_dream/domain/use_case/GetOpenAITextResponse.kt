@@ -11,26 +11,13 @@ import java.io.IOException
 import javax.inject.Inject
 
 class GetOpenAITextResponse @Inject constructor(
-    private val repository: OpenAIRepository
+    private val repository: OpenAIRepository,
+
 ) {
-    operator fun invoke(prompt: Prompt): Flow<Resource<String>> = flow {
-        try {
-            emit(Resource.Loading())
-            val response = repository.getCompletion(
-                prompt.model,
-                prompt.prompt,
-                prompt.max_tokens,
-                prompt.temperature,
-                prompt.frequency_penalty
-            ).toCompletion()
-            emit(Resource.Success(response.choices[0].text))
-        } catch (e: HttpException) {
-            emit(Resource.Error(e.localizedMessage ?: "An unexpected error"))
-        } catch (e: IOException) {
-            emit(Resource.Error("Couldn't reach server. Check your internet connection"))
-        }
+
+    suspend operator fun invoke(prompt: Prompt): String {
+        return repository.getCompletion(
+            prompt
+        ).toCompletion().choices[0].text
     }
-
-
-
 }

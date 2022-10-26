@@ -1,10 +1,10 @@
 package org.ballistic.dreamjournalai.feature_dream.domain.repository
 
 import org.ballistic.dreamjournalai.feature_dream.data.remote.dto.CompletionDTO
+import org.ballistic.dreamjournalai.feature_dream.domain.model.Prompt
 
 interface OpenAIRepository {
     suspend fun getCompletion(
-        model: String, prompt: String,
-        maxTokens: Int, temperature: Int, frequencyPenalty: Int
+      prompt: Prompt
     ): CompletionDTO
 }
