@@ -27,7 +27,7 @@ fun TabLayout(
 ) {
 
 
-    val pages = listOf("Description", "Ai", "Info")
+    val pages = listOf("Description", "AI", "Info")
     val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
 

@@ -8,7 +8,9 @@ import androidx.compose.material3.Slider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamEvent
@@ -26,12 +28,14 @@ fun AIPage(
             .align(Alignment.CenterHorizontally)
             .padding(16.dp))
 
+        //vertical spacer
+        Spacer(modifier = Modifier.weight(1f))
+
 
 
         Box(contentAlignment = Alignment.BottomCenter) {
             Button(onClick = {
                 viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamContent.value.text))
-
             },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -39,8 +43,7 @@ fun AIPage(
 
             ) {
                 Text(text = "Generate AI Response", modifier = Modifier
-                    .padding(16.dp)
-                    .size(100.dp))
+                    .padding(16.dp), color = Color.White, fontSize = 16.sp)
             }
         }
     }

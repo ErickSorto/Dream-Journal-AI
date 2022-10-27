@@ -132,6 +132,21 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                             text = dream.timeOfDay,
                             isHintVisible = false
                         )
+                        _dreamIsNightmare.value = _dreamIsNightmare.value.copy(
+                            value = dream.isNightmare
+                        )
+                        _dreamIsRecurring.value = _dreamIsRecurring.value.copy(
+                            value = dream.isRecurring
+                        )
+                        _dreamIsLucid.value = _dreamIsLucid.value.copy(
+                            value = dream.isLucid
+                        )
+                        _dreamIsFavourite.value = _dreamIsFavourite.value.copy(
+                            value = dream.isFavorite
+                        )
+                        _isFalseAwakening.value = _isFalseAwakening.value.copy(
+                            value = dream.falseAwakening
+                        )
                     }
                 }
             }

@@ -6,10 +6,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Mood
 import androidx.compose.material.icons.filled.ShieldMoon
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,110 +37,237 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.Ad
 fun InfoPage(
     viewModel: AddEditDreamViewModel = hiltViewModel()
 ) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp) , horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(modifier = Modifier
-            .background(Color.Transparent)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Dream.dreamBackgroundColors.forEach { image ->
-                    Box(
-                        modifier = Modifier
-                            .size(if (viewModel.dreamBackgroundColor.value == image) 60.dp else 50.dp)
-                            .shadow(15.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(Color.Transparent)
-                            .border(
-                                if (viewModel.dreamBackgroundColor.value == image) 5.dp else 0.dp,
-                                Color.Black.copy(alpha = 0.3f),
-                                CircleShape
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.White.copy(alpha = 0.2f))
+        ) {
+            Column() {
+                Text(
+                    text = "Dream Background", modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
+                        .padding(16.dp, 16.dp, 16.dp, 0.dp)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Dream.dreamBackgroundColors.forEach { image ->
+                        Box(
+                            modifier = Modifier
+                                .size(if (viewModel.dreamBackgroundColor.value == image) 60.dp else 50.dp)
+                                .shadow(15.dp, CircleShape)
+                                .clip(CircleShape)
+                                .background(Color.Transparent)
+                                .border(
+                                    if (viewModel.dreamBackgroundColor.value == image) 5.dp else 0.dp,
+                                    Color.Black.copy(alpha = 0.3f),
+                                    CircleShape
+                                )
+                                .clickable {
+                                    viewModel.onEvent(AddEditDreamEvent.ChangeColorBackground(image))
+                                }
+                        ) {
+                            Image(
+                                painter = painterResource(id = image),
+                                contentDescription = "Color",
+                                contentScale = ContentScale.Crop
                             )
-                            .clickable {
-                                viewModel.onEvent(AddEditDreamEvent.ChangeColorBackground(image))
-                            }
-                    ){
-                        Image(painter = painterResource(id = image), contentDescription = "Color", contentScale = ContentScale.Crop)
+                        }
                     }
+
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.White.copy(alpha = 0.2f))
+        ) {
+            //row for isLucid
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row {
+                    Text(
+                        text = "Lucid Dream", modifier = Modifier
+                            .align(alignment = Alignment.CenterVertically)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Switch(
+                        checked = viewModel.dreamIsLucid.value.value, onCheckedChange = {
+                            viewModel.onEvent(AddEditDreamEvent.ChangeIsLucid(it))
+                        },
+                        modifier = Modifier
+                            .align(alignment = Alignment.CenterVertically)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                    )
                 }
 
-            }
+                //row for isNightmare
+                Row {
+                    Text(
+                        text = "Nightmare", modifier = Modifier
+                            .align(alignment = Alignment.CenterVertically)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                    )
 
+                    Spacer(modifier = Modifier.weight(1f))
 
-    }
-        //slider for vividness
-        Text(text = "Vividness: " + viewModel.dreamVividness.value.rating , modifier = Modifier
-            .fillMaxWidth()
-            .align(Alignment.CenterHorizontally)
-            .padding(16.dp))
+                    Switch(
+                        checked = viewModel.dreamIsNightmare.value.value, onCheckedChange = {
+                            viewModel.onEvent(AddEditDreamEvent.ChangeNightmare(it))
+                        },
+                        modifier = Modifier
+                            .align(alignment = Alignment.CenterVertically)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                    )
+                }
+                //isRecurring
+                Row {
+                    Text(
+                        text = "Recurring Dream", modifier = Modifier
+                            .align(alignment = Alignment.CenterVertically)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                    )
 
-        Slider(
-            value = viewModel.dreamVividness.value.rating.toFloat(),
-            onValueChange = {
-                viewModel.onEvent(AddEditDreamEvent.ChangeVividness(it.toInt()))
-            },
-            valueRange = 0f..10f,
-            steps = 9,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            thumb = {
-                Icon(
-                    imageVector = Icons.Filled.ShieldMoon,
-                    contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                    tint = Color.Red
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Switch(
+                        checked = viewModel.dreamIsRecurring.value.value, onCheckedChange = {
+                            viewModel.onEvent(AddEditDreamEvent.ChangeRecurrence(it))
+                        },
+                        modifier = Modifier
+                            .align(alignment = Alignment.CenterVertically)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                    )
+                }
+
+                //row for false awakenings
+                Row {
+                    Text(
+                        text = "False Awakening", modifier = Modifier
+                            .align(alignment = Alignment.CenterVertically)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Switch(
+                        checked = viewModel.isFalseAwakening.value.value, onCheckedChange = {
+                            viewModel.onEvent(AddEditDreamEvent.ChangeFalseAwakening(it))
+                        },
+                        modifier = Modifier
+                            .align(alignment = Alignment.CenterVertically)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                    )
+                }
+
+                //slider for lucidity
+                Text(
+                    text = "Lucidity: " + viewModel.dreamLucidity.value.rating, modifier = Modifier
+                        .fillMaxWidth()
+                        .align(alignment = Alignment.CenterHorizontally)
+                        .padding(16.dp, 16.dp, 16.dp, 0.dp)
                 )
-            }
-        )
-        //slider for lucidity
-        Text(text = "Lucidity: " + viewModel.dreamLucidity.value.rating , modifier = Modifier
-            .fillMaxWidth()
-            .align(Alignment.CenterHorizontally)
-            .padding(16.dp))
 
-        Slider(
-            value = viewModel.dreamLucidity.value.rating.toFloat(),
-            onValueChange = {
-                viewModel.onEvent(AddEditDreamEvent.ChangeLucidity(it.toInt()))
-            },
-            valueRange = 0f..10f,
-            steps = 9,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            thumb = {
-                Icon(
-                    imageVector = Icons.Filled.Favorite,
-                    contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                    tint = Color.Red
+                Slider(
+                    value = viewModel.dreamLucidity.value.rating.toFloat(),
+                    onValueChange = {
+                        viewModel.onEvent(AddEditDreamEvent.ChangeLucidity(it.toInt()))
+                    },
+                    valueRange = 0f..10f,
+                    steps = 9,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp, 0.dp, 16.dp, 16.dp),
+                    thumb = {
+                        Icon(
+                            imageVector = Icons.Filled.Favorite,
+                            contentDescription = null,
+                            modifier = Modifier.size(ButtonDefaults.IconSize),
+                            tint = Color.Red
+                        )
+                    }
                 )
+
+                //slider for vividness
+                Text(
+                    text = "Vividness: " + viewModel.dreamVividness.value.rating,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
+                        .padding(16.dp, 16.dp, 16.dp, 0.dp)
+                )
+
+                Slider(
+                    value = viewModel.dreamVividness.value.rating.toFloat(),
+                    onValueChange = {
+                        viewModel.onEvent(AddEditDreamEvent.ChangeVividness(it.toInt()))
+                    },
+                    valueRange = 0f..10f,
+                    steps = 9,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp, 0.dp, 16.dp, 16.dp),
+                    thumb = {
+                        Icon(
+                            imageVector = Icons.Filled.ShieldMoon,
+                            contentDescription = null,
+                            modifier = Modifier.size(ButtonDefaults.IconSize),
+                            tint = Color.Red
+                        )
+                    }
+                )
+
+                //slider for dreamMood
+                Text(
+                    text = "Mood: " + viewModel.dreamEmotion.value.rating, modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
+                        .padding(16.dp, 16.dp, 16.dp, 0.dp)
+                )
+
+                Slider(
+                    value = viewModel.dreamEmotion.value.rating.toFloat(),
+                    onValueChange = {
+                        viewModel.onEvent(AddEditDreamEvent.ChangeMood(it.toInt()))
+                    },
+                    valueRange = 0f..10f,
+                    steps = 9,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp, 0.dp, 16.dp, 16.dp),
+                    thumb = {
+                        Icon(
+                            imageVector = Icons.Filled.Mood,
+                            contentDescription = null,
+                            modifier = Modifier.size(ButtonDefaults.IconSize),
+                            tint = Color.Red
+                        )
+                    }
+                )
+
             }
-        )
-
-
-//        val initialSelectedIndex = Dream.dreamBackgroundColors.indexOf(viewModel.dreamBackgroundColor.value)
-//        var currentIndex by remember { mutableStateOf(initialSelectedIndex) }
-//
-//
-//        AnimatedInfiniteLazyRow(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(8.dp),
-//            Dream.dreamBackgroundColors,
-//            1000,
-//        ) {
-//
-//
-//
-//        }
-
-
-
+        }
     }
 }
 

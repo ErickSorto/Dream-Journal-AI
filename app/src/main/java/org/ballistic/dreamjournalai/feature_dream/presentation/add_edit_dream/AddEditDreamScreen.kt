@@ -2,22 +2,26 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream
 
 
 import androidx.compose.animation.Animatable
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.collectLatest
@@ -39,11 +43,6 @@ fun AddEditDreamScreen(
         )
 
     }
-
-    val scope = rememberCoroutineScope()
-
-
-
 
     LaunchedEffect(key1 = true) {
         viewModel.eventFlow.collectLatest { event ->
@@ -90,8 +89,26 @@ fun AddEditDreamScreen(
         },
 
 
-    ){ padding ->
-        Image(painter = painterResource(id = viewModel.dreamBackgroundColor.value), contentDescription = "Dream Background", contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        ) { padding ->
+        //crossfade between imagebackgrounds
+        Crossfade(targetState = viewModel.dreamBackgroundColor.value) { image ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(dreamBackGroundAnimatable.value)
+                    .padding(padding)
+            ) {
+                Image(
+                    painter = painterResource(id = image),
+                    contentDescription = "Dream Background",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .blur(10.dp)
+                )
+            }
+        }
+//
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -101,12 +118,6 @@ fun AddEditDreamScreen(
 
             TabLayout(dreamColor)
 
-
-
-
-
         }
-
     }
-
 }
