@@ -9,11 +9,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.feature_dream.data.remote.OpenAIApi
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.domain.model.InvalidDreamException
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Prompt
-import org.ballistic.dreamjournalai.feature_dream.domain.use_case.AIResponse
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.GetOpenAITextResponse
 import javax.inject.Inject
@@ -24,7 +22,6 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     private val getOpenAITextResponse: GetOpenAITextResponse,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-
 
     private val _dreamTitle = mutableStateOf(DreamTextFieldState(
         hint = "Enter Dream Title..."
@@ -115,6 +112,26 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                             isHintVisible = false
                         )
                         _dreamBackgroundColor.value = dream.dreamImageBackground
+                        _dreamAIResult.value = _dreamAIResult.value.copy(
+                            text = dream.AIResponse,
+                            isHintVisible = false
+                        )
+                        _dreamVividness.value = _dreamVividness.value.copy(
+                            rating = dream.vividityRating
+                        )
+                        _dreamLucidity.value = _dreamLucidity.value.copy(
+                            rating = dream.lucidityRating
+                        )
+                        _dreamRealism.value = _dreamRealism.value.copy(
+                            rating = dream.realismRating
+                        )
+                        _dreamEmotion.value = _dreamEmotion.value.copy(
+                            rating = dream.moodRating
+                        )
+                        _dreamTime.value = _dreamTime.value.copy(
+                            text = dream.timeOfDay,
+                            isHintVisible = false
+                        )
                     }
                 }
             }
@@ -239,12 +256,13 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
         object SaveDream : UiEvent()
     }
 
-    fun getAIResponse() {
+    private fun getAIResponse() {
         viewModelScope.launch {
             val response = getOpenAITextResponse.invoke(Prompt("text-davinci-002", dreamContent.value.text, 100,0,0))
             _dreamAIResult.value = _dreamAIResult.value.copy(
                 text = response
             )
+
         }
     }
 

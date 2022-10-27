@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.Text
+import androidx.compose.material3.Slider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,8 +20,13 @@ fun AIPage(
 ) {
    
 
-    Column() {
-        Text(text = "TEST" + viewModel.dreamAIResult.value.text, modifier = Modifier.fillMaxWidth().align(Alignment.CenterHorizontally))
+    Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = "TEST" + viewModel. dreamAIResult.value.text, modifier = Modifier
+            .fillMaxWidth()
+            .align(Alignment.CenterHorizontally)
+            .padding(16.dp))
+
+
 
         Box(contentAlignment = Alignment.BottomCenter) {
             Button(onClick = {
