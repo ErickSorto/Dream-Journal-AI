@@ -1,15 +1,12 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Switch
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Mood
@@ -17,6 +14,7 @@ import androidx.compose.material.icons.filled.ShieldMoon
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,7 +23,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight.Companion.Bold
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamEvent
@@ -37,6 +38,7 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.Ad
 fun InfoPage(
     viewModel: AddEditDreamViewModel = hiltViewModel()
 ) {
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -52,7 +54,9 @@ fun InfoPage(
                     text = "Dream Background", modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
-                        .padding(16.dp, 16.dp, 16.dp, 0.dp)
+                        .padding(16.dp, 16.dp, 16.dp, 0.dp), //bold
+                    fontSize = 20.sp,
+                    textAlign = TextAlign.Center
                 )
 
                 Row(
@@ -98,10 +102,13 @@ fun InfoPage(
                 .background(Color.White.copy(alpha = 0.2f))
         ) {
             //row for isLucid
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
+                , horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Row {
                     Text(
@@ -118,7 +125,13 @@ fun InfoPage(
                         },
                         modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
-                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp),
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.Red,
+                            uncheckedThumbColor = Color.White,
+                            checkedTrackColor = Color.Red.copy(alpha = 0.5f),
+                            uncheckedTrackColor = Color.Black.copy(alpha = 0.3f),
+                        )
                     )
                 }
 
@@ -138,7 +151,13 @@ fun InfoPage(
                         },
                         modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
-                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp),
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.Red,
+                            uncheckedThumbColor = Color.White,
+                            checkedTrackColor = Color.Red.copy(alpha = 0.5f),
+                            uncheckedTrackColor = Color.Black.copy(alpha = 0.3f),
+                        )
                     )
                 }
                 //isRecurring
@@ -157,7 +176,13 @@ fun InfoPage(
                         },
                         modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
-                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp),
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.Red,
+                            uncheckedThumbColor = Color.White,
+                            checkedTrackColor = Color.Red.copy(alpha = 0.5f),
+                            uncheckedTrackColor = Color.Black.copy(alpha = 0.3f),
+                        )
                     )
                 }
 
@@ -177,7 +202,13 @@ fun InfoPage(
                         },
                         modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
-                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp),
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.Red,
+                            uncheckedThumbColor = Color.White,
+                            checkedTrackColor = Color.Red.copy(alpha = 0.5f),
+                            uncheckedTrackColor = Color.Black.copy(alpha = 0.3f),
+                        )
                     )
                 }
 
@@ -206,7 +237,12 @@ fun InfoPage(
                             modifier = Modifier.size(ButtonDefaults.IconSize),
                             tint = Color.Red
                         )
-                    }
+                    },
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color.Black,
+                        activeTrackColor = Color.Black,
+                        inactiveTrackColor = Color.Black.copy(alpha = 0.3f)
+                    )
                 )
 
                 //slider for vividness
@@ -235,7 +271,12 @@ fun InfoPage(
                             modifier = Modifier.size(ButtonDefaults.IconSize),
                             tint = Color.Red
                         )
-                    }
+                    },
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color.Black,
+                        activeTrackColor = Color.Black,
+                        inactiveTrackColor = Color.Black.copy(alpha = 0.3f)
+                    )
                 )
 
                 //slider for dreamMood
@@ -263,7 +304,12 @@ fun InfoPage(
                             modifier = Modifier.size(ButtonDefaults.IconSize),
                             tint = Color.Red
                         )
-                    }
+                    },
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color.Black,
+                        activeTrackColor = Color.Black,
+                        inactiveTrackColor = Color.Black.copy(alpha = 0.3f)
+                    )
                 )
 
             }

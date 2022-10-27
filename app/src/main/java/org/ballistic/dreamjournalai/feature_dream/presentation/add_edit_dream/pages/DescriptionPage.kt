@@ -2,9 +2,11 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.p
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -36,7 +38,12 @@ fun DescriptionPage(
             },
             isHintVisible = titleState.isHintVisible,
             singleLine = true,
-            textStyle = MaterialTheme.typography.headlineLarge
+            textStyle = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.White.copy(alpha = 0.2f))
+                .padding(16.dp)
+
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -51,7 +58,11 @@ fun DescriptionPage(
             },
             isHintVisible = contentState.isHintVisible,
             textStyle = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.fillMaxHeight()
+            modifier = Modifier
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.White.copy(alpha = 0.2f))
+                .padding(8.dp)
         )
 
     }
