@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamEvent
@@ -21,6 +22,8 @@ fun DescriptionPage(
     val titleState = viewModel.dreamTitle.value
     val contentState = viewModel.dreamContent.value
 
+    val dreamUiState = viewModel.dreamUiState
+
     Column(
         modifier = Modifier
             .background(color = Color.Transparent)
@@ -28,8 +31,8 @@ fun DescriptionPage(
     ) {
 
         TransparentHintTextField(
-            text = titleState.text,
-            hint = titleState.hint,
+            text = dreamUiState.value.dreamTitle,
+            hint = "", //TODO
             onValueChange = {
                 viewModel.onEvent(AddEditDreamEvent.EnteredTitle(it))
             },
@@ -48,8 +51,8 @@ fun DescriptionPage(
 
         Spacer(modifier = Modifier.height(16.dp))
         TransparentHintTextField(
-            text = contentState.text,
-            hint = contentState.hint,
+            text = dreamUiState.value.dreamContent,
+            hint = LocalContext.current.getString(org.ballistic.dreamjournalai.R.string.hint_title), //TODO
             onValueChange = {
                 viewModel.onEvent(AddEditDreamEvent.EnteredContent(it))
             },
