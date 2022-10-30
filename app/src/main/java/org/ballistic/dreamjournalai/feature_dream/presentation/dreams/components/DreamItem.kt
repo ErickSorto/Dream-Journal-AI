@@ -2,11 +2,11 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.dreams.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,12 +19,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
-
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamViewModel
-import org.ballistic.dreamjournalai.ui.theme.Typography
-
 
 
 @Composable
@@ -58,7 +56,7 @@ fun DreamItem(
 
             ) {
                 Image(
-                    painter = painterResource(dream.backgroundImage),
+                    painter = painterResource(dream.dreamImageBackground),
                     contentDescription = "Color",
                     contentScale = ContentScale.Crop
                 )
@@ -67,12 +65,12 @@ fun DreamItem(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
-                    .padding(end = 16.dp)
+                    .padding(end = 32.dp)
 
             ) {
                 Text(
                     text = dream.title,
-                    style = typography.titleLarge,
+                    style = MaterialTheme.typography.headlineMedium,
                     color = Color.Black,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -82,7 +80,7 @@ fun DreamItem(
 
                 Text(
                     text = dream.content,
-                    style = typography.bodyLarge,
+                    style = MaterialTheme.typography.bodySmall,
                     color = Color.Black,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
