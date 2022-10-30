@@ -1,8 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages
 
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +21,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,15 +63,15 @@ fun InfoPage(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Dream.dreamBackgroundColors.forEach { image ->
+                    Dream.dreamBackgroundImages.forEach { image ->
                         Box(
                             modifier = Modifier
-                                .size(if (viewModel.dreamBackgroundColor.value == image) 60.dp else 50.dp)
+                                .size(if (viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage == image) 60.dp else 50.dp)
                                 .shadow(15.dp, CircleShape)
                                 .clip(CircleShape)
                                 .background(Color.Transparent)
                                 .border(
-                                    if (viewModel.dreamBackgroundColor.value == image) 5.dp else 0.dp,
+                                    if (viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage == image) 5.dp else 0.dp,
                                     Color.Black.copy(alpha = 0.3f),
                                     CircleShape
                                 )
@@ -120,7 +117,7 @@ fun InfoPage(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Switch(
-                        checked = viewModel.dreamIsLucid.value.value, onCheckedChange = {
+                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsLucid, onCheckedChange = {
                             viewModel.onEvent(AddEditDreamEvent.ChangeIsLucid(it))
                         },
                         modifier = Modifier
@@ -146,7 +143,7 @@ fun InfoPage(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Switch(
-                        checked = viewModel.dreamIsNightmare.value.value, onCheckedChange = {
+                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsNightmare, onCheckedChange = {
                             viewModel.onEvent(AddEditDreamEvent.ChangeNightmare(it))
                         },
                         modifier = Modifier
@@ -171,7 +168,7 @@ fun InfoPage(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Switch(
-                        checked = viewModel.dreamIsRecurring.value.value, onCheckedChange = {
+                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsRecurring, onCheckedChange = {
                             viewModel.onEvent(AddEditDreamEvent.ChangeRecurrence(it))
                         },
                         modifier = Modifier
@@ -197,7 +194,7 @@ fun InfoPage(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Switch(
-                        checked = viewModel.isFalseAwakening.value.value, onCheckedChange = {
+                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsFalseAwakening, onCheckedChange = {
                             viewModel.onEvent(AddEditDreamEvent.ChangeFalseAwakening(it))
                         },
                         modifier = Modifier
@@ -214,14 +211,14 @@ fun InfoPage(
 
                 //slider for lucidity
                 Text(
-                    text = "Lucidity: " + viewModel.dreamLucidity.value.rating, modifier = Modifier
+                    text = "Lucidity: " + viewModel.dreamUiState.value.dreamInfo.dreamLucidity, modifier = Modifier
                         .fillMaxWidth()
                         .align(alignment = Alignment.CenterHorizontally)
                         .padding(16.dp, 16.dp, 16.dp, 0.dp)
                 )
 
                 Slider(
-                    value = viewModel.dreamLucidity.value.rating.toFloat(),
+                    value = viewModel.dreamUiState.value.dreamInfo.dreamLucidity.toFloat(),
                     onValueChange = {
                         viewModel.onEvent(AddEditDreamEvent.ChangeLucidity(it.toInt()))
                     },
@@ -247,7 +244,7 @@ fun InfoPage(
 
                 //slider for vividness
                 Text(
-                    text = "Vividness: " + viewModel.dreamVividness.value.rating,
+                    text = "Vividness: " + viewModel.dreamUiState.value.dreamInfo.dreamVividness,
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
@@ -255,7 +252,7 @@ fun InfoPage(
                 )
 
                 Slider(
-                    value = viewModel.dreamVividness.value.rating.toFloat(),
+                    value = viewModel.dreamUiState.value.dreamInfo.dreamVividness.toFloat(),
                     onValueChange = {
                         viewModel.onEvent(AddEditDreamEvent.ChangeVividness(it.toInt()))
                     },
@@ -281,14 +278,14 @@ fun InfoPage(
 
                 //slider for dreamMood
                 Text(
-                    text = "Mood: " + viewModel.dreamEmotion.value.rating, modifier = Modifier
+                    text = "Mood: " + viewModel.dreamUiState.value.dreamInfo.dreamEmotion, modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
                         .padding(16.dp, 16.dp, 16.dp, 0.dp)
                 )
 
                 Slider(
-                    value = viewModel.dreamEmotion.value.rating.toFloat(),
+                    value = viewModel.dreamUiState.value.dreamInfo.dreamEmotion.toFloat(),
                     onValueChange = {
                         viewModel.onEvent(AddEditDreamEvent.ChangeMood(it.toInt()))
                     },

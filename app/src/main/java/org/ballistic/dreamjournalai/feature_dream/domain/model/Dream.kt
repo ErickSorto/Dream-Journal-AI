@@ -8,8 +8,8 @@ import org.ballistic.dreamjournalai.R
 data class Dream(
     val title: String,
     val content: String,
+    val timestamp: Long = System.currentTimeMillis(),
     val AIResponse: String,
-    val timestamp: Long,
     val isFavorite: Boolean,
     val isLucid: Boolean,
     val isNightmare: Boolean,
@@ -18,14 +18,13 @@ data class Dream(
     val lucidityRating: Int,
     val moodRating: Int,
     val vividityRating: Int,
-    val realismRating: Int,
     val timeOfDay: String,
 
-    val dreamImageBackground: Int,
+    val backgroundImage: Int,
     @PrimaryKey val id: Int? = null
 ) {
     companion object {
-        val dreamBackgroundColors = listOf(
+        val dreamBackgroundImages = listOf(
 
             R.drawable.pink_background,
             R.drawable.red_background,

@@ -39,7 +39,7 @@ fun AddEditDreamScreen(
 
     val dreamBackGroundAnimatable = remember {
         Animatable(
-            Color(if (dreamColor != -1) dreamColor else viewModel.dreamBackgroundColor.value)
+            Color(if (dreamColor != -1) dreamColor else viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage)
         )
 
     }
@@ -60,9 +60,9 @@ fun AddEditDreamScreen(
         }
     }
     //listen to color changes and animate
-    LaunchedEffect(key1 = viewModel.dreamBackgroundColor.value) {
+    LaunchedEffect(key1 = viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage) {
         dreamBackGroundAnimatable.animateTo(//animate to new backgroundimage color
-            targetValue = Color(viewModel.dreamBackgroundColor.value),
+            targetValue = Color(viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage),
             animationSpec = tween(
                 durationMillis = 500
             )
@@ -91,7 +91,7 @@ fun AddEditDreamScreen(
 
         ) { padding ->
         //crossfade between imagebackgrounds
-        Crossfade(targetState = viewModel.dreamBackgroundColor.value) { image ->
+        Crossfade(targetState = viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage) { image ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()

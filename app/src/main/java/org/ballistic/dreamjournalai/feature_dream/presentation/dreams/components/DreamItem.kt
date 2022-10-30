@@ -2,7 +2,6 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.dreams.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,10 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamEvent
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamViewModel
 
 
 @Composable
@@ -56,7 +52,7 @@ fun DreamItem(
 
             ) {
                 Image(
-                    painter = painterResource(dream.dreamImageBackground),
+                    painter = painterResource(dream.backgroundImage),
                     contentDescription = "Color",
                     contentScale = ContentScale.Crop
                 )
