@@ -23,6 +23,18 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
+    /*
+    data class DreamUiState(
+    val dreamTitle: String,
+    val dreamContent: String,
+    val dreamInfo: DreamInfo
+    val dreamAIExplanatation: String
+    )
+     */
+
+    var dreamUiState = mutableStateOf(DreamUiState())
+        private set
+
     private val _dreamTitle = mutableStateOf(DreamTextFieldState(
         hint = "Enter Dream Title..."
     ))
@@ -102,15 +114,21 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             if(dreamId != -1) {
                 viewModelScope.launch {
                     dreamUseCases.getDream(dreamId)?.also { dream ->
+
+                        dreamUiState.value = dreamUiState.value.copy(
+                            dreamTitle = dream.title,
+                            dreamContent = dream.content
+                        )
+
                         currentDreamId = dream.id
-                        _dreamTitle.value = dreamTitle.value.copy(
+                        /*_dreamTitle.value = dreamTitle.value.copy(
                             text = dream.title,
                             isHintVisible = false
                         )
                         _dreamContent.value = _dreamContent.value.copy(
                             text = dream.content,
                             isHintVisible = false
-                        )
+                        )*/
                         _dreamBackgroundColor.value = dream.dreamImageBackground
                         _dreamAIResult.value = _dreamAIResult.value.copy(
                             text = dream.AIResponse,
@@ -156,8 +174,11 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     fun onEvent(event: AddEditDreamEvent){
         when(event){
             is AddEditDreamEvent.EnteredTitle -> {
-                _dreamTitle.value = dreamTitle.value.copy(
+               /* _dreamTitle.value = dreamTitle.value.copy(
                     text = event.value
+                )*/
+                dreamUiState.value = dreamUiState.value.copy(
+                    dreamTitle = event.value
                 )
             }
             is AddEditDreamEvent.ChangeTitleFocus -> {
@@ -167,8 +188,11 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 )
             }
             is AddEditDreamEvent.EnteredContent -> {
-                _dreamContent.value = _dreamContent.value.copy(
+                /*_dreamContent.value = _dreamContent.value.copy(
                     text = event.value
+                )*/
+                dreamUiState.value = dreamUiState.value.copy(
+                    dreamContent = event.value
                 )
             }
             is AddEditDreamEvent.ChangeContentFocus -> {
@@ -282,3 +306,23 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     }
 
 }
+
+data class DreamUiState(
+    val dreamTitle: String = "",
+    val dreamContent: String ="",
+    val dreamInfo: DreamInfo = DreamInfo(
+        false, false, false, false,
+        0,0,0
+    ),
+    val dreamAIExplanatation: String = ""
+)
+
+data class DreamInfo(
+    val lucidDream: Boolean,
+    val nightmare: Boolean,
+    val recurringDream: Boolean,
+    val falseAwakening: Boolean,
+    val lucidity: Int,
+    val vividness: Int,
+    val mood: Int,
+)
