@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.filled.Mood
 import androidx.compose.material.icons.filled.ShieldMoon
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
@@ -55,7 +57,7 @@ fun InfoPage(
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
                         .padding(16.dp, 16.dp, 16.dp, 0.dp), //bold
-                    fontSize = 20.sp,
+                    style = typography.titleMedium,
                     textAlign = TextAlign.Center
                 )
 
@@ -70,17 +72,13 @@ fun InfoPage(
                         Box(
                             modifier = Modifier
                                 .size(if (viewModel.dreamBackgroundColor.value == image) 60.dp else 50.dp)
-                                .shadow(15.dp, CircleShape)
                                 .clip(CircleShape)
                                 .background(Color.Transparent)
-                                .border(
-                                    if (viewModel.dreamBackgroundColor.value == image) 5.dp else 0.dp,
-                                    Color.Black.copy(alpha = 0.3f),
-                                    CircleShape
-                                )
+                                .shadow(if (viewModel.dreamBackgroundColor.value == image) 65.dp else 55.dp, CircleShape)
                                 .clickable {
                                     viewModel.onEvent(AddEditDreamEvent.ChangeColorBackground(image))
                                 }
+
                         ) {
                             Image(
                                 painter = painterResource(id = image),
@@ -115,6 +113,7 @@ fun InfoPage(
                         text = "Lucid Dream", modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
                             .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                    , style = typography.bodyLarge
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -140,7 +139,8 @@ fun InfoPage(
                     Text(
                         text = "Nightmare", modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
-                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp),
+                        style = typography.bodyLarge
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -165,7 +165,8 @@ fun InfoPage(
                     Text(
                         text = "Recurring Dream", modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
-                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp),
+                        style = typography.bodyLarge
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -191,7 +192,8 @@ fun InfoPage(
                     Text(
                         text = "False Awakening", modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
-                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp),
+                        style = typography.bodyLarge
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -202,7 +204,7 @@ fun InfoPage(
                         },
                         modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
-                            .padding(16.dp, 0.dp, 16.dp, 0.dp),
+                            .padding(16.dp, 0.dp, 16.dp, 16.dp),
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.Red,
                             uncheckedThumbColor = Color.White,
@@ -217,7 +219,8 @@ fun InfoPage(
                     text = "Lucidity: " + viewModel.dreamLucidity.value.rating, modifier = Modifier
                         .fillMaxWidth()
                         .align(alignment = Alignment.CenterHorizontally)
-                        .padding(16.dp, 16.dp, 16.dp, 0.dp)
+                        .padding(16.dp, 16.dp, 16.dp, 0.dp),
+                    style = typography.bodyLarge
                 )
 
                 Slider(
@@ -251,7 +254,8 @@ fun InfoPage(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
-                        .padding(16.dp, 16.dp, 16.dp, 0.dp)
+                        .padding(16.dp, 8.dp, 16.dp, 0.dp),
+                    style = typography.bodyLarge
                 )
 
                 Slider(
@@ -284,7 +288,8 @@ fun InfoPage(
                     text = "Mood: " + viewModel.dreamEmotion.value.rating, modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
-                        .padding(16.dp, 16.dp, 16.dp, 0.dp)
+                        .padding(16.dp, 8.dp, 16.dp, 0.dp),
+                    style = typography.bodyLarge
                 )
 
                 Slider(

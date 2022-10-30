@@ -62,7 +62,7 @@ fun DescriptionPage(
                 .fillMaxHeight()
                 .clip(RoundedCornerShape(10.dp))
                 .background(Color.White.copy(alpha = 0.2f))
-                .padding(8.dp)
+                .padding(16.dp)
         )
 
     }
