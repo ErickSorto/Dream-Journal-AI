@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Dream Catcher AI</string>
+    <string name="hint_title">title</string>
+
 </resources>

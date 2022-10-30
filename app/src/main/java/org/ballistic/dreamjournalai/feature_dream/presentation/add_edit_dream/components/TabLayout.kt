@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components
 
 import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
@@ -46,11 +47,10 @@ fun TabLayout(
     ) {
         pages.forEachIndexed { index, page ->
             Tab(
-                text = { Text(page) },
+                text = { Text(page, style = typography.titleSmall) },
                 selected = pagerState.currentPage == index,
                 onClick = {
                     scope.launch { pagerState.animateScrollToPage(index) }
-
                 }
             )
         }

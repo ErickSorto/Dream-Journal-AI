@@ -87,7 +87,7 @@ fun DreamsScreen(
                                 .clickable {
                                     navController.navigate(
                                         Screen.AddEditDreamScreen.route +
-                                                "?dreamId=${dream.id}&dreamColor=${dream.dreamImageBackground}"
+                                                "?dreamId=${dream.id}&dreamColor=${dream.backgroundImage}"
                                     )
                                 },
                             onDeleteClick = {

@@ -8,4 +8,5 @@ data class DreamsState (
     val dreams: List<Dream> = emptyList(),
     val dreamOrder: DreamOrder = DreamOrder.Date(OrderType.Descending),
     val isOrderSectionVisible: Boolean = false,
+    val searchText: String = ""
 )
