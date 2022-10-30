@@ -94,7 +94,11 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             }
 
             is AddEditDreamEvent.ChangeColorBackground -> {
-                dreamUiState.value.dreamInfo.dreamBackgroundImage = event.colorBackGroundImage
+                dreamUiState.value = dreamUiState.value.copy(
+                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                        dreamBackgroundImage = event.colorBackGroundImage
+                    )
+                )
             }
             is AddEditDreamEvent.ClickGenerateAIResponse -> {
                 getAIResponse()
