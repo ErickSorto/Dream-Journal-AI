@@ -19,8 +19,8 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.co
 fun DescriptionPage(
     viewModel: AddEditDreamViewModel = hiltViewModel()
 ) {
-    val titleState = viewModel.dreamTitle.value
-    val contentState = viewModel.dreamContent.value
+    val titleState = viewModel.dreamUiState.value.dreamTitle
+    val contentState = viewModel.dreamUiState.value.dreamContent
 
     val dreamUiState = viewModel.dreamUiState
 
@@ -31,15 +31,19 @@ fun DescriptionPage(
     ) {
 
         TransparentHintTextField(
-            text = dreamUiState.value.dreamTitle,
-            hint = "", //TODO
+            text = titleState,
+            hint = "Enter Title...", //TODO
             onValueChange = {
                 viewModel.onEvent(AddEditDreamEvent.EnteredTitle(it))
             },
             onFocusChange = {
-                viewModel.onEvent(AddEditDreamEvent.ChangeTitleFocus(it))
+                            if (it.isFocused) {
+                                viewModel.onEvent(AddEditDreamEvent.EnteredTitle(titleState))
+                            } else {
+                                viewModel.onEvent(AddEditDreamEvent.EnteredTitle(titleState))
+                            }
             },
-            isHintVisible = titleState.isHintVisible,
+            isHintVisible = titleState.isBlank(),
             singleLine = true,
             textStyle = MaterialTheme.typography.headlineLarge,
             modifier = Modifier
@@ -57,9 +61,13 @@ fun DescriptionPage(
                 viewModel.onEvent(AddEditDreamEvent.EnteredContent(it))
             },
             onFocusChange = {
-                viewModel.onEvent(AddEditDreamEvent.ChangeContentFocus(it))
+                if (it.isFocused) {
+                    viewModel.onEvent(AddEditDreamEvent.EnteredContent(contentState))
+                } else {
+                    viewModel.onEvent(AddEditDreamEvent.EnteredContent(contentState))
+                }
             },
-            isHintVisible = contentState.isHintVisible,
+            isHintVisible = contentState.isBlank(),
             textStyle = MaterialTheme.typography.bodyLarge,
             modifier = Modifier
                 .fillMaxHeight()
