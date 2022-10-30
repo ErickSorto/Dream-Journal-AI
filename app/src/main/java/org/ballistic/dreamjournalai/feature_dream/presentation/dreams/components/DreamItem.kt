@@ -58,7 +58,7 @@ fun DreamItem(
 
             ) {
                 Image(
-                    painter = painterResource(dream.dreamImageBackground),
+                    painter = painterResource(dream.backgroundImage),
                     contentDescription = "Color",
                     contentScale = ContentScale.Crop
                 )

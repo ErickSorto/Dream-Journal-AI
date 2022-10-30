@@ -52,7 +52,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                 dreamBackgroundImage= dream.backgroundImage,
                                 dreamTimeOfDay = dream.timeOfDay,
                                 dreamLucidity = dream.lucidityRating,
-                                dreamVividness = dream.vividityRating,
+                                dreamVividness = dream.vividnessRating,
                                 dreamEmotion = dream.moodRating,
                                 dreamIsNightmare = dream.isNightmare,
                                 dreamIsRecurring = dream.isRecurring,
@@ -93,8 +93,12 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 )
             }
 
-            is AddEditDreamEvent.ChangeColorBackground -> {
-                dreamUiState.value.dreamInfo.dreamBackgroundImage = event.colorBackGroundImage
+            is AddEditDreamEvent.ChangeDreamBackgroundImage -> {
+                dreamUiState.value = dreamUiState.value.copy(
+                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                        dreamBackgroundImage = event.dreamBackGroundImage
+                    )
+                )
             }
             is AddEditDreamEvent.ClickGenerateAIResponse -> {
                 getAIResponse()
@@ -184,7 +188,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                 isRecurring = dreamUiState.value.dreamInfo.dreamIsRecurring,
                                 isFavorite = dreamUiState.value.dreamInfo.dreamIsFavorite,
                                 lucidityRating = dreamUiState.value.dreamInfo.dreamLucidity,
-                                vividityRating = dreamUiState.value.dreamInfo.dreamVividness,
+                                vividnessRating = dreamUiState.value.dreamInfo.dreamVividness,
                                 moodRating = dreamUiState.value.dreamInfo.dreamEmotion,
                                 timeOfDay = dreamUiState.value.dreamInfo.dreamTimeOfDay,
                                 falseAwakening = dreamUiState.value.dreamInfo.dreamIsFalseAwakening,

@@ -46,7 +46,7 @@ fun AIPage(
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = viewModel.dreamAIResult.value.text,
+                text = viewModel.dreamUiState.value.dreamAIExplanation,
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterHorizontally)
@@ -62,7 +62,7 @@ fun AIPage(
         Box(contentAlignment = Alignment.BottomCenter) {
             Button(
                 onClick = {
-                    viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamContent.value.text))
+                    viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamUiState.value.dreamContent))
                 },
                 modifier = Modifier
                     .fillMaxWidth(),
