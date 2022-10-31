@@ -7,7 +7,7 @@ sealed class AddEditDreamEvent{
 //    data class ChangedFocusTitle(val focusState: FocusState) : AddEditDreamEvent()
 //    data class ChangedContentFocus(val focusState: FocusState) : AddEditDreamEvent()
     data class EnteredContent(val value: String) : AddEditDreamEvent()
-    data class ChangeColorBackground(val colorBackGroundImage: Int) : AddEditDreamEvent()
+    data class ChangeDreamBackgroundImage(val dreamBackGroundImage: Int) : AddEditDreamEvent()
     data class ChangeLucidity(val lucidity: Int) : AddEditDreamEvent()
     data class ChangeVividness(val vividness: Int) : AddEditDreamEvent()
     data class ChangeRecurrence(val boolean: Boolean) : AddEditDreamEvent()

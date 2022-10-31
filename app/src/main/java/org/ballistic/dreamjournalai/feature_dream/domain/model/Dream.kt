@@ -17,7 +17,7 @@ data class Dream(
     val falseAwakening: Boolean,
     val lucidityRating: Int,
     val moodRating: Int,
-    val vividityRating: Int,
+    val vividnessRating: Int,
     val timeOfDay: String,
 
     val backgroundImage: Int,
