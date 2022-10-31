@@ -55,26 +55,4 @@ object AppModule {
 
         )
     }
-
-    @Provides
-    @Singleton
-    fun provideOpenAIApi(
-    ): OpenAIApi {
-        return Retrofit.Builder()
-            .baseUrl("https://api.openai.com/v1/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(OpenAIApi::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideOpenAIRepository(
-        api: OpenAIApi
-    ): OpenAIRepository {
-        return OpenAIRepositoryImpl(api)
-    }
-
-
-
 }

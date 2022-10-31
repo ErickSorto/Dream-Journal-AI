@@ -22,23 +22,11 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    /*
-    data class DreamUiState(
-    val dreamTitle: String,
-    val dreamContent: String,
-    val dreamInfo: DreamInfo
-    val dreamAIExplanatation: String
-    )
-     */
-
     var dreamUiState = mutableStateOf(DreamUiState())
         private set
 
-
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
-
-
 
     init {
         savedStateHandle.get<Int>("dreamId")?.let { dreamId ->
@@ -76,18 +64,12 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     fun onEvent(event: AddEditDreamEvent){
         when(event){
             is AddEditDreamEvent.EnteredTitle -> {
-               /* _dreamTitle.value = dreamTitle.value.copy(
-                    text = event.value
-                )*/
                 dreamUiState.value = dreamUiState.value.copy(
                     dreamTitle = event.value
                 )
             }
 
             is AddEditDreamEvent.EnteredContent -> {
-                /*_dreamContent.value = _dreamContent.value.copy(
-                    text = event.value
-                )*/
                 dreamUiState.value = dreamUiState.value.copy(
                     dreamContent = event.value
                 )
@@ -167,12 +149,6 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                     )
                 )
             }
-//            is AddEditDreamEvent.ChangedFocusTitle -> {
-//                dreamUiState.value = dreamUiState.value.copy(
-//                    dreamTitle = event.value
-//                )
-//            }
-
 
             is AddEditDreamEvent.SaveDream -> {
                 viewModelScope.launch {

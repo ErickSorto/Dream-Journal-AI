@@ -82,7 +82,6 @@ fun InfoPage(
                             )
                         }
                     }
-
                 }
             }
         }
@@ -311,7 +310,6 @@ fun InfoPage(
                         inactiveTrackColor = Color.Black.copy(alpha = 0.3f)
                     )
                 )
-
             }
         }
     }
