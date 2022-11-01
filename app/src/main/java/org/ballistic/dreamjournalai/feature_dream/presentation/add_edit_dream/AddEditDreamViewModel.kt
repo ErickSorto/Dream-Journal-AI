@@ -187,7 +187,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
 
     private fun getAIResponse() {
         viewModelScope.launch {
-            val response = getOpenAITextResponse.invoke(Prompt("text-davinci-002", dreamUiState.value.dreamContent, 100,0,0))
+            val response = getOpenAITextResponse.invoke(Prompt("text-davinci-002", "Analyze the following dream and try to find meaning in it: " + dreamUiState.value.dreamContent, 250,1,0))
             dreamUiState.value = dreamUiState.value.copy(
                 dreamAIExplanation = response
             )

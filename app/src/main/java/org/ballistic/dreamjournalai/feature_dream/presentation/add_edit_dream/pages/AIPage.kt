@@ -54,6 +54,7 @@ fun AIPage(
                 textAlign = TextAlign.Center,
                 style = typography.bodyLarge
             )
+
         }
 
         //vertical spacer
