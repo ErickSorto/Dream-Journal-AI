@@ -15,9 +15,15 @@ class GetOpenAITextResponse @Inject constructor(
 
 ) {
 
-    suspend operator fun invoke(prompt: Prompt): String {
-        return repository.getCompletion(
-            prompt
-        ).toCompletion().choices[0].text
+    suspend operator fun invoke(prompt: Prompt): Flow<Resource<String>> = flow {
+        try {
+            emit(Resource.Loading())
+            val completion = repository.getCompletion(prompt).toCompletion()
+            emit(Resource.Success(completion.choices[0].text))
+        } catch (e: HttpException) {
+            emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))
+        } catch (e: IOException) {
+            emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+        }
     }
 }
