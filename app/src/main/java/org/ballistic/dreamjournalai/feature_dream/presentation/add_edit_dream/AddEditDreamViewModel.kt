@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -7,7 +8,10 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.core.Resource
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.domain.model.InvalidDreamException
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Prompt
@@ -60,6 +64,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             }
         }
     }
+
+
 
     fun onEvent(event: AddEditDreamEvent){
         when(event){
@@ -185,13 +191,33 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
         object SaveDream : UiEvent()
     }
 
-    private fun getAIResponse() {
-        viewModelScope.launch {
-            val response = getOpenAITextResponse.invoke(Prompt("text-davinci-002", "Analyze the following dream and try to find meaning in it: " + dreamUiState.value.dreamContent, 250,1,0))
-            dreamUiState.value = dreamUiState.value.copy(
-                dreamAIExplanation = response
-            )
-        }
+//    private fun getAIResponse() {
+//        viewModelScope.launch {
+//
+//            val response = getOpenAITextResponse.invoke(Prompt("text-davinci-002", "Analyze the following dream and try to find meaning in it: " + dreamUiState.value.dreamContent, 250,1,0))
+//            dreamUiState.value = dreamUiState.value.copy(
+//                dreamAIExplanation = response
+//            )
+//        }
+//    }
+
+    private fun getAIResponse(){
+            val result = getOpenAITextResponse(Prompt("text-davinci-002",
+                "Analyze the following dream and try to find meaning in it: "
+                        + dreamUiState.value.dreamContent, 250,1,0))
+            when(result){
+                is Resource.Success -> {
+                    dreamUiState.value = dreamUiState.value.copy(
+                        dreamAIExplanation = result.data as String
+                    )
+                }
+                is Resource.Error -> {
+                    Log.d("AddEditDreamViewModel", "Error: ${result.message}")
+                }
+                is Resource.Loading -> {
+                    Log.d("AddEditDreamViewModel", "Loading")
+                }
+            }
     }
 
 }
