@@ -13,17 +13,19 @@ import javax.inject.Inject
 class GetOpenAITextResponse @Inject constructor(
     private val repository: OpenAIRepository,
 
-) {
+    ) {
 
-    suspend operator fun invoke(prompt: Prompt): Flow<Resource<String>> = flow {
+    operator fun invoke(prompt: Prompt): Flow<Resource<String>> = flow {
         try {
-            emit(Resource.Loading())
-            val completion = repository.getCompletion(prompt).toCompletion()
-            emit(Resource.Success(completion.choices[0].text))
-        } catch (e: HttpException) {
-            emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))
-        } catch (e: IOException) {
-            emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+            emit(Resource.Loading<String>())
+            val response = repository.getCompletion(prompt).toCompletion().choices[0].text
+            emit(Resource.Success<String>(response))
+        } catch(e: HttpException) {
+            emit(Resource.Error<String>(e.localizedMessage ?: "An unexpected error occured"))
+        } catch(e: IOException) {
+            emit(Resource.Error<String>("Couldn't reach server. Check your internet connection."))
         }
+
     }
 }
+
