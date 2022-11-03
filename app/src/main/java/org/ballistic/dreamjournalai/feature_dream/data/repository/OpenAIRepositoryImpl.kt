@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.data.repository
 
+import android.util.Log
 import org.ballistic.dreamjournalai.core.Resource
 import org.ballistic.dreamjournalai.feature_dream.data.remote.OpenAIApi
 import org.ballistic.dreamjournalai.feature_dream.data.remote.dto.CompletionDTO
@@ -13,7 +14,7 @@ class OpenAIRepositoryImpl @Inject constructor(
 
     override suspend fun getCompletion(
         prompt: Prompt
-    ): CompletionDTO {
+    ): Resource<CompletionDTO> {
         //AMINE
         //check the api response first, and see if result.isSuccessful is true,
         //handle the use case of failure too, this is where the  Resource class that you have in core comes in handy
@@ -33,7 +34,16 @@ class OpenAIRepositoryImpl @Inject constructor(
             }
             return data
         */
-        return api.getCompletion(prompt).body()!!
+
+        var result = api.getCompletion(prompt)
+        if(result.isSuccessful){
+            return Resource.Success(data = result.body()!!)
+        }else{
+            Log.d("GetOpenAITextResponse", "${result.code()} ${result.message()}, ${result.body()}, ${result.headers()}")
+            return Resource.Error(message = result.message())
+        }
+
+       //return api.getCompletion(prompt).body()!!
     }
 }
 
