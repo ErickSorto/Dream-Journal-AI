@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.core.Resource
+import org.ballistic.dreamjournalai.feature_dream.domain.model.Completion
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.domain.model.InvalidDreamException
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Prompt
@@ -202,20 +203,27 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
 //    }
 
     private fun getAIResponse(){
-            val result = getOpenAITextResponse(Prompt("text-davinci-002",
-                "Analyze the following dream and try to find meaning in it: "
-                        + dreamUiState.value.dreamContent, 250,1,0))
-            when(result){
-                is Resource.Success -> {
-                    dreamUiState.value = dreamUiState.value.copy(
-                        dreamAIExplanation = result.data as String
-                    )
-                }
-                is Resource.Error -> {
-                    Log.d("AddEditDreamViewModel", "Error: ${result.message}")
-                }
-                is Resource.Loading -> {
-                    Log.d("AddEditDreamViewModel", "Loading")
+            viewModelScope.launch {
+                val result = getOpenAITextResponse(Prompt("text-davinci-002",
+                    "Analyze the following dream and try to find meaning in it: "
+                            + dreamUiState.value.dreamContent, 250,1,0))
+
+                result.collect{ result ->
+                    when(result) {
+                        is Resource.Success -> {
+                            result.data as Completion
+
+                            dreamUiState.value = dreamUiState.value.copy(
+                                dreamAIExplanation = result.data.choices[0].text //or use whatever data you want
+                            )
+                        }
+                        is Resource.Error -> {
+                            Log.d("AddEditDreamViewModel", "Error: ${result.message}")
+                        }
+                        is Resource.Loading -> {
+                            Log.d("AddEditDreamViewModel", "Loading")
+                        }
+                    }
                 }
             }
     }
