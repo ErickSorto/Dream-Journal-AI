@@ -9,7 +9,7 @@ import retrofit2.http.*
 
 interface OpenAIApi {
 
-    @Headers("Content-Type: application/json", "Authorization: Bearer " + "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")
+    @Headers("Content-Type: application/json", "Authorization: Bearer " + "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")
     @POST("completions")
     suspend fun getCompletion(@Body prompt: Prompt): Response <CompletionDTO>
 
