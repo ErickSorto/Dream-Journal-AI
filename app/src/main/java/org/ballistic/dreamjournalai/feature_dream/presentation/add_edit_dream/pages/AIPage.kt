@@ -1,5 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages
 
+import androidx.compose.animation.core.InfiniteTransition
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -20,12 +22,17 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components.ArcRotationAnimation
+
 
 @Composable
 fun AIPage(
     viewModel: AddEditDreamViewModel = hiltViewModel()
 ) {
 
+
+    val responseState = viewModel.dreamUiState.value.dreamAIExplanation
+    val infiniteTransition = rememberInfiniteTransition()
 
     Column(
         modifier = Modifier
@@ -56,6 +63,15 @@ fun AIPage(
                 style = typography.bodyLarge
             )
 
+            if (responseState.isLoading) {
+                Box(modifier = Modifier.padding(16.dp).align(Alignment.CenterHorizontally)) {
+                    ArcRotationAnimation(
+                        infiniteTransition = infiniteTransition,
+                    )
+                }
+
+            }
+
         }
 
         //vertical spacer
@@ -83,4 +99,8 @@ fun AIPage(
             }
         }
     }
+
+
+
+
 }

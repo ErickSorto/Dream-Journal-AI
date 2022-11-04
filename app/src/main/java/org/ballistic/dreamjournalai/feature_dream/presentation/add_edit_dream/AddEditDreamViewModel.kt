@@ -211,7 +211,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
 
                         dreamUiState.value = dreamUiState.value.copy(
                             dreamAIExplanation = dreamUiState.value.dreamAIExplanation.copy(
-                                response = result.data.choices[0].text
+                                response = result.data.choices[0].text,
+                                isLoading = false
                             )
                         )
                     }
@@ -219,6 +220,11 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                         Log.d("AddEditDreamViewModel", "Error: ${result.message}")
                     }
                     is Resource.Loading -> {
+                        dreamUiState.value = dreamUiState.value.copy(
+                            dreamAIExplanation = dreamUiState.value.dreamAIExplanation.copy(
+                                isLoading = true
+                            )
+                        )
                         Log.d("AddEditDreamViewModel", "Loading")
                     }
                 }

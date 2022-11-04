@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,46 +11,74 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.graphics.Color.Companion.White
+import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun TwinCircleAnimation(infiniteTransition: InfiniteTransition) {
-    val twinCircleAnimation by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 7f,
+fun ArcRotationAnimation(infiniteTransition: InfiniteTransition) {
+    val circleColor = Color(0xFF008080)
+    circleColor.copy(alpha = 0.2f)
+    val arcAngle1 by infiniteTransition.animateFloat(
+        initialValue = 0F,
+        targetValue = 180F,
         animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = FastOutSlowInEasing),
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+
+    val arcAngle2 by infiniteTransition.animateFloat(
+        initialValue = 180F,
+        targetValue = 360F,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+
+    val greenCircleAnimation by infiniteTransition.animateFloat(
+        initialValue = 50f,
+        targetValue = 80f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, delayMillis = 100, easing = FastOutLinearInEasing),
             repeatMode = RepeatMode.Reverse
         )
     )
-    Row(
-        modifier = Modifier
-            .size(120.dp)
-            .padding(12.dp)
-            .clip(CircleShape)
-            .background(Red),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
 
-        Box(
-            modifier = Modifier
-                .size(15.dp)
-                .scale(twinCircleAnimation)
-                .clip(CircleShape)
-                .background(White)
+    Canvas(
+        modifier = Modifier
+            .padding(12.dp)
+            .size(100.dp)
+    ) {
+        drawArc(
+            color = circleColor,
+            startAngle = arcAngle1,
+            sweepAngle = 90f,
+            useCenter = false,
+            style = Stroke(width = 10f, cap = StrokeCap.Round),
         )
 
-        Spacer(modifier = Modifier.width(6.dp))
+        drawArc(
+            color = circleColor,
+            startAngle = arcAngle2,
+            sweepAngle = 90f,
+            useCenter = false,
+            style = Stroke(width = 10f, cap = StrokeCap.Round),
+        )
 
-        Box(
-            modifier = Modifier
-                .size(15.dp)
-                .scale(twinCircleAnimation)
-                .clip(CircleShape)
-                .background(White)
+        drawCircle(
+            color = White.copy(alpha = 0.4f),
+            radius = 120f,
+        )
+
+        drawCircle(
+            color = circleColor,
+            radius = greenCircleAnimation,
         )
     }
 }
