@@ -26,6 +26,7 @@ fun AIPage(
     viewModel: AddEditDreamViewModel = hiltViewModel()
 ) {
 
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -46,7 +47,7 @@ fun AIPage(
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = viewModel.dreamUiState.value.dreamAIExplanation,
+                text = viewModel.dreamUiState.value.dreamAIExplanation.response,
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterHorizontally)

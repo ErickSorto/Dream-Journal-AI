@@ -19,7 +19,6 @@ data class Dream(
     val moodRating: Int,
     val vividnessRating: Int,
     val timeOfDay: String,
-
     val backgroundImage: Int,
     @PrimaryKey val id: Int? = null
 ) {
