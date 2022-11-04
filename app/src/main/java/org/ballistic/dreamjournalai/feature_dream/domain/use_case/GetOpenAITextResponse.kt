@@ -24,7 +24,7 @@ class GetOpenAITextResponse @Inject constructor(
             val response = repository.getCompletion(prompt)
             when(response){
                 is Resource.Success -> {
-                    emit(Resource.Success(response.data!!.toCompletion()))
+                    emit(Resource.Success(response.data!!.toCompletion().choices[0].text))
                 }
                 is Resource.Error -> {
                     Log.d("GetOpenAITextResponse", response.message.toString())
