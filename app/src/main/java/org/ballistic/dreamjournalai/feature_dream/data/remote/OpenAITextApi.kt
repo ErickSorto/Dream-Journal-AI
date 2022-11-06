@@ -7,7 +7,7 @@ import retrofit2.Response
 import retrofit2.http.*
 
 
-interface OpenAIApi {
+interface OpenAITextApi {
 
     @Headers("Content-Type: application/json", "Authorization: Bearer " + BuildConfig.API_KEY)
     @POST("completions")

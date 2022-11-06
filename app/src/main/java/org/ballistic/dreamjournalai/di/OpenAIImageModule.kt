@@ -6,16 +6,20 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import org.ballistic.dreamjournalai.feature_dream.data.remote.OpenAIApi
+import org.ballistic.dreamjournalai.feature_dream.data.remote.OpenAIDaliApi
+import org.ballistic.dreamjournalai.feature_dream.data.remote.OpenAITextApi
+import org.ballistic.dreamjournalai.feature_dream.data.repository.OpenAIImageRepositoryImpl
 import org.ballistic.dreamjournalai.feature_dream.data.repository.OpenAIRepositoryImpl
+import org.ballistic.dreamjournalai.feature_dream.domain.repository.OpenAIImageRepository
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.OpenAIRepository
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
+
 @Module
 @InstallIn(SingletonComponent::class)
-object OpenAIModule {
+object OpenAIImageModule {
 
     @Singleton
     @Provides
@@ -34,20 +38,21 @@ object OpenAIModule {
     @Singleton
     fun provideOpenAIApi(
         okHttpClient: OkHttpClient
-    ): OpenAIApi {
+    ): OpenAITextApi {
         return Retrofit.Builder()
             .baseUrl("https://api.openai.com/v1/")
             .addConverterFactory(GsonConverterFactory.create())
             .client(okHttpClient)
             .build()
-            .create(OpenAIApi::class.java)
+            .create(OpenAITextApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideOpenAIRepository(
-        api: OpenAIApi
-    ): OpenAIRepository {
-        return OpenAIRepositoryImpl(api)
+    fun provideOpenAIImageRepository(
+        api: OpenAIDaliApi
+    ): OpenAIImageRepository {
+        return OpenAIImageRepositoryImpl(api)
     }
+
 }

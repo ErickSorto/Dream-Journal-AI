@@ -6,18 +6,20 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.MaterialTheme.colors
+import androidx.compose.material.SnackbarDefaults.backgroundColor
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowRightAlt
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
+import androidx.compose.material3.ListItemDefaults.contentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -69,51 +71,65 @@ fun AddEditDreamScreen(
         )
     }
 
+    Crossfade(targetState = viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage) { image ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(dreamBackGroundAnimatable.value)
+                .padding()
+        ) {
+            Image(
+                painter = painterResource(id = image),
+                contentDescription = "Dream Background",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .blur(10.dp)
+            )
+        }
+    }
+
 
     Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    viewModel.onEvent(AddEditDreamEvent.SaveDream)
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text(text = "Dream Journal AI") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            modifier = Modifier.rotate(180f),
+                            imageVector = Icons.Filled.ArrowRightAlt,
+                            contentDescription = "Back"
+                        )
+                    }
                 },
-                containerColor = MaterialTheme.colorScheme.primary,
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Save,
-                    contentDescription = "Save Dream"
-                )
-            }
+                actions = {
+                    IconButton(onClick = { viewModel.onEvent(AddEditDreamEvent.SaveDream) }) {
+                        Icon(
+                            imageVector = Icons.Filled.Save,
+                            contentDescription = "Save Dream"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.White.copy(alpha = 0.5f),
+                ))
         },
         snackbarHost = {
             SnackbarHost(snackbarHostState)
         },
+        containerColor = Color.Transparent,
 
 
         ) { padding ->
         //crossfade between imagebackgrounds
-        Crossfade(targetState = viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage) { image ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(dreamBackGroundAnimatable.value)
-                    .padding(padding)
-            ) {
-                Image(
-                    painter = painterResource(id = image),
-                    contentDescription = "Dream Background",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .blur(10.dp)
-                )
-            }
-        }
+
 //
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Transparent)
-                .padding()
+                .padding(padding)
         ) {
 
             TabLayout(dreamColor)
