@@ -21,6 +21,4 @@ class DreamRepositoryImpl (private val dao: DreamDao) : DreamRepository {
     override suspend fun deleteDream(dream: Dream) {
         dao.deleteDream(dream)
     }
-
-
 }
