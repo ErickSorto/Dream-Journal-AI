@@ -8,8 +8,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.core.Resource
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Completion
@@ -35,14 +33,14 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
 
     init {
         savedStateHandle.get<Int>("dreamId")?.let { dreamId ->
-            if(dreamId != -1) {
+            if (dreamId != -1) {
                 viewModelScope.launch {
                     dreamUseCases.getDream(dreamId)?.also { dream ->
-
+                        //getAI response
                         dreamUiState.value = dream.id?.let {
                             DreamInfo(
                                 dreamId = it,
-                                dreamBackgroundImage= dream.backgroundImage,
+                                dreamBackgroundImage = dream.backgroundImage,
                                 dreamTimeOfDay = dream.timeOfDay,
                                 dreamLucidity = dream.lucidityRating,
                                 dreamVividness = dream.vividnessRating,
@@ -58,6 +56,9 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                 dreamTitle = dream.title,
                                 dreamContent = dream.content,
                                 dreamInfo = it,
+                                DreamAIExplanation(
+                                    response = dream.AIResponse,
+                                ),
                             )
                         }!!
                     }
@@ -66,10 +67,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
         }
     }
 
-
-
-    fun onEvent(event: AddEditDreamEvent){
-        when(event){
+    fun onEvent(event: AddEditDreamEvent) {
+        when (event) {
             is AddEditDreamEvent.EnteredTitle -> {
                 dreamUiState.value = dreamUiState.value.copy(
                     dreamTitle = event.value
@@ -157,6 +156,9 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 )
             }
 
+            //primary key
+
+
             is AddEditDreamEvent.SaveDream -> {
                 viewModelScope.launch {
                     try {
@@ -175,7 +177,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                 moodRating = dreamUiState.value.dreamInfo.dreamEmotion,
                                 timeOfDay = dreamUiState.value.dreamInfo.dreamTimeOfDay,
                                 falseAwakening = dreamUiState.value.dreamInfo.dreamIsFalseAwakening,
-                                AIResponse = dreamUiState.value.dreamAIExplanation
+                                AIResponse = dreamUiState.value.dreamAIExplanation.response
                             )
                         )
                         _eventFlow.emit(UiEvent.SaveDream)
@@ -192,58 +194,77 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
         object SaveDream : UiEvent()
     }
 
-//    private fun getAIResponse() {
-//        viewModelScope.launch {
-//
-//            val response = getOpenAITextResponse.invoke(Prompt("text-davinci-002", "Analyze the following dream and try to find meaning in it: " + dreamUiState.value.dreamContent, 250,1,0))
-//            dreamUiState.value = dreamUiState.value.copy(
-//                dreamAIExplanation = response
-//            )
-//        }
-//    }
-
-    private fun getAIResponse(){
-            viewModelScope.launch {
-                val result = getOpenAITextResponse(Prompt("text-davinci-002",
+    private fun getAIResponse() {
+        viewModelScope.launch {
+            val result = getOpenAITextResponse(
+                Prompt(
+                    "text-davinci-002",
                     "Analyze the following dream and try to find meaning in it: "
-                            + dreamUiState.value.dreamContent, 250,1,0))
+                            + dreamUiState.value.dreamContent, 250, 1, 0
+                )
+            )
 
-                result.collect{ result ->
-                    when(result) {
-                        is Resource.Success -> {
-                            result.data as Completion
+            result.collect { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        result.data as Completion
 
-                            dreamUiState.value = dreamUiState.value.copy(
-                                dreamAIExplanation = result.data.choices[0].text //or use whatever data you want
+                        dreamUiState.value = dreamUiState.value.copy(
+                            dreamAIExplanation = dreamUiState.value.dreamAIExplanation.copy(
+                                response = result.data.choices[0].text,
+                                isLoading = false
                             )
-                        }
-                        is Resource.Error -> {
-                            Log.d("AddEditDreamViewModel", "Error: ${result.message}")
-                        }
-                        is Resource.Loading -> {
-                            Log.d("AddEditDreamViewModel", "Loading")
-                        }
+                        )
+                    }
+                    is Resource.Error -> {
+                        Log.d("AddEditDreamViewModel", "Error: ${result.message}")
+                    }
+                    is Resource.Loading -> {
+                        dreamUiState.value = dreamUiState.value.copy(
+                            dreamAIExplanation = dreamUiState.value.dreamAIExplanation.copy(
+                                isLoading = true
+                            )
+                        )
+                        Log.d("AddEditDreamViewModel", "Loading")
                     }
                 }
             }
+        }
     }
 
 }
 
 data class DreamUiState(
     val dreamTitle: String = "",
-    val dreamContent: String ="",
+    val dreamContent: String = "",
     val dreamInfo: DreamInfo = DreamInfo(
-        dreamId = 0,
-        dreamBackgroundImage =  Dream.dreamBackgroundImages.random(),
-        dreamIsLucid = false, dreamIsFavorite = false, dreamIsNightmare = false, dreamIsRecurring = false, dreamIsFalseAwakening = false,
-        dreamTimeOfDay = "", dreamLucidity = 0, dreamVividness = 0, dreamEmotion = 0
+        dreamId = null,
+        dreamBackgroundImage = Dream.dreamBackgroundImages.random(),
+        dreamIsLucid = false,
+        dreamIsFavorite = false,
+        dreamIsNightmare = false,
+        dreamIsRecurring = false,
+        dreamIsFalseAwakening = false,
+        dreamTimeOfDay = "",
+        dreamLucidity = 0,
+        dreamVividness = 0,
+        dreamEmotion = 0
     ),
-    val dreamAIExplanation: String = ""
+    val dreamAIExplanation: DreamAIExplanation = DreamAIExplanation(
+        response = "",
+        isLoading = false,
+        error = ""
+    )
+)
+
+data class DreamAIExplanation(
+    val response: String = "",
+    val isLoading: Boolean = false,
+    val error: String? = null
 )
 
 data class DreamInfo(
-    val dreamId: Int,
+    val dreamId: Int?,
     var dreamBackgroundImage: Int,
     val dreamIsLucid: Boolean,
     val dreamIsFavorite: Boolean,
