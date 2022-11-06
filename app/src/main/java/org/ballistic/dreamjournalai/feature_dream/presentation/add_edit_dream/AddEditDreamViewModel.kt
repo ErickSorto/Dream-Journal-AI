@@ -10,11 +10,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.core.Resource
-import org.ballistic.dreamjournalai.feature_dream.domain.model.Completion
-import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
-import org.ballistic.dreamjournalai.feature_dream.domain.model.InvalidDreamException
-import org.ballistic.dreamjournalai.feature_dream.domain.model.Prompt
+import org.ballistic.dreamjournalai.feature_dream.data.remote.dto.ImageGenerationDTO
+import org.ballistic.dreamjournalai.feature_dream.domain.model.*
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DreamUseCases
+import org.ballistic.dreamjournalai.feature_dream.domain.use_case.GetOpenAIImageGeneration
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.GetOpenAITextResponse
 import javax.inject.Inject
 
@@ -22,6 +21,7 @@ import javax.inject.Inject
 class AddEditDreamViewModel @Inject constructor( //add ai state later on
     private val dreamUseCases: DreamUseCases,
     private val getOpenAITextResponse: GetOpenAITextResponse,
+    private val getOpenAIImageGeneration: GetOpenAIImageGeneration,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -90,6 +90,10 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             }
             is AddEditDreamEvent.ClickGenerateAIResponse -> {
                 getAIResponse()
+            }
+
+            is AddEditDreamEvent.CLickGenerateAIImage -> {
+                getOpenAIImageResponse()
             }
 
             is AddEditDreamEvent.ChangeLucidity -> {
@@ -232,6 +236,43 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
         }
     }
 
+    private fun getOpenAIImageResponse(){
+        viewModelScope.launch {
+            val result = getOpenAIImageGeneration(
+                ImagePrompt(
+                    dreamUiState.value.dreamContent,
+                    1,
+                    "512x512"
+                )
+            )
+            result.collect { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        result.data as ImageGenerationDTO
+
+                        dreamUiState.value = dreamUiState.value.copy(
+                           dreamAIImage = dreamUiState.value.dreamAIImage.copy(
+                                image = result.data.dataList[0].url,
+                                isLoading = false
+                            )
+                        )
+                    }
+                    is Resource.Error -> {
+                        Log.d("AddEditDreamViewModel", "Error: ${result.message}")
+                    }
+                    is Resource.Loading -> {
+                        dreamUiState.value = dreamUiState.value.copy(
+                            dreamAIImage = dreamUiState.value.dreamAIImage.copy(
+                                isLoading = true
+                            )
+                        )
+                        Log.d("AddEditDreamViewModel", "Loading")
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 data class DreamUiState(
@@ -254,11 +295,22 @@ data class DreamUiState(
         response = "",
         isLoading = false,
         error = ""
+    ),
+    val dreamAIImage: DreamAIImage = DreamAIImage(
+        image = null,
+        isLoading = false,
+        error = ""
     )
 )
 
 data class DreamAIExplanation(
     val response: String = "",
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
+
+data class DreamAIImage(
+    val image: String? = null,
     val isLoading: Boolean = false,
     val error: String? = null
 )

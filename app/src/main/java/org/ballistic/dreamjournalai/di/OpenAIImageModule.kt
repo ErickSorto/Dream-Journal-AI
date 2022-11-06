@@ -21,30 +21,18 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object OpenAIImageModule {
 
-    @Singleton
-    @Provides
-    fun providesHttpLoggingInterceptor(): HttpLoggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
-    }
-
-    @Singleton
-    @Provides
-    fun providesOkHttpClient(
-        httpLoggingInterceptor: HttpLoggingInterceptor
-    ): OkHttpClient = OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor).build()
-
 
     @Provides
     @Singleton
-    fun provideOpenAIApi(
+    fun provideOpenAIImageApi(
         okHttpClient: OkHttpClient
-    ): OpenAITextApi {
+    ): OpenAIDaliApi {
         return Retrofit.Builder()
             .baseUrl("https://api.openai.com/v1/")
             .addConverterFactory(GsonConverterFactory.create())
             .client(okHttpClient)
             .build()
-            .create(OpenAITextApi::class.java)
+            .create(OpenAIDaliApi::class.java)
     }
 
     @Provides
