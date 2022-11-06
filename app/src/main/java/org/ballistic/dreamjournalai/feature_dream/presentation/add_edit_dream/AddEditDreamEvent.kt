@@ -18,6 +18,7 @@ sealed class AddEditDreamEvent{
     data class ChangeTimeOfDay(val timeOfDay: String) : AddEditDreamEvent()
     data class ChangeFavorite(val boolean: Boolean) : AddEditDreamEvent()
     data class ClickGenerateAIResponse(val value: String) : AddEditDreamEvent()
+    data class CLickGenerateAIImage(val value: String) : AddEditDreamEvent()
 
     object SaveDream : AddEditDreamEvent()
 }

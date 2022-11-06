@@ -4,6 +4,6 @@ import com.google.gson.annotations.SerializedName
 
 data class ImageGenerationDTO(
     val created: Int,
-    @SerializedName("\'data\'")
+    @SerializedName("data")
     val dataList: List<Data>
 )

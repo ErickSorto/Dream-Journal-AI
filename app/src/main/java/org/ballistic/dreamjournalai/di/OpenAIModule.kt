@@ -15,7 +15,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object OpenAITextModule {
+object OpenAIModule {
 
     @Singleton
     @Provides
@@ -32,7 +32,7 @@ object OpenAITextModule {
 
     @Provides
     @Singleton
-    fun provideOpenAIApi(
+    fun provideOpenAITextApi(
         okHttpClient: OkHttpClient
     ): OpenAITextApi {
         return Retrofit.Builder()
