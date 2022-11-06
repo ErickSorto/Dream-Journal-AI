@@ -37,9 +37,6 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 viewModelScope.launch {
                     dreamUseCases.getDream(dreamId)?.also { dream ->
                         //getAI response
-
-
-
                         dreamUiState.value = dream.id?.let {
                             DreamInfo(
                                 dreamId = it,
@@ -159,6 +156,9 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 )
             }
 
+            //primary key
+
+
             is AddEditDreamEvent.SaveDream -> {
                 viewModelScope.launch {
                     try {
@@ -238,7 +238,7 @@ data class DreamUiState(
     val dreamTitle: String = "",
     val dreamContent: String = "",
     val dreamInfo: DreamInfo = DreamInfo(
-        dreamId = 0,
+        dreamId = null,
         dreamBackgroundImage = Dream.dreamBackgroundImages.random(),
         dreamIsLucid = false,
         dreamIsFavorite = false,
@@ -264,7 +264,7 @@ data class DreamAIExplanation(
 )
 
 data class DreamInfo(
-    val dreamId: Int,
+    val dreamId: Int?,
     var dreamBackgroundImage: Int,
     val dreamIsLucid: Boolean,
     val dreamIsFavorite: Boolean,
