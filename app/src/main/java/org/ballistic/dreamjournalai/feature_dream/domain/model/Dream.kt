@@ -20,6 +20,8 @@ data class Dream(
     val vividnessRating: Int,
     val timeOfDay: String,
     val backgroundImage: Int,
+    val generatedImage: String?,
+    val generatedDetails: String,
     @PrimaryKey val id: Int? = null
 ) {
     companion object {
