@@ -13,6 +13,7 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import okhttp3.internal.wait
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components.ArcRotationAnimation
@@ -32,7 +37,6 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.co
 fun AIPage(
     viewModel: AddEditDreamViewModel = hiltViewModel()
 ) {
-
 
     val responseState = viewModel.dreamUiState.value.dreamAIExplanation
     val imageState = viewModel.dreamUiState.value.dreamAIImage
@@ -86,8 +90,7 @@ fun AIPage(
                 )
             }
 
-
-            if (responseState.isLoading && imageState.isLoading) {
+            if (responseState.isLoading || imageState.isLoading) {
                 Box(
                     modifier = Modifier
                         .padding(16.dp)
@@ -107,11 +110,16 @@ fun AIPage(
         Box(contentAlignment = Alignment.BottomCenter) {
             Button(
                 onClick = {
-                    viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamUiState.value.dreamContent))
-                    viewModel.onEvent(AddEditDreamEvent.CLickGenerateAIImage(viewModel.dreamUiState.value.dreamAIImage.image.toString()))
+                    GlobalScope.launch {
+                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamUiState.value.dreamContent))
+                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateDetails(viewModel.dreamUiState.value.dreamContent))
+                        delay(3000)
+                        viewModel.onEvent(AddEditDreamEvent.CLickGenerateAIImage(viewModel.dreamUiState.value.dreamAIImage.image.toString()))
+                    }
                 },
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color.White.copy(alpha = 0.7f))
 
@@ -127,6 +135,7 @@ fun AIPage(
             }
         }
     }
+
 
 
 }

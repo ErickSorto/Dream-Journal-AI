@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">Dream Catcher AI</string>
-    <string name="hint_title">title</string>
+    <string name="app_name">Dream Journal AI</string>
+    <string name="hint_title">Enter title..</string>
+    <string name="hint_description">Type dream..</string>
 
 </resources>
