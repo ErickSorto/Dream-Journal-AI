@@ -32,7 +32,7 @@ fun DescriptionPage(
 
         TransparentHintTextField(
             text = titleState,
-            hint = "Enter Title...", //TODO
+            hint = LocalContext.current.getString(org.ballistic.dreamjournalai.R.string.hint_title), //TODO
             onValueChange = {
                 viewModel.onEvent(AddEditDreamEvent.EnteredTitle(it))
             },
@@ -56,7 +56,7 @@ fun DescriptionPage(
         Spacer(modifier = Modifier.height(16.dp))
         TransparentHintTextField(
             text = dreamUiState.value.dreamContent,
-            hint = LocalContext.current.getString(org.ballistic.dreamjournalai.R.string.hint_title), //TODO
+            hint = LocalContext.current.getString(org.ballistic.dreamjournalai.R.string.hint_description), //TODO
             onValueChange = {
                 viewModel.onEvent(AddEditDreamEvent.EnteredContent(it))
             },
