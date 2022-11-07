@@ -7,14 +7,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import org.ballistic.dreamjournalai.feature_dream.data.data_source.DreamDatabase
-import org.ballistic.dreamjournalai.feature_dream.data.remote.OpenAIApi
 import org.ballistic.dreamjournalai.feature_dream.data.repository.DreamRepositoryImpl
-import org.ballistic.dreamjournalai.feature_dream.data.repository.OpenAIRepositoryImpl
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.DreamRepository
-import org.ballistic.dreamjournalai.feature_dream.domain.repository.OpenAIRepository
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.*
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 
