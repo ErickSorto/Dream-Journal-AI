@@ -291,7 +291,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 ImagePrompt(
                     dreamUiState.value.dreamGeneratedDetails.response,
                     1,
-                    "512x512"
+                    "1024x1024"
                 )
             )
             result.collect { result ->
