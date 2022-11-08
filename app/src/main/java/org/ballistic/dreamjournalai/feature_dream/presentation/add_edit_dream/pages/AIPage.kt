@@ -40,6 +40,7 @@ fun AIPage(
 
     val responseState = viewModel.dreamUiState.value.dreamAIExplanation
     val imageState = viewModel.dreamUiState.value.dreamAIImage
+    val detailState = viewModel.dreamUiState.value.dreamGeneratedDetails
     val infiniteTransition = rememberInfiniteTransition()
 
     Column(
@@ -112,7 +113,10 @@ fun AIPage(
                 onClick = {
                     GlobalScope.launch {
                         viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamUiState.value.dreamContent))
-                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateDetails(viewModel.dreamUiState.value.dreamContent))
+                        if(!detailState.isSuccessful){
+                            viewModel.onEvent(AddEditDreamEvent.ClickGenerateDetails(viewModel.dreamUiState.value.dreamContent))
+                        }
+
                         delay(3000)
                         viewModel.onEvent(AddEditDreamEvent.CLickGenerateAIImage(viewModel.dreamUiState.value.dreamAIImage.image.toString()))
                     }
