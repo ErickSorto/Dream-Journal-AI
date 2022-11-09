@@ -167,6 +167,18 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                     )
                 )
             }
+            is AddEditDreamEvent.ClickGenerateFromDescription -> {
+                dreamUiState.value = dreamUiState.value.copy(
+                    dreamAIImage = DreamAIImage(
+                        isLoading = true
+                    )
+                )
+                dreamUiState.value = dreamUiState.value.copy(
+                    dreamAIExplanation = DreamAIExplanation(
+                        isLoading = true
+                    )
+                )
+            }
 
             //primary key
 
