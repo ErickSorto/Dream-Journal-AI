@@ -26,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.google.accompanist.insets.ProvideWindowInsets
 import kotlinx.coroutines.flow.collectLatest
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components.TabLayout
 
@@ -138,5 +139,8 @@ fun AddEditDreamScreen(
             TabLayout(dreamColor)
 
         }
+    }
+    ProvideWindowInsets() {
+
     }
 }

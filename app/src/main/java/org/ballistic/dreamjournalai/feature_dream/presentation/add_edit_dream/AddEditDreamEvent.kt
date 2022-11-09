@@ -1,7 +1,5 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream
 
-import androidx.compose.ui.focus.FocusState
-
 sealed class AddEditDreamEvent{
     data class EnteredTitle(val value: String) : AddEditDreamEvent()
 //    data class ChangedFocusTitle(val focusState: FocusState) : AddEditDreamEvent()
@@ -20,6 +18,7 @@ sealed class AddEditDreamEvent{
     data class ClickGenerateAIResponse(val value: String) : AddEditDreamEvent()
     data class CLickGenerateAIImage(val value: String) : AddEditDreamEvent()
     data class ClickGenerateDetails(val value: String) : AddEditDreamEvent()
+    data class ClickGenerateFromDescription(val value: Boolean) : AddEditDreamEvent()
 
     object SaveDream : AddEditDreamEvent()
 }
