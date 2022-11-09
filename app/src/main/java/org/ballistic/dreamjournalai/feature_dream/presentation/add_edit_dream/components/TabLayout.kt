@@ -63,7 +63,7 @@ fun TabLayout(
     ) { page ->
         when (page) {
             0 -> {
-                DescriptionPage()
+                DescriptionPage(pagerState)
             }
             1 -> {
                 AIPage()
