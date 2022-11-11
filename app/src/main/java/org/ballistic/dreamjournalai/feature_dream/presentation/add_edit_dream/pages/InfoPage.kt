@@ -69,9 +69,16 @@ fun InfoPage(
                                 .size(if (viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage == image) 60.dp else 50.dp)
                                 .clip(CircleShape)
                                 .background(Color.Transparent)
-                                .shadow(if (viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage == image) 65.dp else 55.dp, CircleShape)
+                                .shadow(
+                                    if (viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage == image) 65.dp else 55.dp,
+                                    CircleShape
+                                )
                                 .clickable {
-                                    viewModel.onEvent(AddEditDreamEvent.ChangeDreamBackgroundImage(image))
+                                    viewModel.onEvent(
+                                        AddEditDreamEvent.ChangeDreamBackgroundImage(
+                                            image
+                                        )
+                                    )
                                 }
 
                         ) {
@@ -308,6 +315,37 @@ fun InfoPage(
                         thumbColor = Color.Black,
                         activeTrackColor = Color.Black,
                         inactiveTrackColor = Color.Black.copy(alpha = 0.3f)
+                    )
+                )
+                //AI details text field
+
+                OutlinedTextField(
+                    value = viewModel.dreamUiState.value.dreamGeneratedDetails.response,
+                    onValueChange = {
+                        viewModel.onEvent(AddEditDreamEvent.ChangeDetailsOfDream(it))
+                    },
+                    label = { Text(text = "Explanation for AI Image") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp, 0.dp, 16.dp, 16.dp),
+                    textStyle = typography.bodyLarge,
+                    singleLine = false,
+                    maxLines = 5,
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color.Black,
+                        unfocusedBorderColor = Color.Black,
+                        cursorColor = Color.Black,
+                        focusedLabelColor = Color.Black,
+                        unfocusedLabelColor = Color.Black,
+                        disabledLabelColor = Color.Black,
+                        disabledBorderColor = Color.Black,
+                        textColor = Color.Black,
+                        backgroundColor = Color.White.copy(alpha = 0.5f),
+                        leadingIconColor = Color.Black,
+                        trailingIconColor = Color.Black,
+                        errorLabelColor = Color.Red,
+                        errorBorderColor = Color.Red,
+                        errorCursorColor = Color.Red
                     )
                 )
             }
