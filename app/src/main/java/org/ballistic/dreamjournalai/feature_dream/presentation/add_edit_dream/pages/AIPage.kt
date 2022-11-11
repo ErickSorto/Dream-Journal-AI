@@ -113,7 +113,8 @@ fun AIPage(
                 onClick = {
                     GlobalScope.launch {
                         viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamUiState.value.dreamContent))
-                        if(!detailState.isSuccessful){
+                        if(viewModel.dreamUiState.value.dreamGeneratedDetails.response
+                            == "") {
                             viewModel.onEvent(AddEditDreamEvent.ClickGenerateDetails(viewModel.dreamUiState.value.dreamContent))
                         }
 

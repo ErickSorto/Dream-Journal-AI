@@ -19,6 +19,7 @@ sealed class AddEditDreamEvent{
     data class CLickGenerateAIImage(val value: String) : AddEditDreamEvent()
     data class ClickGenerateDetails(val value: String) : AddEditDreamEvent()
     data class ClickGenerateFromDescription(val value: Boolean) : AddEditDreamEvent()
+    data class ChangeDetailsOfDream(val value: String) : AddEditDreamEvent()
 
     object SaveDream : AddEditDreamEvent()
 }
