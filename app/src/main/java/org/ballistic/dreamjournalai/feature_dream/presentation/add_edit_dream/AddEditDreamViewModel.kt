@@ -180,6 +180,14 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 )
             }
 
+            is AddEditDreamEvent.ChangeDetailsOfDream -> {
+                dreamUiState.value = dreamUiState.value.copy(
+                    dreamGeneratedDetails = DreamAIGeneratedDetails(
+                        response = event.value
+                    )
+                )
+            }
+
             //primary key
 
 
