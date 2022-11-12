@@ -4,6 +4,7 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'dagger.hilt.android.plugin'
+    id 'com.google.gms.google-services'
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin' version '2.0.1' apply false
 }
 
@@ -119,4 +120,9 @@ dependencies {
     implementation "com.google.accompanist:accompanist-insets:0.23.1"
     // If using insets-ui
     implementation "com.google.accompanist:accompanist-insets-ui:0.23.1"
+
+    //firebase
+    implementation platform('com.google.firebase:firebase-bom:31.0.3')
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation 'com.google.firebase:firebase-storage'
 }
