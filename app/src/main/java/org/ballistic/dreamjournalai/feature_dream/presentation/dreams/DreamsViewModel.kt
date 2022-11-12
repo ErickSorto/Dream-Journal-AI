@@ -13,6 +13,7 @@ import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.feature_dream.domain.util.DreamOrder
 import org.ballistic.dreamjournalai.feature_dream.domain.util.OrderType
+import org.ballistic.dreamjournalai.feature_dream.presentation.dreams.state.DreamsState
 import javax.inject.Inject
 
 @HiltViewModel
