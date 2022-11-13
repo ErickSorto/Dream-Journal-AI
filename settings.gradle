@@ -14,5 +14,5 @@ dependencyResolutionManagement {
         maven { url "https://jitpack.io" }
     }
 }
-rootProject.name = "Dream Catcher AI"
+rootProject.name = "Dream Journal AI"
 include ':app'
