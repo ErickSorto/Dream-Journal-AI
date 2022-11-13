@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "433518106186",
+    "project_id": "dream-journal-ai",
+    "storage_bucket": "dream-journal-ai.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:433518106186:android:648e44c95293be2db9b8b3",
+        "android_client_info": {
+          "package_name": "org.ballistic.dreamjournalai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "433518106186-fas918qt78ffo3t0rl2eg86ta05sic89.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHqq-nc8DRGLdFTtQRwdXdFsMIv-hzpHU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "433518106186-fas918qt78ffo3t0rl2eg86ta05sic89.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
