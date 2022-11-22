@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.google.accompanist.insets.ProvideWindowInsets
 import dagger.hilt.android.AndroidEntryPoint
+import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.dreams.DreamsScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.util.Screen
@@ -33,13 +34,13 @@ class MainActivity : ComponentActivity() {
                         val navController = rememberNavController()
                         NavHost(
                             navController = navController,
-                            startDestination = Screen.DreamsScreen.route
+                            startDestination = Screens.DreamListScreen.route
                         ) {
-                            composable(route = Screen.DreamsScreen.route) {
+                            composable(route = Screens.DreamListScreen.route) {
                                 DreamsScreen(navController = navController)
                             }
                             composable(
-                                route = Screen.AddEditDreamScreen.route +
+                                route = Screens.AddEditDreamScreen.route +
                                         "?dreamId={dreamId}&dreamImageBackground={dreamImageBackground}",
                                 arguments = listOf(
                                     navArgument(
