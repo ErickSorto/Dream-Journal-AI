@@ -12,12 +12,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.google.accompanist.insets.ProvideWindowInsets
 import dagger.hilt.android.AndroidEntryPoint
+import org.ballistic.dreamjournalai.feature_dream.navigation.MainGraph
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.dreams.DreamsScreen
-import org.ballistic.dreamjournalai.feature_dream.presentation.util.Screen
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenView
 import org.ballistic.dreamjournalai.ui.theme.DreamCatcherAITheme
 
 @AndroidEntryPoint
@@ -27,44 +27,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             DreamCatcherAITheme {
                 // A surface container using the 'background' color from the theme
+               
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        val navController = rememberNavController()
-                        NavHost(
-                            navController = navController,
-                            startDestination = Screens.DreamListScreen.route
-                        ) {
-                            composable(route = Screens.DreamListScreen.route) {
-                                DreamsScreen(navController = navController)
-                            }
-                            composable(
-                                route = Screens.AddEditDreamScreen.route +
-                                        "?dreamId={dreamId}&dreamImageBackground={dreamImageBackground}",
-                                arguments = listOf(
-                                    navArgument(
-                                        name = "dreamId"
-                                    ) {
-                                        type = NavType.IntType
-                                        defaultValue = -1
-                                    },
-                                    navArgument(
-                                        name = "dreamImageBackground"
-                                    ) {
-                                        type = NavType.IntType
-                                        defaultValue = -1
-                                    },
-                                )
-
-                            ) {
-                                val color = it.arguments?.getInt("dreamImageBackground") ?: -1
-                                AddEditDreamScreen(
-                                    navController = navController,
-                                    dreamColor = color
-                                )
-                            }
-                        }
+                        MainScreenView()
                     }
 
             }

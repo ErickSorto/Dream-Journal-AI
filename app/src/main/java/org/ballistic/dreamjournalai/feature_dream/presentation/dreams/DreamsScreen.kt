@@ -20,6 +20,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.R
+import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.dreams.components.DreamItem
 import org.ballistic.dreamjournalai.feature_dream.presentation.util.Screen
 
@@ -40,16 +41,6 @@ fun DreamsScreen(
             contentDescription = "Background", contentScale = ContentScale.Crop)
 
         Scaffold(
-            floatingActionButton = {
-                FloatingActionButton(onClick = {
-                    navController.navigate(Screen.AddEditDreamScreen.route)
-                },
-                    containerColor = MaterialTheme.colorScheme.background,
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add dream")
-                }
-            },
-
             snackbarHost = {
                 SnackbarHost(snackbarHostState)
             },
@@ -61,21 +52,6 @@ fun DreamsScreen(
                     .padding(horizontal = 16.dp)
                     .fillMaxSize()
             ){
-//                Row(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(16.dp),
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    verticalAlignment = Alignment.CenterVertically
-//
-//                ) {
-//                    Text(
-//                        text = "Dreams",
-//                        style = MaterialTheme.typography.headlineLarge,
-//                        color = MaterialTheme.colorScheme.onSurface,
-//                    )
-//                }
-                //Spacer(modifier = Modifier.height(16.dp))
                 LazyColumn(modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(top = 16.dp, bottom = padding.calculateBottomPadding())){
                     items(state.dreams) { dream ->
@@ -86,7 +62,7 @@ fun DreamsScreen(
                                 .padding(bottom = 16.dp)
                                 .clickable {
                                     navController.navigate(
-                                        Screen.AddEditDreamScreen.route +
+                                        Screens.AddEditDreamScreen.route +
                                                 "?dreamId=${dream.id}&dreamColor=${dream.backgroundImage}"
                                     )
                                 },
