@@ -24,7 +24,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamViewModel
@@ -39,7 +41,8 @@ fun InfoPage(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
+            .navigationBarsWithImePadding()
+            .padding(bottom = 0.dp, start = 16.dp, end = 16.dp, top = 16.dp), horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
@@ -324,10 +327,10 @@ fun InfoPage(
                     onValueChange = {
                         viewModel.onEvent(AddEditDreamEvent.ChangeDetailsOfDream(it))
                     },
-                    label = { Text(text = "Explanation for AI Image") },
+                    label = { Text(text = "Explanation for Image", style = typography.bodyLarge) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp, 0.dp, 16.dp, 16.dp),
+                        .padding(8.dp, 0.dp, 8.dp, 16.dp),
                     textStyle = typography.bodyLarge,
                     singleLine = false,
                     maxLines = 5,
@@ -340,7 +343,7 @@ fun InfoPage(
                         disabledLabelColor = Color.Black,
                         disabledBorderColor = Color.Black,
                         textColor = Color.Black,
-                        backgroundColor = Color.White.copy(alpha = 0.5f),
+                        backgroundColor = Color.White.copy(alpha = 0.3f),
                         leadingIconColor = Color.Black,
                         trailingIconColor = Color.Black,
                         errorLabelColor = Color.Red,

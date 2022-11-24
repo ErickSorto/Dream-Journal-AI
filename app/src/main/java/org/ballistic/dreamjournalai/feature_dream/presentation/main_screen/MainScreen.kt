@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import org.ballistic.dreamjournalai.feature_dream.navigation.MainGraph
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
 
@@ -42,7 +43,8 @@ fun MainScreenView(){
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "Add dream", )
             }
-        }
+        },
+        modifier = Modifier.navigationBarsWithImePadding()
     ) {
         val padding = it
         MainGraph(navController = navController)

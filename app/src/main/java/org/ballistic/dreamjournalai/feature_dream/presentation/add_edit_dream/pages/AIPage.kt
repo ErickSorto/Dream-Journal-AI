@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -46,7 +47,8 @@ fun AIPage(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .navigationBarsWithImePadding()
+            .padding(bottom = 0.dp, start = 16.dp, end = 16.dp, top = 16.dp)
             .verticalScroll(rememberScrollState(), true),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

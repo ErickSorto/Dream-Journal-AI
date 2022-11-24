@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
@@ -44,22 +45,24 @@ fun DreamsScreen(
             snackbarHost = {
                 SnackbarHost(snackbarHostState)
             },
-            containerColor = Color.Transparent
+            containerColor = Color.Transparent,
+            modifier = Modifier.navigationBarsWithImePadding()
         )
         { padding ->
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
+                    .padding(top = padding.calculateTopPadding())
                     .fillMaxSize()
             ){
                 LazyColumn(modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 16.dp, bottom = padding.calculateBottomPadding())){
+                    contentPadding = PaddingValues(top = padding.calculateTopPadding())){
                     items(state.dreams) { dream ->
                         DreamItem(
                             dream = dream,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 16.dp)
+                                .padding(horizontal = 16.dp)
                                 .clickable {
                                     navController.navigate(
                                         Screens.AddEditDreamScreen.route +

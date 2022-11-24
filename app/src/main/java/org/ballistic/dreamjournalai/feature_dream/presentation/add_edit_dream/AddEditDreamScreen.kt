@@ -7,13 +7,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.MaterialTheme.colors
-import androidx.compose.material.SnackbarDefaults.backgroundColor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowRightAlt
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
-import androidx.compose.material3.ListItemDefaults.contentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -27,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.google.accompanist.insets.ProvideWindowInsets
+import com.google.accompanist.insets.navigationBarsHeight
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import kotlinx.coroutines.flow.collectLatest
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components.TabLayout
 
@@ -34,7 +33,7 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.co
 @Composable
 fun AddEditDreamScreen(
     navController: NavController,
-    dreamColor: Int,
+    dreamImage: Int,
     viewModel: AddEditDreamViewModel = hiltViewModel()
 ) {
 
@@ -42,7 +41,7 @@ fun AddEditDreamScreen(
 
     val dreamBackGroundAnimatable = remember {
         Animatable(
-            Color(if (dreamColor != -1) dreamColor else viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage)
+            Color(if (dreamImage != -1) dreamImage else viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage)
         )
 
     }
@@ -124,7 +123,6 @@ fun AddEditDreamScreen(
         },
         containerColor = Color.Transparent,
 
-
         ) { padding ->
         //crossfade between imagebackgrounds
 
@@ -134,13 +132,11 @@ fun AddEditDreamScreen(
                 .fillMaxSize()
                 .background(Color.Transparent)
                 .padding(padding)
+
         ) {
 
-            TabLayout(dreamColor)
+            TabLayout(dreamImage)
 
         }
-    }
-    ProvideWindowInsets() {
-
     }
 }
