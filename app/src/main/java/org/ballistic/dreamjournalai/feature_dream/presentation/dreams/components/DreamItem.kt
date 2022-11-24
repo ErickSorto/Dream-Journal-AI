@@ -39,14 +39,11 @@ fun DreamItem(
         modifier = modifier
             .clip(RoundedCornerShape(cornerRadius))
             .background(Color.White.copy(alpha = 0.2f))
-
-
     ) {
         Row(
             modifier = Modifier,
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
-
         ) {
             Box(
                 modifier = Modifier
@@ -66,8 +63,7 @@ fun DreamItem(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
-                    .padding(end = 16.dp)
+                    .padding(0.dp, 16.dp, 16.dp, 16.dp)
 
             ) {
                 Text(

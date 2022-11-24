@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -45,18 +46,14 @@ fun DescriptionPage(
     val detailState = viewModel.dreamUiState.value.dreamGeneratedDetails
     val dreamUiState = viewModel.dreamUiState
     val scope = rememberCoroutineScope()
-    val coroutineScope = rememberCoroutineScope()
-    val bringIntoViewRequester = remember { BringIntoViewRequester() }
 
 
 
     Column(
         modifier = Modifier
             .background(color = Color.Transparent)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-            .padding(16.dp)
+            .navigationBarsWithImePadding()
+            .padding(bottom = 0.dp, start = 16.dp, end = 16.dp, top = 16.dp)
     ) {
 
         TransparentHintTextField(
@@ -104,7 +101,7 @@ fun DescriptionPage(
                 .weight(1f)
                 .clip(RoundedCornerShape(10.dp))
                 .background(Color.White.copy(alpha = 0.2f))
-                .padding(16.dp)
+                .padding(8.dp)
                 .onFocusEvent {
                 }
         )
