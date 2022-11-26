@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages
+package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -13,7 +13,6 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,10 +27,9 @@ import com.google.accompanist.insets.navigationBarsWithImePadding
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import okhttp3.internal.wait
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamEvent
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.AddEditDreamViewModel
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components.ArcRotationAnimation
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.ArcRotationAnimation
 
 
 @Composable
