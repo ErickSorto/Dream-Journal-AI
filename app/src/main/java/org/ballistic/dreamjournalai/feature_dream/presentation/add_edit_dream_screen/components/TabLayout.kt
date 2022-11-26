@@ -1,6 +1,5 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components
+package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components
 
-import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -16,9 +15,9 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages.AIPage
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages.DescriptionPage
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.pages.InfoPage
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages.AIPage
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages.DescriptionPage
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages.InfoPage
 
 
 @OptIn(ExperimentalPagerApi::class)

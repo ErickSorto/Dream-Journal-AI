@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream
+package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen
 
 
 import androidx.compose.animation.Animatable
@@ -23,11 +23,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.google.accompanist.insets.ProvideWindowInsets
-import com.google.accompanist.insets.navigationBarsHeight
-import com.google.accompanist.insets.navigationBarsWithImePadding
 import kotlinx.coroutines.flow.collectLatest
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components.TabLayout
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TabLayout
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

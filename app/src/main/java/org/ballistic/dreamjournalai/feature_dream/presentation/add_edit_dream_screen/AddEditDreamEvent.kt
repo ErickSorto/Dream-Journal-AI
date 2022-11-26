@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream
+package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen
 
 sealed class AddEditDreamEvent{
     data class EnteredTitle(val value: String) : AddEditDreamEvent()

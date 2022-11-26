@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components
+package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas

@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream.components
+package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components
 
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
