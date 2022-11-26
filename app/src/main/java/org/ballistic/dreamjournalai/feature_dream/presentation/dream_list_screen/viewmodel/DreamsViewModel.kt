@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.dreams
+package org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -13,7 +13,8 @@ import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.feature_dream.domain.util.DreamOrder
 import org.ballistic.dreamjournalai.feature_dream.domain.util.OrderType
-import org.ballistic.dreamjournalai.feature_dream.presentation.dreams.state.DreamsState
+import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamsEvent
+import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.state.DreamsState
 import javax.inject.Inject
 
 @HiltViewModel

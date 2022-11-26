@@ -46,7 +46,6 @@ fun MainScreenView(){
         },
         modifier = Modifier.navigationBarsWithImePadding()
     ) {
-        val padding = it
-        MainGraph(navController = navController)
+        MainGraph(navController = navController, it)
     }
 }

@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream
+package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen
 
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
