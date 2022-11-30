@@ -101,7 +101,17 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 getOpenAIImageResponse()
             }
             is AddEditDreamEvent.ClickGenerateDetails -> {
-                getAIDetailsResponse()
+                if (dreamUiState.value.dreamContent.length >= 1000){
+                    getAIDetailsResponse()
+                }
+                else{
+                    dreamUiState.value = dreamUiState.value.copy(
+                        dreamGeneratedDetails = DreamAIGeneratedDetails(
+                            response = dreamUiState.value.dreamContent
+                        )
+                    )
+                }
+
             }
 
             is AddEditDreamEvent.ChangeLucidity -> {
@@ -232,7 +242,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
         viewModelScope.launch {
             val result = getOpenAITextResponse(
                 Prompt(
-                    "text-davinci-002",
+                    "text-davinci-003",
                     "Analyze the following dream and try to find meaning in it: "
                             + dreamUiState.value.dreamContent, 250, 1, 0
                 )
