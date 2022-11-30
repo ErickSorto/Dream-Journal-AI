@@ -114,7 +114,7 @@ fun AIPage(
                     GlobalScope.launch {
                         viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamUiState.value.dreamContent))
                         if(viewModel.dreamUiState.value.dreamGeneratedDetails.response
-                            == "") {
+                            == "" && viewModel.dreamUiState.value.dreamContent.length >= 1000) {
                             viewModel.onEvent(AddEditDreamEvent.ClickGenerateDetails(viewModel.dreamUiState.value.dreamContent))
                         }
 
