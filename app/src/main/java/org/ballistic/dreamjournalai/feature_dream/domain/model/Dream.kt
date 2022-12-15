@@ -24,7 +24,7 @@ data class Dream(
     val generatedDetails: String,
     @PrimaryKey val id: Int? = null
 ) {
-    companion object { //backgroundsssa
+    companion object { //backgroundssss
         val dreamBackgroundImages = listOf(
 
             R.drawable.pink_river,
