@@ -27,12 +27,12 @@ data class Dream(
     companion object {
         val dreamBackgroundImages = listOf(
 
-            R.drawable.pink_background,
-            R.drawable.red_background,
-            R.drawable.black_backgrownd,
-            R.drawable.blue_background,
-            R.drawable.green_background,
-            R.drawable.white_background,
+            R.drawable.pink_river,
+            R.drawable.red_planet,
+            R.drawable.dark_blue_moon,
+            R.drawable.blue_lighthouse,
+            R.drawable.green_mushroom,
+            R.drawable.white_snow,
             )
     }
 }
