@@ -7,12 +7,20 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:433518106186:android:648e44c95293be2db9b8b3",
+        "mobilesdk_app_id": "1:433518106186:android:978f37fb486009d5b9b8b3",
         "android_client_info": {
           "package_name": "org.ballistic.dreamjournalai"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "433518106186-60pf8t029a6lji7gd4hrmcgnbp5h0hq6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "org.ballistic.dreamjournalai",
+            "certificate_hash": "c6611f40e8b101e29eff2cecf067a2cac73af1b4"
+          }
+        },
         {
           "client_id": "433518106186-fas918qt78ffo3t0rl2eg86ta05sic89.apps.googleusercontent.com",
           "client_type": 3

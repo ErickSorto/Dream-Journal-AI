@@ -6,7 +6,7 @@ import org.ballistic.dreamjournalai.core.Resource
 
 
 typealias OneTapSignInResponse = Resource<BeginSignInResult>
-typealias SignInWithGoogleResponse = Resource<Boolean>
+typealias SignInWithGoogleResponse = Resource<Unit>
 
 interface AuthRepository {
     val isUserAuthenticatedInFirebase: Boolean
