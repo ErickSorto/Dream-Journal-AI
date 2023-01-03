@@ -1,10 +1,8 @@
 package org.ballistic.dreamjournalai.feature_dream.navigation
 
-import androidx.annotation.DrawableRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
-import org.ballistic.dreamjournalai.R.drawable.ic_baseline_home_24
 
 sealed class Screens(
     val route: String,
@@ -23,9 +21,16 @@ sealed class Screens(
         icon = Icons.Default.Add
     )
 
-    object StoreSignInScreen: Screens(
-        route = "store_sign_in",
-        title = "Shop",
+
+    object SignInScreen: Screens(
+        route = "sign_in",
+        title = "SignIn",
+        icon = Icons.Default.Shop
+    )
+
+    object StoreScreen: Screens(
+        route = "dream_store",
+        title = "Store",
         icon = Icons.Default.Shop
     )
 

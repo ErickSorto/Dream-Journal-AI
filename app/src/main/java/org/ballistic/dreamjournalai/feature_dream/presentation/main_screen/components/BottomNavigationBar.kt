@@ -11,19 +11,29 @@ import androidx.compose.ui.graphics.Color
 
 import androidx.compose.ui.res.colorResource
 
-import androidx.compose.ui.text.font.FontWeight.Companion.Black
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
+import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.AuthViewModel
 
 @Composable
-fun BottomNavigation(navController: NavController) {
-    val items = listOf(
-        Screens.DreamListScreen,
-        Screens.StoreSignInScreen
-    )
+fun BottomNavigation(navController: NavController, viewModel: AuthViewModel = hiltViewModel()) {
+
+    val items = if (viewModel.hasSignedIn) {
+        listOf(
+            Screens.DreamListScreen,
+            Screens.StoreScreen,
+        )
+    } else {
+        listOf(
+            Screens.DreamListScreen,
+            Screens.SignInScreen,
+        )
+    }
+
     androidx.compose.material.BottomNavigation(
         backgroundColor = colorResource(id = R.color.RedPink),
         contentColor = Color.Black
@@ -45,7 +55,6 @@ fun BottomNavigation(navController: NavController) {
                 selected = currentRoute == item.route,
                 onClick = {
                     navController.navigate(item.route) {
-
                         navController.graph.startDestinationRoute?.let { screen_route ->
                             popUpTo(screen_route) {
                                 saveState = true
