@@ -11,7 +11,6 @@ import kotlinx.coroutines.tasks.await
 import org.ballistic.dreamjournalai.core.Constants.CREATED_AT
 import org.ballistic.dreamjournalai.core.Constants.DISPLAY_NAME
 import org.ballistic.dreamjournalai.core.Constants.EMAIL
-import org.ballistic.dreamjournalai.core.Constants.PHOTO_URL
 import org.ballistic.dreamjournalai.core.Constants.SIGN_IN_REQUEST
 import org.ballistic.dreamjournalai.core.Constants.SIGN_UP_REQUEST
 import org.ballistic.dreamjournalai.core.Constants.USERS
@@ -19,7 +18,6 @@ import org.ballistic.dreamjournalai.core.Resource
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.OneTapSignInResponse
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.SignInWithGoogleResponse
-
 
 
 import javax.inject.Inject
@@ -47,7 +45,7 @@ class AuthRepositoryImpl  @Inject constructor(
                 val signUpResult = oneTapClient.beginSignIn(signUpRequest).await()
                 Resource.Success(signUpResult)
             } catch (e: Exception) {
-                Resource.Error(e.message.toString())
+                Resource.Error(e.message ?: "Unknown error")
             }
         }
     }
@@ -61,9 +59,9 @@ class AuthRepositoryImpl  @Inject constructor(
             if (isNewUser) {
                 addUserToFirestore()
             }
-            Resource.Success(isNewUser)
+            Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message.toString())
+            Resource.Error(e.message ?: "Unknown error")
         }
     }
 
@@ -78,6 +76,5 @@ class AuthRepositoryImpl  @Inject constructor(
 fun FirebaseUser.toUser() = mapOf(
     DISPLAY_NAME to displayName,
     EMAIL to email,
-    PHOTO_URL to photoUrl?.toString(),
     CREATED_AT to serverTimestamp()
 )
