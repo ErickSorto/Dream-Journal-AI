@@ -27,7 +27,7 @@ class ProfileRepositoryImpl @Inject constructor(
         return try {
             oneTapClient.signOut().await()
             auth.signOut()
-            Resource.Success(true)
+            Resource.Success()
         } catch (e: Exception) {
             Resource.Error(e.message.toString())
         }
@@ -41,7 +41,7 @@ class ProfileRepositoryImpl @Inject constructor(
                 oneTapClient.signOut().await()
                 delete().await()
             }
-            Resource.Success(true)
+            Resource.Success()
         } catch (e: Exception) {
             Resource.Error(e.message.toString())
         }
