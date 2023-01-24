@@ -54,43 +54,39 @@ fun DreamsScreen(
             ){
                 LazyColumn(modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(top = padding.calculateTopPadding())){
-                    items(state.dreams) { dream ->
-                        DreamItem(
-                            dream = dream,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp)
-                                .padding(horizontal = 16.dp)
-                                .clickable {
-                                    navController.navigate(
-                                        Screens.AddEditDreamScreen.route +
-                                                "?dreamId=${dream.id}&dreamColor=${dream.backgroundImage}"
-                                    )
-                                },
-                            onDeleteClick = {
-                                viewModel.onEvent(DreamsEvent.DeleteDream(dream))
-                                scope.launch {
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = "Dream deleted",
-                                        actionLabel = "Undo"
-                                    )
-                                    if(result == SnackbarResult.ActionPerformed){
-                                        viewModel.onEvent(DreamsEvent.RestoreDream)
+                    if (state != null) {
+                        items(state.dreams) { dream ->
+                            DreamItem(
+                                dream = dream,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 16.dp)
+                                    .padding(horizontal = 16.dp)
+                                    .clickable {
+                                        navController.navigate(
+                                            Screens.AddEditDreamScreen.route +
+                                                    "?dreamId=${dream.id}&dreamColor=${dream.backgroundImage}"
+                                        )
+                                    },
+                                onDeleteClick = {
+                                    scope.launch {
+                                        viewModel.onEvent(DreamsEvent.DeleteDream(dream))
+                                        val result = snackbarHostState.showSnackbar(
+                                            message = "Dream deleted",
+                                            actionLabel = "Undo"
+                                        )
+                                        if(result == SnackbarResult.ActionPerformed){
+                                            viewModel.onEvent(DreamsEvent.RestoreDream)
+                                        }
                                     }
                                 }
-                            }
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
                     }
                 }
-
-
-
             }
 
         }
     }
-
-
-
 }

@@ -37,8 +37,8 @@ fun MainGraph(navController: NavHostController, paddingValues: PaddingValues) {
                 navArgument(
                     name = "dreamId"
                 ) {
-                    type = NavType.IntType
-                    defaultValue = -1
+                    type = NavType.StringType
+                    defaultValue = ""
                 },
                 navArgument(
                     name = "dreamImageBackground"

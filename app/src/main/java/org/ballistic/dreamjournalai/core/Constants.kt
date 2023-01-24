@@ -1,5 +1,7 @@
 package org.ballistic.dreamjournalai.core
 
+import com.google.firebase.auth.FirebaseAuth
+
 object Constants {
     //App
     const val TAG = "AppTag"
@@ -7,11 +9,16 @@ object Constants {
     //Collection References
     const val USERS = "users"
 
+
+
     //User fields
     const val DISPLAY_NAME = "displayName"
     const val EMAIL = "email"
     const val PHOTO_URL = "photoUrl"
     const val CREATED_AT = "createdAt"
+
+    const val IMAGES = "image"
+    const val DREAMS = "dream"
 
     //Names
     const val SIGN_IN_REQUEST = "signInRequest"
