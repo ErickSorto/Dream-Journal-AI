@@ -32,45 +32,55 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     val eventFlow = _eventFlow.asSharedFlow()
 
     init {
-        savedStateHandle.get<Int>("dreamId")?.let { dreamId ->
-            if (dreamId != -1) {
+        savedStateHandle.get<String>("dreamId")?.let { dreamId ->
+            if (dreamId.isNotEmpty()) {
                 viewModelScope.launch {
-                    dreamUseCases.getDream(dreamId)?.also { dream ->
-                        dreamUiState.value = dream.id?.let {
-                            DreamInfo(
-                                dreamId = it,
-                                dreamBackgroundImage = dream.backgroundImage,
-                                dreamTimeOfDay = dream.timeOfDay,
-                                dreamLucidity = dream.lucidityRating,
-                                dreamVividness = dream.vividnessRating,
-                                dreamEmotion = dream.moodRating,
-                                dreamIsNightmare = dream.isNightmare,
-                                dreamIsRecurring = dream.isRecurring,
-                                dreamIsLucid = dream.isLucid,
-                                dreamIsFavorite = dream.isFavorite,
-                                dreamIsFalseAwakening = dream.falseAwakening
-                            )
-                        }?.let {
-                            dreamUiState.value.copy(
-                                dreamTitle = dream.title,
-                                dreamContent = dream.content,
-                                dreamInfo = it,
-                                DreamAIExplanation(
-                                    response = dream.AIResponse,
-                                ),
-                                DreamAIImage(
-                                    image = dream.generatedImage,
-                                ),
-                                DreamAIGeneratedDetails(
-                                    response = dream.generatedDetails,
-                                ),
-                            )
-                        }!!
+                    val resource = dreamUseCases.getDream(dreamId)
+                    when (resource) {
+                        is Resource.Success -> {
+                            val dream = resource.data
+                            dream?.let {
+                                dreamUiState.value = DreamUiState(
+                                    dreamTitle = dream.title,
+                                    dreamContent = dream.content,
+                                    dreamInfo = DreamInfo(
+                                        dreamId = dream.id,
+                                        dreamBackgroundImage = dream.backgroundImage,
+                                        dreamIsLucid = dream.isLucid,
+                                        dreamIsFavorite = dream.isFavorite,
+                                        dreamIsNightmare = dream.isNightmare,
+                                        dreamIsRecurring = dream.isRecurring,
+                                        dreamIsFalseAwakening = dream.falseAwakening,
+                                        dreamTimeOfDay = dream.timeOfDay,
+                                        dreamLucidity = dream.lucidityRating,
+                                        dreamVividness = dream.vividnessRating,
+                                        dreamEmotion = dream.moodRating
+                                    ),
+                                    dreamAIExplanation = DreamAIExplanation(
+                                        response = dream.AIResponse,
+                                    ),
+                                    dreamAIImage = DreamAIImage(
+                                        image = dream.generatedImage,
+                                    ),
+                                    dreamGeneratedDetails = DreamAIGeneratedDetails(
+                                        response = dream.generatedDetails,
+                                    )
+                                )
+                            }
+                        }
+                        is Resource.Error -> {
+                            // handle error
+                        }
+                        is Resource.Loading -> {
+                            // handle loading
+                        }
                     }
                 }
             }
         }
     }
+
+
 
     fun onEvent(event: AddEditDreamEvent) {
         when (event) {
@@ -358,7 +368,7 @@ data class DreamUiState(
     val dreamTitle: String = "",
     val dreamContent: String = "",
     val dreamInfo: DreamInfo = DreamInfo(
-        dreamId = null,
+        dreamId = "",
         dreamBackgroundImage = Dream.dreamBackgroundImages.random(),
         dreamIsLucid = false,
         dreamIsFavorite = false,
@@ -408,7 +418,7 @@ data class DreamAIImage(
 )
 
 data class DreamInfo(
-    val dreamId: Int?,
+    val dreamId: String?,
     var dreamBackgroundImage: Int,
     val dreamIsLucid: Boolean,
     val dreamIsFavorite: Boolean,

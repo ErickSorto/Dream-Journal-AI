@@ -21,19 +21,10 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.Aut
 
 @Composable
 fun BottomNavigation(navController: NavController, viewModel: AuthViewModel = hiltViewModel()) {
-
-    val items = if (viewModel.hasSignedIn) {
-        listOf(
-            Screens.DreamListScreen,
-            Screens.StoreScreen,
-        )
-    } else {
-        listOf(
-            Screens.DreamListScreen,
-            Screens.SignInScreen,
-        )
-    }
-
+    val items = listOf(
+        Screens.DreamListScreen,
+        if (viewModel.isUserAuthenticated) Screens.StoreScreen else Screens.SignInScreen
+    )
     androidx.compose.material.BottomNavigation(
         backgroundColor = colorResource(id = R.color.RedPink),
         contentColor = Color.Black

@@ -1,12 +1,14 @@
 package org.ballistic.dreamjournalai.di
 
 import android.app.Application
-import androidx.room.Room
+import coil.Coil
+import coil.ImageLoader
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import org.ballistic.dreamjournalai.feature_dream.data.data_source.DreamDatabase
 import org.ballistic.dreamjournalai.feature_dream.data.repository.DreamRepositoryImpl
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.DreamRepository
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.*
@@ -17,24 +19,23 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    @Provides
-    @Singleton
-    fun provideDreamDatabase(
-        app: Application
-    ): DreamDatabase {
-        return Room.databaseBuilder(
-            app,
-            DreamDatabase::class.java,
-            DreamDatabase.DATABASE_NAME
-        ).build()
-    }
 
     @Provides
     @Singleton
     fun provideDreamRepository(
-        db: DreamDatabase
+        storage: FirebaseStorage,
+        db: FirebaseFirestore
     ): DreamRepository {
-        return DreamRepositoryImpl(db.dreamDao)
+        return DreamRepositoryImpl(
+            storage = storage,
+            db = db
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseStorage(): FirebaseStorage {
+        return FirebaseStorage.getInstance()
     }
 
     @Provides

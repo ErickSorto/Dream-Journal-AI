@@ -5,6 +5,6 @@ import org.ballistic.dreamjournalai.feature_dream.domain.repository.DreamReposit
 
 class DeleteDream(private val repository: DreamRepository) {
     suspend operator fun invoke(dream: Dream) {
-        repository.deleteDream(dream)
+        dream.id?.let { repository.deleteDream(it) }
     }
 }

@@ -1,14 +1,17 @@
 package org.ballistic.dreamjournalai.feature_dream.domain.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import com.google.firebase.firestore.PropertyName
 import org.ballistic.dreamjournalai.R
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 
-@Entity
+
+@Parcelize
 data class Dream(
     val title: String,
     val content: String,
-    val timestamp: Long = System.currentTimeMillis(),
+    val timestamp: String = System.currentTimeMillis().toString(),
+    @PropertyName("airesponse")
     val AIResponse: String,
     val isFavorite: Boolean,
     val isLucid: Boolean,
@@ -22,8 +25,8 @@ data class Dream(
     val backgroundImage: Int,
     val generatedImage: String?,
     val generatedDetails: String,
-    @PrimaryKey val id: Int? = null
-) {
+    val id: String?
+): Parcelable {
     companion object { //backgroundssss
         val dreamBackgroundImages = listOf(
 
@@ -35,6 +38,8 @@ data class Dream(
             R.drawable.white_snow,
             )
     }
+
+    constructor():this("","","", "",false,false,false,false,false,0,0,0,"",0,null,"",null)
 }
 
 class InvalidDreamException(message: String) : Exception(message)
