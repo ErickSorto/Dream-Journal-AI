@@ -154,7 +154,7 @@ class DreamRepositoryImpl(
         }
     }
 
-    fun getCollectionReferenceForDreams(): CollectionReference? {
+    private fun getCollectionReferenceForDreams(): CollectionReference? {
         val currentUser = FirebaseAuth.getInstance().currentUser
         return currentUser?.uid?.let {
             db.collection(USERS).document(it).collection("my_dreams")

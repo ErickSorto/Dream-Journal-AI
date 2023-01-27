@@ -34,4 +34,6 @@ sealed class Screens(
         icon = Icons.Default.Shop
     )
 
+    object Welcome : Screens(route = "welcome_screen", title = "Welcome", icon = null)
+
 }

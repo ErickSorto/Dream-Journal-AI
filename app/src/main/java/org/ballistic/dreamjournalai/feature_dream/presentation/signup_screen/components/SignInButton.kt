@@ -17,7 +17,8 @@ import org.ballistic.dreamjournalai.core.Constants.SIGN_IN_WITH_GOOGLE
 
 @Composable
 fun SignInButton(
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Button(
         modifier = Modifier.padding(bottom = 48.dp),
