@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 
 
@@ -48,10 +49,12 @@ fun DreamItem(
                     .background(Color.Transparent)
 
             ) {
+
                 Image(
-                    painter = painterResource(dream.backgroundImage),
+                    painter = rememberAsyncImagePainter(dream.backgroundImage),
                     contentDescription = "Color",
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
             Column(

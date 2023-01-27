@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.navigation
 
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -7,17 +8,23 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.google.accompanist.pager.ExperimentalPagerApi
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamsScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.Sign_In_Screen
 import org.ballistic.dreamjournalai.feature_dream.presentation.store_screen.StoreScreen
+import org.ballistic.dreamjournalai.onboarding.presentation.WelcomeScreen
 
+@OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
 @Composable
-fun MainGraph(navController: NavHostController, paddingValues: PaddingValues) {
+fun MainGraph(navController: NavHostController, startDestination: String ,paddingValues: PaddingValues) {
     NavHost(
         navController = navController,
-        startDestination = Screens.DreamListScreen.route
+        startDestination = startDestination,
     ) {
+        //welcome
+
+
         composable(route = Screens.DreamListScreen.route) {
             DreamsScreen(navController = navController)
         }

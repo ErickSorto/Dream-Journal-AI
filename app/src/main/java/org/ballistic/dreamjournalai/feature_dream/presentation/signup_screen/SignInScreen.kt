@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen
 
 import android.app.Activity
+import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -9,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.google.android.gms.auth.api.identity.BeginSignInResult
@@ -39,6 +41,7 @@ fun Sign_In_Screen(
             SignInButton(
                 onClick = {
                     viewModel.oneTapSignIn()
+
                 }
             )
         }
@@ -75,7 +78,7 @@ fun Sign_In_Screen(
     SignInWithGoogle(
         navigateToHomeScreen = { signedIn ->
             if (signedIn) {
-                navController.navigate(Screens.StoreScreen.route)
+                navController.navigate(Screens.DreamListScreen.route)
             }
         }
     )
