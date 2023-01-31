@@ -29,12 +29,11 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    val repository: DataStoreRepository by lazy { DataStoreRepository(this) }
 
     @Inject
     lateinit var splashViewModel: SplashViewModel
 
-    @OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -56,9 +55,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        val screen by splashViewModel.startDestination
-                        val navController = rememberNavController()
-                        MainScreenView(screen)
+                        MainScreenView(splashViewModel)
                     }
                 }
             }

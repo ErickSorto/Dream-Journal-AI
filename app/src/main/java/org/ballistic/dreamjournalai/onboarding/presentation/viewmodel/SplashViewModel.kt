@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.BlendMode.Companion.Screen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
 import org.ballistic.dreamjournalai.onboarding.data.DataStoreRepository
@@ -18,19 +19,21 @@ class SplashViewModel @Inject constructor(
     private val _isLoading: MutableState<Boolean> = mutableStateOf(true)
     val isLoading: State<Boolean> = _isLoading
 
-    private val _startDestination: MutableState<String> = mutableStateOf(Screens.DreamListScreen.route)
+    //if completed startDestination = DreamListScreen.route else Welcome.route
+    private val _startDestination: MutableState<String> = mutableStateOf(Screens.Welcome.route)
+
     val startDestination: State<String> = _startDestination
 
     init {
         viewModelScope.launch {
-            repository.readOnBoardingState().collect { completed ->
+            repository.readOnBoardingState().collectLatest { completed ->
                 if (completed) {
                     _startDestination.value = Screens.DreamListScreen.route
                 } else {
                     _startDestination.value = Screens.Welcome.route
                 }
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 }
