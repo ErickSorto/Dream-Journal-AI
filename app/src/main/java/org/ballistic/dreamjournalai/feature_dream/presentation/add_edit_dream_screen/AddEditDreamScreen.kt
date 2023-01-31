@@ -25,16 +25,21 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.collectLatest
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TabLayout
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditDreamScreen(
     navController: NavController,
     dreamImage: Int,
-    viewModel: AddEditDreamViewModel = hiltViewModel()
+    viewModel: AddEditDreamViewModel = hiltViewModel(),
+    mainScreenViewModel: MainScreenViewModel
 ) {
 
     val snackbarHostState = remember { SnackbarHostState() }
+
+    mainScreenViewModel.setBottomBarState(false)
+    mainScreenViewModel.setFloatingActionButtonState(false)
 
     val dreamBackGroundAnimatable = remember {
         Animatable(
@@ -55,6 +60,7 @@ fun AddEditDreamScreen(
                     navController.navigateUp()
                 }
 
+                else -> {}
             }
         }
     }

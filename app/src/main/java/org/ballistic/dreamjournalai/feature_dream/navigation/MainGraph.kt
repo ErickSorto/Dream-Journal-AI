@@ -1,7 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.navigation
 
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -11,26 +10,29 @@ import androidx.navigation.navArgument
 import com.google.accompanist.pager.ExperimentalPagerApi
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamsScreen
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.Sign_In_Screen
 import org.ballistic.dreamjournalai.feature_dream.presentation.store_screen.StoreScreen
 import org.ballistic.dreamjournalai.onboarding.presentation.WelcomeScreen
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
 @Composable
-fun MainGraph(navController: NavHostController, startDestination: String ,paddingValues: PaddingValues) {
+fun MainGraph(navController: NavHostController, startDestination: String, mainScreenViewModel: MainScreenViewModel) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
     ) {
         //welcome
-
+        composable(route = Screens.Welcome.route) {
+            WelcomeScreen(navController = navController, mainScreenViewModel = mainScreenViewModel)
+        }
 
         composable(route = Screens.DreamListScreen.route) {
-            DreamsScreen(navController = navController)
+            DreamsScreen(navController = navController, mainScreenViewModel = mainScreenViewModel)
         }
         //store
         composable(route = Screens.StoreScreen.route) {
-            StoreScreen(navController = navController)
+            StoreScreen(navController = navController,  mainScreenViewModel = mainScreenViewModel)
         }
         composable(route = Screens.SignInScreen.route) {
             Sign_In_Screen(
@@ -58,7 +60,8 @@ fun MainGraph(navController: NavHostController, startDestination: String ,paddin
             val image = it.arguments?.getInt("dreamImageBackground") ?: -1
             AddEditDreamScreen(
                 navController = navController,
-                dreamImage = image
+                dreamImage = image,
+                mainScreenViewModel = mainScreenViewModel
             )
         }
     }

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.AuthViewModel
 
 //import all compose-
@@ -18,8 +19,13 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.Aut
 @Composable
 fun StoreScreen(
     viewModel: AuthViewModel = hiltViewModel(),
-    navController: NavHostController
+    navController: NavHostController,
+    mainScreenViewModel: MainScreenViewModel
 ) {
+    mainScreenViewModel.setBottomBarState(true)
+    mainScreenViewModel.setFloatingActionButtonState(true)
+
+
     Column(
         modifier = Modifier.padding(top = 32.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),

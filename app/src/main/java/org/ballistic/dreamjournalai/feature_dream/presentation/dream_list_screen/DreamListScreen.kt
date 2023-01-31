@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen
 
+import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,16 +23,21 @@ import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.components.DreamItem
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamsViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DreamsScreen(
     navController: NavController,
-    viewModel: DreamsViewModel = hiltViewModel()
+    viewModel: DreamsViewModel = hiltViewModel(),
+    mainScreenViewModel: MainScreenViewModel
 ) {
     val state = viewModel.state.value
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    mainScreenViewModel.setBottomBarState(true)
+    mainScreenViewModel.setFloatingActionButtonState(true)
 
     Box(){
 

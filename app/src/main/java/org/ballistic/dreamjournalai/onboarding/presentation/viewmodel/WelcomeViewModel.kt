@@ -18,4 +18,6 @@ class WelcomeViewModel @Inject constructor(
             repository.saveOnBoardingState(completed = completed)
         }
     }
+
+    fun isOnBoardingCompleted() = repository.readOnBoardingState()
 }
