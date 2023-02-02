@@ -1,9 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen
 
 
-import androidx.compose.animation.Animatable
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,6 +11,7 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -41,11 +40,10 @@ fun AddEditDreamScreen(
     mainScreenViewModel.setBottomBarState(false)
     mainScreenViewModel.setFloatingActionButtonState(false)
 
-    val dreamBackGroundAnimatable = remember {
-        Animatable(
-            Color(if (dreamImage != -1) dreamImage else viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage)
+    val dreamBackgroundImage = remember {
+        mutableStateOf (
+            if (dreamImage != -1) dreamImage else viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage
         )
-
     }
 
     LaunchedEffect(key1 = true) {
@@ -64,21 +62,11 @@ fun AddEditDreamScreen(
             }
         }
     }
-    //listen to color changes and animate
-    LaunchedEffect(key1 = viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage) {
-        dreamBackGroundAnimatable.animateTo(//animate to new backgroundimage color
-            targetValue = Color(viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage),
-            animationSpec = tween(
-                durationMillis = 500
-            )
-        )
-    }
 
-    Crossfade(targetState = viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage) { image ->
+   Crossfade(targetState = dreamBackgroundImage.value) { image ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(dreamBackGroundAnimatable.value)
                 .padding()
         ) {
             Image(
@@ -90,7 +78,7 @@ fun AddEditDreamScreen(
                     .blur(10.dp)
             )
         }
-    }
+  }
 
 
     Scaffold(
@@ -119,7 +107,8 @@ fun AddEditDreamScreen(
                     navigationIconContentColor = Color.Black,
                     titleContentColor = Color.Black,
                     actionIconContentColor = Color.Black
-                ))
+                )
+            )
         },
         snackbarHost = {
             SnackbarHost(snackbarHostState)
@@ -127,9 +116,6 @@ fun AddEditDreamScreen(
         containerColor = Color.Transparent,
 
         ) { padding ->
-        //crossfade between imagebackgrounds
-
-//
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -137,9 +123,7 @@ fun AddEditDreamScreen(
                 .padding(padding)
 
         ) {
-
-            TabLayout(dreamImage)
-
+            TabLayout(dreamBackgroundImage)
         }
     }
 }
