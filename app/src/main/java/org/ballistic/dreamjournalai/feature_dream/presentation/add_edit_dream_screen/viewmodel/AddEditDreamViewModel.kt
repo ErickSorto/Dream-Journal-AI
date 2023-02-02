@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen
 
 import android.util.Log
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -31,10 +32,12 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
+
     init {
         savedStateHandle.get<String>("dreamId")?.let { dreamId ->
-            if (dreamId.isNotEmpty()) {
+            if (dreamId != "") {
                 viewModelScope.launch {
+                    dreamUiState.value = dreamUiState.value.copy(isLoading = true)
                     val resource = dreamUseCases.getDream(dreamId)
                     when (resource) {
                         is Resource.Success -> {
@@ -64,7 +67,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                     ),
                                     dreamGeneratedDetails = DreamAIGeneratedDetails(
                                         response = dream.generatedDetails,
-                                    )
+                                    ),
+                                    isLoading = false
                                 )
                             }
                         }
@@ -79,7 +83,6 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             }
         }
     }
-
 
 
     fun onEvent(event: AddEditDreamEvent) {
@@ -111,10 +114,9 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 getOpenAIImageResponse()
             }
             is AddEditDreamEvent.ClickGenerateDetails -> {
-                if (dreamUiState.value.dreamContent.length >= 1000){
+                if (dreamUiState.value.dreamContent.length >= 1000) {
                     getAIDetailsResponse()
-                }
-                else{
+                } else {
                     dreamUiState.value = dreamUiState.value.copy(
                         dreamGeneratedDetails = DreamAIGeneratedDetails(
                             response = dreamUiState.value.dreamContent
@@ -291,7 +293,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             val result = getOpenAITextResponse(
                 Prompt(
                     "text-davinci-002",
-                    "From the following statement list all characteristics of the environment list all objects mentioned: \n"
+                    "From the following dream build a scene prompt so that it may be painted by an AI: : \n"
                             + dreamUiState.value.dreamContent, 60, 1, 0
                 )
             )
@@ -325,7 +327,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
         }
     }
 
-    private fun getOpenAIImageResponse(){
+    private fun getOpenAIImageResponse() {
         viewModelScope.launch {
             val result = getOpenAIImageGeneration(
                 ImagePrompt(
@@ -340,7 +342,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                         result.data as ImageGenerationDTO
 
                         dreamUiState.value = dreamUiState.value.copy(
-                           dreamAIImage = dreamUiState.value.dreamAIImage.copy(
+                            dreamAIImage = dreamUiState.value.dreamAIImage.copy(
                                 image = result.data.dataList[0].url,
                                 isLoading = false
                             )
@@ -395,7 +397,8 @@ data class DreamUiState(
         isLoading = false,
         isSuccessful = false,
         error = ""
-    )
+    ),
+    val isLoading: Boolean = false,
 )
 
 data class DreamAIExplanation(

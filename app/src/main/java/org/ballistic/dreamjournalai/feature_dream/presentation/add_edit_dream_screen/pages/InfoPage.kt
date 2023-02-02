@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages
 
+import android.media.Image
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -15,6 +16,7 @@ import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,7 +36,8 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_sc
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InfoPage(
-    viewModel: AddEditDreamViewModel = hiltViewModel()
+    dreamBackgroundImage: MutableState<Int>,
+    viewModel: AddEditDreamViewModel = hiltViewModel(),
 ) {
 
     Column(
@@ -81,6 +84,7 @@ fun InfoPage(
                                             image
                                         )
                                     )
+                                    dreamBackgroundImage.value = image
                                 }
 
                         ) {

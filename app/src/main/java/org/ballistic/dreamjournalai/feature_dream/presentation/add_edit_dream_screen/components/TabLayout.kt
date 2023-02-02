@@ -6,6 +6,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.UiComposable
@@ -24,10 +25,8 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_sc
 @Composable
 @UiComposable
 fun TabLayout(
-    dreamColor: Int
+    dreamBackgroundImage: MutableState<Int>
 ) {
-
-
     val pages = listOf("Description", "AI", "Info")
     val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
@@ -69,7 +68,7 @@ fun TabLayout(
                 AIPage()
             }
             2 -> {
-                InfoPage()
+                InfoPage(dreamBackgroundImage)
             }
         }
     }
