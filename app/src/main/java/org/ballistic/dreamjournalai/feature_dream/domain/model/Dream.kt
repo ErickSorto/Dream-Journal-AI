@@ -5,7 +5,6 @@ import org.ballistic.dreamjournalai.R
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
-
 @Parcelize
 data class Dream(
     val title: String,
@@ -29,17 +28,16 @@ data class Dream(
 ): Parcelable {
     companion object { //backgroundssss
         val dreamBackgroundImages = listOf(
-
             R.drawable.pink_river,
             R.drawable.red_planet,
             R.drawable.dark_blue_moon,
             R.drawable.blue_lighthouse,
             R.drawable.green_mushroom,
             R.drawable.white_snow,
+            R.drawable.gray_city,
+            R.drawable.yellow_cave
             )
     }
-
     constructor():this("","","", "",false,false,false,false,false,0,0,0,"",0,null,"",null)
 }
-
 class InvalidDreamException(message: String) : Exception(message)

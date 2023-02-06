@@ -12,11 +12,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.pager.ExperimentalPagerApi
 import dagger.hilt.android.AndroidEntryPoint
+import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.feature_dream.navigation.MainGraph
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenView
@@ -30,36 +32,37 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
 
-    @Inject
-    lateinit var splashViewModel: SplashViewModel
-
+    var keepSplashOpened = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
         installSplashScreen().setKeepOnScreenCondition {
-            !splashViewModel.isLoading.value
+            keepSplashOpened
         }
 
+
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             DreamCatcherAITheme {
                 // A surface container using the 'background' color from the theme
                 ProvideWindowInsets(
-                    windowInsetsAnimationsEnabled = true,
-                    consumeWindowInsets = false
+                    windowInsetsAnimationsEnabled = true, consumeWindowInsets = false
                 ) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        MainScreenView(splashViewModel)
+                        //  val screen by splashViewModel.state
+
+                        MainScreenView(onDataLoaded = {
+                            keepSplashOpened = false
+                        })
                     }
                 }
             }
         }
     }
 }
-

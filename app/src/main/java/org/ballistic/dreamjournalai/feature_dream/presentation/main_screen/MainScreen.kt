@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.main_screen
 
+import android.content.Context
 import androidx.compose.animation.*
 import androidx.compose.animation.core.estimateAnimationDurationMillis
 import androidx.compose.foundation.layout.size
@@ -7,12 +8,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.FabPosition
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material.Scaffold
+import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -27,19 +30,34 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.pager.ExperimentalPagerApi
+import kotlinx.coroutines.delay
 import org.ballistic.dreamjournalai.feature_dream.navigation.MainGraph
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
+import org.ballistic.dreamjournalai.onboarding.data.DataStoreRepository
 import org.ballistic.dreamjournalai.onboarding.presentation.viewmodel.SplashViewModel
+import javax.inject.Inject
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
 @Composable
 fun MainScreenView(
-    splashViewModel: SplashViewModel,
-    mainScreenViewModel: MainScreenViewModel = hiltViewModel()
+    mainScreenViewModel: MainScreenViewModel = hiltViewModel(),
+    splashViewModel: SplashViewModel = hiltViewModel(),
+    onDataLoaded : () -> Unit
 ) {
-    val screen by splashViewModel.startDestination
+
+  //  lateinit var splashViewModel: SplashViewModel
+//        installSplashScreen().setKeepOnScreenCondition {
+//            !splashViewModel.isLoading.value
+//        }
+
+    LaunchedEffect(key1 = Unit){
+        delay(1500)
+        onDataLoaded()
+    }
+    val screen by splashViewModel.state
     val navController = rememberNavController()
+
 
 
     Scaffold(
@@ -52,6 +70,11 @@ fun MainScreenView(
                     BottomNavigation(navController = navController)
                 }
             }
+        },
+        topBar = {
+                 AnimatedVisibility(visible = false) {
+
+                 }
         },
         floatingActionButtonPosition = FabPosition.Center,
         isFloatingActionButtonDocked = true,
@@ -75,21 +98,11 @@ fun MainScreenView(
     ) {
         it
         AnimatedVisibility(visible = true) {
-            if (screen == Screens.Welcome.route) {
-                MainGraph(
-                    navController = navController,
-                    startDestination = screen,
-                    mainScreenViewModel = mainScreenViewModel
-                )
-            } else {
-                MainGraph(
-                    navController = navController,
-                    startDestination = screen,
-                    mainScreenViewModel = mainScreenViewModel
-                )
-            }
+            MainGraph(
+                navController = navController,
+                startDestination = screen.startDestination,
+                mainScreenViewModel = mainScreenViewModel,
+            )
         }
-
-
     }
 }

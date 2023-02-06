@@ -11,7 +11,6 @@ import javax.inject.Inject
 class OpenAIImageRepositoryImpl @Inject constructor(
     private val api: OpenAIDaliApi
 ): OpenAIImageRepository {
-
     override suspend fun getImageGeneration(prompt: ImagePrompt): Resource<ImageGenerationDTO> {
         var result = api.getImageGeneration(prompt)
 
@@ -24,4 +23,3 @@ class OpenAIImageRepositoryImpl @Inject constructor(
     }
 
 }
-
