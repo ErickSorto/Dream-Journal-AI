@@ -5,7 +5,9 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.Composable
@@ -36,6 +38,7 @@ fun AIPage(
     val imageState = viewModel.dreamUiState.value.dreamAIImage
     val detailState = viewModel.dreamUiState.value.dreamGeneratedDetails
     val infiniteTransition = rememberInfiniteTransition()
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
@@ -46,7 +49,9 @@ fun AIPage(
         Column(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
-                .background(Color.White.copy(alpha = 0.2f)),
+                .background(Color.White.copy(alpha = 0.2f))
+                .verticalScroll(scrollState, true)
+                .weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -65,7 +70,6 @@ fun AIPage(
                 style = typography.bodyLarge
             )
 
-
             val painter =
                 rememberAsyncImagePainter(model = viewModel.dreamUiState.value.dreamAIImage.image.toString())
 
@@ -78,8 +82,7 @@ fun AIPage(
                         .fillMaxWidth()
                         .aspectRatio(1f)
                         .padding(16.dp, 0.dp, 16.dp, 16.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                    ,
+                        .clip(RoundedCornerShape(10.dp)),
                     contentScale = ContentScale.Crop
                 )
             }

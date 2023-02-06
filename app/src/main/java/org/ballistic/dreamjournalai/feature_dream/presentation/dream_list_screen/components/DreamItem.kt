@@ -2,6 +2,7 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_scree
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -80,11 +81,18 @@ fun DreamItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-
             }
+
+            Image(
+                painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.baseline_delete_24),
+                contentDescription = "Delete",
+                modifier = Modifier
+                    .padding(16.dp)
+                    .size(24.dp)
+                    .clickable {
+                        onDeleteClick()
+                    }
+            )
         }
     }
 }
-
-
-

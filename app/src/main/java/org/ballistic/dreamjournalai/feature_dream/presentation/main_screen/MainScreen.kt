@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.colorResource
 
 
 import androidx.compose.ui.unit.dp
@@ -31,6 +32,7 @@ import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import kotlinx.coroutines.delay
+import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.feature_dream.navigation.MainGraph
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
@@ -84,7 +86,7 @@ fun MainScreenView(
                     onClick = {
                         navController.navigate(Screens.AddEditDreamScreen.route)
                     },
-                    containerColor = MaterialTheme.colorScheme.primary,
+                    containerColor = colorResource(id = R.color.Yellow),
                     elevation = FloatingActionButtonDefaults.elevation(3.dp, 4.dp),
                     shape = CircleShape,
                     modifier = Modifier.size(64.dp)
