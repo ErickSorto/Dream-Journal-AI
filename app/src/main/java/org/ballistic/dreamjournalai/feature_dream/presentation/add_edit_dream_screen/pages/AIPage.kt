@@ -5,11 +5,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.Composable
@@ -18,22 +14,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
-import com.google.accompanist.insets.navigationBarsWithImePadding
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.PagerState
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.ArcRotationAnimation
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.GenerateButton
 
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun AIPage(
+    state: PagerState,
     viewModel: AddEditDreamViewModel = hiltViewModel()
 ) {
 
@@ -45,9 +40,7 @@ fun AIPage(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .navigationBarsWithImePadding()
-            .padding(bottom = 0.dp, start = 16.dp, end = 16.dp, top = 16.dp)
-            .verticalScroll(rememberScrollState(), true),
+            .padding(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(
@@ -105,42 +98,6 @@ fun AIPage(
             }
         }
 
-        //vertical spacer
-        Spacer(modifier = Modifier.weight(1f))
-
-        Box(contentAlignment = Alignment.BottomCenter) {
-            Button(
-                onClick = {
-                    GlobalScope.launch {
-                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamUiState.value.dreamContent))
-                        if(viewModel.dreamUiState.value.dreamGeneratedDetails.response
-                            == "" && viewModel.dreamUiState.value.dreamContent.length >= 1000) {
-                            viewModel.onEvent(AddEditDreamEvent.ClickGenerateDetails(viewModel.dreamUiState.value.dreamContent))
-                        }
-
-                        delay(3000)
-                        viewModel.onEvent(AddEditDreamEvent.CLickGenerateAIImage(viewModel.dreamUiState.value.dreamAIImage.image.toString()))
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color.White.copy(alpha = 0.7f))
-
-            ) {
-                Text(
-                    text = "Generate AI Response",
-                    modifier = Modifier
-                        .padding(16.dp),
-                    color = Color.Black,
-                    style = typography.titleMedium,
-                    fontWeight = Bold
-                )
-            }
-        }
+        GenerateButton(viewModel = viewModel, state = state)
     }
-
-
-
 }

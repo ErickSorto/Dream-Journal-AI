@@ -28,9 +28,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.insets.navigationBarsWithImePadding
+import com.smarttoolfactory.animatedlist.AnimatedInfiniteLazyColumn
+import com.smarttoolfactory.animatedlist.AnimatedInfiniteLazyRow
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
+import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream.Companion.dreamBackgroundImages
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.DreamImageSelectionRow
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,15 +47,15 @@ fun InfoPage(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .navigationBarsWithImePadding()
-            .padding(bottom = 0.dp, start = 16.dp, end = 16.dp, top = 16.dp), horizontalAlignment = Alignment.CenterHorizontally
+            .padding(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
                 .background(Color.White.copy(alpha = 0.2f))
         ) {
-            Column() {
+            Column {
                 Text(
                     text = "Dream Background", modifier = Modifier
                         .fillMaxWidth()
@@ -61,41 +65,7 @@ fun InfoPage(
                     textAlign = TextAlign.Center
                 )
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Dream.dreamBackgroundImages.forEach { image ->
-                        Box(
-                            modifier = Modifier
-                                .size(if (viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage == image) 60.dp else 50.dp)
-                                .clip(CircleShape)
-                                .background(Color.Transparent)
-                                .shadow(
-                                    if (viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage == image) 65.dp else 55.dp,
-                                    CircleShape
-                                )
-                                .clickable {
-                                    viewModel.onEvent(
-                                        AddEditDreamEvent.ChangeDreamBackgroundImage(
-                                            image
-                                        )
-                                    )
-                                    dreamBackgroundImage.value = image
-                                }
-
-                        ) {
-                            Image(
-                                painter = painterResource(id = image),
-                                contentDescription = "Color",
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-                    }
-                }
+                DreamImageSelectionRow(viewModel = viewModel, dreamBackgroundImage = dreamBackgroundImage)
             }
         }
 
@@ -112,21 +82,21 @@ fun InfoPage(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
-                    .verticalScroll(rememberScrollState())
-                , horizontalAlignment = Alignment.CenterHorizontally
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Row {
                     Text(
                         text = "Lucid Dream", modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
-                            .padding(16.dp, 0.dp, 16.dp, 0.dp)
-                    , style = typography.bodyLarge
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp), style = typography.bodyLarge
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
 
                     Switch(
-                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsLucid, onCheckedChange = {
+                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsLucid,
+                        onCheckedChange = {
                             viewModel.onEvent(AddEditDreamEvent.ChangeIsLucid(it))
                         },
                         modifier = Modifier
@@ -153,7 +123,8 @@ fun InfoPage(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Switch(
-                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsNightmare, onCheckedChange = {
+                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsNightmare,
+                        onCheckedChange = {
                             viewModel.onEvent(AddEditDreamEvent.ChangeNightmare(it))
                         },
                         modifier = Modifier
@@ -179,7 +150,8 @@ fun InfoPage(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Switch(
-                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsRecurring, onCheckedChange = {
+                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsRecurring,
+                        onCheckedChange = {
                             viewModel.onEvent(AddEditDreamEvent.ChangeRecurrence(it))
                         },
                         modifier = Modifier
@@ -206,7 +178,8 @@ fun InfoPage(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Switch(
-                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsFalseAwakening, onCheckedChange = {
+                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsFalseAwakening,
+                        onCheckedChange = {
                             viewModel.onEvent(AddEditDreamEvent.ChangeFalseAwakening(it))
                         },
                         modifier = Modifier
@@ -223,7 +196,8 @@ fun InfoPage(
 
                 //slider for lucidity
                 Text(
-                    text = "Lucidity: " + viewModel.dreamUiState.value.dreamInfo.dreamLucidity, modifier = Modifier
+                    text = "Lucidity: " + viewModel.dreamUiState.value.dreamInfo.dreamLucidity,
+                    modifier = Modifier
                         .fillMaxWidth()
                         .align(alignment = Alignment.CenterHorizontally)
                         .padding(16.dp, 16.dp, 16.dp, 0.dp),
@@ -292,7 +266,8 @@ fun InfoPage(
 
                 //slider for dreamMood
                 Text(
-                    text = "Mood: " + viewModel.dreamUiState.value.dreamInfo.dreamEmotion, modifier = Modifier
+                    text = "Mood: " + viewModel.dreamUiState.value.dreamInfo.dreamEmotion,
+                    modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
                         .padding(16.dp, 8.dp, 16.dp, 0.dp),
@@ -358,4 +333,3 @@ fun InfoPage(
         }
     }
 }
-

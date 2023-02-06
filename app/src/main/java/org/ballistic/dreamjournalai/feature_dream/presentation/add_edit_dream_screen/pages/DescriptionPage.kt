@@ -28,29 +28,27 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.GenerateButton
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TransparentHintTextField
 
 @OptIn(DelicateCoroutinesApi::class, ExperimentalPagerApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun DescriptionPage(
-
     state: PagerState
-
 ) {
     val viewModel: AddEditDreamViewModel = hiltViewModel()
     val titleState = viewModel.dreamUiState.value.dreamTitle
     val contentState = viewModel.dreamUiState.value.dreamContent
     val detailState = viewModel.dreamUiState.value.dreamGeneratedDetails
     val dreamUiState = viewModel.dreamUiState
-    val scope = rememberCoroutineScope()
+
 
 
 
     Column(
         modifier = Modifier
             .background(color = Color.Transparent)
-            .navigationBarsWithImePadding()
-            .padding(bottom = 0.dp, start = 16.dp, end = 16.dp, top = 16.dp)
+            .padding(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 16.dp)
     ) {
 
         TransparentHintTextField(
@@ -79,6 +77,7 @@ fun DescriptionPage(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+
         TransparentHintTextField(
             text = dreamUiState.value.dreamContent,
             hint = LocalContext.current.getString(org.ballistic.dreamjournalai.R.string.hint_description), //TODO
@@ -103,47 +102,8 @@ fun DescriptionPage(
                 }
         )
 
-        if (dreamUiState.value.dreamContent.isNotBlank() && dreamUiState.value.dreamContent.length > 10) {
-            Box(contentAlignment = Alignment.BottomCenter,
-            ) {
-                Button(
-                    onClick = {
-                        //scroll to AI page on tablayout
-                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateFromDescription(true))
-                        scope.launch {
-                            delay(100)
-                            state.animateScrollToPage(1)
-                        }
 
-                        GlobalScope.launch {
+            GenerateButton(viewModel = viewModel, state = state)
 
-                            viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamUiState.value.dreamContent))
-                            if (!detailState.isSuccessful) {
-                                viewModel.onEvent(AddEditDreamEvent.ClickGenerateDetails(viewModel.dreamUiState.value.dreamContent))
-                            }
-
-                            delay(3000)
-                            viewModel.onEvent(AddEditDreamEvent.CLickGenerateAIImage(viewModel.dreamUiState.value.dreamAIImage.image.toString()))
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                    ,
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.White.copy(alpha = 0.7f))
-
-                ) {
-                    Text(
-                        text = "Generate AI Response",
-                        modifier = Modifier
-                            .padding(16.dp),
-                        color = Color.Black,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
     }
 }

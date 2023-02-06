@@ -124,7 +124,7 @@ class DreamRepositoryImpl(
                     updatedDream = updatedDream.copy(id = newDreamRef?.id)
                 }
                 if (dream.generatedImage != null && !dream.generatedImage.startsWith("gs://")) {
-                    val storageRef = FirebaseStorage.getInstance().getReference()
+                    val storageRef = FirebaseStorage.getInstance().reference
                     val imageRef = storageRef.child("images/${UUID.randomUUID()}.jpg")
 
                     val imageUrl = URL(dream.generatedImage)

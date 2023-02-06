@@ -53,8 +53,6 @@ fun TabLayout(
                 }
             )
         }
-
-
     }
     HorizontalPager(
         count = pages.size,
@@ -65,7 +63,7 @@ fun TabLayout(
                 DescriptionPage(pagerState)
             }
             1 -> {
-                AIPage()
+                AIPage(pagerState)
             }
             2 -> {
                 InfoPage(dreamBackgroundImage)

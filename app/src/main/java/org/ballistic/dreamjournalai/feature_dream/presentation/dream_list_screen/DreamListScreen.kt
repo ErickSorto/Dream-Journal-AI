@@ -42,7 +42,7 @@ fun DreamsScreen(
     Box(){
 
         Image(modifier = Modifier.fillMaxSize(),
-            painter = painterResource(id = R.drawable.background_journal_ai),
+            painter = painterResource(id = R.drawable.blue_lighthouse),
             contentDescription = "Background", contentScale = ContentScale.Crop)
 
         Scaffold(
