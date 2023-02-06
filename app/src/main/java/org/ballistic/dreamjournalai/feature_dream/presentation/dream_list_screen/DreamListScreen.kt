@@ -1,6 +1,5 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen
 
-import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -90,7 +89,6 @@ fun DreamsScreen(
                     }
                 }
             }
-
         }
     }
 }

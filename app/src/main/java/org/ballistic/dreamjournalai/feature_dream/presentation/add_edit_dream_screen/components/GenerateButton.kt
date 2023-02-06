@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,11 +28,14 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_sc
 
 @OptIn(ExperimentalPagerApi::class, DelicateCoroutinesApi::class)
 @Composable
-fun GenerateButton(viewModel : AddEditDreamViewModel, state: PagerState) {
+fun GenerateButton(viewModel: AddEditDreamViewModel, state: PagerState) {
     val scope = rememberCoroutineScope()
     val dreamUiState = viewModel.dreamUiState
     if (dreamUiState.value.dreamContent.isNotBlank() && dreamUiState.value.dreamContent.length > 10) {
-        Box(contentAlignment = Alignment.BottomCenter) {
+        Box(
+            contentAlignment = Alignment.BottomCenter,
+            modifier = Modifier.background(Color.Transparent)
+        ) {
             Button(
                 onClick = {
                     scope.launch {
@@ -48,9 +52,8 @@ fun GenerateButton(viewModel : AddEditDreamViewModel, state: PagerState) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color.White.copy(alpha = 0.7f))
-
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color.White.copy(alpha = 0.7f)),
+                shape = RoundedCornerShape(10.dp)
             ) {
                 Text(
                     text = "Generate AI Response",
