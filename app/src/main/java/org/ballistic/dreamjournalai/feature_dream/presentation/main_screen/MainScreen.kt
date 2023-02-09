@@ -1,105 +1,98 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.main_screen
 
-import android.content.Context
+
 import androidx.compose.animation.*
-import androidx.compose.animation.core.estimateAnimationDurationMillis
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.FabPosition
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material.Scaffold
-import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
-
-
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.google.accompanist.insets.navigationBarsWithImePadding
-import com.google.accompanist.pager.ExperimentalPagerApi
+import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.delay
 import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.feature_dream.navigation.MainGraph
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
-import org.ballistic.dreamjournalai.onboarding.data.DataStoreRepository
 import org.ballistic.dreamjournalai.onboarding.presentation.viewmodel.SplashViewModel
-import javax.inject.Inject
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class
+)
 @Composable
 fun MainScreenView(
     mainScreenViewModel: MainScreenViewModel = hiltViewModel(),
     splashViewModel: SplashViewModel = hiltViewModel(),
-    onDataLoaded : () -> Unit
+    onDataLoaded: () -> Unit
 ) {
 
-  //  lateinit var splashViewModel: SplashViewModel
-//        installSplashScreen().setKeepOnScreenCondition {
-//            !splashViewModel.isLoading.value
-//        }
-
-    LaunchedEffect(key1 = Unit){
+    LaunchedEffect(key1 = Unit) {
         delay(1500)
         onDataLoaded()
     }
     val screen by splashViewModel.state
     val navController = rememberNavController()
-
-
+    Image(
+        painter = rememberAsyncImagePainter(model = R.drawable.blue_lighthouse),
+        modifier = Modifier.fillMaxSize(),
+        contentDescription = "Lighthouse",
+        contentScale = ContentScale.Crop
+    )
 
     Scaffold(
+        modifier = Modifier
+            .navigationBarsPadding()
+            .background(color = Color.Transparent),
         bottomBar = {
-            if (mainScreenViewModel.getBottomBarState()) {
-                AnimatedVisibility(
-                    visible = true,
-                )
-                {
-                    BottomNavigation(navController = navController)
+
+            AnimatedVisibility(
+                visible = mainScreenViewModel.getBottomBarState(),
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it })
+            )
+            {
+                BottomNavigation(navController = navController)
+                Box(modifier = Modifier.offset(y = 4.dp)
+                    .fillMaxWidth()) {
+                    FloatingActionButton(
+                        onClick = {
+                            navController.navigate(Screens.AddEditDreamScreen.route)
+                        },
+                        containerColor = colorResource(id = R.color.Yellow),
+                        elevation = FloatingActionButtonDefaults.elevation(3.dp, 4.dp),
+                        shape = CircleShape,
+                        modifier = Modifier
+                            .size(64.dp)
+                            .align(Alignment.Center)
+
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = "Add dream")
+                    }
                 }
             }
         },
         topBar = {
-                 AnimatedVisibility(visible = false) {
+            AnimatedVisibility(visible = false) {
 
-                 }
-        },
-        floatingActionButtonPosition = FabPosition.Center,
-        isFloatingActionButtonDocked = true,
-        floatingActionButton = {
-            if (mainScreenViewModel.getFloatingActionButtonState()) {
-                FloatingActionButton(
-                    onClick = {
-                        navController.navigate(Screens.AddEditDreamScreen.route)
-                    },
-                    containerColor = colorResource(id = R.color.Yellow),
-                    elevation = FloatingActionButtonDefaults.elevation(3.dp, 4.dp),
-                    shape = CircleShape,
-                    modifier = Modifier.size(64.dp)
-
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add dream")
-                }
             }
         },
-        modifier = Modifier.navigationBarsWithImePadding()
-    ) {
+        containerColor = Color.Transparent,
+
+        ) {
         it
-        AnimatedVisibility(visible = true) {
+        AnimatedVisibility(visible = true, enter = fadeIn(), exit = fadeOut()) {
             MainGraph(
                 navController = navController,
                 startDestination = screen.startDestination,

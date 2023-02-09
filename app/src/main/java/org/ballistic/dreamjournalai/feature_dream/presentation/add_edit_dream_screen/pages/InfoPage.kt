@@ -1,9 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages
 
-import android.media.Image
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -20,18 +18,10 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.accompanist.insets.navigationBarsWithImePadding
-import com.smarttoolfactory.animatedlist.AnimatedInfiniteLazyColumn
-import com.smarttoolfactory.animatedlist.AnimatedInfiniteLazyRow
-import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
-import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream.Companion.dreamBackgroundImages
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.DreamImageSelectionRow

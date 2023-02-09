@@ -18,8 +18,8 @@ android {
         applicationId "org.ballistic.dreamjournalai"
         minSdk 23
         targetSdk 33
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -57,6 +57,7 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
+    namespace 'org.ballistic.dreamjournalai'
 }
 
 
@@ -76,6 +77,9 @@ dependencies {
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
+    implementation "androidx.constraintlayout:constraintlayout-compose:1.0.1"
+    implementation("androidx.compose.material3:material3-window-size-class:1.0.1")
+
 
     implementation 'com.github.SmartToolFactory:Compose-AnimatedList:0.5.1'
 
@@ -116,9 +120,6 @@ dependencies {
     implementation("io.coil-kt:coil:2.2.2")
     implementation("io.coil-kt:coil-compose:2.2.2")
 
-    implementation "com.google.accompanist:accompanist-insets:0.23.1"
-    // If using insets-ui
-    implementation "com.google.accompanist:accompanist-insets-ui:0.23.1"
 
     //firebase
     implementation platform('com.google.firebase:firebase-bom:31.1.1')

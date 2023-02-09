@@ -2,8 +2,6 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_s
 
 sealed class AddEditDreamEvent{
     data class EnteredTitle(val value: String) : AddEditDreamEvent()
-//    data class ChangedFocusTitle(val focusState: FocusState) : AddEditDreamEvent()
-//    data class ChangedContentFocus(val focusState: FocusState) : AddEditDreamEvent()
     data class EnteredContent(val value: String) : AddEditDreamEvent()
     data class ChangeDreamBackgroundImage(val dreamBackGroundImage: Int) : AddEditDreamEvent()
     data class ChangeLucidity(val lucidity: Int) : AddEditDreamEvent()
@@ -22,4 +20,6 @@ sealed class AddEditDreamEvent{
     data class ChangeDetailsOfDream(val value: String) : AddEditDreamEvent()
 
     object SaveDream : AddEditDreamEvent()
+
+    object DeleteDream : AddEditDreamEvent()
 }

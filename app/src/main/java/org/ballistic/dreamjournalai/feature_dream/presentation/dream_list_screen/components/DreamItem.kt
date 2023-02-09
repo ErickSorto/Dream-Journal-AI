@@ -30,14 +30,15 @@ fun DreamItem(
     cornerRadius: Dp = 10.dp,
     onDeleteClick: () -> Unit
 ) {
-
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(cornerRadius))
             .background(Color.White.copy(alpha = 0.2f))
+
     ) {
         Row(
-            modifier = Modifier,
+            modifier = Modifier
+                .height(IntrinsicSize.Min),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -50,7 +51,6 @@ fun DreamItem(
                     .background(Color.Transparent)
 
             ) {
-
                 Image(
                     painter = rememberAsyncImagePainter(dream.backgroundImage),
                     contentDescription = "Color",
@@ -60,8 +60,8 @@ fun DreamItem(
             }
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(0.dp, 16.dp, 16.dp, 16.dp)
+                    .weight(1f)
+                    .padding(0.dp, 16.dp, 0.dp, 16.dp)
 
             ) {
                 Text(
@@ -82,17 +82,33 @@ fun DreamItem(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-
-            Image(
-                painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.baseline_delete_24),
-                contentDescription = "Delete",
+            Column(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .size(24.dp)
-                    .clickable {
-                        onDeleteClick()
-                    }
-            )
+                    .padding(8.dp)
+                    .fillMaxHeight(1f),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                //isFavorite
+                Image(
+                    painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.baseline_star_24),
+                    contentDescription = "Favorite",
+                    modifier = Modifier
+                        .size(24.dp),
+                    alignment = Alignment.TopCenter
+
+                )
+
+                Image(
+                    painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.baseline_delete_24),
+                    contentDescription = "Delete",
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable {
+                            onDeleteClick()
+                        },
+                    alignment = Alignment.BottomCenter
+                )
+            }
         }
     }
 }
