@@ -11,8 +11,8 @@ sealed class OnBoardingPage(
 ) {
     object First : OnBoardingPage(
         image = R.drawable.black_backgrownd,
-        title = "Meeting",
-        description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod."
+        title = "Dream Journal AI",
+        description = ""
     )
 
     object Second : OnBoardingPage(

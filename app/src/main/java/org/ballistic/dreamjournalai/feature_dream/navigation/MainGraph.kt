@@ -32,13 +32,10 @@ fun MainGraph(navController: NavHostController, startDestination: String, mainSc
         }
         //store
         composable(route = Screens.StoreScreen.route) {
-            StoreScreen(navController = navController,  mainScreenViewModel = mainScreenViewModel)
+            StoreScreen( mainScreenViewModel = mainScreenViewModel)
         }
-        composable(route = Screens.SignInScreen.route) {
-            Sign_In_Screen(
-                navController = navController,
-            )
-        }
+
+
         composable(
             route = Screens.AddEditDreamScreen.route +
                     "?dreamId={dreamId}&dreamImageBackground={dreamImageBackground}",

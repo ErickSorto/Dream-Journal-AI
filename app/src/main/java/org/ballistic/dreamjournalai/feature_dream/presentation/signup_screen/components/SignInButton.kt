@@ -2,10 +2,7 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.co
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -32,7 +29,8 @@ fun SignInButton(
 ) {
     Row(
         modifier = modifier
-            .padding(horizontal = 40.dp),
+            .padding(horizontal = 40.dp)
+            .fillMaxHeight(),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.Center
     ) {
@@ -41,7 +39,7 @@ fun SignInButton(
             visible = pagerState.currentPage == 2
         ) {
             Button(
-                modifier = Modifier.padding(bottom = 48.dp),
+                modifier = Modifier.padding(bottom = 16.dp),
                 shape = RoundedCornerShape(6.dp),
                 colors = ButtonDefaults.buttonColors(
                     backgroundColor = colorResource(R.color.LightGreen)

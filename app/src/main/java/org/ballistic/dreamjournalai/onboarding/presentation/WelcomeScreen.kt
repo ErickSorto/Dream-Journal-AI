@@ -16,12 +16,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.pager.*
 import com.google.android.gms.auth.api.identity.BeginSignInResult
 import com.google.android.gms.common.api.ApiException
@@ -46,6 +48,7 @@ fun WelcomeScreen(
 ) {
 
     mainScreenViewModel.setBottomBarState(false)
+    mainScreenViewModel.setFloatingActionButtonState(false)
 
 
     val pages = listOf(
@@ -54,6 +57,15 @@ fun WelcomeScreen(
         OnBoardingPage.Third
     )
     val pagerState = rememberPagerState()
+
+    Box(){
+        Image(
+            painter = rememberAsyncImagePainter(org.ballistic.dreamjournalai.R.drawable.blue_lighthouse),
+            contentDescription = "background",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(

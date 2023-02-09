@@ -1,17 +1,14 @@
 package org.ballistic.dreamjournalai.feature_dream.data.repository
 
-import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import org.ballistic.dreamjournalai.core.Constants.USERS
@@ -32,10 +29,9 @@ class DreamRepositoryImpl(
 
     private val dreamsCollection = getCollectionReferenceForDreams()
 
-
     override fun getDreams(): Flow<List<Dream>> {
         return callbackFlow {
-            val registration = getCollectionReferenceForDreams()?.addSnapshotListener { querySnapshot, exception ->
+            val registration = dreamsCollection?.addSnapshotListener { querySnapshot, exception ->
                 if (exception != null) {
                     // Handle error
                     return@addSnapshotListener
@@ -115,8 +111,6 @@ class DreamRepositoryImpl(
 
     override suspend fun insertDream(dream: Dream): Resource<Unit> {
         return try {
-            val currentUser = FirebaseAuth.getInstance().currentUser
-                ?: throw InvalidDreamException("Cannot insert dream, no current user found")
             var updatedDream = dream
             CoroutineScope(Dispatchers.IO).launch {
                 if (updatedDream.id == null) {
@@ -135,7 +129,7 @@ class DreamRepositoryImpl(
                     updatedDream = updatedDream.copy(generatedImage = downloadUrl.toString())
                 }
                 // Save the dream to Firestore
-                getCollectionReferenceForDreams()?.add(updatedDream)?.await()
+                dreamsCollection?.add(updatedDream)?.await()
             }
             Resource.Success(Unit)
         } catch (e: Exception) {
@@ -146,8 +140,7 @@ class DreamRepositoryImpl(
 
     override suspend fun deleteDream(id: String): Resource<Unit> {
         return try {
-            val dreamRef = db.collection("dreams").document(id)
-            dreamRef.delete().await()
+            dreamsCollection?.document(id)?.delete()?.await()
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error("Error deleting dream")

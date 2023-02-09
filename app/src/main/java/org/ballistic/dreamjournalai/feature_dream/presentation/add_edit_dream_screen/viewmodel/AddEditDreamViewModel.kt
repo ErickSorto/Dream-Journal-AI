@@ -1,7 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen
 
 import android.util.Log
-import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -28,6 +27,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
 
     var dreamUiState = mutableStateOf(DreamUiState())
         private set
+
+    val saveSuccess = mutableStateOf(false)
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
@@ -123,7 +124,6 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                         )
                     )
                 }
-
             }
 
             is AddEditDreamEvent.ChangeLucidity -> {
@@ -210,7 +210,11 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 )
             }
 
-            //primary key
+            is AddEditDreamEvent.DeleteDream -> {
+                viewModelScope.launch {
+                    dreamUseCases.deleteDream(SavedStateHandle()["dreamId"]!!)
+                }
+            }
 
 
             is AddEditDreamEvent.SaveDream -> {
@@ -236,8 +240,10 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                 generatedImage = dreamUiState.value.dreamAIImage.image,
                             )
                         )
+                        saveSuccess.value = true
                         _eventFlow.emit(UiEvent.SaveDream)
                     } catch (e: InvalidDreamException) {
+                        saveSuccess.value = false
                         _eventFlow.emit(UiEvent.ShowSnackBar(e.message ?: "Couldn't save dream"))
                     }
                 }
@@ -333,7 +339,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 ImagePrompt(
                     dreamUiState.value.dreamGeneratedDetails.response,
                     1,
-                    "1024x1024"
+                    "512x512"
                 )
             )
             result.collect { result ->

@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen
 
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.collectLatest
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.AlertSave
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TabLayout
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 
@@ -37,11 +39,18 @@ fun AddEditDreamScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val dialogState = remember { mutableStateOf(false) }
+
+
     mainScreenViewModel.setBottomBarState(false)
     mainScreenViewModel.setFloatingActionButtonState(false)
 
+    BackHandler {
+        dialogState.value = !dialogState.value
+    }
+
     val dreamBackgroundImage = remember {
-        mutableStateOf (
+        mutableStateOf(
             if (dreamImage != -1) dreamImage else viewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage
         )
     }
@@ -58,12 +67,14 @@ fun AddEditDreamScreen(
                     navController.navigateUp()
                 }
 
-                else -> {}
+
+                else -> {//to be added}
+                }
             }
         }
     }
 
-   Crossfade(targetState = dreamBackgroundImage.value) { image ->
+    Crossfade(targetState = dreamBackgroundImage.value) { image ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -78,7 +89,23 @@ fun AddEditDreamScreen(
                     .blur(10.dp)
             )
         }
-  }
+    }
+
+    if (dialogState.value) {
+        AlertSave(
+            onDismiss = {
+                navController.navigateUp()
+                dialogState.value = false
+            },
+            onConfirm = {
+                dialogState.value = false
+                viewModel.onEvent(AddEditDreamEvent.SaveDream)
+                if (viewModel.saveSuccess.value) {
+                    navController.navigateUp()
+                }
+            },
+        )
+    }
 
 
     Scaffold(
@@ -86,7 +113,9 @@ fun AddEditDreamScreen(
             CenterAlignedTopAppBar(
                 title = { Text(text = "Dream Journal AI") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton(onClick = {
+                        dialogState.value = true
+                    }) {
                         Icon(
                             modifier = Modifier.rotate(180f),
                             imageVector = Icons.Filled.ArrowRightAlt,
@@ -107,7 +136,8 @@ fun AddEditDreamScreen(
                     navigationIconContentColor = Color.Black,
                     titleContentColor = Color.Black,
                     actionIconContentColor = Color.Black
-                )
+                ),
+                modifier = Modifier.padding(bottom = 0.dp)
             )
         },
         snackbarHost = {
@@ -116,12 +146,13 @@ fun AddEditDreamScreen(
         containerColor = Color.Transparent,
 
         ) { padding ->
+        //change bottom to 0.dp in padding
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Transparent)
                 .padding(padding)
-
         ) {
             TabLayout(dreamBackgroundImage)
         }
