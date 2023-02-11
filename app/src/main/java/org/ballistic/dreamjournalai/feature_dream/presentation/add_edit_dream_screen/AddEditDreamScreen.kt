@@ -67,9 +67,7 @@ fun AddEditDreamScreen(
                     navController.navigateUp()
                 }
 
-
-                else -> {//to be added}
-                }
+                else -> {}
             }
         }
     }
@@ -104,9 +102,11 @@ fun AddEditDreamScreen(
                     navController.navigateUp()
                 }
             },
+            onClickOutside = {
+                dialogState.value = false
+            }
         )
     }
-
 
     Scaffold(
         topBar = {
@@ -137,7 +137,7 @@ fun AddEditDreamScreen(
                     titleContentColor = Color.Black,
                     actionIconContentColor = Color.Black
                 ),
-                modifier = Modifier.padding(bottom = 0.dp)
+                modifier = Modifier.padding()
             )
         },
         snackbarHost = {

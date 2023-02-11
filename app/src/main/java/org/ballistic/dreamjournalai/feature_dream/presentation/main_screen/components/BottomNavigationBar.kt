@@ -1,5 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.main_screen
-
+package org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,21 +11,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-
-
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
-
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
-import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.AuthViewModel
 
 @Composable
-fun BottomNavigation(navController: NavController, viewModel: AuthViewModel = hiltViewModel()) {
+fun BottomNavigation(navController: NavController) {
     val items = listOf(
         Screens.DreamListScreen,
         Screens.StoreScreen
@@ -54,8 +48,8 @@ fun BottomNavigation(navController: NavController, viewModel: AuthViewModel = hi
                     selected = currentRoute == item.route,
                     onClick = {
                         navController.navigate(item.route) {
-                            navController.graph.startDestinationRoute?.let { screen_route ->
-                                popUpTo(screen_route) {
+                            navController.graph.startDestinationRoute?.let { startDestinationRoute ->
+                                popUpTo(startDestinationRoute) {
                                     saveState = true
                                 }
                             }

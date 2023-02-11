@@ -9,13 +9,14 @@ import androidx.compose.runtime.Composable
 fun AlertSave(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
+    onClickOutside : () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = {
             // Dismiss the dialog when the user clicks outside the dialog or on the back
             // button. If you want to disable that functionality, simply use an empty
             // onDismissRequest.
-            onDismiss()
+            onClickOutside()
         },
         title = {
             Text(text = "Attention!")

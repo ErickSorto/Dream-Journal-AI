@@ -89,14 +89,27 @@ fun DreamItem(
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 //isFavorite
-                Image(
-                    painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.baseline_star_24),
-                    contentDescription = "Favorite",
-                    modifier = Modifier
-                        .size(24.dp),
-                    alignment = Alignment.TopCenter
 
-                )
+                if (dream.isLucid){
+                    Image(
+                        painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.lighthouse_vector),
+                        contentDescription = "Lucid",
+                        modifier = Modifier
+                            .size(24.dp),
+                        alignment = Alignment.TopCenter
+
+                    )
+                }
+
+                if (dream.isFavorite){
+                    Image(
+                        painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.baseline_star_24),
+                        contentDescription = "Favorite",
+                        modifier = Modifier
+                            .size(24.dp),
+                        alignment = Alignment.Center
+                    )
+                }
 
                 Image(
                     painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.baseline_delete_24),
