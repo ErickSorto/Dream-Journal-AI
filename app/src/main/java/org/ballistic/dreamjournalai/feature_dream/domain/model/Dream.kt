@@ -28,14 +28,16 @@ data class Dream(
 ): Parcelable {
     companion object { //backgroundssss
         val dreamBackgroundImages = listOf(
-            R.drawable.pink_river,
-            R.drawable.red_planet,
-            R.drawable.dark_blue_moon,
+            R.drawable.purple_lighthouse_background,
+            R.drawable.red_lighthouse_background,
+            R.drawable.dark_blue_lighthouse_background,
             R.drawable.blue_lighthouse,
-            R.drawable.green_mushroom,
-            R.drawable.white_snow,
-            R.drawable.gray_city,
-            R.drawable.yellow_cave
+            R.drawable.garden_lighthouse,
+            R.drawable.white_lighthouse_background,
+            R.drawable.gray_lighthouse_background,
+            R.drawable.yellow_lighthouse_background,
+            R.drawable.trippy_dreambackground,
+            R.drawable.ocean_lighthouse
             )
     }
     constructor():this("","","", "",false,false,false,false,false,0,0,0,"",0,null,"",null)

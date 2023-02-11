@@ -78,13 +78,15 @@ fun SubInfoMonthlyYearlyPrice() {
                 text = "\$3.33/month",
                 modifier = Modifier.padding(8.dp),
                 fontSize = 20.sp,
-                fontWeight = Bold
+                fontWeight = Bold,
+                color = Color.Black
             )
             Text(
                 text = "(39.99/year)",
                 modifier = Modifier.padding(8.dp),
                 fontSize = 20.sp,
-                fontWeight = Bold
+                fontWeight = Bold,
+                color = Color.Black
             )
         }
     }
@@ -125,30 +127,26 @@ fun SubInfoFeatures() {
                 shape = RoundedCornerShape(0.dp, 0.dp, 16.dp, 16.dp)
             )
             .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         CheckmarkAndText(
             text = "1200 Dream Tokens",
             subText = "(100 monthly)",
-            hasSubText = true,
             modifier = Modifier
         )
         CheckmarkAndText(
             text = "Access dictionary",
             subText = "(Coming Soon)",
-            hasSubText = true,
             modifier = Modifier
         )
         CheckmarkAndText(
             text = "Access AI recorder",
             subText = "(Coming Soon)",
-            hasSubText = true,
             modifier = Modifier
         )
         CheckmarkAndText(
             text = "No Ads",
             subText = "",
-            hasSubText = false,
             modifier = Modifier
         )
     }
@@ -193,7 +191,6 @@ fun SubscriptionTabText(
 fun CheckmarkAndText(
     text: String,
     subText: String,
-    hasSubText: Boolean,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -202,12 +199,12 @@ fun CheckmarkAndText(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Image(
-            painter = rememberAsyncImagePainter(org.ballistic.dreamjournalai.R.drawable.baseline_check_24),
+            painter = rememberAsyncImagePainter(R.drawable.baseline_check_24),
             contentDescription = "checkmark",
-            contentScale = ContentScale.FillBounds,
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .size(48.dp)
-                .padding(8.dp, 8.dp, 8.dp, 8.dp)
+                .padding(8.dp, 8.dp, 0.dp, 8.dp)
         )
         Text(text = text, fontSize = 16.sp, color = Color.White, fontWeight = Bold)
         Text(text = subText, fontSize = 12.sp, color = Color.White, fontWeight = Bold)

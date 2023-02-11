@@ -25,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.DreamImageSelectionRow
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.LucidFavoriteLayout
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +68,6 @@ fun InfoPage(
                 .background(Color.White.copy(alpha = 0.2f))
         ) {
             //row for isLucid
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -75,6 +75,7 @@ fun InfoPage(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                LucidFavoriteLayout()
                 Row {
                     Text(
                         text = "Lucid Dream", modifier = Modifier

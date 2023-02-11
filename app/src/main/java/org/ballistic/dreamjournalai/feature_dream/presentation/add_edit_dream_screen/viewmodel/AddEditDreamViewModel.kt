@@ -2,6 +2,7 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_s
 
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -29,6 +30,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
         private set
 
     val saveSuccess = mutableStateOf(false)
+
+    var dialogState =  mutableStateOf(false)
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()

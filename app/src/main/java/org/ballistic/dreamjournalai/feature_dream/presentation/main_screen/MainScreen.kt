@@ -25,6 +25,7 @@ import kotlinx.coroutines.delay
 import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.feature_dream.navigation.MainGraph
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.components.BottomNavigation
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 import org.ballistic.dreamjournalai.onboarding.presentation.viewmodel.SplashViewModel
 
@@ -52,9 +53,14 @@ fun MainScreenView(
     )
 
     Scaffold(
-        modifier = Modifier
-            .navigationBarsPadding()
-            .background(color = Color.Transparent),
+        modifier = if (!mainScreenViewModel.getBottomBarState()) {
+            Modifier
+                .padding(bottom = 16.dp)
+        } else {
+            Modifier
+                .navigationBarsPadding()
+        },
+
         bottomBar = {
 
             AnimatedVisibility(
