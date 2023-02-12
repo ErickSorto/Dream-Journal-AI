@@ -12,9 +12,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/dream_journal_ai_logo"
+        android:icon="@drawable/dream_journal_ai_lighthouse_logo"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/dream_journal_ai_logo"
+        android:roundIcon="@drawable/dream_journal_ai_lighthouse_logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.CustomSplashScreenTheme"
         tools:targetApi="31">
@@ -28,7 +28,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
     </application>
 
 </manifest>
