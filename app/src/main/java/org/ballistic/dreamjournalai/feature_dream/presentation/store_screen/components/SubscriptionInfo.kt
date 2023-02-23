@@ -248,7 +248,7 @@ fun AnnualButtonBuy(modifier: Modifier) {
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "Annual",
+                text = "500 DreamTokens",
                 fontSize = 20.sp,
                 fontWeight = Bold,
                 maxLines = 1,
@@ -262,7 +262,7 @@ fun AnnualButtonBuy(modifier: Modifier) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "\$39.99/year",
+                    text = "\$19.99",
                     fontSize = 20.sp,
                     fontWeight = Bold,
                     maxLines = 1,
@@ -298,7 +298,7 @@ fun MonthlyButtonBuy(modifier: Modifier) {
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "Monthly",
+                text = "100 DreamTokens",
                 fontSize = 20.sp,
                 fontWeight = Bold,
                 maxLines = 1,
@@ -309,7 +309,7 @@ fun MonthlyButtonBuy(modifier: Modifier) {
 
             Column(modifier = Modifier.align(Alignment.CenterEnd)) {
                 Text(
-                    text = "\$5.99/month",
+                    text = "\$5.99",
                     fontSize = 20.sp,
                     fontWeight = Bold,
                     maxLines = 1,

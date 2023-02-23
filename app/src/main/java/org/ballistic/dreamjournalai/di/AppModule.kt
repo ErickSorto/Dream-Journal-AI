@@ -48,7 +48,6 @@ object AppModule {
             deleteDream = DeleteDream(repository),
             addDream = AddDream(repository),
             getDream = GetDream(repository)
-
         )
     }
 

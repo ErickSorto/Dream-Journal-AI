@@ -34,9 +34,6 @@ fun DescriptionPage(
     val contentState = viewModel.dreamUiState.value.dreamContent
     val dreamUiState = viewModel.dreamUiState
 
-
-
-
     Column(
         modifier = Modifier
             .background(color = Color.Transparent)
