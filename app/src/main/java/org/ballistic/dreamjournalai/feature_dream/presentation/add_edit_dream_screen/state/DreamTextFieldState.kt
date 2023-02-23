@@ -4,5 +4,4 @@ data class DreamTextFieldState (
     val text: String = "",
     val hint: String = "",
     val isHintVisible: Boolean = true) {
-
 }
