@@ -30,7 +30,10 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
 
     val saveSuccess = mutableStateOf(false)
 
-    var dialogState =  mutableStateOf(false)
+    var dialogState = mutableStateOf(false)
+
+    var imageGenerationPopUpState = mutableStateOf(false)
+    var dreamInterpretationPopUpState = mutableStateOf(false)
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
@@ -110,11 +113,40 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 )
             }
             is AddEditDreamEvent.ClickGenerateAIResponse -> {
-                getAIResponse()
+                if (dreamUiState.value.dreamContent.length >= 10) {
+                    getAIResponse()
+                } else {
+                    //snack bar
+                    viewModelScope.launch {
+                        if (dreamUiState.value.dreamContent.length in 1..9) {
+                            _eventFlow.emit(
+                                UiEvent.ShowSnackBar(
+                                    "Dream content too short"
+                                )
+                            )
+                        } else if (dreamUiState.value.dreamContent.isEmpty()) {
+                            _eventFlow.emit(
+                                UiEvent.ShowSnackBar(
+                                    "Dream content is empty"
+                                )
+                            )
+                        }
+                    }
+                }
             }
 
-            is AddEditDreamEvent.CLickGenerateAIImage -> {
-                getOpenAIImageResponse()
+            is AddEditDreamEvent.ClickGenerateAIImage -> {
+                if (dreamUiState.value.dreamGeneratedDetails.response.isNotEmpty()){
+                    getOpenAIImageResponse()
+                } else {
+                    viewModelScope.launch {
+                        _eventFlow.emit(
+                            UiEvent.ShowSnackBar(
+                                "Please add image details"
+                            )
+                        )
+                    }
+                }
             }
             is AddEditDreamEvent.ClickGenerateDetails -> {
                 if (dreamUiState.value.dreamContent.length >= 1000) {
@@ -259,6 +291,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     }
 
     private fun getAIResponse() {
+
         viewModelScope.launch {
             val result = getOpenAITextResponse(
                 Prompt(

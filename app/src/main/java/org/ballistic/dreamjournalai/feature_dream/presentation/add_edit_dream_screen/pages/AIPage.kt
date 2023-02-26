@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,9 +23,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
+import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.ArcRotationAnimation
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.GenerateButton
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.*
 
 
 @OptIn(ExperimentalPagerApi::class)
@@ -39,6 +41,44 @@ fun AIPage(
     val detailState = viewModel.dreamUiState.value.dreamGeneratedDetails
     val infiniteTransition = rememberInfiniteTransition()
     val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
+
+
+    if (viewModel.imageGenerationPopUpState.value) {
+            ImageGenerationPopUp(
+                onDismiss = {
+                    viewModel.imageGenerationPopUpState.value = false
+                },
+                onConfirm = {
+                    viewModel.imageGenerationPopUpState.value = false
+                    scope.launch {
+                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIImage(viewModel.dreamUiState.value.dreamGeneratedDetails.response))
+                    }
+                },
+                onClickOutside = {
+                    viewModel.imageGenerationPopUpState.value = false
+                },
+                pagerState = state,
+            )
+    }
+
+    if (viewModel.dreamInterpretationPopUpState.value) {
+        DreamInterpretationPopUp(
+            onDismiss = {
+                viewModel.dreamInterpretationPopUpState.value = false
+            },
+            onConfirm = {
+                viewModel.dreamInterpretationPopUpState.value = false
+                scope.launch {
+                    viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamUiState.value.dreamGeneratedDetails.response))
+                }
+            },
+            onClickOutside = {
+                viewModel.dreamInterpretationPopUpState.value = false
+            },
+            pagerState = state,
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -101,6 +141,6 @@ fun AIPage(
             }
         }
 
-        GenerateButton(viewModel = viewModel, state = state)
+        GenerateButtonsLayout(viewModel = viewModel, state = state)
     }
 }

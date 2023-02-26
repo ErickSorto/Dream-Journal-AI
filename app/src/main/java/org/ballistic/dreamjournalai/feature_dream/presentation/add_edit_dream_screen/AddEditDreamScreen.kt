@@ -25,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.collectLatest
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.AlertSave
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.ImageGenerationPopUp
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TabLayout
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 
@@ -39,14 +40,14 @@ fun AddEditDreamScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val dialogState = remember { mutableStateOf(false) }
+
 
 
     mainScreenViewModel.setBottomBarState(false)
     mainScreenViewModel.setFloatingActionButtonState(false)
 
     BackHandler {
-        dialogState.value = !dialogState.value
+        viewModel.dialogState.value = !viewModel.dialogState.value
     }
 
     val dreamBackgroundImage = remember {
@@ -89,24 +90,26 @@ fun AddEditDreamScreen(
         }
     }
 
-    if (dialogState.value) {
+    if (viewModel.dialogState.value) {
         AlertSave(
             onDismiss = {
                 navController.navigateUp()
-                dialogState.value = false
+                viewModel.dialogState.value = false
             },
             onConfirm = {
-                dialogState.value = false
+                viewModel.dialogState.value = false
                 viewModel.onEvent(AddEditDreamEvent.SaveDream)
                 if (viewModel.saveSuccess.value) {
                     navController.navigateUp()
                 }
             },
             onClickOutside = {
-                dialogState.value = false
+                viewModel.dialogState.value = false
             }
         )
     }
+
+
 
     Scaffold(
         topBar = {
@@ -114,7 +117,7 @@ fun AddEditDreamScreen(
                 title = { Text(text = "Dream Journal AI") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        dialogState.value = true
+                        viewModel.dialogState.value = true
                     }) {
                         Icon(
                             modifier = Modifier.rotate(180f),
