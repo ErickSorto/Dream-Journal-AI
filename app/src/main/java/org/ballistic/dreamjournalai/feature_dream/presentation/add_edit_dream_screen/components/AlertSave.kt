@@ -22,7 +22,7 @@ fun AlertSave(
             Text(text = "Attention!")
         },
         text = {
-            Text(text = "You did not save your dream yet. Do you want to save it?")
+            Text(text = "You did not save your dream yet. Do you wish to save it?")
         },
         confirmButton = {
             TextButton(
