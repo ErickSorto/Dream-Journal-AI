@@ -2,18 +2,22 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.main_screen
 
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
@@ -25,6 +29,7 @@ import kotlinx.coroutines.delay
 import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.feature_dream.navigation.MainGraph
 import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TransparentHintTextField
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.components.BottomNavigation
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 import org.ballistic.dreamjournalai.onboarding.presentation.viewmodel.SplashViewModel
@@ -39,12 +44,16 @@ fun MainScreenView(
     onDataLoaded: () -> Unit
 ) {
 
+
     LaunchedEffect(key1 = Unit) {
         delay(1500)
         onDataLoaded()
     }
+
     val screen by splashViewModel.state
     val navController = rememberNavController()
+
+
     Image(
         painter = rememberAsyncImagePainter(model = R.drawable.blue_lighthouse),
         modifier = Modifier.fillMaxSize(),
@@ -60,6 +69,104 @@ fun MainScreenView(
             Modifier
                 .navigationBarsPadding()
         },
+        snackbarHost = {
+            SnackbarHost(mainScreenViewModel.snackbarHostState.value)
+        },
+        topBar = {
+            AnimatedVisibility(
+                visible = mainScreenViewModel.getTopBarState(),
+                enter = slideInVertically(initialOffsetY = { -it }),
+                exit = fadeOut()
+            ) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                        ){
+                            if (!mainScreenViewModel.getSearchingState()) {
+                                Text(
+                                    text = "Dream Journal",
+                                    color = Color.Black,
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .padding(start = 16.dp)
+                                )
+                            }
+
+
+                            AnimatedVisibility(
+                                visible = mainScreenViewModel.getSearchingState(),
+                                //slide from left to right
+                                enter = slideInHorizontally(
+                                    initialOffsetX = { it },
+                                    animationSpec = tween(500)
+                                ),
+                                exit = slideOutHorizontally(
+                                    targetOffsetX = { -it - 400 },
+                                    animationSpec = tween(500)
+                                ),
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .padding(start = 16.dp, end = 16.dp)
+
+                            ) {
+                                TransparentHintTextField(
+                                    text = "",
+                                    hint = "Search dream...",
+                                    onValueChange = {
+
+                                    },
+                                    onFocusChange = {
+
+                                    },
+                                    isHintVisible = true,
+                                    singleLine = true,
+                                    textStyle = MaterialTheme.typography.headlineSmall,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color.White.copy(alpha = 0.4f))
+                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                                        .fillMaxWidth()
+                                        .padding(4.dp)
+                                )
+                            }
+                        }
+                    },
+//                    navigationIcon = {
+//                        Icon(
+//                            Icons.Filled.Menu,
+//                            contentDescription = "Menu",
+//                            tint = Color.Black,
+//                            modifier = Modifier.padding(start = 16.dp)
+//                        )
+//                    },
+                    actions = {
+                        IconButton(
+                            onClick = {
+                                mainScreenViewModel.setSearchingState(!mainScreenViewModel.getSearchingState())
+                            },
+                            modifier = Modifier.padding(end = 16.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Search,
+                                contentDescription = "Search",
+                                tint = Color.Black
+                            )
+                        }
+
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        //animate content color
+                        containerColor = Color.White.copy(alpha = 0.4f),
+                        navigationIconContentColor = Color.Black,
+                        titleContentColor = Color.Black,
+                        actionIconContentColor = Color.Black
+                    ),
+                )
+            }
+        },
 
         bottomBar = {
 
@@ -70,8 +177,11 @@ fun MainScreenView(
             )
             {
                 BottomNavigation(navController = navController)
-                Box(modifier = Modifier.offset(y = 4.dp)
-                    .fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .offset(y = 4.dp)
+                        .fillMaxWidth()
+                ) {
                     FloatingActionButton(
                         onClick = {
                             navController.navigate(Screens.AddEditDreamScreen.route)
@@ -89,20 +199,16 @@ fun MainScreenView(
                 }
             }
         },
-        topBar = {
-            AnimatedVisibility(visible = false) {
-
-            }
-        },
         containerColor = Color.Transparent,
 
-        ) {
-        it
+        ) { innerPadding ->
+
         AnimatedVisibility(visible = true, enter = fadeIn(), exit = fadeOut()) {
             MainGraph(
                 navController = navController,
                 startDestination = screen.startDestination,
                 mainScreenViewModel = mainScreenViewModel,
+                innerPadding = innerPadding
             )
         }
     }

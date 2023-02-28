@@ -20,6 +20,8 @@ fun StoreScreen(
 ) {
     mainScreenViewModel.setBottomBarState(true)
     mainScreenViewModel.setFloatingActionButtonState(true)
+    mainScreenViewModel.setTopBarState(false)
+    
     Box(modifier = Modifier.fillMaxSize()) {
         SubscriptionInfo(modifier = Modifier.padding(16.dp))
 

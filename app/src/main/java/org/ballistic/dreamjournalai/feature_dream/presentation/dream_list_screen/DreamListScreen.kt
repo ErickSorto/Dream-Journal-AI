@@ -26,66 +26,48 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewm
 fun DreamsScreen(
     navController: NavController,
     viewModel: DreamsViewModel = hiltViewModel(),
-    mainScreenViewModel: MainScreenViewModel
+    mainScreenViewModel: MainScreenViewModel,
+    innerPadding: PaddingValues = PaddingValues()
 ) {
     val state = viewModel.state.value
-    val snackbarHostState = remember { SnackbarHostState() }
+
     val scope = rememberCoroutineScope()
 
     mainScreenViewModel.setBottomBarState(true)
     mainScreenViewModel.setFloatingActionButtonState(true)
+    mainScreenViewModel.setTopBarState(true)
 
-    Scaffold(
-        snackbarHost = {
-            SnackbarHost(snackbarHostState)
-        },
-        containerColor = Color.Transparent,
-        modifier = Modifier.navigationBarsPadding(),
-        bottomBar = {}
-    )
-    { padding ->
-        Column(
-            modifier = Modifier
-                .padding(
-                    top = padding.calculateTopPadding(),
-                    bottom = padding.calculateBottomPadding()
-                )
-                .fillMaxSize()
-                .background(color = Color.Transparent)
-        ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = padding.calculateTopPadding())
-            ) {
-                items(state.dreams) { dream ->
-                    DreamItem(
-                        dream = dream,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp)
-                            .padding(horizontal = 16.dp)
-                            .clickable {
-                                navController.navigate(
-                                    Screens.AddEditDreamScreen.route +
-                                            "?dreamId=${dream.id}&dreamImageBackground=${dream.backgroundImage}"
-                                )
-                            },
-                        onDeleteClick = {
-                            scope.launch {
-                                viewModel.onEvent(DreamsEvent.DeleteDream(dream))
-                                val result = snackbarHostState.showSnackbar(
-                                    message = "Dream deleted",
-                                    actionLabel = "Undo"
-                                )
-                                if (result == SnackbarResult.ActionPerformed) {
-                                    viewModel.onEvent(DreamsEvent.RestoreDream)
-                                }
-                            }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(top = 16.dp),
+        contentPadding = innerPadding,
+    ) {
+        items(state.dreams) { dream ->
+            DreamItem(
+                dream = dream,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+                    .padding(horizontal = 16.dp)
+                    .clickable {
+                        navController.navigate(
+                            Screens.AddEditDreamScreen.route +
+                                    "?dreamId=${dream.id}&dreamImageBackground=${dream.backgroundImage}"
+                        )
+                    },
+                onDeleteClick = {
+                    scope.launch {
+                        viewModel.onEvent(DreamsEvent.DeleteDream(dream))
+                        val result = mainScreenViewModel.snackbarHostState.value.showSnackbar(
+                            message = "Dream deleted",
+                            actionLabel = "Undo"
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            viewModel.onEvent(DreamsEvent.RestoreDream)
                         }
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
-            }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
