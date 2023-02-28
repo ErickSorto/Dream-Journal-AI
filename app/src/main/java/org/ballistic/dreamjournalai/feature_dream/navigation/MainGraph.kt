@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.navigation
 
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -17,7 +18,12 @@ import org.ballistic.dreamjournalai.onboarding.presentation.WelcomeScreen
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
 @Composable
-fun MainGraph(navController: NavHostController, startDestination: String, mainScreenViewModel: MainScreenViewModel) {
+fun MainGraph(
+    navController: NavHostController,
+    startDestination: String,
+    mainScreenViewModel: MainScreenViewModel,
+    innerPadding: PaddingValues
+) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -28,11 +34,11 @@ fun MainGraph(navController: NavHostController, startDestination: String, mainSc
         }
 
         composable(route = Screens.DreamListScreen.route) {
-            DreamsScreen(navController = navController, mainScreenViewModel = mainScreenViewModel)
+            DreamsScreen(navController = navController, mainScreenViewModel = mainScreenViewModel, innerPadding = innerPadding)
         }
         //store
         composable(route = Screens.StoreScreen.route) {
-            StoreScreen( mainScreenViewModel = mainScreenViewModel)
+            StoreScreen(mainScreenViewModel = mainScreenViewModel)
         }
 
 

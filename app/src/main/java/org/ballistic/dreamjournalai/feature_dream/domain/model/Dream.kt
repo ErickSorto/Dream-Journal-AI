@@ -26,6 +26,16 @@ data class Dream(
     val generatedDetails: String,
     val id: String?
 ): Parcelable {
+
+    fun doesMatchSearchQuery(query: String): Boolean {
+        val matchingCombination = listOf(
+            title,
+            content,
+            "$title $content",
+            "$content $title"
+        )
+        return matchingCombination.any { it.contains(query, true) }
+    }
     companion object { //backgroundssss
         val dreamBackgroundImages = listOf(
             R.drawable.purple_lighthouse_background,

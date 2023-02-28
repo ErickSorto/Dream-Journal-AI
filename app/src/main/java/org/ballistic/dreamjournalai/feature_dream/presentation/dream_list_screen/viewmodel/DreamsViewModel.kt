@@ -8,9 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.core.Resource
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
@@ -29,6 +27,12 @@ class DreamsViewModel @Inject constructor(
 
     private val _state = mutableStateOf(DreamsState())
     val state: State<DreamsState> = _state
+
+    private val _searchDreams = MutableStateFlow("")
+    val searchDreams: StateFlow<String> = _searchDreams.asStateFlow()
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
 
     private var recentlyDeletedDream: Dream? = null
 
@@ -66,14 +70,28 @@ class DreamsViewModel @Inject constructor(
         }
     }
 
-    private fun getDreams(dreamOrder: DreamOrder){
+    fun onSearchChange(text: String) {
+        _searchDreams.value = text
+        _isSearching.value = true
+        getDreams(state.value.dreamOrder)
+        _isSearching.value = false
+    }
+
+    private fun getDreams(dreamOrder: DreamOrder) {
         getDreamJob?.cancel()
         getDreamJob = dreamUseCases.getDreams(dreamOrder).onEach { dreams ->
+            val filteredDreams = if (searchDreams.value.isBlank()) {
+                dreams
+            } else {
+                dreams.filter { it.doesMatchSearchQuery(searchDreams.value) }
+            }
             _state.value = state.value.copy(
-                dreams = dreams,
+                dreams = filteredDreams,
                 dreamOrder = dreamOrder,
+                searchText = searchDreams.value
             )
         }.launchIn(viewModelScope)
     }
 }
+
 

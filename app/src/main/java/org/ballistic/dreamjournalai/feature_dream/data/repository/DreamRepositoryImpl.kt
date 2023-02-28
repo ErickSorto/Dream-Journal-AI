@@ -26,7 +26,6 @@ class DreamRepositoryImpl(
     private val db: FirebaseFirestore
 ) : DreamRepository {
 
-
     private val dreamsCollection = getCollectionReferenceForDreams()
 
     override fun getDreams(): Flow<List<Dream>> {
@@ -111,11 +110,34 @@ class DreamRepositoryImpl(
 
     override suspend fun insertDream(dream: Dream): Resource<Unit> {
         return try {
-            var updatedDream = dream
-            CoroutineScope(Dispatchers.IO).launch {
-                if (updatedDream.id == null) {
+            val existingDream = getDream(dream.id ?: "")
+            if (existingDream is Resource.Success && existingDream.data != null) {
+                // Dream already exists, update it
+                val updatedDream = existingDream.data.copy(
+                    title = dream.title,
+                    content = dream.content,
+                    timestamp = dream.timestamp,
+                    AIResponse = dream.AIResponse,
+                    isFavorite = dream.isFavorite,
+                    isLucid = dream.isLucid,
+                    isNightmare = dream.isNightmare,
+                    isRecurring = dream.isRecurring,
+                    falseAwakening = dream.falseAwakening,
+                    lucidityRating = dream.lucidityRating,
+                    moodRating = dream.moodRating,
+                    vividnessRating = dream.vividnessRating,
+                    timeOfDay = dream.timeOfDay,
+                    backgroundImage = dream.backgroundImage,
+                    generatedImage = dream.generatedImage,
+                    generatedDetails = dream.generatedDetails
+                )
+                dreamsCollection?.document(dream.id ?: "")?.set(updatedDream)?.await()
+            } else {
+                // Dream does not exist, insert it
+                var newDream = dream
+                if (newDream.id == null) {
                     val newDreamRef = getCollectionReferenceForDreams()?.document()
-                    updatedDream = updatedDream.copy(id = newDreamRef?.id)
+                    newDream = newDream.copy(id = newDreamRef?.id)
                 }
                 if (dream.generatedImage != null && !dream.generatedImage.startsWith("gs://")) {
                     val storageRef = FirebaseStorage.getInstance().reference
@@ -126,10 +148,9 @@ class DreamRepositoryImpl(
                     val uploadTask = imageRef.putBytes(imageBytes)
                     uploadTask.await()
                     val downloadUrl = imageRef.downloadUrl.await()
-                    updatedDream = updatedDream.copy(generatedImage = downloadUrl.toString())
+                    newDream = newDream.copy(generatedImage = downloadUrl.toString())
                 }
-                // Save the dream to Firestore
-                dreamsCollection?.add(updatedDream)?.await()
+                dreamsCollection?.add(newDream)?.await()
             }
             Resource.Success(Unit)
         } catch (e: Exception) {
@@ -137,9 +158,16 @@ class DreamRepositoryImpl(
         }
     }
 
-
     override suspend fun deleteDream(id: String): Resource<Unit> {
         return try {
+            val dream = getDream(id)
+            if (dream is Resource.Success && dream.data != null && dream.data.generatedImage != null) {
+                // Dream has a generated image, delete it from Firebase Storage
+                val storageRef = storage.reference
+                val imageRef = storageRef.child(dream.data.generatedImage)
+                imageRef.delete().await()
+            }
+            // Delete dream from Firebase Firestore
             dreamsCollection?.document(id)?.delete()?.await()
             Resource.Success(Unit)
         } catch (e: Exception) {

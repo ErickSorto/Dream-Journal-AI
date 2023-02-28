@@ -40,11 +40,9 @@ fun AddEditDreamScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-
-
-
     mainScreenViewModel.setBottomBarState(false)
     mainScreenViewModel.setFloatingActionButtonState(false)
+    mainScreenViewModel.setTopBarState(false)
 
     BackHandler {
         viewModel.dialogState.value = !viewModel.dialogState.value
