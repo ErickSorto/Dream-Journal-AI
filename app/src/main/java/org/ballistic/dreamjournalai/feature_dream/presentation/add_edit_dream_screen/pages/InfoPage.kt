@@ -1,5 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,18 +24,72 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.maxkeppeler.sheets.calendar.CalendarDialog
+import com.maxkeppeler.sheets.calendar.models.CalendarConfig
+import com.maxkeppeler.sheets.calendar.models.CalendarSelection
+import com.maxkeppeler.sheets.clock.ClockDialog
+import com.maxkeppeler.sheets.clock.models.ClockConfig
+import com.maxkeppeler.sheets.clock.models.ClockSelection
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.DateAndTimeButtonsLayout
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.DreamImageSelectionRow
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.LucidFavoriteLayout
+import java.time.Clock
+import java.time.LocalTime
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InfoPage(
     dreamBackgroundImage: MutableState<Int>,
     viewModel: AddEditDreamViewModel = hiltViewModel(),
 ) {
+    CalendarDialog(state = viewModel.calendarState, config = CalendarConfig(
+        monthSelection = true,
+        yearSelection = true,
+    ), selection = CalendarSelection.Date { date ->
+        viewModel.onEvent(
+            AddEditDreamEvent.ChangeDreamDate(
+                date
+            )
+        )
+    })
+    ClockDialog(state = viewModel.sleepTimePickerState,
+        config = ClockConfig(
+            //default time 12:00am
+            defaultTime = Clock.systemDefaultZone().instant().atZone(Clock.systemDefaultZone().zone).toLocalTime(),
+            is24HourFormat = false,
+            ),
+        selection = ClockSelection.HoursMinutes { hour, minute ->
+            val hourFormat = if (hour > 12) hour - 12 else hour
+            val minuteFormat = if (minute == 0) "00" else minute
+            viewModel.onEvent(
+                AddEditDreamEvent.ChangeDreamSleepTime(
+                    LocalTime.of(hour, minute)
+                )
+            )
+        }
+    )
+
+    ClockDialog(state = viewModel.wakeTimePickerState,
+        config = ClockConfig(
+            //default time 12:00am
+            defaultTime = Clock.systemDefaultZone().instant().atZone(Clock.systemDefaultZone().zone).toLocalTime(),
+            is24HourFormat = false,
+
+            ),
+        selection = ClockSelection.HoursMinutes { hour, minute ->
+            val hourFormat = if (hour > 12) hour - 12 else hour
+            val minuteFormat = if (minute == 0) "00" else minute
+            viewModel.onEvent(
+                AddEditDreamEvent.ChangeDreamWakeTime(
+                    LocalTime.of(hour, minute)
+                )
+            )
+        }
+    )
 
     Column(
         modifier = Modifier
@@ -48,7 +104,8 @@ fun InfoPage(
         ) {
             Column {
                 Text(
-                    text = "Dream Background", modifier = Modifier
+                    text = "Dream Background",
+                    modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
                         .padding(16.dp, 16.dp, 16.dp, 0.dp), //bold
@@ -56,7 +113,9 @@ fun InfoPage(
                     textAlign = TextAlign.Center
                 )
 
-                DreamImageSelectionRow(viewModel = viewModel, dreamBackgroundImage = dreamBackgroundImage)
+                DreamImageSelectionRow(
+                    viewModel = viewModel, dreamBackgroundImage = dreamBackgroundImage
+                )
             }
         }
 
@@ -76,11 +135,14 @@ fun InfoPage(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 LucidFavoriteLayout()
+                DateAndTimeButtonsLayout()
                 Row {
                     Text(
-                        text = "Lucid Dream", modifier = Modifier
+                        text = "Lucid Dream",
+                        modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
-                            .padding(16.dp, 0.dp, 16.dp, 0.dp), style = typography.bodyLarge
+                            .padding(16.dp, 0.dp, 16.dp, 0.dp),
+                        style = typography.bodyLarge
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -105,7 +167,8 @@ fun InfoPage(
                 //row for isNightmare
                 Row {
                     Text(
-                        text = "Nightmare", modifier = Modifier
+                        text = "Nightmare",
+                        modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
                             .padding(16.dp, 0.dp, 16.dp, 0.dp),
                         style = typography.bodyLarge
@@ -132,7 +195,8 @@ fun InfoPage(
                 //isRecurring
                 Row {
                     Text(
-                        text = "Recurring Dream", modifier = Modifier
+                        text = "Recurring Dream",
+                        modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
                             .padding(16.dp, 0.dp, 16.dp, 0.dp),
                         style = typography.bodyLarge
@@ -160,7 +224,8 @@ fun InfoPage(
                 //row for false awakenings
                 Row {
                     Text(
-                        text = "False Awakening", modifier = Modifier
+                        text = "False Awakening",
+                        modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
                             .padding(16.dp, 0.dp, 16.dp, 0.dp),
                         style = typography.bodyLarge

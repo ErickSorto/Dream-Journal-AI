@@ -87,7 +87,7 @@ fun MainScreenView(
                         ){
                             if (!mainScreenViewModel.getSearchingState()) {
                                 Text(
-                                    text = "Dream Journal",
+                                    text = "Dream Journal AI",
                                     color = Color.Black,
                                     modifier = Modifier
                                         .align(Alignment.Center)
