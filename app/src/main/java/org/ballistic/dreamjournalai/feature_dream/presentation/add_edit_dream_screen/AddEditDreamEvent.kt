@@ -1,6 +1,9 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen
 
-sealed class AddEditDreamEvent{
+import java.time.LocalDate
+import java.time.LocalTime
+
+sealed class AddEditDreamEvent {
     data class EnteredTitle(val value: String) : AddEditDreamEvent()
     data class EnteredContent(val value: String) : AddEditDreamEvent()
     data class ChangeDreamBackgroundImage(val dreamBackGroundImage: Int) : AddEditDreamEvent()
@@ -18,6 +21,10 @@ sealed class AddEditDreamEvent{
     data class ClickGenerateDetails(val value: String) : AddEditDreamEvent()
     data class ClickGenerateFromDescription(val value: Boolean) : AddEditDreamEvent()
     data class ChangeDetailsOfDream(val value: String) : AddEditDreamEvent()
+
+    data class ChangeDreamWakeTime(val value: LocalTime) : AddEditDreamEvent()
+    data class ChangeDreamSleepTime(val value: LocalTime) : AddEditDreamEvent()
+    data class ChangeDreamDate(val value: LocalDate) : AddEditDreamEvent()
 
     object SaveDream : AddEditDreamEvent()
 

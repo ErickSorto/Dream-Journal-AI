@@ -1,10 +1,14 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.maxkeppeker.sheets.core.models.base.SheetState
+import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -15,8 +19,12 @@ import org.ballistic.dreamjournalai.feature_dream.domain.model.*
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.GetOpenAIImageGeneration
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.GetOpenAITextResponse
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
+@RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class AddEditDreamViewModel @Inject constructor( //add ai state later on
     private val dreamUseCases: DreamUseCases,
@@ -31,6 +39,10 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     val saveSuccess = mutableStateOf(false)
 
     var dialogState = mutableStateOf(false)
+    var calendarState = SheetState()
+    var sleepTimePickerState = SheetState()
+    var wakeTimePickerState = SheetState()
+
 
     var imageGenerationPopUpState = mutableStateOf(false)
     var dreamInterpretationPopUpState = mutableStateOf(false)
@@ -60,6 +72,9 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                         dreamIsNightmare = dream.isNightmare,
                                         dreamIsRecurring = dream.isRecurring,
                                         dreamIsFalseAwakening = dream.falseAwakening,
+                                        dreamSleepTime = dream.sleepTime,
+                                        dreamWakeTime = dream.wakeTime,
+                                        dreamDate = dream.date,
                                         dreamTimeOfDay = dream.timeOfDay,
                                         dreamLucidity = dream.lucidityRating,
                                         dreamVividness = dream.vividnessRating,
@@ -91,6 +106,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun onEvent(event: AddEditDreamEvent) {
         when (event) {
             is AddEditDreamEvent.EnteredTitle -> {
@@ -136,7 +152,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             }
 
             is AddEditDreamEvent.ClickGenerateAIImage -> {
-                if (dreamUiState.value.dreamGeneratedDetails.response.isNotEmpty()){
+                if (dreamUiState.value.dreamGeneratedDetails.response.isNotEmpty()) {
                     getOpenAIImageResponse()
                 } else {
                     viewModelScope.launch {
@@ -249,7 +265,37 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                     dreamUseCases.deleteDream(SavedStateHandle()["dreamId"]!!)
                 }
             }
+            is AddEditDreamEvent.ChangeDreamDate -> {
+                val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
+                val formattedDate = event.value.format(formatter)
+                dreamUiState.value = dreamUiState.value.copy(
+                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                        dreamDate = formattedDate
+                    )
+                )
+            }
+            is AddEditDreamEvent.ChangeDreamWakeTime -> {
+                val formatter = DateTimeFormatter.ofPattern(
+                    if (event.value.hour < 10) "h:mm a" else "hh:mm a"
+                )
 
+                dreamUiState.value = dreamUiState.value.copy(
+                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                        dreamWakeTime = event.value.format(formatter)
+                    )
+                )
+            }
+            is AddEditDreamEvent.ChangeDreamSleepTime -> {
+                val formatter = DateTimeFormatter.ofPattern(
+                    if (event.value.hour < 10) "h:mm a" else "hh:mm a"
+                )
+
+                dreamUiState.value = dreamUiState.value.copy(
+                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                        dreamSleepTime = event.value.format(formatter)
+                    )
+                )
+            }
 
             is AddEditDreamEvent.SaveDream -> {
                 viewModelScope.launch {
@@ -260,6 +306,9 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                 content = dreamUiState.value.dreamContent,
                                 backgroundImage = dreamUiState.value.dreamInfo.dreamBackgroundImage,
                                 id = dreamUiState.value.dreamInfo.dreamId,
+                                sleepTime = dreamUiState.value.dreamInfo.dreamSleepTime,
+                                wakeTime = dreamUiState.value.dreamInfo.dreamWakeTime,
+                                date = dreamUiState.value.dreamInfo.dreamDate,
                                 isLucid = dreamUiState.value.dreamInfo.dreamIsLucid,
                                 isNightmare = dreamUiState.value.dreamInfo.dreamIsNightmare,
                                 isRecurring = dreamUiState.value.dreamInfo.dreamIsRecurring,
@@ -407,6 +456,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
 
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 data class DreamUiState(
     val dreamTitle: String = "",
     val dreamContent: String = "",
@@ -418,6 +468,11 @@ data class DreamUiState(
         dreamIsNightmare = false,
         dreamIsRecurring = false,
         dreamIsFalseAwakening = false,
+        dreamSleepTime = LocalTime.of(23, 0).format(DateTimeFormatter.ofPattern("hh:mm a")),
+        dreamWakeTime = LocalTime.of(7, 0).format(DateTimeFormatter.ofPattern("hh:mm a")),
+        dreamDate =
+                LocalDate.now().month.toString().substring(0, 3) + " " +
+                LocalDate.now().dayOfMonth.toString() + ", " + LocalDate.now().year.toString(),
         dreamTimeOfDay = "",
         dreamLucidity = 0,
         dreamVividness = 0,
@@ -469,6 +524,9 @@ data class DreamInfo(
     val dreamIsNightmare: Boolean,
     val dreamIsRecurring: Boolean,
     val dreamIsFalseAwakening: Boolean,
+    val dreamSleepTime: String,
+    val dreamWakeTime: String,
+    val dreamDate: String,
     val dreamTimeOfDay: String,
     val dreamLucidity: Int,
     val dreamVividness: Int,

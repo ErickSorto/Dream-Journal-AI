@@ -1,22 +1,22 @@
 package org.ballistic.dreamjournalai.feature_dream.data.repository
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import org.ballistic.dreamjournalai.core.Constants.USERS
 import org.ballistic.dreamjournalai.core.Resource
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
-import org.ballistic.dreamjournalai.feature_dream.domain.model.InvalidDreamException
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.DreamRepository
 import java.net.URL
+import java.time.LocalDate
+import java.time.LocalTime
 import java.util.*
 import javax.inject.Singleton
 
@@ -28,6 +28,7 @@ class DreamRepositoryImpl(
 
     private val dreamsCollection = getCollectionReferenceForDreams()
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun getDreams(): Flow<List<Dream>> {
         return callbackFlow {
             val registration = dreamsCollection?.addSnapshotListener { querySnapshot, exception ->
@@ -42,7 +43,10 @@ class DreamRepositoryImpl(
                             Dream(
                                 title = data["title"] as String,
                                 content = data["content"] as String,
-                                timestamp = data["timestamp"] as String,
+                                timestamp = data["timestamp"] as Long,
+                                date = data["date"] as String,
+                                sleepTime = data["sleepTime"] as String,
+                                wakeTime = data["wakeTime"] as String,
                                 AIResponse = data["airesponse"] as String,
                                 isFavorite = data["favorite"] as Boolean,
                                 isLucid = data["lucid"] as Boolean,
@@ -69,7 +73,7 @@ class DreamRepositoryImpl(
         }
     }
 
-
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun getDream(id: String): Resource<Dream> {
         return try {
             val document = getCollectionReferenceForDreams()?.document(id)?.get()?.await()
@@ -79,7 +83,10 @@ class DreamRepositoryImpl(
                     val dream = Dream(
                         title = data["title"] as String,
                         content = data["content"] as String,
-                        timestamp = data["timestamp"] as String,
+                        timestamp = data["timestamp"] as Long,
+                        date = data["date"] as String,
+                        sleepTime = data["sleepTime"] as String,
+                        wakeTime = data["wakeTime"] as String,
                         AIResponse = data["airesponse"] as String,
                         isFavorite = data["favorite"] as Boolean,
                         isLucid = data["lucid"] as Boolean,
@@ -108,6 +115,7 @@ class DreamRepositoryImpl(
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun insertDream(dream: Dream): Resource<Unit> {
         return try {
             val existingDream = getDream(dream.id ?: "")
@@ -117,6 +125,9 @@ class DreamRepositoryImpl(
                     title = dream.title,
                     content = dream.content,
                     timestamp = dream.timestamp,
+                    date = dream.date,
+                    sleepTime = dream.sleepTime,
+                    wakeTime = dream.wakeTime,
                     AIResponse = dream.AIResponse,
                     isFavorite = dream.isFavorite,
                     isLucid = dream.isLucid,
@@ -158,6 +169,7 @@ class DreamRepositoryImpl(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun deleteDream(id: String): Resource<Unit> {
         return try {
             val dream = getDream(id)

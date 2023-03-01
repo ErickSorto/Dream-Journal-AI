@@ -1,15 +1,25 @@
 package org.ballistic.dreamjournalai.feature_dream.domain.model
 
+import android.os.Build
 import com.google.firebase.firestore.PropertyName
 import org.ballistic.dreamjournalai.R
 import android.os.Parcelable
+import androidx.annotation.RequiresApi
 import kotlinx.parcelize.Parcelize
-
+import java.text.SimpleDateFormat
+import java.time.Clock
+import java.time.LocalDate
+import java.time.LocalTime
+import java.util.*
+@RequiresApi(Build.VERSION_CODES.O)
 @Parcelize
-data class Dream(
+data class Dream @RequiresApi(Build.VERSION_CODES.O) constructor(
     val title: String,
     val content: String,
-    val timestamp: String = System.currentTimeMillis().toString(),
+    val timestamp: Long = System.currentTimeMillis(),
+    val date: String = LocalDate.now(Clock.systemUTC()).toString(),
+    val sleepTime: String = String.format("%02d:%02d", 23, 0),
+    val wakeTime: String = String.format("%02d:%02d", 7, 0),
     @PropertyName("airesponse")
     val AIResponse: String,
     val isFavorite: Boolean,
@@ -25,7 +35,7 @@ data class Dream(
     val generatedImage: String?,
     val generatedDetails: String,
     val id: String?
-): Parcelable {
+) : Parcelable {
 
     fun doesMatchSearchQuery(query: String): Boolean {
         val matchingCombination = listOf(
@@ -36,6 +46,7 @@ data class Dream(
         )
         return matchingCombination.any { it.contains(query, true) }
     }
+
     companion object { //backgroundssss
         val dreamBackgroundImages = listOf(
             R.drawable.purple_lighthouse_background,
@@ -48,8 +59,31 @@ data class Dream(
             R.drawable.yellow_lighthouse_background,
             R.drawable.trippy_dreambackground,
             R.drawable.ocean_lighthouse
-            )
+        )
     }
-    constructor():this("","","", "",false,false,false,false,false,0,0,0,"",0,null,"",null)
+
+    constructor() : this(
+        "",
+        "",
+        0,
+        "",
+        "",
+        "",
+        "",
+        false,
+        false,
+        false,
+        false,
+        false,
+        0,
+        0,
+        0,
+        "",
+        0,
+        null,
+        "",
+        null
+    )
 }
+
 class InvalidDreamException(message: String) : Exception(message)
