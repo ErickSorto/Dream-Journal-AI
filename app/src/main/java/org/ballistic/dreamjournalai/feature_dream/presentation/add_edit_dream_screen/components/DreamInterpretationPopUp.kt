@@ -1,5 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,10 +10,8 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,15 +24,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 import org.ballistic.dreamjournalai.R
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun DreamInterpretationPopUp(
     viewModel: AddEditDreamViewModel = hiltViewModel(),
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
+    onAdClick: () -> Unit,
+    onDreamTokenClick: () -> Unit,
     onClickOutside: () -> Unit,
     pagerState: PagerState,
     modifier: Modifier = Modifier
@@ -64,7 +64,10 @@ fun DreamInterpretationPopUp(
                         color = colorResource(id = R.color.black),
                         modifier = Modifier.padding(8.dp, 8.dp, 8.dp, 16.dp)
                     )
-                    AdTokenLayout()
+                    AdTokenLayout(
+                        onAdClick = onAdClick,
+                        onDreamTokenClick = onDreamTokenClick
+                    )
                 }
             }
 

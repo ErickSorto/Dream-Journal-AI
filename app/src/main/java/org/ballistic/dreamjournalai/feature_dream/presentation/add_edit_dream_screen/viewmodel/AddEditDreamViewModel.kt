@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen
 
+import android.app.Activity
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -7,12 +8,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.ads.rewarded.RewardItem
 import com.maxkeppeker.sheets.core.models.base.SheetState
-import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.ad_feature.domain.AdCallback
+import org.ballistic.dreamjournalai.ad_feature.domain.AdManagerRepository
 import org.ballistic.dreamjournalai.core.Resource
 import org.ballistic.dreamjournalai.feature_dream.data.remote.dto.ImageGenerationDTO
 import org.ballistic.dreamjournalai.feature_dream.domain.model.*
@@ -30,6 +33,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     private val dreamUseCases: DreamUseCases,
     private val getOpenAITextResponse: GetOpenAITextResponse,
     private val getOpenAIImageGeneration: GetOpenAIImageGeneration,
+    private val adManagerRepository: AdManagerRepository,
+
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -130,7 +135,21 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             }
             is AddEditDreamEvent.ClickGenerateAIResponse -> {
                 if (dreamUiState.value.dreamContent.length >= 10) {
-                    getAIResponse()
+                    if (!event.isAd) {
+                        getAIResponse()
+                    } else {
+                        runAd(event.activity, onRewardedAd = {
+                            getAIResponse()
+                        }, onAdFailed = {
+                            viewModelScope.launch {
+                                _eventFlow.emit(
+                                    UiEvent.ShowSnackBar(
+                                        "Ad failed to load"
+                                    )
+                                )
+                            }
+                        })
+                    }
                 } else {
                     //snack bar
                     viewModelScope.launch {
@@ -153,7 +172,21 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
 
             is AddEditDreamEvent.ClickGenerateAIImage -> {
                 if (dreamUiState.value.dreamGeneratedDetails.response.isNotEmpty()) {
-                    getOpenAIImageResponse()
+                    if (!event.isAd) {
+                        getOpenAIImageResponse()
+                    } else {
+                        runAd(event.activity, onRewardedAd = {
+                            getOpenAIImageResponse()
+                        }, onAdFailed = {
+                            viewModelScope.launch {
+                                _eventFlow.emit(
+                                    UiEvent.ShowSnackBar(
+                                        "Ad failed to load"
+                                    )
+                                )
+                            }
+                        })
+                    }
                 } else {
                     viewModelScope.launch {
                         _eventFlow.emit(
@@ -340,7 +373,6 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     }
 
     private fun getAIResponse() {
-
         viewModelScope.launch {
             val result = getOpenAITextResponse(
                 Prompt(
@@ -454,6 +486,44 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
         }
     }
 
+    private fun runAd(
+        activity: Activity,
+        onRewardedAd: () -> Unit,
+        onAdFailed : () -> Unit
+    ) {
+        activity.runOnUiThread {
+            adManagerRepository.loadRewardedAd(activity) {
+                //show ad
+                adManagerRepository.showRewardedAd(
+                    activity,
+                    object : AdCallback {
+                        override fun onAdClosed() {
+                            //to be added later
+                        }
+
+                        override fun onAdRewarded(reward: RewardItem) {
+                            onRewardedAd()
+                        }
+
+                        override fun onAdLeftApplication() {
+                            TODO("Not yet implemented")
+                        }
+
+                        override fun onAdLoaded() {
+                            TODO("Not yet implemented")
+                        }
+
+                        override fun onAdFailedToLoad(errorCode: Int) {
+                            onAdFailed()
+                        }
+
+                        override fun onAdOpened() {
+                            TODO("Not yet implemented")
+                        }
+                    })
+            }
+        }
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -469,9 +539,9 @@ data class DreamUiState(
         dreamIsRecurring = false,
         dreamIsFalseAwakening = false,
         dreamSleepTime = LocalTime.of(23, 0).format(DateTimeFormatter.ofPattern("hh:mm a")),
-        dreamWakeTime = LocalTime.of(7, 0).format(DateTimeFormatter.ofPattern("hh:mm a")),
+        dreamWakeTime = LocalTime.of(7, 0).format(DateTimeFormatter.ofPattern("h:mm a")),
         dreamDate =
-                LocalDate.now().month.toString().substring(0, 3) + " " +
+        LocalDate.now().month.toString().substring(0, 3) + " " +
                 LocalDate.now().dayOfMonth.toString() + ", " + LocalDate.now().year.toString(),
         dreamTimeOfDay = "",
         dreamLucidity = 0,

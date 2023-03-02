@@ -1,5 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -24,12 +26,13 @@ import com.google.accompanist.pager.PagerState
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun ImageGenerationPopUp(
     viewModel: AddEditDreamViewModel = hiltViewModel(),
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
+    onDreamTokenClick: () -> Unit,
+    onAdClick: () -> Unit,
     onClickOutside: () -> Unit,
     pagerState: PagerState,
     modifier: Modifier = Modifier
@@ -96,7 +99,10 @@ fun ImageGenerationPopUp(
                             errorCursorColor = Color.Red
                         )
                     )
-                    AdTokenLayout()
+                    AdTokenLayout(
+                        onAdClick = onAdClick,
+                        onDreamTokenClick = onDreamTokenClick,
+                    )
                 }
             }
 
