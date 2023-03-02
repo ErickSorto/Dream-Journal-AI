@@ -1,12 +1,13 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -24,62 +25,60 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.R
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
 
 
-@OptIn(ExperimentalPagerApi::class, DelicateCoroutinesApi::class)
-@Composable
-fun GenerateButton(viewModel: AddEditDreamViewModel, state: PagerState) {
-    val scope = rememberCoroutineScope()
-    val dreamUiState = viewModel.dreamUiState
-    if (dreamUiState.value.dreamContent.isNotBlank() && dreamUiState.value.dreamContent.length > 10) {
-        Box(
-            contentAlignment = Alignment.BottomCenter,
-            modifier = Modifier.background(Color.Transparent)
-        ) {
-            Button(
-                onClick = {
-                    scope.launch {
-                        delay(100)
-                        state.animateScrollToPage(1)
-                    }
-                    GlobalScope.launch {
-                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamUiState.value.dreamContent))
-                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateDetails(viewModel.dreamUiState.value.dreamContent))
-                        delay(3000)
-                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIImage(viewModel.dreamUiState.value.dreamAIImage.image.toString()))
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color.White.copy(alpha = 0.7f)),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(
-                    text = "Generate AI Response",
-                    modifier = Modifier
-                        .padding(16.dp),
-                    color = Color.Black,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+//@OptIn(ExperimentalPagerApi::class, DelicateCoroutinesApi::class)
+//@Composable
+//fun GenerateButton(viewModel: AddEditDreamViewModel, state: PagerState) {
+//    val scope = rememberCoroutineScope()
+//    val dreamUiState = viewModel.dreamUiState
+//    if (dreamUiState.value.dreamContent.isNotBlank() && dreamUiState.value.dreamContent.length > 10) {
+//        Box(
+//            contentAlignment = Alignment.BottomCenter,
+//            modifier = Modifier.background(Color.Transparent)
+//        ) {
+//            Button(
+//                onClick = {
+//                    scope.launch {
+//                        delay(100)
+//                        state.animateScrollToPage(1)
+//                    }
+//                    GlobalScope.launch {
+//                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamUiState.value.dreamContent))
+//                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateDetails(viewModel.dreamUiState.value.dreamContent))
+//                        delay(3000)
+//                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIImage(viewModel.dreamUiState.value.dreamAIImage.image.toString()))
+//                    }
+//                },
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(top = 16.dp),
+//                colors = ButtonDefaults.buttonColors(backgroundColor = Color.White.copy(alpha = 0.7f)),
+//                shape = RoundedCornerShape(10.dp)
+//            ) {
+//                Text(
+//                    text = "Generate AI Response",
+//                    modifier = Modifier
+//                        .padding(16.dp),
+//                    color = Color.Black,
+//                    style = MaterialTheme.typography.titleMedium,
+//                    fontWeight = FontWeight.Bold
+//                )
+//            }
+//
+//            //vector asset button for generating AI response
+//            IconButton(onClick = { /*TODO*/ }) {
+//
+//            }
+//        }
+//    }
+//}
 
-            //vector asset button for generating AI response
-            IconButton(onClick = { /*TODO*/ }) {
-
-            }
-        }
-    }
-}
-
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun GenerateButtonsLayout(
@@ -107,6 +106,7 @@ fun GenerateButtonsLayout(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun PaintCustomButton(
@@ -143,6 +143,7 @@ fun PaintCustomButton(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun InterpretCustomButton(
@@ -178,8 +179,13 @@ fun InterpretCustomButton(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AdTokenLayout() {
+fun AdTokenLayout(
+    viewModel: AddEditDreamViewModel = hiltViewModel(),
+    onAdClick: () -> Unit = {},
+    onDreamTokenClick: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -187,24 +193,26 @@ fun AdTokenLayout() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        WatchAdButton()
+        WatchAdButton(onClick = { onAdClick() })
         Spacer(modifier = Modifier.height(8.dp))
-        DreamTokenGenerateButton {
-            //TODO
-        }
+        DreamTokenGenerateButton(onClick = { onDreamTokenClick() })
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun WatchAdButton() {
+fun WatchAdButton(
+    onClick: () -> Unit = {}
+) {
     Button(
-        onClick = { /*TODO*/ },
+        onClick = {
+            onClick()
+        },
         modifier = Modifier
             .fillMaxWidth(),
         colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.sky_blue)),
         shape = RoundedCornerShape(10.dp)
     ) {
-
 
         Icon(
             painter = rememberAsyncImagePainter(R.drawable.baseline_smart_display_24),
@@ -255,7 +263,5 @@ fun DreamTokenGenerateButton(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
-
-
     }
 }

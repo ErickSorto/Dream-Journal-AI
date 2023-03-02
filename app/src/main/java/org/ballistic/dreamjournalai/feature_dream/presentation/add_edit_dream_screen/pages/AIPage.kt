@@ -1,5 +1,8 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages
 
+import android.app.Activity
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
@@ -17,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -29,6 +33,7 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_sc
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.*
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun AIPage(
@@ -38,39 +43,72 @@ fun AIPage(
 
     val responseState = viewModel.dreamUiState.value.dreamAIExplanation
     val imageState = viewModel.dreamUiState.value.dreamAIImage
-    val detailState = viewModel.dreamUiState.value.dreamGeneratedDetails
+    val contentState = viewModel.dreamUiState.value.dreamContent
+    val detailState = viewModel.dreamUiState.value.dreamGeneratedDetails.response
     val infiniteTransition = rememberInfiniteTransition()
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
+    val activity = LocalContext.current as Activity
 
 
     if (viewModel.imageGenerationPopUpState.value) {
-            ImageGenerationPopUp(
-                onDismiss = {
-                    viewModel.imageGenerationPopUpState.value = false
-                },
-                onConfirm = {
-                    viewModel.imageGenerationPopUpState.value = false
-                    scope.launch {
-                        viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIImage(viewModel.dreamUiState.value.dreamGeneratedDetails.response))
-                    }
-                },
-                onClickOutside = {
-                    viewModel.imageGenerationPopUpState.value = false
-                },
-                pagerState = state,
-            )
+        ImageGenerationPopUp(
+
+            onDreamTokenClick = {
+                viewModel.imageGenerationPopUpState.value = false
+                scope.launch {
+                    viewModel.onEvent(
+                        AddEditDreamEvent.ClickGenerateAIImage(
+                            detailState,
+                            activity,
+                            false
+                        )
+                    )
+                }
+            },
+            onAdClick = {
+                viewModel.imageGenerationPopUpState.value = false
+                scope.launch {
+                    viewModel.onEvent(
+                        AddEditDreamEvent.ClickGenerateAIImage(
+                            detailState,
+                            activity,
+                            true
+                        )
+                    )
+                }
+            },
+            onClickOutside = {
+                viewModel.imageGenerationPopUpState.value = false
+            },
+            pagerState = state,
+        )
     }
 
     if (viewModel.dreamInterpretationPopUpState.value) {
         DreamInterpretationPopUp(
-            onDismiss = {
-                viewModel.dreamInterpretationPopUpState.value = false
-            },
-            onConfirm = {
+            onDreamTokenClick = {
                 viewModel.dreamInterpretationPopUpState.value = false
                 scope.launch {
-                    viewModel.onEvent(AddEditDreamEvent.ClickGenerateAIResponse(viewModel.dreamUiState.value.dreamGeneratedDetails.response))
+                    viewModel.onEvent(
+                        AddEditDreamEvent.ClickGenerateAIResponse(
+                            contentState,
+                            activity,
+                            false
+                        )
+                    )
+                }
+            },
+            onAdClick = {
+                viewModel.dreamInterpretationPopUpState.value = false
+                scope.launch {
+                    viewModel.onEvent(
+                        AddEditDreamEvent.ClickGenerateAIResponse(
+                            contentState,
+                            activity,
+                            true
+                        )
+                    )
                 }
             },
             onClickOutside = {
