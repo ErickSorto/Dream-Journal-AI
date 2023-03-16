@@ -7,9 +7,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import org.ballistic.dreamjournalai.core.Constants.USERS
 import org.ballistic.dreamjournalai.core.Resource
-import org.ballistic.dreamjournalai.feature_dream.domain.repository.ProfileRepository
-import org.ballistic.dreamjournalai.feature_dream.domain.repository.RevokeAccessResponse
-import org.ballistic.dreamjournalai.feature_dream.domain.repository.SignOutResponse
+import org.ballistic.dreamjournalai.user_authentication.domain.repository.ProfileRepository
+import org.ballistic.dreamjournalai.user_authentication.domain.repository.RevokeAccessResponse
+import org.ballistic.dreamjournalai.user_authentication.domain.repository.SignOutResponse
+
 import javax.inject.Inject
 import javax.inject.Singleton
 

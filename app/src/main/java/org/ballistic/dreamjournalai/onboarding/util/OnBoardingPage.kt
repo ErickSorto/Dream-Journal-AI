@@ -17,13 +17,20 @@ sealed class OnBoardingPage(
 
     object Second : OnBoardingPage(
         image = R.drawable.blue_background,
-        title = "Coordination",
-        description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod."
+        title = "Paint and Interpret",
+        description = "Paint your dream and let the AI interpret it for you!"
     )
 
     object Third : OnBoardingPage(
         image = R.drawable.white_background,
-        title = "Dialogue",
-        description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod."
+        title = "Save your dreams",
+        description = "Save your dreams in the cloud and access them from anywhere."
+    )
+
+    //sign in
+    object Fourth : OnBoardingPage(
+        image = R.drawable.white_background,
+        title = "Sign In",
+        description = ""
     )
 }

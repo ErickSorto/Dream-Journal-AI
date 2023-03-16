@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.components
+package org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
@@ -28,20 +28,20 @@ fun SignInButton(
 ) {
     Row(
         modifier = modifier
-            .padding(horizontal = 40.dp)
-            .fillMaxHeight(),
-        verticalAlignment = Alignment.Top,
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(16.dp, 8.dp, 16.dp, 16.dp),
         horizontalArrangement = Arrangement.Center
     ) {
         AnimatedVisibility(
             modifier = Modifier.fillMaxWidth(),
-            visible = pagerState.currentPage == 2
+            visible = pagerState.currentPage == 3
         ) {
             Button(
-                modifier = Modifier.padding(bottom = 16.dp),
+                modifier = Modifier.padding(),
                 shape = RoundedCornerShape(6.dp),
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = colorResource(R.color.LightGreen)
+                    backgroundColor = colorResource(R.color.sky_blue)
                 ),
                 onClick = onClick
             ) {
@@ -53,7 +53,7 @@ fun SignInButton(
                 )
                 Text(
                     text = SIGN_IN_WITH_GOOGLE,
-                    modifier = Modifier.padding(6.dp),
+                    modifier = Modifier.padding(start = 8.dp),
                     fontSize = 18.sp
                 )
             }

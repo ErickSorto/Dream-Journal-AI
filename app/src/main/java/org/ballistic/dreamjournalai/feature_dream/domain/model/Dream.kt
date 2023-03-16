@@ -1,16 +1,15 @@
 package org.ballistic.dreamjournalai.feature_dream.domain.model
 
 import android.os.Build
-import com.google.firebase.firestore.PropertyName
-import org.ballistic.dreamjournalai.R
 import android.os.Parcelable
 import androidx.annotation.RequiresApi
+import com.google.firebase.firestore.PropertyName
 import kotlinx.parcelize.Parcelize
-import java.text.SimpleDateFormat
+import org.ballistic.dreamjournalai.R
 import java.time.Clock
 import java.time.LocalDate
-import java.time.LocalTime
 import java.util.*
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Parcelize
 data class Dream @RequiresApi(Build.VERSION_CODES.O) constructor(

@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.onboarding.data.DataStoreRepository
+import org.ballistic.dreamjournalai.onboarding.presentation.data.DataStoreRepository
 import javax.inject.Inject
 
 @HiltViewModel

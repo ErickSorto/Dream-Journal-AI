@@ -1,6 +1,8 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.main_screen
 
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -12,9 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,31 +27,30 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.delay
 import org.ballistic.dreamjournalai.R
-import org.ballistic.dreamjournalai.feature_dream.navigation.MainGraph
-import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
+import org.ballistic.dreamjournalai.navigation.MainGraph
+import org.ballistic.dreamjournalai.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TransparentHintTextField
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.components.BottomNavigation
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
-import org.ballistic.dreamjournalai.onboarding.presentation.viewmodel.SplashViewModel
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(
     ExperimentalMaterial3Api::class
 )
 @Composable
 fun MainScreenView(
     mainScreenViewModel: MainScreenViewModel = hiltViewModel(),
-    splashViewModel: SplashViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
     onDataLoaded: () -> Unit
 ) {
-
-
     LaunchedEffect(key1 = Unit) {
         delay(1500)
         onDataLoaded()
     }
 
-    val screen by splashViewModel.state
     val navController = rememberNavController()
+
 
 
     Image(
@@ -84,7 +83,7 @@ fun MainScreenView(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
-                        ){
+                        ) {
                             if (!mainScreenViewModel.getSearchingState()) {
                                 Text(
                                     text = "Dream Journal AI",
@@ -94,8 +93,6 @@ fun MainScreenView(
                                         .padding(start = 16.dp)
                                 )
                             }
-
-
                             AnimatedVisibility(
                                 visible = mainScreenViewModel.getSearchingState(),
                                 //slide from left to right
@@ -203,10 +200,11 @@ fun MainScreenView(
 
         ) { innerPadding ->
 
+
         AnimatedVisibility(visible = true, enter = fadeIn(), exit = fadeOut()) {
             MainGraph(
                 navController = navController,
-                startDestination = screen.startDestination,
+                startDestination = Screens.OnboardingScreen.route,
                 mainScreenViewModel = mainScreenViewModel,
                 innerPadding = innerPadding
             )

@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.onboarding.data
+package org.ballistic.dreamjournalai.onboarding.presentation.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore

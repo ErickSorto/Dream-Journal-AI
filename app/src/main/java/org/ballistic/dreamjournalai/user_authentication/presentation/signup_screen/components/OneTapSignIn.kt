@@ -3,12 +3,9 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.co
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import com.google.android.gms.auth.api.identity.BeginSignInResult
 import org.ballistic.dreamjournalai.core.Resource
-import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
-import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.AuthViewModel
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModel
 
 @Composable
 fun OneTapSignIn(

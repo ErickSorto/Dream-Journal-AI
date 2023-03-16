@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.domain.repository
+package org.ballistic.dreamjournalai.user_authentication.domain.repository
 
 import org.ballistic.dreamjournalai.core.Resource
 

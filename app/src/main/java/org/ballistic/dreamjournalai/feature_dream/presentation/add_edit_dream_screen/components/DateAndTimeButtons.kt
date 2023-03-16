@@ -68,7 +68,7 @@ fun DateButton(
     Button(
         onClick = onClick,
         modifier = modifier
-            .padding(0.dp, 8.dp, 0.dp, 8.dp)
+            .padding(0.dp, 4.dp, 0.dp, 4.dp)
             .clip(RoundedCornerShape(4.dp))
             .background(Color.Transparent),
         colors = buttonColors(
@@ -101,7 +101,7 @@ fun SleepTimeButton(
     Button(
         onClick = onClick,
         modifier = modifier
-            .padding(0.dp, 8.dp, 0.dp, 8.dp)
+            .padding(0.dp, 4.dp, 0.dp, 4.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(Color.Transparent),
         colors = buttonColors(
@@ -133,7 +133,7 @@ fun WakeTimeButton(
     Button(
         onClick = onClick,
         modifier = modifier
-            .padding(0.dp, 8.dp, 0.dp, 8.dp)
+            .padding(0.dp, 4.dp, 0.dp, 4.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(Color.Transparent),
         colors = buttonColors(

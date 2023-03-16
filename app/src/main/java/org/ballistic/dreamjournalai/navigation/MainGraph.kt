@@ -1,5 +1,7 @@
-package org.ballistic.dreamjournalai.feature_dream.navigation
+package org.ballistic.dreamjournalai.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
@@ -9,13 +11,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.google.accompanist.pager.ExperimentalPagerApi
+import org.ballistic.dreamjournalai.onboarding.presentation.OnboardingScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamScreen
-import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamsScreen
+import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamJournalScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
-import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.Sign_In_Screen
 import org.ballistic.dreamjournalai.feature_dream.presentation.store_screen.StoreScreen
-import org.ballistic.dreamjournalai.onboarding.presentation.WelcomeScreen
 
+
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
 @Composable
 fun MainGraph(
@@ -29,12 +32,27 @@ fun MainGraph(
         startDestination = startDestination,
     ) {
         //welcome
-        composable(route = Screens.Welcome.route) {
-            WelcomeScreen(navController = navController, mainScreenViewModel = mainScreenViewModel)
+        composable(route = Screens.OnboardingScreen.route) {
+            OnboardingScreen(
+                navController = navController,
+                mainScreenViewModel = mainScreenViewModel,
+                innerPadding = innerPadding,
+                navigateToDreamJournalScreen = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.DreamJournalScreen.route)
+                },
+                popBackStack = {
+                    navController.popBackStack()
+                }
+            )
         }
 
-        composable(route = Screens.DreamListScreen.route) {
-            DreamsScreen(navController = navController, mainScreenViewModel = mainScreenViewModel, innerPadding = innerPadding)
+        composable(route = Screens.DreamJournalScreen.route) {
+            DreamJournalScreen(
+                navController = navController,
+                mainScreenViewModel = mainScreenViewModel,
+                innerPadding = innerPadding
+            )
         }
         //store
         composable(route = Screens.StoreScreen.route) {

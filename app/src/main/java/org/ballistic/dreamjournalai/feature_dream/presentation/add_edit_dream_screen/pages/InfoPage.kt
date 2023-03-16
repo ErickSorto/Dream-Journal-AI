@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -94,7 +95,7 @@ fun InfoPage(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 16.dp),
+            .padding(bottom = 16.dp, start = 14.dp, end = 14.dp, top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
@@ -110,7 +111,8 @@ fun InfoPage(
                         .align(Alignment.CenterHorizontally)
                         .padding(16.dp, 16.dp, 16.dp, 0.dp), //bold
                     style = typography.titleMedium,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
                 )
 
                 DreamImageSelectionRow(
@@ -130,7 +132,7 @@ fun InfoPage(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
+                    .padding(12.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

@@ -1,5 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -21,6 +23,7 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_sc
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages.InfoPage
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 @UiComposable
