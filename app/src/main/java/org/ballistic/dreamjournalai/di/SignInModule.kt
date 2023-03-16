@@ -20,8 +20,9 @@ import dagger.hilt.components.SingletonComponent
 import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.core.Constants.SIGN_IN_REQUEST
 import org.ballistic.dreamjournalai.core.Constants.SIGN_UP_REQUEST
-import org.ballistic.dreamjournalai.feature_dream.data.repository.AuthRepositoryImpl
-import org.ballistic.dreamjournalai.feature_dream.domain.repository.AuthRepository
+import org.ballistic.dreamjournalai.user_authentication.data.repository.AuthRepositoryImpl
+import org.ballistic.dreamjournalai.user_authentication.domain.repository.AuthRepository
+
 import javax.inject.Named
 
 

@@ -1,29 +1,33 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen
 
-import androidx.compose.foundation.background
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import kotlinx.coroutines.delay
 
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
+import org.ballistic.dreamjournalai.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.components.DreamItem
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamsViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DreamsScreen(
+fun DreamJournalScreen(
     navController: NavController,
     viewModel: DreamsViewModel = hiltViewModel(),
     mainScreenViewModel: MainScreenViewModel,
@@ -32,6 +36,8 @@ fun DreamsScreen(
     val state = viewModel.state.value
 
     val scope = rememberCoroutineScope()
+
+    val context = LocalContext.current
 
     mainScreenViewModel.setBottomBarState(true)
     mainScreenViewModel.setFloatingActionButtonState(true)
@@ -56,11 +62,16 @@ fun DreamsScreen(
                     },
                 onDeleteClick = {
                     scope.launch {
-                        viewModel.onEvent(DreamsEvent.DeleteDream(dream))
+                        viewModel.onEvent(DreamsEvent.DeleteDream(dream, context))
+
                         val result = mainScreenViewModel.snackbarHostState.value.showSnackbar(
                             message = "Dream deleted",
-                            actionLabel = "Undo"
+                            actionLabel = "Undo",
+                            duration = SnackbarDuration.Long
                         )
+
+                        mainScreenViewModel.snackbarHostState.value.currentSnackbarData?.dismiss()
+
                         if (result == SnackbarResult.ActionPerformed) {
                             viewModel.onEvent(DreamsEvent.RestoreDream)
                         }

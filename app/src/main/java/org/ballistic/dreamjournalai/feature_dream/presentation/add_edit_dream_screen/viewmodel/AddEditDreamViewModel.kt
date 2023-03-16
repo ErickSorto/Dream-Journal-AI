@@ -191,7 +191,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                     viewModelScope.launch {
                         _eventFlow.emit(
                             UiEvent.ShowSnackBar(
-                                "Please add image details"
+                                "Please add image explanation."
                             )
                         )
                     }

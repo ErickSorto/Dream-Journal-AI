@@ -8,10 +8,11 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import org.ballistic.dreamjournalai.core.NetworkHelper
 import org.ballistic.dreamjournalai.feature_dream.data.repository.DreamRepositoryImpl
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.DreamRepository
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.*
-import org.ballistic.dreamjournalai.onboarding.data.DataStoreRepository
+import org.ballistic.dreamjournalai.onboarding.presentation.data.DataStoreRepository
 import javax.inject.Singleton
 
 
@@ -56,4 +57,11 @@ object AppModule {
     fun provideDataStoreRepository(
         @ApplicationContext context: Context
     ) = DataStoreRepository(context = context)
+
+
+    @Provides
+    @Singleton
+    fun provideNetworkHelper(@ApplicationContext context: Context): NetworkHelper {
+        return NetworkHelper(context)
+    }
 }

@@ -1,5 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
@@ -20,10 +22,13 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen
 import javax.inject.Inject
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class DreamsViewModel @Inject constructor(
     private val dreamUseCases: DreamUseCases
 ) : ViewModel() {
+
+    private val imageCache = mutableMapOf<String, ByteArray>()
 
     private val _state = mutableStateOf(DreamsState())
     val state: State<DreamsState> = _state
@@ -42,6 +47,8 @@ class DreamsViewModel @Inject constructor(
         getDreams(DreamOrder.Date(OrderType.Descending))
     }
 
+
+    @RequiresApi(Build.VERSION_CODES.O)
     fun onEvent(event: DreamsEvent) {
         when(event) {
             is DreamsEvent.DeleteDream -> {
@@ -56,7 +63,8 @@ class DreamsViewModel @Inject constructor(
             }
             is DreamsEvent.RestoreDream -> {
                 viewModelScope.launch {
-                    dreamUseCases.addDream(recentlyDeletedDream ?: return@launch)
+                    val dreamToRestore = recentlyDeletedDream?.copy(generatedImage = null) ?: return@launch
+                    dreamUseCases.addDream(dreamToRestore)
                     recentlyDeletedDream = null
                 }
             }
@@ -70,6 +78,7 @@ class DreamsViewModel @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun onSearchChange(text: String) {
         _searchDreams.value = text
         _isSearching.value = true
@@ -77,6 +86,7 @@ class DreamsViewModel @Inject constructor(
         _isSearching.value = false
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun getDreams(dreamOrder: DreamOrder) {
         getDreamJob?.cancel()
         getDreamJob = dreamUseCases.getDreams(dreamOrder).onEach { dreams ->

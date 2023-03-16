@@ -2,18 +2,28 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.view
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import org.ballistic.dreamjournalai.navigation.Screens
+import org.ballistic.dreamjournalai.user_authentication.domain.repository.AuthRepository
 import javax.inject.Inject
 
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
+    private val repo: AuthRepository
 ) : ViewModel() {
     val scaffoldState = mutableStateOf(ScaffoldState())
     val snackbarHostState = mutableStateOf(SnackbarHostState())
+    val startDestination = mutableStateOf(Screens.DreamJournalScreen.route)
+
+
+    init {
+        getAuthState()
+    }
+
+    fun getAuthState() = repo.getAuthState(viewModelScope)
 
 
 
@@ -46,7 +56,6 @@ class MainScreenViewModel @Inject constructor(
     fun getFloatingActionButtonState(): Boolean {
         return scaffoldState.value.floatingActionButtonState
     }
-
 }
 
 data class ScaffoldState (

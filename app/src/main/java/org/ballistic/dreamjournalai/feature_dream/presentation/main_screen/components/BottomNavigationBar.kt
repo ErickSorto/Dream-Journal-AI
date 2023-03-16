@@ -17,12 +17,12 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.ballistic.dreamjournalai.R
-import org.ballistic.dreamjournalai.feature_dream.navigation.Screens
+import org.ballistic.dreamjournalai.navigation.Screens
 
 @Composable
 fun BottomNavigation(navController: NavController) {
     val items = listOf(
-        Screens.DreamListScreen,
+        Screens.DreamJournalScreen,
         Screens.StoreScreen
     )
     Box(modifier = Modifier.height(96.dp).fillMaxWidth()){ //This box fixes padding issue
@@ -47,14 +47,14 @@ fun BottomNavigation(navController: NavController) {
                     alwaysShowLabel = true,
                     selected = currentRoute == item.route,
                     onClick = {
-                        navController.navigate(item.route) {
-                            navController.graph.startDestinationRoute?.let { startDestinationRoute ->
-                                popUpTo(startDestinationRoute) {
+                        if (currentRoute != item.route) {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.startDestinationId) {
                                     saveState = true
                                 }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
                         }
                     }
                 )

@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.navigation
+package org.ballistic.dreamjournalai.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -9,7 +9,7 @@ sealed class Screens(
     val title: String?= null,
     val icon: ImageVector?= null
 ) {
-    object DreamListScreen: Screens(
+    object DreamJournalScreen: Screens(
         route = "dreams_screen",
         title = "Home",
         icon = Icons.Default.Home
@@ -34,6 +34,6 @@ sealed class Screens(
         icon = Icons.Default.Shop
     )
 
-    object Welcome : Screens(route = "welcome_screen", title = "Welcome", icon = null)
+    object OnboardingScreen : Screens(route = "welcome_screen", title = "Welcome", icon = null)
 
 }

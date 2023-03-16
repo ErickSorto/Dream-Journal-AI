@@ -145,4 +145,7 @@ dependencies {
 
     //ads
     implementation 'com.google.android.gms:play-services-ads:21.5.0'
+
+    //billing client
+    implementation 'com.android.billingclient:billing:5.1.0'
 }
