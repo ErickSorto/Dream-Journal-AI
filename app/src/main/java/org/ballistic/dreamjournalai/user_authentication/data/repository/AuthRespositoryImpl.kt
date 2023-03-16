@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.user_authentication.data.repository
 
 
+import android.util.Log
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.auth.AuthCredential
@@ -69,9 +70,9 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun addUserToFirestore() {
+    private suspend fun addUserToFirestore(emailVerified: Boolean, registrationTimestamp: Long) {
         auth.currentUser?.apply {
-            val user = toUser()
+            val user = toUser(emailVerified, registrationTimestamp)
             db.collection(USERS).document(uid).set(user).await()
         }
     }
@@ -81,12 +82,13 @@ class AuthRepositoryImpl @Inject constructor(
     ): Flow<Resource<AuthResult>> {
         return flow {
             emit(Resource.Loading())
-            emit(
-                Resource.Success(
-                    auth.createUserWithEmailAndPassword(email, password).await()
-                )
-            )
+            val authResult = auth.createUserWithEmailAndPassword(email, password).await()
+            Log.d("SignUp", "User created successfully: $authResult")
+            // Add the user to Firestore with the additional fields
+            addUserToFirestore(emailVerified = false, registrationTimestamp = System.currentTimeMillis())
+            emit(Resource.Success(authResult))
         }.catch { e ->
+            Log.e("SignUp", "Error creating user: $e")
             emit(Resource.Error(e.toString()))
         }
     }
@@ -94,12 +96,11 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun sendEmailVerification(): Flow<Resource<Boolean>> {
         return flow {
             emit(Resource.Loading())
-            emit(
-                Resource.Success(
-                    auth.currentUser?.sendEmailVerification()?.await() != null
-                )
-            )
+            val isEmailSent = auth.currentUser?.sendEmailVerification()?.await() != null
+            Log.d("EmailVerification", "Email verification sent: $isEmailSent")
+            emit(Resource.Success(isEmailSent))
         }.catch { e ->
+            Log.e("EmailVerification", "Error sending email verification: $e")
             emit(Resource.Error(e.toString()))
         }
     }
@@ -161,8 +162,10 @@ class AuthRepositoryImpl @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), auth.currentUser == null)
 }
 
-fun FirebaseUser.toUser() = mapOf(
+fun FirebaseUser.toUser(emailVerified: Boolean, registrationTimestamp: Long) = mapOf(
     DISPLAY_NAME to displayName,
     EMAIL to email,
-    CREATED_AT to serverTimestamp()
+    CREATED_AT to serverTimestamp(),
+    "emailVerified" to emailVerified,
+    "registrationTimestamp" to registrationTimestamp
 )
