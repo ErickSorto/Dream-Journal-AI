@@ -120,7 +120,6 @@ fun SignUpSignInForgotPasswordLayout(
             }
         }
     }
-
 }
 
 @OptIn(ExperimentalPagerApi::class)
