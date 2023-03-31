@@ -21,7 +21,8 @@ class AdManagerRepositoryImpl @Inject constructor(
     private var rewardedAd: RewardedAd? = null
 
 
-    override fun loadRewardedAd(activity: Activity, callback: () -> Unit) {
+    override fun loadRewardedAd(
+        activity: Activity, callback: () -> Unit) {
         val adRequest = AdRequest.Builder().build()
 
         RewardedAd.load(

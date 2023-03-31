@@ -34,7 +34,6 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     private val getOpenAITextResponse: GetOpenAITextResponse,
     private val getOpenAIImageGeneration: GetOpenAIImageGeneration,
     private val adManagerRepository: AdManagerRepository,
-
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 

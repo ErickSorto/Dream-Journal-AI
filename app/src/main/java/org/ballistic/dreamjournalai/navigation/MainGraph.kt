@@ -11,11 +11,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.google.accompanist.pager.ExperimentalPagerApi
-import org.ballistic.dreamjournalai.onboarding.presentation.OnboardingScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamJournalScreen
+import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamsViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.store_screen.StoreScreen
+import org.ballistic.dreamjournalai.onboarding.presentation.OnboardingScreen
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -25,6 +26,7 @@ fun MainGraph(
     navController: NavHostController,
     startDestination: String,
     mainScreenViewModel: MainScreenViewModel,
+    dreamsViewModel: DreamsViewModel,
     innerPadding: PaddingValues
 ) {
     NavHost(
@@ -51,6 +53,7 @@ fun MainGraph(
             DreamJournalScreen(
                 navController = navController,
                 mainScreenViewModel = mainScreenViewModel,
+                dreamsViewModel = dreamsViewModel,
                 innerPadding = innerPadding
             )
         }

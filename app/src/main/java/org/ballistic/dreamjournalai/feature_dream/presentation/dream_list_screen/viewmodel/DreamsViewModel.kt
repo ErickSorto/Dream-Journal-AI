@@ -4,15 +4,12 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.core.Resource
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.feature_dream.domain.util.DreamOrder
@@ -30,11 +27,13 @@ class DreamsViewModel @Inject constructor(
 
     private val imageCache = mutableMapOf<String, ByteArray>()
 
-    private val _state = mutableStateOf(DreamsState())
-    val state: State<DreamsState> = _state
+    private val _state = MutableStateFlow(DreamsState())
+    val state: StateFlow<DreamsState> = _state.asStateFlow()
 
-    private val _searchDreams = MutableStateFlow("")
-    val searchDreams: StateFlow<String> = _searchDreams.asStateFlow()
+    private val _searchedText = MutableStateFlow("")
+    val searchedText: StateFlow<String> = _searchedText.asStateFlow()
+
+
 
     private val _isSearching = MutableStateFlow(false)
     val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
@@ -50,7 +49,7 @@ class DreamsViewModel @Inject constructor(
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun onEvent(event: DreamsEvent) {
-        when(event) {
+        when (event) {
             is DreamsEvent.DeleteDream -> {
                 viewModelScope.launch {
                     dreamUseCases.deleteDream(event.dream)
@@ -75,32 +74,31 @@ class DreamsViewModel @Inject constructor(
                 }
                 getDreams(event.dreamType)
             }
+            is DreamsEvent.SearchDreams -> {
+                _searchedText.value = event.searchQuery
+            }
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun onSearchChange(text: String) {
-        _searchDreams.value = text
-        _isSearching.value = true
-        getDreams(state.value.dreamOrder)
-        _isSearching.value = false
-    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun getDreams(dreamOrder: DreamOrder) {
         getDreamJob?.cancel()
-        getDreamJob = dreamUseCases.getDreams(dreamOrder).onEach { dreams ->
-            val filteredDreams = if (searchDreams.value.isBlank()) {
-                dreams
-            } else {
-                dreams.filter { it.doesMatchSearchQuery(searchDreams.value) }
+        getDreamJob = dreamUseCases.getDreams(dreamOrder)
+            .combine(_searchedText) { dreams, searchText ->
+                if (searchText.isBlank()) {
+                    dreams
+                } else {
+                    dreams.filter { it.doesMatchSearchQuery(searchText) }
+                }
             }
-            _state.value = state.value.copy(
-                dreams = filteredDreams,
-                dreamOrder = dreamOrder,
-                searchText = searchDreams.value
-            )
-        }.launchIn(viewModelScope)
+            .onEach { filteredDreams ->
+                _state.value = state.value.copy(
+                    dreams = filteredDreams,
+                    dreamOrder = dreamOrder,
+                )
+            }
+            .launchIn(viewModelScope)
     }
 }
 

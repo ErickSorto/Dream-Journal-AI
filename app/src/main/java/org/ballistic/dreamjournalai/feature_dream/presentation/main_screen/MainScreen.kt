@@ -30,9 +30,10 @@ import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.navigation.MainGraph
 import org.ballistic.dreamjournalai.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TransparentHintTextField
+import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamsEvent
+import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamsViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.components.BottomNavigation
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
-import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(
@@ -41,7 +42,7 @@ import org.ballistic.dreamjournalai.user_authentication.presentation.signup_scre
 @Composable
 fun MainScreenView(
     mainScreenViewModel: MainScreenViewModel = hiltViewModel(),
-    authViewModel: AuthViewModel = hiltViewModel(),
+    dreamsViewModel: DreamsViewModel = hiltViewModel(),
     onDataLoaded: () -> Unit
 ) {
     LaunchedEffect(key1 = Unit) {
@@ -51,6 +52,7 @@ fun MainScreenView(
 
     val navController = rememberNavController()
 
+    val searchedText = dreamsViewModel.searchedText.collectAsState()
 
 
     Image(
@@ -110,15 +112,14 @@ fun MainScreenView(
 
                             ) {
                                 TransparentHintTextField(
-                                    text = "",
+                                    text = searchedText.value,
                                     hint = "Search dream...",
                                     onValueChange = {
-
+                                        dreamsViewModel.onEvent(DreamsEvent.SearchDreams(it))
                                     },
                                     onFocusChange = {
-
                                     },
-                                    isHintVisible = true,
+                                    isHintVisible = searchedText.value.isBlank(),
                                     singleLine = true,
                                     textStyle = MaterialTheme.typography.headlineSmall,
                                     modifier = Modifier
@@ -206,6 +207,7 @@ fun MainScreenView(
                 navController = navController,
                 startDestination = Screens.OnboardingScreen.route,
                 mainScreenViewModel = mainScreenViewModel,
+                dreamsViewModel = dreamsViewModel,
                 innerPadding = innerPadding
             )
         }
