@@ -9,4 +9,6 @@ sealed class DreamsEvent {
     data class DeleteDream(val dream: Dream, val context : Context): DreamsEvent()
     object ToggleOrderSection: DreamsEvent()
     object RestoreDream: DreamsEvent()
+
+    data class SearchDreams(val searchQuery: String): DreamsEvent()
 }

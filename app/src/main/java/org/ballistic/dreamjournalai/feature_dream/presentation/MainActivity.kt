@@ -31,6 +31,7 @@ class MainActivity : ComponentActivity() {
 
 
 
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
@@ -40,10 +41,11 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+
                     //  val screen by splashViewModel.state
-                    MainScreenView(onDataLoaded = {
+                    MainScreenView {
                         keepSplashOpened = false
-                    })
+                    }
                 }
             }
         }

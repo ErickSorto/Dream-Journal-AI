@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -83,7 +84,7 @@ fun DescriptionPage(
                 .background(Color.White.copy(alpha = 0.2f))
                 .padding(8.dp)
                 .onFocusEvent {
-                }
+                }.focusable()
         )
 
         if (dreamUiState.value.dreamContent.isNotBlank() && dreamUiState.value.dreamContent.length > 10) {
