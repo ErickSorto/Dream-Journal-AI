@@ -30,8 +30,8 @@ class AuthViewModel @Inject constructor(
     val isCurrentUserExist = repo.isCurrentUserExist()
     val isEmailVerified get() = repo.currentUser?.isEmailVerified ?: false
 
-    private val _login = MutableStateFlow(SignInState())
-    val signIn: StateFlow<SignInState> = _login
+    private val _login = MutableStateFlow(LoginState())
+    val login: StateFlow<LoginState> = _login
 
     private val _signUp = MutableStateFlow(SignUpState())
     val signUp: StateFlow<SignUpState> = _signUp
@@ -47,7 +47,7 @@ class AuthViewModel @Inject constructor(
 
     var oneTapSignInResponse by mutableStateOf<Resource<OneTapSignInResponse>>(Resource.Success())
         private set
-    var signInWithGoogleResponse by mutableStateOf<Flow<Resource<AuthResult>>>(flow {})
+    var signInWithGoogleResponse = MutableStateFlow<Resource<AuthResult>>(Resource.Loading<AuthResult>())
         private set
 
     var signInResponse by mutableStateOf<Resource<SignInResponse>>(Resource.Success())
@@ -80,16 +80,31 @@ class AuthViewModel @Inject constructor(
     ).onEach { result ->
         when (result) {
             is Resource.Success -> {
-                _login.emit(SignInState(login = result.data))
+                _login.emit(LoginState(login = result.data))
+                signInWithGoogleResponse.value = Resource.Success(result.data)
             }
             is Resource.Error -> {
-                _login.emit(SignInState(error = result.message ?: "Error"))
+                _login.emit(LoginState(error = result.message ?: "Error"))
+                signInWithGoogleResponse.value = Resource.Error(result.message ?: "Error")
             }
             is Resource.Loading -> {
-                _login.emit(SignInState(isLoading = true))
+                _login.emit(LoginState(isLoading = true))
+                signInWithGoogleResponse.value = Resource.Loading()
             }
         }
     }.launchIn(viewModelScope)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     suspend fun loginWithEmailAndPassword(email: String, password: String) =
@@ -106,13 +121,13 @@ class AuthViewModel @Inject constructor(
 
             when (result) {
                 is Resource.Loading -> {
-                    _login.emit(SignInState(isLoading = true))
+                    _login.emit(LoginState(isLoading = true))
                 }
                 is Resource.Success -> {
-                    _login.emit(SignInState(login = result.data))
+                    _login.emit(LoginState(login = result.data))
                 }
                 is Resource.Error -> {
-                    _login.emit(SignInState(error = result.message ?: "Error"))
+                    _login.emit(LoginState(error = result.message ?: "Error"))
                 }
             }
         }.launchIn(viewModelScope)
@@ -184,7 +199,7 @@ data class VerifyEmailState(
     val isLoading: Boolean = false,
     val error: String = ""
 )
-data class SignInState(
+data class LoginState(
     val login: AuthResult? = null,
     val isLoading: Boolean = false,
     val error: String = ""

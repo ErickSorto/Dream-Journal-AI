@@ -35,5 +35,5 @@ sealed class Screens(
     )
 
     object OnboardingScreen : Screens(route = "welcome_screen", title = "Welcome", icon = null)
-
+    object MainScreen : Screens(route = "main_screen", title = "Main", icon = null)
 }

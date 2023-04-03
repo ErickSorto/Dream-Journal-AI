@@ -11,8 +11,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
+import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenView
+import org.ballistic.dreamjournalai.navigation.MainGraph
 import org.ballistic.dreamjournalai.ui.theme.DreamCatcherAITheme
 
 @AndroidEntryPoint
@@ -41,11 +43,12 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val navController = rememberNavController()
 
                     //  val screen by splashViewModel.state
-                    MainScreenView {
+                    MainGraph(navController = navController, onDataLoaded = {
                         keepSplashOpened = false
-                    }
+                    })
                 }
             }
         }
