@@ -17,16 +17,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.pager.*
 import com.google.android.gms.auth.api.identity.BeginSignInResult
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
-import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.components.OneTapSignIn
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.OneTapSignIn
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.SignInButton
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.SignInWithGoogle
 import org.ballistic.dreamjournalai.onboarding.presentation.viewmodel.WelcomeViewModel
@@ -38,20 +37,15 @@ import org.ballistic.dreamjournalai.user_authentication.presentation.signup_scre
 @ExperimentalPagerApi
 @Composable
 fun OnboardingScreen(
-    navController: NavHostController,
     welcomeViewModel: WelcomeViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
-    mainScreenViewModel: MainScreenViewModel,
     navigateToDreamJournalScreen: () -> Unit,
-    popBackStack: () -> Unit,
-    innerPadding: PaddingValues
+    onDataLoaded: () -> Unit
 ) {
     val isUserExist = authViewModel.isCurrentUserExist.collectAsState(initial = true)
-    val loginState = authViewModel.signIn.collectAsState()
+    val loginState = authViewModel.login.collectAsState()
     val signUpState = authViewModel.signUp.collectAsState()
     val emailVerificationState = authViewModel.emailVerification.collectAsState()
-    var isError by remember { mutableStateOf(false) }
-    var isEnabled by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         if (isUserExist.value && authViewModel.isEmailVerified) {
@@ -59,9 +53,10 @@ fun OnboardingScreen(
         }
     }
 
-    mainScreenViewModel.setBottomBarState(false)
-    mainScreenViewModel.setFloatingActionButtonState(false)
-    mainScreenViewModel.setTopBarState(false)
+    LaunchedEffect(key1 = Unit) {
+        delay(1500)
+        onDataLoaded()
+    }
 
 
     val pages = listOf(
@@ -84,7 +79,7 @@ fun OnboardingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(innerPadding)
+            .padding()
     ) {
         HorizontalPager(
             modifier = Modifier.weight(10f),
@@ -106,6 +101,32 @@ fun OnboardingScreen(
         )
     }
     val scope = rememberCoroutineScope()
+
+
+
+    if (loginState.value.login != null && authViewModel.isEmailVerified) {
+        welcomeViewModel.saveOnBoardingState(completed = true)
+        LaunchedEffect(Unit) {
+            navigateToDreamJournalScreen()
+        }
+    }
+
+//    if (signUpState.value.error != "" || emailVerificationState.value.isLoading) {
+//        LaunchedEffect(Unit) {
+//            mainScreenViewModel.snackbarHostState.value.showSnackbar(message = authViewModel.signUpErrorMessage.value, actionLabel = "Dismiss")
+//        }
+//    }
+//    if(emailVerificationState.value.sent) {
+//        LaunchedEffect(Unit) {
+//            mainScreenViewModel.snackbarHostState.value.showSnackbar(message = "Verification email sent", actionLabel = "Dismiss")
+//        }
+//    }
+//
+//    if (loginState.value.error.isNotEmpty()) {
+//        LaunchedEffect(Unit) {
+//            mainScreenViewModel.snackbarHostState.value.showSnackbar(message = authViewModel.loginErrorMessage.value, actionLabel = "Dismiss")
+//        }
+//    }
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -129,30 +150,6 @@ fun OnboardingScreen(
         launcher.launch(intent)
     }
 
-    if (loginState.value.login != null && authViewModel.isEmailVerified) {
-        welcomeViewModel.saveOnBoardingState(completed = true)
-        LaunchedEffect(Unit) {
-            navigateToDreamJournalScreen()
-        }
-    }
-
-    if (signUpState.value.error != "" || emailVerificationState.value.isLoading) {
-        LaunchedEffect(Unit) {
-            mainScreenViewModel.snackbarHostState.value.showSnackbar(message = authViewModel.signUpErrorMessage.value, actionLabel = "Dismiss")
-        }
-    }
-    if(emailVerificationState.value.sent) {
-        LaunchedEffect(Unit) {
-            mainScreenViewModel.snackbarHostState.value.showSnackbar(message = "Verification email sent", actionLabel = "Dismiss")
-        }
-    }
-
-    if (loginState.value.error.isNotEmpty()) {
-        LaunchedEffect(Unit) {
-            mainScreenViewModel.snackbarHostState.value.showSnackbar(message = authViewModel.loginErrorMessage.value, actionLabel = "Dismiss")
-        }
-    }
-
     OneTapSignIn(launch = {
         launch(it)
     })
@@ -160,8 +157,7 @@ fun OnboardingScreen(
     SignInWithGoogle(navigateToHomeScreen = { signedIn ->
         if (signedIn) {
             welcomeViewModel.saveOnBoardingState(completed = true)
-            navController.popBackStack()
-            navController.navigate(Screens.DreamJournalScreen.route)
+            navigateToDreamJournalScreen()
         }
     })
 }

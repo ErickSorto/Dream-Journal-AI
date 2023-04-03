@@ -27,7 +27,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.delay
 import org.ballistic.dreamjournalai.R
-import org.ballistic.dreamjournalai.navigation.MainGraph
+import org.ballistic.dreamjournalai.navigation.ScreenGraph
 import org.ballistic.dreamjournalai.navigation.Screens
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TransparentHintTextField
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamsEvent
@@ -203,9 +203,8 @@ fun MainScreenView(
 
 
         AnimatedVisibility(visible = true, enter = fadeIn(), exit = fadeOut()) {
-            MainGraph(
+            ScreenGraph(
                 navController = navController,
-                startDestination = Screens.OnboardingScreen.route,
                 mainScreenViewModel = mainScreenViewModel,
                 dreamsViewModel = dreamsViewModel,
                 innerPadding = innerPadding
