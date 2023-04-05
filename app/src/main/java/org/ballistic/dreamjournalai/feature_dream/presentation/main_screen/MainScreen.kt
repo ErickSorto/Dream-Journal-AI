@@ -34,7 +34,7 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_sc
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamsEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamsViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.components.BottomNavigation
-import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(
@@ -42,8 +42,10 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewm
 )
 @Composable
 fun MainScreenView(
-    mainScreenViewModel: MainScreenViewModel = hiltViewModel(),
+    mainScreenViewModelState: MainScreenViewModelState,
     dreamsViewModel: DreamsViewModel = hiltViewModel(),
+    onMainEvent : (MainScreenEvent) -> Unit = {},
+    onDreamsEvent : (DreamsEvent) -> Unit = {},
     onDataLoaded: () -> Unit
 ) {
     LaunchedEffect(key1 = Unit) {
@@ -64,7 +66,7 @@ fun MainScreenView(
     )
 
     Scaffold(
-        modifier = if (!mainScreenViewModel.getBottomBarState()) {
+        modifier = if (!mainScreenViewModelState.scaffoldState.bottomBarState) {
             Modifier
                 .padding(bottom = 16.dp)
         } else {
@@ -72,11 +74,11 @@ fun MainScreenView(
                 .navigationBarsPadding()
         },
         snackbarHost = {
-            SnackbarHost(mainScreenViewModel.snackbarHostState.value)
+            SnackbarHost(mainScreenViewModelState.scaffoldState.snackBarHostState.value)
         },
         topBar = {
             AnimatedVisibility(
-                visible = mainScreenViewModel.getTopBarState(),
+                visible = mainScreenViewModelState.scaffoldState.topBarState,
                 enter = slideInVertically(initialOffsetY = { -it }),
                 exit = fadeOut()
             ) {
@@ -87,7 +89,7 @@ fun MainScreenView(
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
                         ) {
-                            if (!mainScreenViewModel.getSearchingState()) {
+                            if (!mainScreenViewModelState.scaffoldState.isUserSearching) {
                                 Text(
                                     text = "Dream Journal AI",
                                     color = Color.Black,
@@ -97,7 +99,7 @@ fun MainScreenView(
                                 )
                             }
                             AnimatedVisibility(
-                                visible = mainScreenViewModel.getSearchingState(),
+                                visible = mainScreenViewModelState.scaffoldState.isUserSearching,
                                 //slide from left to right
                                 enter = slideInHorizontally(
                                     initialOffsetX = { it },
@@ -144,7 +146,7 @@ fun MainScreenView(
                     actions = {
                         IconButton(
                             onClick = {
-                                mainScreenViewModel.setSearchingState(!mainScreenViewModel.getSearchingState())
+                                onMainEvent(MainScreenEvent.SetSearchingState(!mainScreenViewModelState.scaffoldState.isUserSearching))
                             },
                             modifier = Modifier.padding(end = 16.dp)
                         ) {
@@ -170,7 +172,7 @@ fun MainScreenView(
         bottomBar = {
 
             AnimatedVisibility(
-                visible = mainScreenViewModel.getBottomBarState(),
+                visible = mainScreenViewModelState.scaffoldState.bottomBarState,
                 enter = slideInVertically(initialOffsetY = { it }),
                 exit = slideOutVertically(targetOffsetY = { it })
             )
@@ -206,9 +208,11 @@ fun MainScreenView(
         AnimatedVisibility(visible = true, enter = fadeIn(), exit = fadeOut()) {
             ScreenGraph(
                 navController = navController,
-                mainScreenViewModel = mainScreenViewModel,
+                mainScreenViewModelState = mainScreenViewModelState,
                 dreamsViewModel = dreamsViewModel,
-                innerPadding = innerPadding
+                innerPadding = innerPadding,
+                onMainEvent = { onMainEvent(it) },
+                onDreamsEvent = { onDreamsEvent(it) }
             )
         }
     }

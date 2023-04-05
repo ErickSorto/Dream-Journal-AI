@@ -48,10 +48,10 @@ fun OnboardingScreen(
     val isUserExist = authViewModelState.isCurrentUserExist.value
     val loginState = authViewModelState.login.collectAsStateWithLifecycle()
     val signUpState = authViewModelState.signUp.collectAsStateWithLifecycle()
-    val emailVerificationState = authViewModelState.emailVerification.collectAsStateWithLifecycle()
+    val emailVerificationState = authViewModelState.isEmailVerified.value
 
     LaunchedEffect(Unit) {
-        if (isUserExist && emailVerificationState.value.verified) {
+        if (isUserExist && emailVerificationState) {
             navigateToDreamJournalScreen()
         }
     }

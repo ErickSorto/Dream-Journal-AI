@@ -8,7 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenEvent
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.feature_dream.presentation.store_screen.components.CustomButtonLayout
 import org.ballistic.dreamjournalai.feature_dream.presentation.store_screen.components.SubscriptionInfo
 
@@ -16,11 +17,17 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.store_screen.comp
 
 @Composable
 fun StoreScreen(
-    mainScreenViewModel: MainScreenViewModel
+    mainScreenViewModelState: MainScreenViewModelState,
+    onMainEvent : (MainScreenEvent) -> Unit = {}
 ) {
-    mainScreenViewModel.setBottomBarState(true)
-    mainScreenViewModel.setFloatingActionButtonState(true)
-    mainScreenViewModel.setTopBarState(false)
+    onMainEvent(MainScreenEvent.SetSearchingState(false))
+    onMainEvent(MainScreenEvent.SetBottomBarState(true))
+    onMainEvent(MainScreenEvent.SetFloatingActionButtonState(true))
+    onMainEvent(MainScreenEvent.SetTopBarState(false))
+
+//    mainScreenViewModel.setBottomBarState(true)
+//    mainScreenViewModel.setFloatingActionButtonState(true)
+//    mainScreenViewModel.setTopBarState(false)
     
     Box(modifier = Modifier.fillMaxSize()) {
         SubscriptionInfo(modifier = Modifier.padding(16.dp))
