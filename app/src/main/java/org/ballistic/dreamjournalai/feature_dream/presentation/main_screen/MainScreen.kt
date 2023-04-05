@@ -23,6 +23,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.delay
@@ -52,7 +53,7 @@ fun MainScreenView(
 
     val navController = rememberNavController()
 
-    val searchedText = dreamsViewModel.searchedText.collectAsState()
+    val searchedText = dreamsViewModel.searchedText.collectAsStateWithLifecycle()
 
 
     Image(

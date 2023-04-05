@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.components.DreamItem
@@ -30,7 +31,7 @@ fun DreamJournalScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val state by dreamsViewModel.state.collectAsState()
+    val state by dreamsViewModel.state.collectAsStateWithLifecycle()
 
     mainScreenViewModel.setBottomBarState(true)
     mainScreenViewModel.setFloatingActionButtonState(true)
@@ -39,7 +40,9 @@ fun DreamJournalScreen(
 
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(top = 16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 16.dp),
         contentPadding = innerPadding,
     ) {
         items(state.dreams) { dream ->

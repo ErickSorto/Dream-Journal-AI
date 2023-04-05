@@ -2,21 +2,18 @@ package org.ballistic.dreamjournalai.user_authentication.presentation.signup_scr
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.firebase.auth.AuthResult
-import kotlinx.coroutines.flow.collect
 import org.ballistic.dreamjournalai.core.Resource
-import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.components.ProgressBar
-import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModel
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModelState
 
 @Composable
 fun SignInWithGoogle(
-    viewModel: AuthViewModel = hiltViewModel(),
+    authViewModelState: AuthViewModelState,
     navigateToHomeScreen: (signedIn: Boolean) -> Unit
 ) {
-    val signInWithGoogleResponse by viewModel.signInWithGoogleResponse.collectAsState(initial = Resource.Loading())
+    val signInWithGoogleResponse by authViewModelState.signInWithGoogleResponse.collectAsStateWithLifecycle()
 
     when (signInWithGoogleResponse) {
         is Resource.Loading<*> -> null
