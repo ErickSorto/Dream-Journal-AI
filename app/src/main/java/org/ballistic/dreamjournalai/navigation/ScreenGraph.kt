@@ -13,19 +13,22 @@ import androidx.navigation.navArgument
 import com.google.accompanist.pager.ExperimentalPagerApi
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamJournalScreen
+import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamsEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamsViewModel
-import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenEvent
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.feature_dream.presentation.store_screen.StoreScreen
 
 
 @RequiresApi(Build.VERSION_CODES.O)
-@OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
 @Composable
 fun ScreenGraph(
     navController: NavHostController,
-    mainScreenViewModel: MainScreenViewModel,
+    mainScreenViewModelState: MainScreenViewModelState,
     dreamsViewModel: DreamsViewModel,
-    innerPadding: PaddingValues
+    innerPadding: PaddingValues,
+    onMainEvent: (MainScreenEvent) -> Unit = {},
+    onDreamsEvent: (DreamsEvent) -> Unit = {},
 ) {
     NavHost(
         navController = navController,
@@ -36,14 +39,18 @@ fun ScreenGraph(
         composable(route = Screens.DreamJournalScreen.route) {
             DreamJournalScreen(
                 navController = navController,
-                mainScreenViewModel = mainScreenViewModel,
+                mainScreenViewModelState = mainScreenViewModelState,
                 dreamsViewModel = dreamsViewModel,
-                innerPadding = innerPadding
+                innerPadding = innerPadding,
+                onMainEvent = { onMainEvent(it) },
+                onDreamsEvent = { onDreamsEvent(it) }
             )
         }
         //store
         composable(route = Screens.StoreScreen.route) {
-            StoreScreen(mainScreenViewModel = mainScreenViewModel)
+            StoreScreen(
+                mainScreenViewModelState = mainScreenViewModelState,
+                onMainEvent = { onMainEvent(it) })
         }
 
 
@@ -64,13 +71,13 @@ fun ScreenGraph(
                     defaultValue = -1
                 },
             )
-        ) {
-            val image = it.arguments?.getInt("dreamImageBackground") ?: -1
+        ) { value ->
+            val image = value.arguments?.getInt("dreamImageBackground") ?: -1
             AddEditDreamScreen(
                 navController = navController,
                 dreamImage = image,
-                mainScreenViewModel = mainScreenViewModel
-            )
+                mainScreenViewModelState = mainScreenViewModelState,
+            ) { onMainEvent(it) }
         }
     }
 }

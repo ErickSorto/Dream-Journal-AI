@@ -16,16 +16,19 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.components.DreamItem
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamsViewModel
-import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenEvent
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.navigation.Screens
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DreamJournalScreen(
     navController: NavController,
-    mainScreenViewModel: MainScreenViewModel,
+    mainScreenViewModelState: MainScreenViewModelState,
     dreamsViewModel: DreamsViewModel,
-    innerPadding: PaddingValues = PaddingValues()
+    innerPadding: PaddingValues = PaddingValues(),
+    onMainEvent : (MainScreenEvent) -> Unit = {},
+    onDreamsEvent : (DreamsEvent) -> Unit = {}
 ) {
 
     val scope = rememberCoroutineScope()
@@ -33,9 +36,14 @@ fun DreamJournalScreen(
 
     val state by dreamsViewModel.state.collectAsStateWithLifecycle()
 
-    mainScreenViewModel.setBottomBarState(true)
-    mainScreenViewModel.setFloatingActionButtonState(true)
-    mainScreenViewModel.setTopBarState(true)
+
+    onMainEvent(MainScreenEvent.SetBottomBarState(true))
+    onMainEvent(MainScreenEvent.SetFloatingActionButtonState(true))
+    onMainEvent(MainScreenEvent.SetTopBarState(true))
+
+//    mainScreenViewModelState.setBottomBarState(true)
+//    mainScreenViewModelState.setFloatingActionButtonState(true)
+//    mainScreenViewModelState.setTopBarState(true)
 
 
 
@@ -62,13 +70,13 @@ fun DreamJournalScreen(
                     scope.launch {
                         dreamsViewModel.onEvent(DreamsEvent.DeleteDream(dream, context))
 
-                        val result = mainScreenViewModel.snackbarHostState.value.showSnackbar(
+                        val result = mainScreenViewModelState.scaffoldState.snackBarHostState.value.showSnackbar(
                             message = "Dream deleted",
                             actionLabel = "Undo",
                             duration = SnackbarDuration.Long
                         )
 
-                        mainScreenViewModel.snackbarHostState.value.currentSnackbarData?.dismiss()
+                        mainScreenViewModelState.scaffoldState.snackBarHostState.value.currentSnackbarData?.dismiss()
 
                         if (result == SnackbarResult.ActionPerformed) {
                             dreamsViewModel.onEvent(DreamsEvent.RestoreDream)
