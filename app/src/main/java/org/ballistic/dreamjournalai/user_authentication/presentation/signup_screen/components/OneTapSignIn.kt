@@ -6,22 +6,25 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.auth.api.identity.BeginSignInResult
 import org.ballistic.dreamjournalai.core.Resource
 import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.components.ProgressBar
-import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModel
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.AuthEvent
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModelState
 
 @Composable
 fun OneTapSignIn(
-    viewModel: AuthViewModel = hiltViewModel(),
+    authViewModelState: AuthViewModelState,
     launch: (result: BeginSignInResult) -> Unit
 ) {
-    when (val oneTapSignInResponse = viewModel.oneTapSignInResponse) {
+    when (val oneTapSignInResponse = authViewModelState.oneTapSignInResponse.value) {
         is Resource.Loading -> ProgressBar()
-        is Resource.Success -> oneTapSignInResponse.data?.data?.let {
-            LaunchedEffect(it) {
-                launch(it)
+        is Resource.Success -> oneTapSignInResponse.data?.let { result ->
+            LaunchedEffect(result) {
+                launch(result)
             }
         }
-        is Resource.Error -> LaunchedEffect(Unit) {
-            print(oneTapSignInResponse)
+        is Resource.Error -> oneTapSignInResponse.apply {
+            LaunchedEffect(Unit) {
+                print(message)
+            }
         }
     }
 }

@@ -4,19 +4,22 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.google.accompanist.pager.ExperimentalPagerApi
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenView
 import org.ballistic.dreamjournalai.onboarding.presentation.OnboardingScreen
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
 @Composable
 fun MainGraph(
     navController: NavHostController,
-    onDataLoaded : () -> Unit
+    onDataLoaded : () -> Unit,
 ) {
     NavHost(
         navController = navController,
@@ -24,6 +27,8 @@ fun MainGraph(
     ) {
         //welcome
         composable(route = Screens.OnboardingScreen.route) {
+            val authViewModel: AuthViewModel = hiltViewModel()
+
             OnboardingScreen(
                 navigateToDreamJournalScreen = {
                     navController.popBackStack()
@@ -31,6 +36,10 @@ fun MainGraph(
                 },
                 onDataLoaded = {
                     onDataLoaded()
+                },
+                authViewModelState = authViewModel.state.collectAsStateWithLifecycle().value,
+                onEvent = {
+                    authViewModel.onEvent(it)
                 }
             )
         }

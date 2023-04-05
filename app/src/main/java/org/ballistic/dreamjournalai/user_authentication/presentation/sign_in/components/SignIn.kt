@@ -3,23 +3,34 @@ package org.ballistic.dreamjournalai.user_authentication.presentation.sign_in.co
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.work.ListenableWorker.Result.Success
 import org.ballistic.dreamjournalai.core.Resource
 import org.ballistic.dreamjournalai.feature_dream.presentation.signup_screen.components.ProgressBar
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModel
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModelState
 
 @Composable
 fun SignIn(
-    viewModel: AuthViewModel = hiltViewModel(),
+    authViewModelState: AuthViewModelState,
     showErrorMessage: (errorMessage: String?) -> Unit,
 ) {
-    when(val signInResponse = viewModel.signInResponse) {
+    HandleSignInResponse(
+        authViewModelState.signInResponse.value,
+        showErrorMessage
+    )
+}
+
+@Composable
+private fun HandleSignInResponse(
+    signInResponse: Resource<Boolean>,
+    showErrorMessage: (errorMessage: String?) -> Unit
+) {
+    when (signInResponse) {
         is Resource.Loading -> ProgressBar()
         is Resource.Success -> Unit
-        is Resource.Error -> signInResponse.apply {
+        is Resource.Error -> {
             LaunchedEffect(Unit) {
-                print("SignIn: $message")
-                showErrorMessage(message)
+                println("SignIn: ${signInResponse.message}")
+                showErrorMessage(signInResponse.message)
             }
         }
     }

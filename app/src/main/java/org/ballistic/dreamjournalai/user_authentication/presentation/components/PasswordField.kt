@@ -1,6 +1,5 @@
 package org.ballistic.dreamjournalai.user_authentication.presentation.components
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -21,12 +20,11 @@ import org.ballistic.dreamjournalai.user_authentication.presentation.signup_scre
 
 @Composable
 fun PasswordField(
-    viewModel: AuthViewModel,
+    isLoginLayout: Boolean,
     password: MutableState<String>,
     onPasswordValueChange: (newValue: TextFieldValue) -> Unit,
     forgotPassword: () -> Unit
 ) {
-
     var passwordIsVisible by remember { mutableStateOf(false) }
 
 
@@ -68,7 +66,7 @@ fun PasswordField(
                 }
             },
             trailingIcon = {
-                if (viewModel.isLoginLayout.value) {
+                if (isLoginLayout) {
                     TextButton(onClick = { forgotPassword() }) {
                         Text(text = "Forgot password?", color = Color.Black.copy(alpha = 0.5f))
                     }
@@ -92,5 +90,4 @@ fun PasswordField(
                 errorCursorColor = Color.Red
             )
         )
-
 }

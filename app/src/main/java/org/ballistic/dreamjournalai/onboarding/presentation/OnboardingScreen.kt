@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.pager.*
 import com.google.android.gms.auth.api.identity.BeginSignInResult
@@ -24,31 +25,33 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.OneTapSignIn
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.SignInButton
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.SignInWithGoogle
 import org.ballistic.dreamjournalai.onboarding.presentation.viewmodel.WelcomeViewModel
 import org.ballistic.dreamjournalai.onboarding.util.OnBoardingPage
 import org.ballistic.dreamjournalai.user_authentication.presentation.components.SignUpSignInForgotPasswordLayout
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.AuthEvent
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModel
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModelState
 
 @ExperimentalAnimationApi
 @ExperimentalPagerApi
 @Composable
 fun OnboardingScreen(
     welcomeViewModel: WelcomeViewModel = hiltViewModel(),
-    authViewModel: AuthViewModel = hiltViewModel(),
+    authViewModelState: AuthViewModelState,
     navigateToDreamJournalScreen: () -> Unit,
+    onEvent: (AuthEvent) -> Unit,
     onDataLoaded: () -> Unit
 ) {
-    val isUserExist = authViewModel.isCurrentUserExist.collectAsState(initial = true)
-    val loginState = authViewModel.login.collectAsState()
-    val signUpState = authViewModel.signUp.collectAsState()
-    val emailVerificationState = authViewModel.emailVerification.collectAsState()
+    val isUserExist = authViewModelState.isCurrentUserExist.value
+    val loginState = authViewModelState.login.collectAsStateWithLifecycle()
+    val signUpState = authViewModelState.signUp.collectAsStateWithLifecycle()
+    val emailVerificationState = authViewModelState.emailVerification.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        if (isUserExist.value && authViewModel.isEmailVerified) {
+        if (isUserExist && emailVerificationState.value.verified) {
             navigateToDreamJournalScreen()
         }
     }
@@ -88,9 +91,10 @@ fun OnboardingScreen(
             verticalAlignment = Alignment.Top,
 
             ) { position ->
-            PagerScreen(
-                onBoardingPage = pages[position], viewModel = authViewModel,
+             PagerScreen(
+                onBoardingPage = pages[position], authViewModelState = authViewModelState,
                 pagerState = pagerState,
+                onEvent = { onEvent(it) },
             )
         }
         HorizontalPagerIndicator(
@@ -104,7 +108,7 @@ fun OnboardingScreen(
 
 
 
-    if (loginState.value.login != null && authViewModel.isEmailVerified) {
+    if (loginState.value.login != null && authViewModelState.isEmailVerified.value) {
         welcomeViewModel.saveOnBoardingState(completed = true)
         LaunchedEffect(Unit) {
             navigateToDreamJournalScreen()
@@ -133,11 +137,11 @@ fun OnboardingScreen(
             if (result.resultCode == Activity.RESULT_OK) {
                 try {
                     val credentials =
-                        authViewModel.oneTapClient.getSignInCredentialFromIntent(result.data)
-                    val googleIdToken = credentials.googleIdToken
+                        authViewModelState.oneTapClient?.getSignInCredentialFromIntent(result.data)
+                    val googleIdToken = credentials?.googleIdToken
                     val googleCredentials = GoogleAuthProvider.getCredential(googleIdToken, null)
                     scope.launch {
-                        authViewModel.signInWithGoogle(googleCredentials)
+                        onEvent(AuthEvent.SignInWithGoogle(googleCredentials))
                     }
                 } catch (it: ApiException) {
                     print(it)
@@ -152,26 +156,27 @@ fun OnboardingScreen(
 
     OneTapSignIn(launch = {
         launch(it)
-    })
+    }, authViewModelState = authViewModelState)
 
     SignInWithGoogle(navigateToHomeScreen = { signedIn ->
         if (signedIn) {
             welcomeViewModel.saveOnBoardingState(completed = true)
             navigateToDreamJournalScreen()
         }
-    })
+    }, authViewModelState = authViewModelState)
 }
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
 @Composable
 fun PagerScreen(
     onBoardingPage: OnBoardingPage,
-    viewModel: AuthViewModel = hiltViewModel(),
+    authViewModelState: AuthViewModelState,
     pagerState: PagerState,
+    onEvent: (AuthEvent) -> Unit
 ) {
     if (onBoardingPage == OnBoardingPage.Fourth) {
         //sign in email and password text field
-        SignUpPage(pagerState = pagerState, viewModel = viewModel)
+        SignUpPage(pagerState = pagerState, authViewModelState = authViewModelState, onEvent = { onEvent(it) })
 
     } else {
         Column(
@@ -211,7 +216,8 @@ fun PagerScreen(
 @Composable
 fun SignUpPage(
     pagerState: PagerState,
-    viewModel: AuthViewModel = hiltViewModel(),
+    authViewModelState: AuthViewModelState,
+    onEvent : (AuthEvent) -> Unit = {}
 ) {
     Column(
         Modifier.fillMaxSize(),
@@ -220,14 +226,16 @@ fun SignUpPage(
     ) {
         SignInButton(
             onClick = {
-                viewModel.oneTapSignIn()
+                onEvent(AuthEvent.OneTapSignIn)
             },
             modifier = Modifier.fillMaxWidth(),
             pagerState = pagerState,
         )
 
         SignUpSignInForgotPasswordLayout(
-            viewModel = viewModel, pagerState = pagerState
-        )
+            authViewModelState = authViewModelState, pagerState = pagerState
+        ) {
+            onEvent(it)
+        }
     }
 }

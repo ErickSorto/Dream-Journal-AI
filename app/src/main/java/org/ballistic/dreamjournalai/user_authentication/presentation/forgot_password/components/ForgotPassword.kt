@@ -6,16 +6,32 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import org.ballistic.dreamjournalai.core.Resource
 import org.ballistic.dreamjournalai.user_authentication.presentation.components.ProgressBar
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModel
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModelState
 
 
 @Composable
 fun ForgotPassword(
-    viewModel: AuthViewModel = hiltViewModel(),
+    authViewModelState: AuthViewModelState,
     navigateBack: () -> Unit,
     showResetPasswordMessage: () -> Unit,
     showErrorMessage: (errorMessage: String?) -> Unit
 ) {
-    when(val sendPasswordResetEmailResponse = viewModel.sendPasswordResetEmailResponse) {
+    HandleSendPasswordResetEmailResponse(
+        authViewModelState.sendPasswordResetEmailResponse.value,
+        navigateBack,
+        showResetPasswordMessage,
+        showErrorMessage
+    )
+}
+
+@Composable
+private fun HandleSendPasswordResetEmailResponse(
+    sendPasswordResetEmailResponse: Resource<Boolean>,
+    navigateBack: () -> Unit,
+    showResetPasswordMessage: () -> Unit,
+    showErrorMessage: (errorMessage: String?) -> Unit
+) {
+    when (sendPasswordResetEmailResponse) {
         is Resource.Loading -> ProgressBar()
         is Resource.Success -> {
             val isPasswordResetEmailSent = sendPasswordResetEmailResponse.data
@@ -27,11 +43,9 @@ fun ForgotPassword(
             }
         }
         is Resource.Error -> {
-            sendPasswordResetEmailResponse.apply {
-                LaunchedEffect(Unit) {
-                    print("Error")
-                    showErrorMessage(message)
-                }
+            LaunchedEffect(Unit) {
+                println("Error")
+                showErrorMessage(sendPasswordResetEmailResponse.message)
             }
         }
     }
