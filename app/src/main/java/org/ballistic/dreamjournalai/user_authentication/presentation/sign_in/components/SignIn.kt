@@ -9,28 +9,17 @@ import org.ballistic.dreamjournalai.user_authentication.presentation.signup_scre
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModelState
 
 @Composable
-fun SignIn(
+fun LogIn(
     authViewModelState: AuthViewModelState,
     showErrorMessage: (errorMessage: String?) -> Unit,
 ) {
-    HandleSignInResponse(
-        authViewModelState.signInResponse.value,
-        showErrorMessage
-    )
-}
-
-@Composable
-private fun HandleSignInResponse(
-    signInResponse: Resource<Boolean>,
-    showErrorMessage: (errorMessage: String?) -> Unit
-) {
-    when (signInResponse) {
+    when(val signInResponse = authViewModelState.signInResponse.value) {
         is Resource.Loading -> ProgressBar()
         is Resource.Success -> Unit
-        is Resource.Error -> {
+        is Resource.Error -> signInResponse.apply {
             LaunchedEffect(Unit) {
-                println("SignIn: ${signInResponse.message}")
-                showErrorMessage(signInResponse.message)
+                print("SignIn: $message")
+                showErrorMessage(message)
             }
         }
     }

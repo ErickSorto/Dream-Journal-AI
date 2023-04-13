@@ -21,18 +21,17 @@ import org.ballistic.dreamjournalai.user_authentication.presentation.signup_scre
 @Composable
 fun PasswordField(
     isLoginLayout: Boolean,
-    password: MutableState<String>,
-    onPasswordValueChange: (newValue: TextFieldValue) -> Unit,
+    password: String,
+    onValueChange: (String) -> Unit,
     forgotPassword: () -> Unit
 ) {
     var passwordIsVisible by remember { mutableStateOf(false) }
 
 
         OutlinedTextField(
-            value = password.value,
+            value = password,
             onValueChange = {
-                password.value = it
-
+               onValueChange(it)
             },
             label = {
                 Text(

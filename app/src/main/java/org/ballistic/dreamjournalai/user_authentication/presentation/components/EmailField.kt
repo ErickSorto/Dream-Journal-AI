@@ -19,21 +19,22 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
-import kotlinx.coroutines.job
 import org.ballistic.dreamjournalai.core.Constants.EMAIL_LABEL
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.AuthEvent
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalPagerApi::class)
 @Composable
 fun EmailField(
-    email: MutableState<String>,
-    pagerState: PagerState
+    email: String,
+    pagerState: PagerState,
+    onValueChange: (String) -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
 
     OutlinedTextField(
-        value = email.value,
+        value = email,
         onValueChange = { newValue ->
-            email.value = newValue
+            onValueChange(newValue)
         },
         label = {
             Text(

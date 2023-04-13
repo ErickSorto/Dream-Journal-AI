@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.onboarding.presentation
 
 import android.app.Activity
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,13 +27,12 @@ import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.OneTapSignIn
-import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.SignInButton
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.SignInGoogleButton
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.SignInWithGoogle
 import org.ballistic.dreamjournalai.onboarding.presentation.viewmodel.WelcomeViewModel
 import org.ballistic.dreamjournalai.onboarding.util.OnBoardingPage
 import org.ballistic.dreamjournalai.user_authentication.presentation.components.SignUpSignInForgotPasswordLayout
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.AuthEvent
-import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModel
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModelState
 
 @ExperimentalAnimationApi
@@ -45,12 +45,14 @@ fun OnboardingScreen(
     onEvent: (AuthEvent) -> Unit,
     onDataLoaded: () -> Unit
 ) {
-    val isUserExist = authViewModelState.isCurrentUserExist.value
-    val loginState = authViewModelState.login.collectAsStateWithLifecycle()
+    val isUserExist = authViewModelState.isCurrentUserExist().collectAsStateWithLifecycle().value
+    val loginState = authViewModelState.login.collectAsStateWithLifecycle().value
     val signUpState = authViewModelState.signUp.collectAsStateWithLifecycle()
-    val emailVerificationState = authViewModelState.isEmailVerified.value
+    val emailVerificationState = authViewModelState.isEmailVerified().collectAsStateWithLifecycle().value
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(key1 = isUserExist, key2 = emailVerificationState) {
+        println("isUserExist: $isUserExist, emailVerificationState: $emailVerificationState")
+        Log.d("OnboardingScreen", "isUserExist: $isUserExist, emailVerificationState: $emailVerificationState")
         if (isUserExist && emailVerificationState) {
             navigateToDreamJournalScreen()
         }
@@ -91,10 +93,11 @@ fun OnboardingScreen(
             verticalAlignment = Alignment.Top,
 
             ) { position ->
-             PagerScreen(
+            PagerScreen(
                 onBoardingPage = pages[position], authViewModelState = authViewModelState,
                 pagerState = pagerState,
                 onEvent = { onEvent(it) },
+                navigateToDreamJournalScreen = { navigateToDreamJournalScreen() }
             )
         }
         HorizontalPagerIndicator(
@@ -108,29 +111,13 @@ fun OnboardingScreen(
 
 
 
-    if (loginState.value.login != null && authViewModelState.isEmailVerified.value) {
-        welcomeViewModel.saveOnBoardingState(completed = true)
-        LaunchedEffect(Unit) {
+
+    LaunchedEffect(Unit) {
+        if (loginState.login != null && emailVerificationState) {
+            welcomeViewModel.saveOnBoardingState(completed = true)
             navigateToDreamJournalScreen()
         }
     }
-
-//    if (signUpState.value.error != "" || emailVerificationState.value.isLoading) {
-//        LaunchedEffect(Unit) {
-//            mainScreenViewModel.snackbarHostState.value.showSnackbar(message = authViewModel.signUpErrorMessage.value, actionLabel = "Dismiss")
-//        }
-//    }
-//    if(emailVerificationState.value.sent) {
-//        LaunchedEffect(Unit) {
-//            mainScreenViewModel.snackbarHostState.value.showSnackbar(message = "Verification email sent", actionLabel = "Dismiss")
-//        }
-//    }
-//
-//    if (loginState.value.error.isNotEmpty()) {
-//        LaunchedEffect(Unit) {
-//            mainScreenViewModel.snackbarHostState.value.showSnackbar(message = authViewModel.loginErrorMessage.value, actionLabel = "Dismiss")
-//        }
-//    }
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -172,11 +159,17 @@ fun PagerScreen(
     onBoardingPage: OnBoardingPage,
     authViewModelState: AuthViewModelState,
     pagerState: PagerState,
-    onEvent: (AuthEvent) -> Unit
+    onEvent: (AuthEvent) -> Unit,
+    navigateToDreamJournalScreen: () -> Unit
 ) {
     if (onBoardingPage == OnBoardingPage.Fourth) {
         //sign in email and password text field
-        SignUpPage(pagerState = pagerState, authViewModelState = authViewModelState, onEvent = { onEvent(it) })
+        SignUpPage(
+            pagerState = pagerState,
+            authViewModelState = authViewModelState,
+            onEvent = { onEvent(it) },
+            navigateToDreamJournalScreen = navigateToDreamJournalScreen
+        )
 
     } else {
         Column(
@@ -217,14 +210,15 @@ fun PagerScreen(
 fun SignUpPage(
     pagerState: PagerState,
     authViewModelState: AuthViewModelState,
-    onEvent : (AuthEvent) -> Unit = {}
+    onEvent: (AuthEvent) -> Unit = {},
+    navigateToDreamJournalScreen: () -> Unit
 ) {
     Column(
         Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        SignInButton(
+        SignInGoogleButton(
             onClick = {
                 onEvent(AuthEvent.OneTapSignIn)
             },
@@ -233,9 +227,9 @@ fun SignUpPage(
         )
 
         SignUpSignInForgotPasswordLayout(
-            authViewModelState = authViewModelState, pagerState = pagerState
-        ) {
-            onEvent(it)
-        }
+            authViewModelState = authViewModelState, pagerState = pagerState,
+            authEvent = { onEvent(it) },
+            navigateToHomeScreen = { navigateToDreamJournalScreen() }
+        )
     }
 }

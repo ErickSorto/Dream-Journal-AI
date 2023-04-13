@@ -12,4 +12,9 @@ sealed class AuthEvent {
     object ReloadUser : AuthEvent()
     object SignOut : AuthEvent()
     object RevokeAccess : AuthEvent()
+    data class EnteredLoginEmail(val email: String) : AuthEvent()
+    data class EnteredLoginPassword(val password: String) : AuthEvent()
+    data class EnteredSignUpEmail(val email: String) : AuthEvent()
+    data class EnteredSignUpPassword(val password: String) : AuthEvent()
+    data class EnteredForgotPasswordEmail(val email: String) : AuthEvent()
 }

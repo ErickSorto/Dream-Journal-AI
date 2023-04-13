@@ -28,6 +28,7 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.flow.collectLatest
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.AlertSave
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TabLayout
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 
@@ -111,9 +112,7 @@ fun AddEditDreamScreen(
             }
         )
     }
-
-
-
+    
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(

@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen
+package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel
 
 import android.app.Activity
 import android.os.Build
@@ -22,6 +22,7 @@ import org.ballistic.dreamjournalai.feature_dream.domain.model.*
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.GetOpenAIImageGeneration
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.GetOpenAITextResponse
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter

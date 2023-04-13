@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -135,27 +137,44 @@ fun MainScreenView(
                             }
                         }
                     },
-//                    navigationIcon = {
-//                        Icon(
-//                            Icons.Filled.Menu,
-//                            contentDescription = "Menu",
-//                            tint = Color.Black,
-//                            modifier = Modifier.padding(start = 16.dp)
-//                        )
-//                    },
+                    navigationIcon = {
+                        Icon(
+                            Icons.Filled.Menu,
+                            contentDescription = "Menu",
+                            tint = Color.Black,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    },
                     actions = {
-                        IconButton(
-                            onClick = {
-                                onMainEvent(MainScreenEvent.SetSearchingState(!mainScreenViewModelState.scaffoldState.isUserSearching))
-                            },
-                            modifier = Modifier.padding(end = 16.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.Search,
-                                contentDescription = "Search",
-                                tint = Color.Black
-                            )
+                        if (!mainScreenViewModelState.scaffoldState.isUserSearching){
+                            IconButton(
+                                onClick = {
+                                    onMainEvent(MainScreenEvent.SetSearchingState(!mainScreenViewModelState.scaffoldState.isUserSearching))
+                                },
+                                modifier = Modifier.padding(end = 16.dp)
+                            ) {
+                                Icon(
+                                    Icons.Filled.Search,
+                                    contentDescription = "Search",
+                                    tint = Color.Black
+                                )
+                            }
+                        } else {
+                            IconButton(
+                                onClick = {
+                                    onMainEvent(MainScreenEvent.SetSearchingState(!mainScreenViewModelState.scaffoldState.isUserSearching))
+                                    dreamsViewModel.onEvent(DreamsEvent.SearchDreams(""))
+                                },
+                                modifier = Modifier.padding(end = 16.dp)
+                            ) {
+                                Icon(
+                                    Icons.Filled.Close,
+                                    contentDescription = "Close",
+                                    tint = Color.Black
+                                )
+                            }
                         }
+
 
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
