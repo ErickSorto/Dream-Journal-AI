@@ -8,7 +8,6 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -21,7 +20,7 @@ import org.ballistic.dreamjournalai.core.Constants.SIGN_IN_WITH_GOOGLE
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun SignInButton(
+fun SignInGoogleButton(
     modifier: Modifier,
     pagerState: PagerState,
     onClick: () -> Unit,

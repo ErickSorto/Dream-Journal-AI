@@ -20,12 +20,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
-import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.core.Constants.LOGIN
 import org.ballistic.dreamjournalai.core.Constants.SIGNUP
 import org.ballistic.dreamjournalai.user_authentication.presentation.forgot_password.components.ForgotPassword
-import org.ballistic.dreamjournalai.user_authentication.presentation.sign_in.components.SignIn
+import org.ballistic.dreamjournalai.user_authentication.presentation.sign_in.components.LogIn
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.AuthEvent
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModelState
 
@@ -34,7 +33,8 @@ import org.ballistic.dreamjournalai.user_authentication.presentation.signup_scre
 fun SignUpSignInForgotPasswordLayout(
     authViewModelState: AuthViewModelState,
     pagerState: PagerState,
-    onEvent: (AuthEvent) -> Unit
+    authEvent: (AuthEvent) -> Unit,
+    navigateToHomeScreen: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
 
@@ -93,36 +93,30 @@ fun SignUpSignInForgotPasswordLayout(
                 authViewModelState.isLoginLayout.value -> {
                     LoginLayout(
                         authViewModelState = authViewModelState,
-                        login = { email, password ->
-                            onEvent(AuthEvent.LoginWithEmailAndPassword(email, password))
+                        authEvent = {
+                            authEvent(it)
                         },
-                        pagerState = pagerState
+                        pagerState = pagerState,
+                        navigateToHomeScreen = {
+                            navigateToHomeScreen()
+                        }
                     )
                 }
                 authViewModelState.isForgotPasswordLayout.value -> {
                     ForgotPasswordLayout(
                         authViewModelState = authViewModelState,
-                        sendPasswordResetEmail = {
-                            onEvent(AuthEvent.SendPasswordResetEmail(it))
-                            // authViewModelState.sendPasswordResetEmail(it)
-                        },
                         pagerState = pagerState,
-                    )
+                    ) {
+                        authEvent(it)
+                    }
                 }
                 else -> {
                     SignupLayout(
-                        sendEmailVerification = {
-                            onEvent(AuthEvent.SendEmailVerification)
-                            //authViewModelState.sendEmailVerification()
-                        },
-                        signup = { email, password ->
-                            scope.launch {
-                                onEvent(AuthEvent.SignUpWithEmailAndPassword(email, password))
-                                //    authViewModelState.signUpWithEmailAndPassword(email, password)
-                            }
-                        },
                         pagerState = pagerState,
-                        authViewModelState = authViewModelState
+                        authViewModelState = authViewModelState,
+                        authEvent = {
+                            authEvent(it)
+                        }
                     )
                 }
             }
@@ -134,8 +128,8 @@ fun SignUpSignInForgotPasswordLayout(
 @Composable
 fun ForgotPasswordLayout(
     authViewModelState: AuthViewModelState,
-    sendPasswordResetEmail: (email: String) -> Unit,
     pagerState: PagerState,
+    authEvent: (AuthEvent) -> Unit
 ) {
 
 
@@ -145,11 +139,14 @@ fun ForgotPasswordLayout(
         EmailField(
             email = authViewModelState.forgotPasswordEmail,
             pagerState = pagerState,
+            onValueChange = {
+                authEvent(AuthEvent.EnteredForgotPasswordEmail(it))
+            },
         )
 
         Button(
             onClick = {
-                sendPasswordResetEmail(authViewModelState.forgotPasswordEmail.value)
+                authEvent(AuthEvent.SendPasswordResetEmail(authViewModelState.forgotPasswordEmail))
             },
             modifier = Modifier.fillMaxWidth(.5f),
             colors = buttonColors(
@@ -196,8 +193,7 @@ fun ForgotPasswordLayout(
 @Composable
 fun SignupLayout(
     authViewModelState: AuthViewModelState,
-    signup: (email: String, password: String) -> Unit,
-    sendEmailVerification: () -> Unit,
+    authEvent: (AuthEvent) -> Unit,
     pagerState: PagerState,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
@@ -209,12 +205,15 @@ fun SignupLayout(
         EmailField(
             email = authViewModelState.signUpEmail,
             pagerState = pagerState,
+            onValueChange = {
+                authEvent(AuthEvent.EnteredSignUpEmail(it))
+            },
         )
 
         PasswordField(
             password = authViewModelState.signUpPassword,
-            onPasswordValueChange = { newValue ->
-
+            onValueChange = { newValue ->
+                authEvent(AuthEvent.EnteredSignUpPassword(newValue))
             },
             forgotPassword = { authViewModelState.isForgotPasswordLayout.value = true },
             isLoginLayout = authViewModelState.isLoginLayout.value,
@@ -224,11 +223,8 @@ fun SignupLayout(
             modifier = Modifier.fillMaxWidth(.5f),
             onClick = {
                 keyboard?.hide()
-                signup(
-                    authViewModelState.signUpEmail.value,
-                    authViewModelState.signUpPassword.value
-                )
-                sendEmailVerification()
+                authEvent(AuthEvent.SignUpWithEmailAndPassword(authViewModelState.signUpEmail, authViewModelState.signUpPassword))
+                authEvent(AuthEvent.SendEmailVerification)
             },
             colors = buttonColors(
                 backgroundColor = colorResource(id = R.color.sky_blue)
@@ -251,8 +247,9 @@ fun SignupLayout(
 @Composable
 fun LoginLayout(
     authViewModelState: AuthViewModelState,
-    login: (email: String, password: String) -> Unit,
     pagerState: PagerState,
+    authEvent: (AuthEvent) -> Unit,
+    navigateToHomeScreen: () -> Unit,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
 
@@ -262,12 +259,15 @@ fun LoginLayout(
         EmailField(
             email = authViewModelState.loginEmail,
             pagerState = pagerState,
+            onValueChange = {
+                authEvent(AuthEvent.EnteredLoginEmail(it))
+            },
         )
 
         PasswordField(
             password = authViewModelState.loginPassword,
-            onPasswordValueChange = { newValue ->
-
+            onValueChange = { newValue ->
+                authEvent(AuthEvent.EnteredLoginPassword(newValue))
             },
             forgotPassword = {
                 authViewModelState.isForgotPasswordLayout.value = true
@@ -281,7 +281,7 @@ fun LoginLayout(
                 .fillMaxWidth(.5f),
             onClick = {
                 keyboard?.hide()
-                login(authViewModelState.loginEmail.value, authViewModelState.loginPassword.value)
+                authEvent(AuthEvent.LoginWithEmailAndPassword(authViewModelState.loginEmail, authViewModelState.loginPassword))
             },
             colors = buttonColors(
                 backgroundColor = colorResource(id = R.color.lighter_yellow)
@@ -294,7 +294,7 @@ fun LoginLayout(
         }
     }
 
-    SignIn(showErrorMessage = { /*TODO*/ }, authViewModelState = authViewModelState)
+    LogIn(showErrorMessage = { /*TODO*/ }, authViewModelState = authViewModelState)
 }
 
 @Composable
@@ -303,7 +303,7 @@ fun LoginOrSignupTab(
     modifier: Modifier = Modifier,
     isLoginLayout: Boolean,
     isSignUpLayout: Boolean,
-    isClicked: () -> Unit
+    isClicked: () -> Unit,
 ) {
     TextButton(
         modifier = modifier

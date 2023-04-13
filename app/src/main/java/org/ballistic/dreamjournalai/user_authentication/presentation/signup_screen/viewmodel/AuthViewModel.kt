@@ -1,10 +1,8 @@
 package org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.auth.AuthCredential
@@ -51,6 +49,31 @@ class AuthViewModel @Inject constructor(
             is AuthEvent.SendPasswordResetEmail -> {
                 sendPasswordResetEmail(event.email)
             }
+            is AuthEvent.EnteredLoginEmail -> {
+                _state.value = _state.value.copy(
+                    loginEmail = event.email
+                )
+            }
+            is AuthEvent.EnteredLoginPassword -> {
+                _state.value = _state.value.copy(
+                    loginPassword = event.password
+                )
+            }
+            is AuthEvent.EnteredSignUpEmail -> {
+                _state.value = _state.value.copy(
+                    signUpEmail = event.email
+                )
+            }
+            is AuthEvent.EnteredSignUpPassword -> {
+                _state.value = _state.value.copy(
+                    signUpPassword = event.password
+                )
+            }
+            is AuthEvent.EnteredForgotPasswordEmail -> {
+                _state.value = _state.value.copy(
+                    forgotPasswordEmail = event.email
+                )
+            }
             AuthEvent.ReloadUser -> {
                 reloadUser()
             }
@@ -69,7 +92,7 @@ class AuthViewModel @Inject constructor(
         _state.value.oneTapSignInResponse.value = response
     }
 
-    suspend fun signInWithGoogle(googleCredential: AuthCredential) = repo.firebaseSignInWithGoogle(
+    private suspend fun signInWithGoogle(googleCredential: AuthCredential) = repo.firebaseSignInWithGoogle(
         googleCredential
     ).onEach { result ->
         when (result) {
@@ -94,12 +117,12 @@ class AuthViewModel @Inject constructor(
         }
     }.launchIn(viewModelScope)
 
-    suspend fun loginWithEmailAndPassword(email: String, password: String) =
+    private suspend fun loginWithEmailAndPassword(email: String, password: String) =
         repo.firebaseSignInWithEmailAndPassword(email, password).onEach { result ->
-            if (_state.value.loginEmail.value.isEmpty() || _state.value.loginPassword.value.isEmpty()) {
+            if (_state.value.loginEmail.isEmpty() || _state.value.loginPassword.isEmpty()) {
                 _state.value.loginErrorMessage.value = "Email or password is empty"
             } //incorrect format
-            else if (!_state.value.loginEmail.value.contains("@") || !_state.value.loginEmail.value.contains(".")) {
+            else if (!_state.value.loginEmail.contains("@") || !_state.value.loginEmail.contains(".")) {
                 _state.value.loginErrorMessage.value = "Email format is incorrect"
             } //incorrect password
             else {
@@ -121,10 +144,10 @@ class AuthViewModel @Inject constructor(
 
     private suspend fun signUpWithEmailAndPassword(email: String, password: String) =
         viewModelScope.launch {
-            if (_state.value.signUpEmail.value.isEmpty() || _state.value.signUpPassword.value.isEmpty()) {
+            if (_state.value.signUpEmail.isEmpty() || _state.value.signUpPassword.isEmpty()) {
                 _state.value.signUpErrorMessage.value = "Email or password is empty"
             } //incorrect format
-            else if (!_state.value.signUpEmail.value.contains("@") || !_state.value.signUpEmail.value.contains(".")) {
+            else if (!_state.value.signUpEmail.contains("@") || !_state.value.signUpEmail.contains(".")) {
                 _state.value.signUpErrorMessage.value = "Email format is incorrect"
             } else {
                 _state.value.signUpErrorMessage.value = ""
@@ -180,13 +203,11 @@ class AuthViewModel @Inject constructor(
 
 data class AuthViewModelState(
     val repo: AuthRepository,
-    val loginEmail: MutableState<String> = mutableStateOf(""),
-    val loginPassword: MutableState<String> = mutableStateOf(""),
-    val signUpEmail: MutableState<String> = mutableStateOf(""),
-    val signUpPassword: MutableState<String> = mutableStateOf(""),
-    val forgotPasswordEmail: MutableState<String> = mutableStateOf(""),
-    val isEmailVerified: MutableState<Boolean> = mutableStateOf(repo.currentUser?.isEmailVerified ?: false),
-    val isCurrentUserExist: MutableState<Boolean> = mutableStateOf(repo.currentUser != null),
+    val loginEmail: String = "",
+    val loginPassword: String = "",
+    val signUpEmail: String = "",
+    val signUpPassword: String = "",
+    val forgotPasswordEmail: String = "",
     val oneTapClient: SignInClient? = null,
     val isLoginLayout: MutableState<Boolean> = mutableStateOf(true),
     val isSignUpLayout: MutableState<Boolean> = mutableStateOf(false),
@@ -204,7 +225,11 @@ data class AuthViewModelState(
     val login: StateFlow<LoginState> = MutableStateFlow(LoginState()),
     val signUp: StateFlow<SignUpState> = MutableStateFlow(SignUpState()),
     val emailVerification: StateFlow<VerifyEmailState> = MutableStateFlow(VerifyEmailState())
-)
+){
+    fun isCurrentUserExist(): StateFlow<Boolean> = repo.isCurrentUserExist()
+    fun isEmailVerified(): StateFlow<Boolean> = repo.isEmailVerified()
+
+}
 data class VerifyEmailState(
     val verified : Boolean = false,
     val sent: Boolean = false,

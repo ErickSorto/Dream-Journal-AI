@@ -11,9 +11,11 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FieldValue.serverTimestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope.coroutineContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import org.ballistic.dreamjournalai.core.Constants.CREATED_AT
 import org.ballistic.dreamjournalai.core.Constants.DISPLAY_NAME
@@ -40,10 +42,17 @@ class AuthRepositoryImpl @Inject constructor(
 
     override val currentUser get() = auth.currentUser
 
-    override fun isCurrentUserExist(): Flow<Boolean> {
-        return flow {
-            emit(auth.currentUser != null)
+    override fun isCurrentUserExist(): StateFlow<Boolean> {
+        return MutableStateFlow(auth.currentUser != null)
+    }
+    override fun isEmailVerified(): StateFlow<Boolean> {
+        val result = MutableStateFlow(auth.currentUser?.isEmailVerified ?: false)
+        auth.currentUser?.let { user ->
+            CoroutineScope(coroutineContext).launch {
+                result.value = user.isEmailVerified
+            }
         }
+        return result
     }
 
     override suspend fun oneTapSignInWithGoogle(): OneTapSignInResponse {
@@ -70,9 +79,9 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun addUserToFirestore(emailVerified: Boolean, registrationTimestamp: Long) {
+    private suspend fun addUserToFirestore(registrationTimestamp: Long) {
         auth.currentUser?.apply {
-            val user = toUser(emailVerified, registrationTimestamp)
+            val user = toUser(registrationTimestamp)
             db.collection(USERS).document(uid).set(user).await()
         }
     }
@@ -85,7 +94,9 @@ class AuthRepositoryImpl @Inject constructor(
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             Log.d("SignUp", "User created successfully: $authResult")
             // Add the user to Firestore with the additional fields
-            addUserToFirestore(emailVerified = false, registrationTimestamp = System.currentTimeMillis())
+            addUserToFirestore(
+                registrationTimestamp = System.currentTimeMillis()
+            )
             emit(Resource.Success(authResult))
         }.catch { e ->
             Log.e("SignUp", "Error creating user: $e")
@@ -139,7 +150,6 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-
     override fun signOut() = auth.signOut()
 
     override suspend fun revokeAccess(): RevokeAccessResponse {
@@ -162,10 +172,9 @@ class AuthRepositoryImpl @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), auth.currentUser == null)
 }
 
-fun FirebaseUser.toUser(emailVerified: Boolean, registrationTimestamp: Long) = mapOf(
+fun FirebaseUser.toUser(registrationTimestamp: Long) = mapOf(
     DISPLAY_NAME to displayName,
     EMAIL to email,
     CREATED_AT to serverTimestamp(),
-    "emailVerified" to emailVerified,
     "registrationTimestamp" to registrationTimestamp
 )

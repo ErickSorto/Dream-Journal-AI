@@ -28,7 +28,7 @@ import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.R
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
 
 
 //@OptIn(ExperimentalPagerApi::class, DelicateCoroutinesApi::class)

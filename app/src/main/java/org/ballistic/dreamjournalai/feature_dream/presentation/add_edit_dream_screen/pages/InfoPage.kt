@@ -32,7 +32,7 @@ import com.maxkeppeler.sheets.clock.ClockDialog
 import com.maxkeppeler.sheets.clock.models.ClockConfig
 import com.maxkeppeler.sheets.clock.models.ClockSelection
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.DateAndTimeButtonsLayout
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.DreamImageSelectionRow
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.LucidFavoriteLayout

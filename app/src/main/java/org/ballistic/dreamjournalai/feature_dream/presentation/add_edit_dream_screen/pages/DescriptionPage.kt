@@ -23,7 +23,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.GenerateButtonsLayout
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TransparentHintTextField
 
@@ -57,12 +57,11 @@ fun DescriptionPage(
             singleLine = true,
             textStyle = MaterialTheme.typography.headlineLarge,
             modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(8.dp))
                 .background(Color.White.copy(alpha = 0.2f))
                 .padding(16.dp)
                 .onFocusEvent {
                 }
-
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -80,7 +79,7 @@ fun DescriptionPage(
             textStyle = MaterialTheme.typography.bodyLarge,
             modifier = Modifier
                 .weight(1f)
-                .clip(RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(8.dp))
                 .background(Color.White.copy(alpha = 0.2f))
                 .padding(8.dp)
                 .onFocusEvent {
