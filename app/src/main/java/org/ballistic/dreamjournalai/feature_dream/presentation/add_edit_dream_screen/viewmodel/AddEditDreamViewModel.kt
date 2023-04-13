@@ -541,7 +541,8 @@ data class DreamUiState(
         dreamSleepTime = LocalTime.of(23, 0).format(DateTimeFormatter.ofPattern("hh:mm a")),
         dreamWakeTime = LocalTime.of(7, 0).format(DateTimeFormatter.ofPattern("h:mm a")),
         dreamDate =
-        LocalDate.now().month.toString().substring(0, 3) + " " +
+        LocalDate.now().month.toString().substring(0, 1).uppercase() +
+                LocalDate.now().month.toString().substring(1, 3).lowercase() + " " +
                 LocalDate.now().dayOfMonth.toString() + ", " + LocalDate.now().year.toString(),
         dreamTimeOfDay = "",
         dreamLucidity = 0,

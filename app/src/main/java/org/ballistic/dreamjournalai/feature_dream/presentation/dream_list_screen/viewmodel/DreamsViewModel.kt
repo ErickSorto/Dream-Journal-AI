@@ -2,8 +2,6 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_scree
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,7 +10,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DreamUseCases
-import org.ballistic.dreamjournalai.feature_dream.domain.util.DreamOrder
 import org.ballistic.dreamjournalai.feature_dream.domain.util.OrderType
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamsEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.state.DreamsState
@@ -43,7 +40,7 @@ class DreamsViewModel @Inject constructor(
     private var getDreamJob: Job? = null
 
     init {
-        getDreams(DreamOrder.Date(OrderType.Descending))
+        getDreams(OrderType.Date)
     }
 
 
@@ -68,11 +65,10 @@ class DreamsViewModel @Inject constructor(
                 }
             }
             is DreamsEvent.Order -> {
-                if (state.value.dreamOrder::class == event.dreamType::class &&
-                    state.value.dreamOrder.orderType == event.dreamType.orderType) {
+                if (state.value.orderType == event.orderType) {
                     return
                 }
-                getDreams(event.dreamType)
+                getDreams(event.orderType)
             }
             is DreamsEvent.SearchDreams -> {
                 _searchedText.value = event.searchQuery
@@ -82,9 +78,9 @@ class DreamsViewModel @Inject constructor(
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun getDreams(dreamOrder: DreamOrder) {
+    private fun getDreams(orderType: OrderType) {
         getDreamJob?.cancel()
-        getDreamJob = dreamUseCases.getDreams(dreamOrder)
+        getDreamJob = dreamUseCases.getDreams(orderType)
             .combine(_searchedText) { dreams, searchText ->
                 if (searchText.isBlank()) {
                     dreams
@@ -95,7 +91,7 @@ class DreamsViewModel @Inject constructor(
             .onEach { filteredDreams ->
                 _state.value = state.value.copy(
                     dreams = filteredDreams,
-                    dreamOrder = dreamOrder,
+                    orderType = orderType,
                 )
             }
             .launchIn(viewModelScope)
