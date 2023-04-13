@@ -25,7 +25,7 @@ fun BottomNavigation(navController: NavController) {
         Screens.DreamJournalScreen,
         Screens.StoreScreen
     )
-    Box(modifier = Modifier.height(96.dp).fillMaxWidth()){ //This box fixes padding issue
+    Box(modifier = Modifier.height(96.dp).fillMaxWidth()){ //This box fixes padding issue, adding extra space to the height to account for floating action button
         androidx.compose.material.BottomNavigation(
             backgroundColor = colorResource(id = R.color.sky_blue),
             contentColor = Color.Black,

@@ -27,7 +27,7 @@ import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 fun DreamItem(
     dream: Dream,
     modifier: Modifier = Modifier,
-    cornerRadius: Dp = 10.dp,
+    cornerRadius: Dp = 8.dp,
     onDeleteClick: () -> Unit
 ) {
     Box(
@@ -36,92 +36,92 @@ fun DreamItem(
             .background(Color.White.copy(alpha = 0.2f))
 
     ) {
-        Row(
-            modifier = Modifier
-                .height(IntrinsicSize.Min),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Box(
+            Row(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .size(60.dp)
-                    .shadow(16.dp, CircleShape, true, Color.Black.copy(alpha = 0.8f))
-                    .clip(CircleShape)
-                    .background(Color.Transparent)
-
+                    .height(IntrinsicSize.Min),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Image(
-                    painter = rememberAsyncImagePainter(dream.backgroundImage),
-                    contentDescription = "Color",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(0.dp, 16.dp, 0.dp, 16.dp)
-
-            ) {
-                Text(
-                    text = dream.title,
-                    style = typography.titleLarge,
-                    color = Color.Black,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = dream.content,
-                    style = typography.bodyLarge,
-                    color = Color.Black,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Column(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxHeight(1f),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                //isFavorite
-
-                if (dream.isLucid){
-                    Image(
-                        painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.lighthouse_vector),
-                        contentDescription = "Lucid",
-                        modifier = Modifier
-                            .size(24.dp),
-                        alignment = Alignment.TopCenter
-
-                    )
-                }
-
-                if (dream.isFavorite){
-                    Image(
-                        painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.baseline_star_24),
-                        contentDescription = "Favorite",
-                        modifier = Modifier
-                            .size(24.dp),
-                        alignment = Alignment.Center
-                    )
-                }
-
-                Image(
-                    painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.baseline_delete_24),
-                    contentDescription = "Delete",
+                Box(
                     modifier = Modifier
-                        .size(24.dp)
-                        .clickable {
-                            onDeleteClick()
-                        },
-                    alignment = Alignment.BottomCenter
-                )
+                        .padding(16.dp)
+                        .size(60.dp)
+                        .shadow(16.dp, CircleShape, true, Color.Black.copy(alpha = 0.8f))
+                        .clip(CircleShape)
+                        .background(Color.Transparent)
+
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(dream.backgroundImage),
+                        contentDescription = "Color",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(0.dp, 16.dp, 0.dp, 16.dp)
+
+                ) {
+                    Text(
+                        text = dream.title,
+                        style = typography.titleLarge,
+                        color = Color.Black,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = dream.content,
+                        style = typography.bodyLarge,
+                        color = Color.Black,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxHeight(1f),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    //isFavorite
+
+                    if (dream.isLucid) {
+                        Image(
+                            painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.lighthouse_vector),
+                            contentDescription = "Lucid",
+                            modifier = Modifier
+                                .size(24.dp),
+                            alignment = Alignment.TopCenter
+
+                        )
+                    }
+
+                    if (dream.isFavorite) {
+                        Image(
+                            painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.baseline_star_24),
+                            contentDescription = "Favorite",
+                            modifier = Modifier
+                                .size(24.dp),
+                            alignment = Alignment.Center
+                        )
+                    }
+
+                    Image(
+                        painter = painterResource(id = org.ballistic.dreamjournalai.R.drawable.baseline_delete_24),
+                        contentDescription = "Delete",
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable {
+                                onDeleteClick()
+                            },
+                        alignment = Alignment.BottomCenter
+                    )
+                }
             }
-        }
     }
 }

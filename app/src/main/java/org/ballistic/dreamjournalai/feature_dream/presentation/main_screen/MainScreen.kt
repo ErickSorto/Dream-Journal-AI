@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -222,14 +223,23 @@ fun MainScreenView(
         containerColor = Color.Transparent,
 
         ) { innerPadding ->
+        val layoutDirection = LocalLayoutDirection.current
 
+        val newPadding = remember(innerPadding) {
+            PaddingValues(
+                top = innerPadding.calculateTopPadding(),
+                bottom = 56.dp, // Set the bottom padding to 96.dp
+                start = innerPadding.calculateStartPadding(layoutDirection),
+                end = innerPadding.calculateEndPadding(layoutDirection)
+            )
+        }
 
         AnimatedVisibility(visible = true, enter = fadeIn(), exit = fadeOut()) {
             ScreenGraph(
                 navController = navController,
                 mainScreenViewModelState = mainScreenViewModelState,
                 dreamsViewModel = dreamsViewModel,
-                innerPadding = innerPadding,
+                innerPadding = newPadding,
                 onMainEvent = { onMainEvent(it) },
                 onDreamsEvent = { onDreamsEvent(it) }
             )
