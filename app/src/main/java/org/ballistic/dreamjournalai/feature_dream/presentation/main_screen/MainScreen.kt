@@ -38,6 +38,7 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamsViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.components.BottomNavigation
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
+import org.ballistic.dreamjournalai.store_billing.presentation.store_screen.StoreEvent
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(
@@ -49,6 +50,7 @@ fun MainScreenView(
     dreamsViewModel: DreamsViewModel = hiltViewModel(),
     onMainEvent : (MainScreenEvent) -> Unit = {},
     onDreamsEvent : (DreamsEvent) -> Unit = {},
+    onStoreEvent: (StoreEvent) -> Unit = {},
     onDataLoaded: () -> Unit
 ) {
     LaunchedEffect(key1 = Unit) {
@@ -241,7 +243,8 @@ fun MainScreenView(
                 dreamsViewModel = dreamsViewModel,
                 innerPadding = newPadding,
                 onMainEvent = { onMainEvent(it) },
-                onDreamsEvent = { onDreamsEvent(it) }
+                onDreamsEvent = { onDreamsEvent(it) },
+                onStoreEvent = { onStoreEvent(it) },
             )
         }
     }
