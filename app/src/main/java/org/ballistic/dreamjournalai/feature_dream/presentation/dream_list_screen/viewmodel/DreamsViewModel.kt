@@ -30,8 +30,6 @@ class DreamsViewModel @Inject constructor(
     private val _searchedText = MutableStateFlow("")
     val searchedText: StateFlow<String> = _searchedText.asStateFlow()
 
-
-
     private val _isSearching = MutableStateFlow(false)
     val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
 
