@@ -176,5 +176,6 @@ fun FirebaseUser.toUser(registrationTimestamp: Long) = mapOf(
     DISPLAY_NAME to displayName,
     EMAIL to email,
     CREATED_AT to serverTimestamp(),
-    "registrationTimestamp" to registrationTimestamp
+    "registrationTimestamp" to registrationTimestamp,
+    "dreamTokens" to 10,
 )

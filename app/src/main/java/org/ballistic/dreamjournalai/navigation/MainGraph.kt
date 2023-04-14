@@ -13,6 +13,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenView
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 import org.ballistic.dreamjournalai.onboarding.presentation.OnboardingScreen
+import org.ballistic.dreamjournalai.store_billing.presentation.store_screen.StoreScreenViewModel
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -47,6 +48,7 @@ fun MainGraph(
 
         composable(route = Screens.MainScreen.route) {
             val mainScreenViewModel: MainScreenViewModel = hiltViewModel()
+            val storeScreenViewModel: StoreScreenViewModel = hiltViewModel()
             MainScreenView(
                 mainScreenViewModelState = mainScreenViewModel.mainScreenViewModelState.collectAsStateWithLifecycle().value,
                 onDataLoaded = {
@@ -54,7 +56,10 @@ fun MainGraph(
                 },
                 onMainEvent = {
                     mainScreenViewModel.onEvent(it)
-                }
+                },
+                onStoreEvent = {
+                    storeScreenViewModel.onEvent(it)
+                },
             )
         }
     }

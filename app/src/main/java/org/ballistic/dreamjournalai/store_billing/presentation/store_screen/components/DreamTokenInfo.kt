@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.store_screen.components
+package org.ballistic.dreamjournalai.store_billing.presentation.store_screen.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,7 +27,7 @@ import org.ballistic.dreamjournalai.R
 
 
 @Composable
-fun SubscriptionInfo(modifier: Modifier) {
+fun DreamTokenInfo(modifier: Modifier) {
 
     Column(
         modifier = modifier
@@ -212,7 +212,10 @@ fun CheckmarkAndText(
 }
 
 @Composable
-fun CustomButtonLayout() {
+fun CustomButtonLayout(
+    buy500IsClicked: () -> Unit,
+    buy100IsClicked: () -> Unit
+) {
     ConstraintLayout(
         modifier = Modifier
             .fillMaxWidth()
@@ -220,12 +223,22 @@ fun CustomButtonLayout() {
     ) {
         val (monthly, annual, tag) = createRefs()
 
-        AnnualButtonBuy(modifier = Modifier.constrainAs(annual) {
-            bottom.linkTo(monthly.top)
-        })
-        MonthlyButtonBuy(modifier = Modifier.constrainAs(monthly) {
-            bottom.linkTo(parent.bottom)
-        })
+        DreamToken500ButtonBuy(
+            modifier = Modifier.constrainAs(annual) {
+                bottom.linkTo(monthly.top)
+            },
+            buy500IsClicked = {
+                buy500IsClicked()
+            })
+
+        DreamToken100ButtonBuy(
+            modifier = Modifier.constrainAs(monthly) {
+                bottom.linkTo(parent.bottom)
+            },
+            buy100IsClicked = {
+                buy100IsClicked()
+            }
+        )
         MostPopularBanner(modifier = Modifier.constrainAs(tag) {
 
         })
@@ -233,9 +246,12 @@ fun CustomButtonLayout() {
 }
 
 @Composable
-fun AnnualButtonBuy(modifier: Modifier) {
+fun DreamToken500ButtonBuy(
+    modifier: Modifier,
+    buy500IsClicked: () -> Unit = {}
+) {
     Button(
-        onClick = { /*TODO*/ },
+        onClick = { buy500IsClicked() },
         modifier = modifier
             .padding(8.dp, 0.dp, 8.dp, 8.dp)
             .fillMaxWidth()
@@ -283,9 +299,12 @@ fun AnnualButtonBuy(modifier: Modifier) {
 }
 
 @Composable
-fun MonthlyButtonBuy(modifier: Modifier) {
+fun DreamToken100ButtonBuy(
+    modifier: Modifier,
+    buy100IsClicked: () -> Unit
+) {
     Button(
-        onClick = { /*TODO*/ },
+        onClick = { buy100IsClicked() },
         modifier = modifier
             .padding(8.dp, 8.dp, 8.dp, 8.dp)
             .fillMaxWidth()
@@ -309,7 +328,7 @@ fun MonthlyButtonBuy(modifier: Modifier) {
 
             Column(modifier = Modifier.align(Alignment.CenterEnd)) {
                 Text(
-                    text = "\$5.99",
+                    text = "\$4.99",
                     fontSize = 20.sp,
                     fontWeight = Bold,
                     maxLines = 1,

@@ -2,7 +2,6 @@ package org.ballistic.dreamjournalai.navigation
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -10,14 +9,14 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.google.accompanist.pager.ExperimentalPagerApi
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamJournalScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamsEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamsViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
-import org.ballistic.dreamjournalai.feature_dream.presentation.store_screen.StoreScreen
+import org.ballistic.dreamjournalai.store_billing.presentation.store_screen.StoreEvent
+import org.ballistic.dreamjournalai.store_billing.presentation.store_screen.StoreScreen
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -29,6 +28,7 @@ fun ScreenGraph(
     innerPadding: PaddingValues,
     onMainEvent: (MainScreenEvent) -> Unit = {},
     onDreamsEvent: (DreamsEvent) -> Unit = {},
+    onStoreEvent: (StoreEvent) -> Unit = {}
 ) {
     NavHost(
         navController = navController,
@@ -50,7 +50,8 @@ fun ScreenGraph(
         composable(route = Screens.StoreScreen.route) {
             StoreScreen(
                 mainScreenViewModelState = mainScreenViewModelState,
-                onMainEvent = { onMainEvent(it) })
+                onMainEvent = { onMainEvent(it) },
+                onStoreEvent = { onStoreEvent(it) })
         }
 
 
