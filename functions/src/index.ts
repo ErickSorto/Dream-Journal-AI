@@ -1,16 +1,18 @@
 /* eslint-disable eol-last */
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import * as corsFactory from "cors";
 
 admin.initializeApp();
 
 const firestore = admin.firestore();
+const cors = corsFactory({ origin: true });
 
 // The time (in minutes) after which unverified users should be deleted
 const DELETE_UNVERIFIED_USERS_AFTER = 60;
 
 export const deleteUnverifiedUsers =
-  functions.pubsub.schedule("every 60 minutes").onRun(async (context) => {
+  functions.pubsub.schedule("every 60 minutes").onRun(async () => {
     const currentTime = admin.firestore.Timestamp.now();
     const cutoffTime =
       currentTime.toMillis() - DELETE_UNVERIFIED_USERS_AFTER * 60 * 1000;
@@ -38,24 +40,22 @@ export const deleteUnverifiedUsers =
   });
 
 
-export const handleUserCreate =
-  functions.auth.user().onCreate(async (user) => {
+export const handleUserCreate = functions.auth.user().onCreate(async (user) => {
     const isGoogleSignIn = user.providerData
-      .some((provider) => provider.providerId === "google.com");
-
+        .some((provider) => provider.providerId === "google.com");
     const newUser = {
-      uid: user.uid,
-      displayName: user.displayName,
-      email: user.email,
-      emailVerified: isGoogleSignIn || user.emailVerified,
-      registrationTimestamp: admin.firestore.FieldValue.serverTimestamp(),
-      // Add any other fields you need
+        uid: user.uid,
+        displayName: user.displayName,
+        email: user.email,
+        emailVerified: isGoogleSignIn || user.emailVerified,
+        registrationTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+        dreamTokens: 10, // Add the dreamTokens field with an initial value of 10
+        // Add any other fields you need
     };
-
     await firestore.collection("users").doc(user.uid).set(newUser);
     functions.logger
-      .info(`Created new user with UID: ${user.uid} using ${isGoogleSignIn ? "Google Sign In" : "email and password"}.`);
-  });
+        .info(`Created new user with UID: ${user.uid} using ${isGoogleSignIn ? "Google Sign In" : "email and password"}.`);
+});
 
 export const handleEmailVerificationUpdate =
     functions.firestore.document("users/{userId}").onUpdate(async (change, context) => {
@@ -66,3 +66,24 @@ export const handleEmailVerificationUpdate =
         functions.logger.info(`Updated emailVerified for UID: ${context.params.userId} to true.`);
       }
     });
+
+exports.handlePurchaseVerification = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    const userId = req.body.userId;
+    const dreamTokens = req.body.dreamTokens;
+
+    const isPurchaseValid = true; // This should be the result of your purchase verification process
+
+    if (isPurchaseValid) {
+      // Update the user's dreamTokens in Firestore
+      const userRef = firestore.collection("users").doc(userId);
+      await userRef.update({
+        dreamTokens: admin.firestore.FieldValue.increment(dreamTokens),
+      });
+
+      res.status(200).json({ success: true });
+    } else {
+      res.status(200).json({ success: false });
+    }
+  });
+});

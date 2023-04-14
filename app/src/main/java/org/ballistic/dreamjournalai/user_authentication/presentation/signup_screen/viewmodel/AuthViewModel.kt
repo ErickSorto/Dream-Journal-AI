@@ -224,12 +224,10 @@ data class AuthViewModelState(
     val signUpErrorMessage: MutableState<String> = mutableStateOf(""),
     val login: StateFlow<LoginState> = MutableStateFlow(LoginState()),
     val signUp: StateFlow<SignUpState> = MutableStateFlow(SignUpState()),
-    val emailVerification: StateFlow<VerifyEmailState> = MutableStateFlow(VerifyEmailState())
-){
-    fun isCurrentUserExist(): StateFlow<Boolean> = repo.isCurrentUserExist()
-    fun isEmailVerified(): StateFlow<Boolean> = repo.isEmailVerified()
-
-}
+    val emailVerification: StateFlow<VerifyEmailState> = MutableStateFlow(VerifyEmailState()),
+    val isUserExist: StateFlow<Boolean> = repo.isUserExist,
+    val emailVerified: StateFlow<Boolean> = repo.emailVerified
+)
 data class VerifyEmailState(
     val verified : Boolean = false,
     val sent: Boolean = false,
