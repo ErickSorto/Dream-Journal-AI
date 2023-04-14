@@ -22,9 +22,8 @@ typealias AuthStateResponse = StateFlow<Boolean>
 interface AuthRepository {
     val currentUser: FirebaseUser?
 
-    fun isCurrentUserExist(): StateFlow<Boolean>
-
-    fun isEmailVerified(): StateFlow<Boolean>
+    val isUserExist: StateFlow<Boolean>
+    val emailVerified: StateFlow<Boolean>
 
     suspend fun oneTapSignInWithGoogle(): OneTapSignInResponse
 

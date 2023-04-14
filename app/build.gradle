@@ -129,6 +129,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-storage'
     implementation "com.google.firebase:firebase-auth-ktx"
     implementation "com.google.firebase:firebase-firestore-ktx"
+    implementation 'com.google.firebase:firebase-functions-ktx:20.2.2'
 
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4"
     implementation "com.google.android.gms:play-services-auth:20.5.0"

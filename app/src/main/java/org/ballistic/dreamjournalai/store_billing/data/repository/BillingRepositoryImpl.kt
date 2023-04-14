@@ -2,21 +2,22 @@ package org.ballistic.dreamjournalai.store_billing.data.repository
 
 import android.app.Activity
 import com.android.billingclient.api.*
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.*
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import org.ballistic.dreamjournalai.store_billing.data.api.PurchaseVerificationApi
 import org.ballistic.dreamjournalai.store_billing.domain.repository.BillingRepository
-import org.json.JSONObject
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import com.google.firebase.functions.ktx.functions
+import kotlinx.coroutines.tasks.await
 
 class BillingRepositoryImpl(
     val billingClient: BillingClient
 ) : BillingRepository {
     private var purchaseListener: ((Purchase) -> Unit)? = null
 
-
+    val userId = Firebase.auth.currentUser?.uid
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://us-central1-dream-journal-ai.cloudfunctions.net/")
         .addConverterFactory(GsonConverterFactory.create())
@@ -85,27 +86,23 @@ class BillingRepositoryImpl(
             suspend fun verifyPurchaseOnServer(purchase: Purchase): Boolean {
                 val dreamTokens = when (purchase.skus.firstOrNull()) {
                     "dream_token_100" -> 100
-                    "dream_tokens_500" -> 500
+                    "dream_token_500" -> 500
                     else -> 0
                 }
 
                 if (dreamTokens == 0) return false
 
-                val uniqueOrderId = "USER_ID_${System.currentTimeMillis()}" // Create a unique order ID with timestamp
-
-                val response = purchaseVerificationApi.verifyPurchase(
-                    purchaseToken = purchase.purchaseToken,
-                    purchaseTime = purchase.purchaseTime,
-                    orderId = uniqueOrderId,
-                    userId = "USER_ID",
-                    dreamTokens = dreamTokens
+                // Use Firebase Functions SDK to call your handlePurchaseVerification function
+                val firebaseFunctions = Firebase.functions
+                val data = hashMapOf(
+                    "purchaseToken" to purchase.purchaseToken,
+                    "purchaseTime" to purchase.purchaseTime,
+                    "orderId" to purchase.orderId,
+                    "userId" to userId,
+                    "dreamTokens" to dreamTokens
                 )
-
-                return if (response.isSuccessful) {
-                    response.body()?.isValid ?: false
-                } else {
-                    false
-                }
+                val response = firebaseFunctions.getHttpsCallable("handlePurchaseVerification").call(data).await()
+                return (response.data as? Map<*, *>)?.get("success") as? Boolean ?: false
             }
 
             CoroutineScope(Dispatchers.IO).launch {

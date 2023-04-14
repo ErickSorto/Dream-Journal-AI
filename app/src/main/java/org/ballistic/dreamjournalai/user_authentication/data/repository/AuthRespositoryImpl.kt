@@ -41,20 +41,19 @@ class AuthRepositoryImpl @Inject constructor(
 ) : AuthRepository {
 
     override val currentUser get() = auth.currentUser
+    private val _isUserExist = MutableStateFlow(false)
+    override val isUserExist: StateFlow<Boolean> = _isUserExist
 
-    override fun isCurrentUserExist(): StateFlow<Boolean> {
-        return MutableStateFlow(auth.currentUser != null)
-    }
-    override fun isEmailVerified(): StateFlow<Boolean> {
-        val result = MutableStateFlow(auth.currentUser?.isEmailVerified ?: false)
-        auth.currentUser?.let { user ->
-            CoroutineScope(coroutineContext).launch {
-                result.value = user.isEmailVerified
-            }
+    private val _emailVerified = MutableStateFlow(false)
+    override val emailVerified: StateFlow<Boolean> = _emailVerified
+
+    init {
+        auth.addAuthStateListener { firebaseAuth ->
+            val user = firebaseAuth.currentUser
+            _isUserExist.value = user != null
+            _emailVerified.value = user?.isEmailVerified ?: false
         }
-        return result
     }
-
     override suspend fun oneTapSignInWithGoogle(): OneTapSignInResponse {
         return try {
             val signInResult = oneTapClient.beginSignIn(signInRequest).await()
