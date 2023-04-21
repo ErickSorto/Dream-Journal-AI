@@ -19,6 +19,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -29,6 +31,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 
 
 //@OptIn(ExperimentalPagerApi::class, DelicateCoroutinesApi::class)
@@ -112,7 +115,9 @@ fun GenerateButtonsLayout(
 fun PaintCustomButton(
     isLucid: Boolean,
     viewModel: AddEditDreamViewModel = hiltViewModel(),
-    state: PagerState
+    state: PagerState,
+    size: Dp = 40.dp,
+    fontSize: TextUnit = 16.sp
 ) {
     val scope = rememberCoroutineScope()
     Column(
@@ -127,19 +132,19 @@ fun PaintCustomButton(
                 }
                 viewModel.imageGenerationPopUpState.value = true
             },
-            modifier = Modifier.size(40.dp)
+            modifier = Modifier.size(size)
         ) {
             Icon(
                 painter = rememberAsyncImagePainter(R.drawable.paint_vector),
                 contentDescription = "Paint",
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(size)
                     .rotate(45f),
                 tint = if (isLucid) colorResource(R.color.sky_blue) else Color.Black
             )
 
         }
-        Text(text = "Paint Dream", fontSize = 16.sp)
+        Text(text = "Paint Dream", fontSize = fontSize)
     }
 }
 
@@ -149,7 +154,9 @@ fun PaintCustomButton(
 fun InterpretCustomButton(
     isFavorite: Boolean,
     viewModel: AddEditDreamViewModel = hiltViewModel(),
-    state: PagerState
+    state: PagerState,
+    size: Dp = 40.dp,
+    fontSize: TextUnit = 16.sp
 ) {
     val scope = rememberCoroutineScope()
     Column(
@@ -164,18 +171,18 @@ fun InterpretCustomButton(
                 }
                 viewModel.dreamInterpretationPopUpState.value = true
             },
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier.size(size),
         ) {
             Icon(
                 painter = rememberAsyncImagePainter(R.drawable.interpret_vector),
                 contentDescription = "Interpret",
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(size)
                     .rotate(45f),
                 tint = if (isFavorite) colorResource(R.color.Yellow) else Color.Black
             )
         }
-        Text(text = "Interpret Dream", fontSize = 16.sp)
+        Text(text = "Interpret Dream", fontSize = fontSize)
     }
 }
 

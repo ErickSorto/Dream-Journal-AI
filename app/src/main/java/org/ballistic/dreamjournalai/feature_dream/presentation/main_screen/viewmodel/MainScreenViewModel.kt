@@ -4,6 +4,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,7 @@ import javax.inject.Inject
 class MainScreenViewModel @Inject constructor(
     private val repo: AuthRepository
 ) : ViewModel() {
-    private val _mainScreenViewModelState = MutableStateFlow(MainScreenViewModelState())
+    private val _mainScreenViewModelState = MutableStateFlow(MainScreenViewModelState(authRepo = repo))
     val mainScreenViewModelState: StateFlow<MainScreenViewModelState> = _mainScreenViewModelState.asStateFlow()
 
 
@@ -27,7 +28,7 @@ class MainScreenViewModel @Inject constructor(
         getAuthState()
     }
 
-    fun getAuthState() = repo.getAuthState(viewModelScope)
+    private fun getAuthState() = repo.getAuthState(viewModelScope)
 
     fun onEvent (event: MainScreenEvent) = viewModelScope.launch {
         when (event) {
@@ -59,45 +60,19 @@ class MainScreenViewModel @Inject constructor(
                     )
                 )
             }
+            is MainScreenEvent.SearchDreams -> {
+                mainScreenViewModelState.value.searchedText.value = event.query
+            }
         }
     }
-
-
-
-//    fun setBottomBarState(state: Boolean) {
-//        scaffoldState.value = scaffoldState.value.copy(bottomBarState = state)
-//    }
-//    fun setSearchingState(state: Boolean) {
-//        scaffoldState.value = scaffoldState.value.copy(isUserSearching = state)
-//    }
-//    fun getSearchingState(): Boolean {
-//        return scaffoldState.value.isUserSearching
-//    }
-//
-//    fun setTopBarState(state: Boolean) {
-//        scaffoldState.value = scaffoldState.value.copy(topBarState = state)
-//    }
-//
-//    fun setFloatingActionButtonState(state: Boolean) {
-//        scaffoldState.value = scaffoldState.value.copy(floatingActionButtonState = state)
-//    }
-//
-//    fun getBottomBarState(): Boolean {
-//        return scaffoldState.value.bottomBarState
-//    }
-//
-//    fun getTopBarState(): Boolean {
-//        return scaffoldState.value.topBarState
-//    }
-//
-//    fun getFloatingActionButtonState(): Boolean {
-//        return scaffoldState.value.floatingActionButtonState
-//    }
 }
 
 
 data class MainScreenViewModelState(
     val scaffoldState: ScaffoldState = ScaffoldState(),
+    val authRepo: AuthRepository,
+    val searchedText: MutableStateFlow<String> = MutableStateFlow(""),
+    val dreamTokens: StateFlow<Int> = authRepo.dreamTokens
 )
 data class ScaffoldState (
     val bottomBarState: Boolean = true,

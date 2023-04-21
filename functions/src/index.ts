@@ -57,20 +57,28 @@ export const handleUserCreate = functions.auth.user().onCreate(async (user) => {
         .info(`Created new user with UID: ${user.uid} using ${isGoogleSignIn ? "Google Sign In" : "email and password"}.`);
 });
 
-export const handleEmailVerificationUpdate =
-    functions.firestore.document("users/{userId}").onUpdate(async (change, context) => {
-      const beforeUser = change.before.data();
-      const afterUser = change.after.data();
+exports.handleEmailVerificationUpdate = functions.auth.user().onUpdate(async (userRecord, context) => {
+    const { uid } = userRecord;
+    const userEmailVerified = userRecord.emailVerified;
 
-      if (!beforeUser.emailVerified && afterUser.emailVerified) {
-        functions.logger.info(`Updated emailVerified for UID: ${context.params.userId} to true.`);
-      }
-    });
+    const userDoc = admin.firestore().collection("users").doc(uid);
+    const userDocSnapshot = await userDoc.get();
+    const userData = userDocSnapshot.data();
+
+    if (userData && !userData.emailVerified && userEmailVerified) {
+        functions.logger.info(`Updated emailVerified for UID: ${uid} to true.`);
+
+        await userDoc.update({ emailVerified: true });
+    }
+});
 
 exports.handlePurchaseVerification = functions.https.onRequest(async (req, res) => {
   cors(req, res, async () => {
-    const userId = req.body.userId;
-    const dreamTokens = req.body.dreamTokens;
+    const data = req.body.data;
+    const userId = data.userId;
+    const dreamTokens = data.dreamTokens;
+
+    console.log(`handlePurchaseVerification - userId: ${userId}, dreamTokens: ${dreamTokens}`);
 
     const isPurchaseValid = true; // This should be the result of your purchase verification process
 
@@ -81,9 +89,9 @@ exports.handlePurchaseVerification = functions.https.onRequest(async (req, res) 
         dreamTokens: admin.firestore.FieldValue.increment(dreamTokens),
       });
 
-      res.status(200).json({ success: true });
+      res.status(200).json({ result: { success: true } });
     } else {
-      res.status(200).json({ success: false });
+      res.status(200).json({ result: { success: false } });
     }
   });
 });

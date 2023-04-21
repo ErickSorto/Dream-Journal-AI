@@ -6,6 +6,7 @@ import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -94,12 +95,14 @@ object SignInModule {
         signInRequest: BeginSignInRequest,
         @Named(SIGN_UP_REQUEST)
         signUpRequest: BeginSignInRequest,
+        signInClient: GoogleSignInClient,
         db: FirebaseFirestore
     ): AuthRepository = AuthRepositoryImpl(
         auth = auth,
         oneTapClient = oneTapClient,
         signInRequest = signInRequest,
         signUpRequest = signUpRequest,
+        signInClient = signInClient,
         db = db
     )
 }

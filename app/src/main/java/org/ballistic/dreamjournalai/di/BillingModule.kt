@@ -2,6 +2,7 @@ package org.ballistic.dreamjournalai.di
 
 import android.content.Context
 import com.android.billingclient.api.BillingClient
+import com.android.billingclient.api.PurchasesUpdatedListener
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
@@ -22,14 +23,16 @@ object BillingModule {
         @ApplicationContext context: Context,
         billingRepository: dagger.Lazy<BillingRepository>
     ): BillingClient {
-        return BillingClient.newBuilder(context)
-            .setListener { billingResult, purchases ->
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-                    for (purchase in purchases) {
-                        (billingRepository.get() as BillingRepositoryImpl).getPurchaseListener()?.invoke(purchase)
-                    }
+        val purchasesUpdatedListener = PurchasesUpdatedListener { billingResult, purchases ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
+                for (purchase in purchases) {
+                    (billingRepository.get() as BillingRepositoryImpl).getPurchaseListener()?.invoke(purchase)
                 }
             }
+        }
+
+        return BillingClient.newBuilder(context)
+            .setListener(purchasesUpdatedListener)
             .enablePendingPurchases()
             .build()
     }

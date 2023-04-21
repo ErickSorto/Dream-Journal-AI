@@ -2,18 +2,15 @@ package org.ballistic.dreamjournalai.feature_dream.data.repository
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageMetadata
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import org.ballistic.dreamjournalai.core.Constants.USERS
@@ -22,8 +19,6 @@ import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.DreamRepository
 import java.net.URL
 import java.net.URLDecoder
-import java.time.LocalDate
-import java.time.LocalTime
 import java.util.*
 import javax.inject.Singleton
 
@@ -33,8 +28,14 @@ class DreamRepositoryImpl(
     private val db: FirebaseFirestore
 ) : DreamRepository {
 
-    private val dreamsCollection = getCollectionReferenceForDreams()
+    private val dreamsCollection
+        get() = getCollectionReferenceForDreams()
     val ioScope = CoroutineScope(Dispatchers.IO)
+
+    // Add this function to get the current user's UID
+    private fun userID(): String? {
+        return FirebaseAuth.getInstance().currentUser?.uid
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun getDreams(): Flow<List<Dream>> {
@@ -68,7 +69,8 @@ class DreamRepositoryImpl(
                                 backgroundImage = (data["backgroundImage"] as Long?)?.toInt() ?: 0,
                                 generatedImage = data["generatedImage"] as String?,
                                 generatedDetails = data["generatedDetails"] as String? ?: "",
-                                id = document.id
+                                id = document.id,
+                                uid = data["uid"] as String
                             )
                         } else {
                             null
@@ -108,7 +110,8 @@ class DreamRepositoryImpl(
                         backgroundImage = (data["backgroundImage"] as Long?)?.toInt() ?: 0,
                         generatedImage = data["generatedImage"] as String?,
                         generatedDetails = data["generatedDetails"] as String? ?: "",
-                        id = document.id
+                        id = document.id,
+                        uid = data["uid"] as String
                     )
                     Resource.Success(dream)
                 } else {
@@ -131,14 +134,13 @@ class DreamRepositoryImpl(
             suspend fun uploadImageIfNeeded(dream: Dream): Dream {
                 if (dream.generatedImage != null && !dream.generatedImage.startsWith("https://firebasestorage.googleapis.com/")) {
                     return withContext(Dispatchers.IO) {
-                        val storageRef = FirebaseStorage.getInstance().reference
-                        val imageRef = storageRef.child("images/${UUID.randomUUID()}.jpg")
+                        val storageRef = FirebaseStorage.getInstance().reference.child("${userID()}/images/${UUID.randomUUID()}.jpg")
 
                         val imageUrl = URL(dream.generatedImage)
                         val imageBytes = imageUrl.readBytes()
-                        val uploadTask = imageRef.putBytes(imageBytes)
+                        val uploadTask = storageRef.putBytes(imageBytes)
                         uploadTask.await()
-                        val downloadUrl = imageRef.downloadUrl.await()
+                        val downloadUrl = storageRef.downloadUrl.await()
                         dream.copy(generatedImage = downloadUrl.toString())
                     }
                 }
@@ -172,13 +174,11 @@ class DreamRepositoryImpl(
                 dreamsCollection?.document(updatedDreamWithImage.id ?: "")?.set(updatedDreamWithImage)?.await()
             } else {
                 // Dream does not exist, insert it
-                var newDream = dream
-                if (newDream.id == null) {
-                    val newDreamRef = getCollectionReferenceForDreams()?.document()
-                    newDream = newDream.copy(id = newDreamRef?.id)
-                }
+                var newDream = dream.copy(uid = userID()) // Set the uid property here
+                val newDreamRef = getCollectionReferenceForDreams()?.document()
+                newDream = newDream.copy(id = newDreamRef?.id)
                 val newDreamWithImage = uploadImageIfNeeded(newDream)
-                dreamsCollection?.add(newDreamWithImage)?.await()
+                newDreamRef?.set(newDreamWithImage)?.await()
             }
             Resource.Success(Unit)
         } catch (e: Exception) {
@@ -202,7 +202,10 @@ class DreamRepositoryImpl(
                 val imagePath = imageUrl.path.substringAfter("/o/").substringBefore("?")
 
                 // Decode the image path
-                val decodedImagePath = URLDecoder.decode(imagePath, "UTF-8")
+                val decodedImagePath =
+                    withContext(Dispatchers.IO) {
+                        URLDecoder.decode(imagePath, "UTF-8")
+                    }
 
                 val imageRef = storageRef.child(decodedImagePath)
                 imageRef.delete().await()
@@ -219,7 +222,7 @@ class DreamRepositoryImpl(
     private fun getCollectionReferenceForDreams(): CollectionReference? {
         val currentUser = FirebaseAuth.getInstance().currentUser
         return currentUser?.uid?.let {
-            db.collection(USERS).document(it).collection("my_dreams")
+            db.collection(USERS).document(userID() ?: return null).collection("my_dreams")
         }
     }
 }

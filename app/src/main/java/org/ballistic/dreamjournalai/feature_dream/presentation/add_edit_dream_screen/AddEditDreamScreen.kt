@@ -49,7 +49,7 @@ fun AddEditDreamScreen(
     onMainEvent(MainScreenEvent.SetFloatingActionButtonState(false))
     onMainEvent(MainScreenEvent.SetTopBarState(false))
     onMainEvent(MainScreenEvent.SetSearchingState(false))
-    
+
     BackHandler {
         addEditDreamViewModel.dialogState.value = !addEditDreamViewModel.dialogState.value
     }
@@ -112,7 +112,7 @@ fun AddEditDreamScreen(
             }
         )
     }
-    
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -159,7 +159,10 @@ fun AddEditDreamScreen(
                 .background(Color.Transparent)
                 .padding(padding)
         ) {
-            TabLayout(dreamBackgroundImage)
+            TabLayout(
+                dreamBackgroundImage,
+                mainScreenViewModelState = mainScreenViewModelState,
+            )
         }
     }
 }
