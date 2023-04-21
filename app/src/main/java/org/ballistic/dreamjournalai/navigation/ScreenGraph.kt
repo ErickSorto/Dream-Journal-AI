@@ -11,6 +11,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import org.ballistic.dreamjournalai.core.components.FeatureComingSoonScreen
+import org.ballistic.dreamjournalai.feature_dream.presentation.about_me_screen.AboutMeScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.account_settings.AccountSettingsScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamJournalListScreen
@@ -84,7 +86,11 @@ fun ScreenGraph(
         }
         // Add your new screens here
         composable(route = Screens.Favorites.route) {
-            // Implement your Favorites screen composable here
+            FeatureComingSoonScreen(paddingValues = innerPadding,
+                onNavigateToAboutMeScreen = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.AboutMe.route)
+                })
         }
 
         composable(route = Screens.AccountSettings.route) {
@@ -98,29 +104,53 @@ fun ScreenGraph(
         }
 
         composable(route = Screens.AboutMe.route) {
-            // Implement your About Me screen composable here
+            AboutMeScreen(paddingValues = innerPadding)
         }
 
         composable(route = Screens.Tools.route) {
-            // Implement your Tools screen composable here
+            FeatureComingSoonScreen(paddingValues = innerPadding,
+                onNavigateToAboutMeScreen = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.AboutMe.route)
+                })
         }
 
         composable(route = Screens.Statistics.route) {
-            // Implement your Statistics screen composable here
+            FeatureComingSoonScreen(paddingValues = innerPadding,
+                onNavigateToAboutMeScreen = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.AboutMe.route)
+                })
         }
 
         composable(route = Screens.NotificationSettings.route) {
-            // Implement your Notification Settings screen composable here
+            FeatureComingSoonScreen(paddingValues = innerPadding,
+                onNavigateToAboutMeScreen = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.AboutMe.route)
+                })
         }
         composable(route = Screens.Nightmares.route) {
-            // Implement your Nightmares screen composable here
+            FeatureComingSoonScreen(paddingValues = innerPadding,
+                onNavigateToAboutMeScreen = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.AboutMe.route)
+                })
         }
 
         composable(route = Screens.Dictionary.route) {
-            // Implement your Dictionary screen composable here
+            FeatureComingSoonScreen(paddingValues = innerPadding,
+                onNavigateToAboutMeScreen = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.AboutMe.route)
+                })
         }
         composable(route = Screens.DreamSettings.route) {
-            // Implement your Dream Settings screen composable here
+            FeatureComingSoonScreen(paddingValues = innerPadding,
+                onNavigateToAboutMeScreen = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.AboutMe.route)
+                })
         }
     }
 }

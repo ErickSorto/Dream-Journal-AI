@@ -2,12 +2,10 @@ package org.ballistic.dreamjournalai.store_billing.presentation.store_screen.com
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,6 +15,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -24,70 +23,45 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import coil.compose.rememberAsyncImagePainter
 import org.ballistic.dreamjournalai.R
+import org.ballistic.dreamjournalai.core.components.DreamTokenLayout
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 
 
 @Composable
-fun DreamTokenInfo(modifier: Modifier) {
+fun DreamTokenInfo(modifier: Modifier, mainScreenViewModelState: MainScreenViewModelState) {
 
     Column(
         modifier = modifier
             .padding(top = 32.dp)
             .background(
-                colorResource(id = R.color.white).copy(alpha = 0.2f),
+                colorResource(id = R.color.sky_blue).copy(alpha = 0.8f),
                 shape = RoundedCornerShape(16.dp)
             )
     ) {
-        SubInfoMonthlyYearlyPrice()
+        SubInfoMonthlyYearlyPrice(mainScreenViewModelState = mainScreenViewModelState)
         SubInfoFeatures()
     }
 }
 
 @Composable
-fun SubInfoMonthlyYearlyPrice() {
-    val isYearly = remember {
-        mutableStateOf(true)
-    }
+fun SubInfoMonthlyYearlyPrice(
+    mainScreenViewModelState: MainScreenViewModelState
+) {
     Column(
         modifier = Modifier
-            .padding(paddingValues = PaddingValues(8.dp, 16.dp, 8.dp, 8.dp)),
+            .padding(paddingValues = PaddingValues(8.dp, 16.dp, 8.dp, 8.dp))
+            .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier
+                .padding(0.dp, 0.dp, 0.dp, 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            SubscriptionTabText(
-                text = "Monthly",
-                modifier = Modifier.weight(1f),
-                isYearly.value,
-                isClicked = { isYearly.value = false })
-
-
-            SubscriptionTabText(
-                text = "Annual",
-                modifier = Modifier.weight(1f),
-                isYearly.value,
-                isClicked = { isYearly.value = true })
-        }
-
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "\$3.33/month",
-                modifier = Modifier.padding(8.dp),
-                fontSize = 20.sp,
-                fontWeight = Bold,
-                color = Color.Black
-            )
-            Text(
-                text = "(39.99/year)",
-                modifier = Modifier.padding(8.dp),
-                fontSize = 20.sp,
-                fontWeight = Bold,
-                color = Color.Black
-            )
+            Text(text = "Dream Token Benefits", fontSize = 20.sp, fontWeight = Bold, color = Color.White)
+            DreamTokenLayout(mainScreenViewModelState = mainScreenViewModelState)
         }
     }
 }
@@ -127,27 +101,26 @@ fun SubInfoFeatures() {
                 shape = RoundedCornerShape(0.dp, 0.dp, 16.dp, 16.dp)
             )
             .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         CheckmarkAndText(
-            text = "1200 Dream Tokens",
-            subText = "(100 monthly)",
+            text = "Paint Your Dreams",
+            subText = "Unlock the power to visualize your dreams in full color with 100 monthly tokens.",
             modifier = Modifier
         )
         CheckmarkAndText(
-            text = "Access dictionary",
-            subText = "(Coming Soon)",
+            text = "Interpret Your Dreams",
+            subText = "Unlock exclusive access to our dream interpretation feature when it's available.",
             modifier = Modifier
         )
         CheckmarkAndText(
-            text = "Access AI recorder",
-            subText = "(Coming Soon)",
+            text = "Discover New Words",
+            subText = "Expand your dream vocabulary with our upcoming dream dictionary feature.",
             modifier = Modifier
         )
         CheckmarkAndText(
-            text = "No Ads",
-            subText = "",
-            modifier = Modifier
+            text = "Enjoy an Ad-Free Experience",
+            subText = "Say goodbye to interruptions and enhance your dream journaling experience.",
+            modifier = Modifier.padding(bottom = 8.dp)
         )
     }
 }
@@ -193,10 +166,15 @@ fun CheckmarkAndText(
     subText: String,
     modifier: Modifier = Modifier
 ) {
+    val showDialog = remember { mutableStateOf(false) }
+
     Row(
-        modifier = modifier.padding(),
+        modifier = modifier
+            .padding(8.dp, 8.dp, 8.dp, 0.dp)
+            .fillMaxWidth()
+            .clickable { showDialog.value = true },
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.Start
     ) {
         Image(
             painter = rememberAsyncImagePainter(R.drawable.baseline_check_24),
@@ -204,11 +182,37 @@ fun CheckmarkAndText(
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .size(48.dp)
-                .padding(8.dp, 8.dp, 0.dp, 8.dp)
+                .padding(0.dp, 0.dp, 8.dp, 0.dp)
         )
-        Text(text = text, fontSize = 16.sp, color = Color.White, fontWeight = Bold)
-        Text(text = subText, fontSize = 12.sp, color = Color.White, fontWeight = Bold)
+        Column {
+            Text(
+                text = text,
+                fontSize = 16.sp,
+                color = Color.White,
+                fontWeight = Bold,
+            )
+            if (showDialog.value) {
+                SubTextDialog(subText = subText, onDismiss = { showDialog.value = false })
+            }
+        }
     }
+}
+
+@Composable
+fun SubTextDialog(subText: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text(text = "Details") },
+        text = { Text(text = subText, textAlign = TextAlign.Center, color = Color.White) },
+        confirmButton = {
+            TextButton(
+                onClick = { onDismiss() },
+                content = { Text(text = "OK") }
+            )
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = colorResource(id = R.color.Yellow),
+    )
 }
 
 @Composable

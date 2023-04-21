@@ -26,6 +26,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.delay
@@ -59,18 +60,6 @@ fun MainScreenView(
     }
 
     val navController = rememberNavController()
-
-    val searchedText = mainScreenViewModelState.searchedText.collectAsStateWithLifecycle()
-
-    Image(
-        painter = rememberAsyncImagePainter(model = R.drawable.blue_lighthouse),
-        modifier = Modifier.fillMaxSize(),
-        contentDescription = "Lighthouse",
-        contentScale = ContentScale.Crop
-    )
-
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
     val drawerGroups = listOf(
         DrawerGroup(
             title = "Pages",
@@ -100,6 +89,34 @@ fun MainScreenView(
         )
     )
     val selectedItem = remember { mutableStateOf(drawerGroups.first().items.first()) }
+
+
+    DisposableEffect(navController) {
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+            val route = destination.route ?: return@OnDestinationChangedListener
+            val matchedScreen = drawerGroups.flatMap { it.items }.firstOrNull { it.route == route }
+            if (matchedScreen != null) {
+                selectedItem.value = matchedScreen
+            }
+        }
+
+        navController.addOnDestinationChangedListener(listener)
+        onDispose { navController.removeOnDestinationChangedListener(listener) }
+    }
+
+    val searchedText = mainScreenViewModelState.searchedText.collectAsStateWithLifecycle()
+
+    Image(
+        painter = rememberAsyncImagePainter(model = R.drawable.blue_lighthouse),
+        modifier = Modifier.fillMaxSize(),
+        contentDescription = "Lighthouse",
+        contentScale = ContentScale.Crop
+    )
+
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+
 
 
     ModalNavigationDrawer(

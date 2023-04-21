@@ -1,5 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +20,7 @@ import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream.Companion.d
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DreamImageSelectionRow(
     viewModel: AddEditDreamViewModel,
