@@ -71,6 +71,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                     dreamContent = dream.content,
                                     dreamInfo = DreamInfo(
                                         dreamId = dream.id,
+                                        dreamUID = dream.uid,
                                         dreamBackgroundImage = dream.backgroundImage,
                                         dreamIsLucid = dream.isLucid,
                                         dreamIsFavorite = dream.isFavorite,
@@ -339,6 +340,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                                 content = dreamUiState.value.dreamContent,
                                 backgroundImage = dreamUiState.value.dreamInfo.dreamBackgroundImage,
                                 id = dreamUiState.value.dreamInfo.dreamId,
+                                uid = dreamUiState.value.dreamInfo.dreamUID,
                                 sleepTime = dreamUiState.value.dreamInfo.dreamSleepTime,
                                 wakeTime = dreamUiState.value.dreamInfo.dreamWakeTime,
                                 date = dreamUiState.value.dreamInfo.dreamDate,
@@ -532,6 +534,7 @@ data class DreamUiState(
     val dreamContent: String = "",
     val dreamInfo: DreamInfo = DreamInfo(
         dreamId = "",
+        dreamUID = "",
         dreamBackgroundImage = Dream.dreamBackgroundImages.random(),
         dreamIsLucid = false,
         dreamIsFavorite = false,
@@ -589,6 +592,7 @@ data class DreamAIImage(
 
 data class DreamInfo(
     val dreamId: String?,
+    val dreamUID: String?,
     var dreamBackgroundImage: Int,
     val dreamIsLucid: Boolean,
     val dreamIsFavorite: Boolean,

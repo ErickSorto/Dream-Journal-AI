@@ -59,5 +59,6 @@ class StoreScreenViewModel @Inject constructor(
         productDetails?.let {
             billingRepository.initiatePurchaseFlow(activity, it)
         }
+
     }
 }

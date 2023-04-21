@@ -16,10 +16,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.feature_dream.domain.model.Dream
-import org.ballistic.dreamjournalai.feature_dream.domain.util.OrderType
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.components.DateHeader
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.components.DreamItem
-import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamsViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamJournalListState
+import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamJournalListViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.navigation.Screens
@@ -31,24 +32,28 @@ import java.util.*
 @OptIn(ExperimentalFoundationApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun DreamJournalScreen(
+fun DreamJournalListScreen(
     navController: NavController,
     mainScreenViewModelState: MainScreenViewModelState,
-    dreamsViewModel: DreamsViewModel,
+    dreamJournalListState: DreamJournalListState,
     innerPadding: PaddingValues = PaddingValues(),
-    onMainEvent : (MainScreenEvent) -> Unit = {},
-    onDreamsEvent : (DreamsEvent) -> Unit = {}
+    onMainEvent: (MainScreenEvent) -> Unit = {},
+    onDreamListEvent: (DreamListEvent) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val state by dreamsViewModel.state.collectAsStateWithLifecycle()
-
     val groupedDreams = remember { mutableStateOf(emptyMap<String, List<Dream>>()) }
+    val searchedText = mainScreenViewModelState.searchedText.collectAsStateWithLifecycle().value
 
-    LaunchedEffect(state) {
-        groupedDreams.value = state.dreams.groupBy { it.date }
+    LaunchedEffect(dreamJournalListState) {
+        groupedDreams.value = dreamJournalListState.dreams.groupBy { it.date }
     }
+
+    LaunchedEffect(searchedText) {
+        dreamJournalListState.searchedText.value = searchedText
+    }
+
     onMainEvent(MainScreenEvent.SetBottomBarState(true))
     onMainEvent(MainScreenEvent.SetFloatingActionButtonState(true))
     onMainEvent(MainScreenEvent.SetTopBarState(true))
@@ -84,44 +89,45 @@ fun DreamJournalScreen(
                 }
 
                 items(dreamsForDate) { dream ->
-                    // ... (rest of the code)
-                }
-
-
-            items(dreamsForDate) { dream ->
-                DreamItem(
-                    dream = dream,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                        .padding(horizontal = 16.dp)
-                        .clickable {
-                            navController.navigate(
-                                Screens.AddEditDreamScreen.route +
-                                        "?dreamId=${dream.id}&dreamImageBackground=${dream.backgroundImage}"
-                            )
-                        },
-                    onDeleteClick = {
-                        scope.launch {
-                            dreamsViewModel.onEvent(DreamsEvent.DeleteDream(dream, context))
-
-                            val result =
-                                mainScreenViewModelState.scaffoldState.snackBarHostState.value.showSnackbar(
-                                    message = "Dream deleted",
-                                    actionLabel = "Undo",
-                                    duration = SnackbarDuration.Long
+                    DreamItem(
+                        dream = dream,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                            .padding(horizontal = 16.dp)
+                            .clickable {
+                                navController.navigate(
+                                    Screens.AddEditDreamScreen.route +
+                                            "?dreamId=${dream.id}&dreamImageBackground=${dream.backgroundImage}"
                                 )
+                            },
+                        onDeleteClick = {
+                            onDreamListEvent(
+                                DreamListEvent.DeleteDream(
+                                    dream = dream,
+                                    context = context
+                                )
+                            )
+                            scope.launch {
+                                val result =
+                                    mainScreenViewModelState.scaffoldState.snackBarHostState.value.showSnackbar(
+                                        message = "Dream deleted",
+                                        actionLabel = "Undo",
+                                        duration = SnackbarDuration.Long
+                                    )
 
-                            mainScreenViewModelState.scaffoldState.snackBarHostState.value.currentSnackbarData?.dismiss()
+                                mainScreenViewModelState.scaffoldState.snackBarHostState.value.currentSnackbarData?.dismiss()
 
-                            if (result == SnackbarResult.ActionPerformed) {
-                                dreamsViewModel.onEvent(DreamsEvent.RestoreDream)
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    onDreamListEvent(
+                                        DreamListEvent.RestoreDream
+                                    )
+                                }
                             }
                         }
-                    }
-                )
-                Spacer(modifier = Modifier.height(4.dp))
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
             }
-        }
     }
 }

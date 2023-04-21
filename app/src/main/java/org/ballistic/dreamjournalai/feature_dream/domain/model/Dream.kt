@@ -33,7 +33,8 @@ data class Dream @RequiresApi(Build.VERSION_CODES.O) constructor(
     val backgroundImage: Int,
     val generatedImage: String?,
     val generatedDetails: String,
-    val id: String?
+    val id: String?,
+    val uid: String?
 ) : Parcelable {
 
     fun doesMatchSearchQuery(query: String): Boolean {
@@ -81,6 +82,7 @@ data class Dream @RequiresApi(Build.VERSION_CODES.O) constructor(
         0,
         null,
         "",
+        null,
         null
     )
 }

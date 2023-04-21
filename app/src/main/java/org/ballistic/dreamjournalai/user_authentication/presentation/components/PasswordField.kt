@@ -26,8 +26,6 @@ fun PasswordField(
     forgotPassword: () -> Unit
 ) {
     var passwordIsVisible by remember { mutableStateOf(false) }
-
-
         OutlinedTextField(
             value = password,
             onValueChange = {

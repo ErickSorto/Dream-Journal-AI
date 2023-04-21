@@ -24,6 +24,7 @@ interface AuthRepository {
 
     val isUserExist: StateFlow<Boolean>
     val emailVerified: StateFlow<Boolean>
+    val isLoggedIn: StateFlow<Boolean>
 
     suspend fun oneTapSignInWithGoogle(): OneTapSignInResponse
 
@@ -41,7 +42,9 @@ interface AuthRepository {
 
     fun signOut()
 
-    suspend fun revokeAccess(): RevokeAccessResponse
+    suspend fun revokeAccess(password: String?): Flow<RevokeAccessResponse>
 
     fun getAuthState(viewModelScope: CoroutineScope): AuthStateResponse
+
+    val dreamTokens: StateFlow<Int>
 }

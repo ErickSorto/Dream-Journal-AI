@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages.AIPage
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages.DescriptionPage
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages.InfoPage
+import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -28,7 +29,8 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_sc
 @Composable
 @UiComposable
 fun TabLayout(
-    dreamBackgroundImage: MutableState<Int>
+    dreamBackgroundImage: MutableState<Int>,
+    mainScreenViewModelState: MainScreenViewModelState
 ) {
     val pages = listOf("Description", "AI", "Info")
     val pagerState = rememberPagerState()
@@ -68,7 +70,7 @@ fun TabLayout(
                 DescriptionPage(pagerState)
             }
             1 -> {
-                AIPage(pagerState)
+                AIPage(pagerState, mainScreenViewModelState = mainScreenViewModelState)
             }
             2 -> {
                 InfoPage(dreamBackgroundImage)

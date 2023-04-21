@@ -10,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.google.accompanist.pager.ExperimentalPagerApi
+import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamJournalListViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenView
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModel
 import org.ballistic.dreamjournalai.onboarding.presentation.OnboardingScreen
@@ -60,6 +61,10 @@ fun MainGraph(
                 onStoreEvent = {
                     storeScreenViewModel.onEvent(it)
                 },
+                onNavigateToOnboardingScreen = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.OnboardingScreen.route)
+                }
             )
         }
     }

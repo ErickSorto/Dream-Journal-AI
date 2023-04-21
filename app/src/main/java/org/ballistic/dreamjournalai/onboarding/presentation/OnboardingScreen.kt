@@ -46,15 +46,15 @@ fun OnboardingScreen(
     onDataLoaded: () -> Unit
 ) {
     val isUserExist = authViewModelState.isUserExist.collectAsStateWithLifecycle().value
-    val loginState = authViewModelState.login.collectAsStateWithLifecycle().value
+    val isLoggedIn = authViewModelState.isLoggedIn.collectAsStateWithLifecycle().value
     val signUpState = authViewModelState.signUp.collectAsStateWithLifecycle()
     val emailVerificationState = authViewModelState.emailVerified.collectAsStateWithLifecycle().value
 
-    LaunchedEffect(key1 = isUserExist, key2 = emailVerificationState) {
+    LaunchedEffect(key1 = isUserExist, key2 = emailVerificationState, key3 = isLoggedIn) {
         println("isUserExist: $isUserExist, emailVerificationState: $emailVerificationState")
         Log.d("OnboardingScreen", "isUserExist: $isUserExist, emailVerificationState: $emailVerificationState")
 
-        if (isUserExist && emailVerificationState) {
+        if (isUserExist && emailVerificationState && isLoggedIn) {
             navigateToDreamJournalScreen()
         }
     }
@@ -114,7 +114,7 @@ fun OnboardingScreen(
 
 
     LaunchedEffect(Unit) {
-        if (loginState.login != null && emailVerificationState) {
+        if (isLoggedIn && emailVerificationState) {
             welcomeViewModel.saveOnBoardingState(completed = true)
             navigateToDreamJournalScreen()
         }

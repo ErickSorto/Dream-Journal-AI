@@ -59,3 +59,45 @@ fun SignInGoogleButton(
         }
     }
 }
+
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun ReauthenticateSignInGoogleButton(
+    modifier: Modifier,
+    onClick: () -> Unit,
+    enabled: Boolean = false,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(16.dp, 8.dp, 16.dp, 16.dp),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        AnimatedVisibility(
+            modifier = Modifier.fillMaxWidth(),
+            visible = enabled
+        ) {
+            Button(
+                modifier = Modifier.padding(),
+                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = colorResource(R.color.sky_blue)
+                ),
+                onClick = onClick
+            ) {
+                Image(
+                    painter = painterResource(
+                        id = R.drawable.ic_google_logo
+                    ),
+                    contentDescription = null
+                )
+                Text(
+                    text = "Reauthenticate",
+                    modifier = Modifier.padding(start = 8.dp),
+                    fontSize = 18.sp
+                )
+            }
+        }
+    }
+}

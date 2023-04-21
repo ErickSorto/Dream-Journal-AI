@@ -4,19 +4,22 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import org.ballistic.dreamjournalai.feature_dream.presentation.account_settings.AccountSettingsScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamScreen
-import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamJournalScreen
-import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamsEvent
-import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamsViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamJournalListScreen
+import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamJournalListViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.store_billing.presentation.store_screen.StoreEvent
 import org.ballistic.dreamjournalai.store_billing.presentation.store_screen.StoreScreen
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModel
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -24,26 +27,25 @@ import org.ballistic.dreamjournalai.store_billing.presentation.store_screen.Stor
 fun ScreenGraph(
     navController: NavHostController,
     mainScreenViewModelState: MainScreenViewModelState,
-    dreamsViewModel: DreamsViewModel,
     innerPadding: PaddingValues,
     onMainEvent: (MainScreenEvent) -> Unit = {},
-    onDreamsEvent: (DreamsEvent) -> Unit = {},
-    onStoreEvent: (StoreEvent) -> Unit = {}
+    onStoreEvent: (StoreEvent) -> Unit = {},
+    onNavigateToOnboardingScreen: () -> Unit = {},
 ) {
     NavHost(
         navController = navController,
         startDestination = Screens.DreamJournalScreen.route,
     ) {
 
-
         composable(route = Screens.DreamJournalScreen.route) {
-            DreamJournalScreen(
+            val dreamJournalListViewModel: DreamJournalListViewModel = hiltViewModel()
+            DreamJournalListScreen(
                 navController = navController,
                 mainScreenViewModelState = mainScreenViewModelState,
-                dreamsViewModel = dreamsViewModel,
+                dreamJournalListState = dreamJournalListViewModel.dreamJournalListState.collectAsStateWithLifecycle().value,
                 innerPadding = innerPadding,
                 onMainEvent = { onMainEvent(it) },
-                onDreamsEvent = { onDreamsEvent(it) }
+                onDreamListEvent = { dreamJournalListViewModel.onEvent(it) },
             )
         }
         //store
@@ -79,6 +81,46 @@ fun ScreenGraph(
                 dreamImage = image,
                 mainScreenViewModelState = mainScreenViewModelState,
             ) { onMainEvent(it) }
+        }
+        // Add your new screens here
+        composable(route = Screens.Favorites.route) {
+            // Implement your Favorites screen composable here
+        }
+
+        composable(route = Screens.AccountSettings.route) {
+            val authViewModel: AuthViewModel = hiltViewModel()
+            AccountSettingsScreen(
+                authViewModel.state.collectAsStateWithLifecycle().value,
+                paddingValues = innerPadding,
+                onNavigateToOnboardingScreen = onNavigateToOnboardingScreen,
+                authEvent = { authViewModel.onEvent(it) }
+            )
+        }
+
+        composable(route = Screens.AboutMe.route) {
+            // Implement your About Me screen composable here
+        }
+
+        composable(route = Screens.Tools.route) {
+            // Implement your Tools screen composable here
+        }
+
+        composable(route = Screens.Statistics.route) {
+            // Implement your Statistics screen composable here
+        }
+
+        composable(route = Screens.NotificationSettings.route) {
+            // Implement your Notification Settings screen composable here
+        }
+        composable(route = Screens.Nightmares.route) {
+            // Implement your Nightmares screen composable here
+        }
+
+        composable(route = Screens.Dictionary.route) {
+            // Implement your Dictionary screen composable here
+        }
+        composable(route = Screens.DreamSettings.route) {
+            // Implement your Dream Settings screen composable here
         }
     }
 }

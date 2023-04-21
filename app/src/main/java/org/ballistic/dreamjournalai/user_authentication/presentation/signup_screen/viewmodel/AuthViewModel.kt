@@ -1,20 +1,20 @@
 package org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.auth.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.core.Resource
-import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.state.DreamsState
 import org.ballistic.dreamjournalai.user_authentication.domain.repository.*
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.AuthEvent
-
 import javax.inject.Inject
 
 @HiltViewModel
@@ -74,14 +74,14 @@ class AuthViewModel @Inject constructor(
                     forgotPasswordEmail = event.email
                 )
             }
-            AuthEvent.ReloadUser -> {
+            is AuthEvent.ReloadUser -> {
                 reloadUser()
             }
-            AuthEvent.SignOut -> {
+            is AuthEvent.SignOut -> {
                 signOut()
             }
-            AuthEvent.RevokeAccess -> {
-                revokeAccess()
+            is AuthEvent.RevokeAccess -> {
+                revokeAccess(event.password, onSuccess = event.onSuccess)
             }
         }
     }
@@ -98,7 +98,7 @@ class AuthViewModel @Inject constructor(
         when (result) {
             is Resource.Success -> {
                 _state.value = _state.value.copy(
-                    login = MutableStateFlow(LoginState(login = result.data)),
+                    login = MutableStateFlow(LoginState(isLoggedIn = true)),
                     signInWithGoogleResponse = MutableStateFlow(Resource.Success(result.data))
                 )
             }
@@ -134,7 +134,7 @@ class AuthViewModel @Inject constructor(
                     _state.value = _state.value.copy(login = MutableStateFlow(LoginState(isLoading = true)))
                 }
                 is Resource.Success -> {
-                    _state.value = _state.value.copy(login = MutableStateFlow(LoginState(login = result.data)))
+                    _state.value = _state.value.copy(login = MutableStateFlow(LoginState(isLoggedIn = true)))
                 }
                 is Resource.Error -> {
                     _state.value = _state.value.copy(login = MutableStateFlow(LoginState(error = result.message ?: "Error")))
@@ -193,16 +193,34 @@ class AuthViewModel @Inject constructor(
         _state.value = _state.value.copy(reloadUserResponse = mutableStateOf(Resource.Success(repo.reloadFirebaseUser())))
     }
 
-    private fun signOut() = repo.signOut()
+    private fun signOut() = viewModelScope.launch {
+        repo.signOut()
+    }
 
-    private suspend fun revokeAccess() = viewModelScope.launch {
-        _state.value = _state.value.copy(revokeAccessResponse = mutableStateOf(Resource.Loading()))
-        _state.value = _state.value.copy(revokeAccessResponse = mutableStateOf(Resource.Success(repo.revokeAccess())))
+    private suspend fun revokeAccess(password: String?, onSuccess: () -> Unit) = viewModelScope.launch {
+
+        repo.revokeAccess(
+            password,
+        ).onEach {
+            when (it) {
+                is Resource.Success -> {
+                    _state.value = _state.value.copy(revokeAccess = MutableStateFlow(RevokeAccessState(isRevoked = true)))
+                    onSuccess()
+                }
+                is Resource.Error -> {
+                    _state.value = _state.value.copy(revokeAccess = MutableStateFlow(RevokeAccessState(error = it.message ?: "Error")))
+                }
+                is Resource.Loading -> {
+                    _state.value = _state.value.copy(revokeAccess = MutableStateFlow(RevokeAccessState(isLoading = true)))
+                }
+            }
+        }.launchIn(viewModelScope)
     }
 }
 
 data class AuthViewModelState(
     val repo: AuthRepository,
+    val user: FirebaseUser? = repo.currentUser,
     val loginEmail: String = "",
     val loginPassword: String = "",
     val signUpEmail: String = "",
@@ -218,15 +236,16 @@ data class AuthViewModelState(
     val signUpResponse: MutableState<Resource<SignUpResponse>> = mutableStateOf(Resource.Success()),
     val sendEmailVerificationResponse: MutableState<Resource<Boolean>> = mutableStateOf(Resource.Success()),
     val sendPasswordResetEmailResponse: MutableState<SendPasswordResetEmailResponse> = mutableStateOf(Resource.Success()),
-    val revokeAccessResponse: MutableState<Resource<RevokeAccessResponse>> = mutableStateOf(Resource.Success()),
     val reloadUserResponse: MutableState<Resource<ReloadUserResponse>> = mutableStateOf(Resource.Success()),
     val loginErrorMessage: MutableState<String> = mutableStateOf(""),
     val signUpErrorMessage: MutableState<String> = mutableStateOf(""),
     val login: StateFlow<LoginState> = MutableStateFlow(LoginState()),
     val signUp: StateFlow<SignUpState> = MutableStateFlow(SignUpState()),
     val emailVerification: StateFlow<VerifyEmailState> = MutableStateFlow(VerifyEmailState()),
+    val revokeAccess: StateFlow<RevokeAccessState> = MutableStateFlow(RevokeAccessState()),
     val isUserExist: StateFlow<Boolean> = repo.isUserExist,
-    val emailVerified: StateFlow<Boolean> = repo.emailVerified
+    val emailVerified: StateFlow<Boolean> = repo.emailVerified,
+    val isLoggedIn: StateFlow<Boolean> = repo.isLoggedIn,
 )
 data class VerifyEmailState(
     val verified : Boolean = false,
@@ -234,8 +253,14 @@ data class VerifyEmailState(
     val isLoading: Boolean = false,
     val error: String = ""
 )
+
+data class RevokeAccessState(
+    val isRevoked: Boolean = false,
+    val isLoading: Boolean = false,
+    val error: String = ""
+)
 data class LoginState(
-    val login: AuthResult? = null,
+    val isLoggedIn: Boolean = false,
     val isLoading: Boolean = false,
     val error: String = ""
 )
