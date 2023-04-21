@@ -2,10 +2,8 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_scree
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
@@ -20,38 +18,18 @@ import javax.inject.Inject
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class DreamJournalListViewModel @Inject constructor(
-    private val dreamUseCases: DreamUseCases,
-    private val firebaseAuth: FirebaseAuth
+    private val dreamUseCases: DreamUseCases
 ) : ViewModel() {
 
     private val _dreamJournalListState = MutableStateFlow(DreamJournalListState())
     val dreamJournalListState: StateFlow<DreamJournalListState> = _dreamJournalListState.asStateFlow()
-
-    val currentUserUid: MutableLiveData<String?> = MutableLiveData()
 
     private var recentlyDeletedDream: Dream? = null
 
     private var getDreamJob: Job? = null
 
     init {
-        observeAuthState()
-        observeCurrentUserUid()
-    }
-
-    private fun observeAuthState() {
-        firebaseAuth.addAuthStateListener { firebaseAuth ->
-            currentUserUid.value = firebaseAuth.currentUser?.uid
-        }
-    }
-
-    private fun observeCurrentUserUid() {
-        currentUserUid.observeForever { uid ->
-            if (uid != null) {
-                getDreams(dreamJournalListState.value.orderType)
-            } else {
-                _dreamJournalListState.value = _dreamJournalListState.value.copy(dreams = emptyList())
-            }
-        }
+        getDreams(OrderType.Date)
     }
 
 
