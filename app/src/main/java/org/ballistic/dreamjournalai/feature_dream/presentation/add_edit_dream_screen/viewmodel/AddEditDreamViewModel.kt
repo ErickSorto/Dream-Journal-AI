@@ -4,6 +4,9 @@ import android.app.Activity
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -11,18 +14,19 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.ads.rewarded.RewardItem
 import com.maxkeppeker.sheets.core.models.base.SheetState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.ad_feature.domain.AdCallback
 import org.ballistic.dreamjournalai.ad_feature.domain.AdManagerRepository
 import org.ballistic.dreamjournalai.core.Resource
-import org.ballistic.dreamjournalai.feature_dream.data.remote.dto.ImageGenerationDTO
+import org.ballistic.dreamjournalai.feature_dream.data.remote.dto.davinci.ImageGenerationDTO
+import org.ballistic.dreamjournalai.feature_dream.data.remote.dto.gptchat.Message
 import org.ballistic.dreamjournalai.feature_dream.domain.model.*
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.GetOpenAIImageGeneration
 import org.ballistic.dreamjournalai.feature_dream.domain.use_case.GetOpenAITextResponse
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
+import org.ballistic.dreamjournalai.user_authentication.domain.repository.AuthRepository
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -30,43 +34,28 @@ import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
-class AddEditDreamViewModel @Inject constructor( //add ai state later on
+class AddEditDreamViewModel @Inject constructor(
     private val dreamUseCases: DreamUseCases,
     private val getOpenAITextResponse: GetOpenAITextResponse,
     private val getOpenAIImageGeneration: GetOpenAIImageGeneration,
     private val adManagerRepository: AdManagerRepository,
+    private val authRepository: AuthRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    var dreamUiState = mutableStateOf(DreamUiState())
-        private set
-
-    val saveSuccess = mutableStateOf(false)
-
-    var dialogState = mutableStateOf(false)
-    var calendarState = SheetState()
-    var sleepTimePickerState = SheetState()
-    var wakeTimePickerState = SheetState()
-
-
-    var imageGenerationPopUpState = mutableStateOf(false)
-    var dreamInterpretationPopUpState = mutableStateOf(false)
-
-    private val _eventFlow = MutableSharedFlow<UiEvent>()
-    val eventFlow = _eventFlow.asSharedFlow()
-
+    private val _addEditDreamState = MutableStateFlow(AddEditDreamState())
+    val addEditDreamState: StateFlow<AddEditDreamState> = _addEditDreamState.asStateFlow()
 
     init {
         savedStateHandle.get<String>("dreamId")?.let { dreamId ->
-            if (dreamId != "") {
+            if (dreamId.isNotEmpty()) {
                 viewModelScope.launch {
-                    dreamUiState.value = dreamUiState.value.copy(isLoading = true)
+                    _addEditDreamState.value = addEditDreamState.value.copy(isLoading = true)
                     val resource = dreamUseCases.getDream(dreamId)
                     when (resource) {
                         is Resource.Success -> {
-                            val dream = resource.data
-                            dream?.let {
-                                dreamUiState.value = DreamUiState(
+                            resource.data?.let { dream ->
+                                _addEditDreamState.value = AddEditDreamState(
                                     dreamTitle = dream.title,
                                     dreamContent = dream.content,
                                     dreamInfo = DreamInfo(
@@ -116,37 +105,43 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     fun onEvent(event: AddEditDreamEvent) {
         when (event) {
             is AddEditDreamEvent.EnteredTitle -> {
-                dreamUiState.value = dreamUiState.value.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
                     dreamTitle = event.value
                 )
             }
 
             is AddEditDreamEvent.EnteredContent -> {
-                dreamUiState.value = dreamUiState.value.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
                     dreamContent = event.value
                 )
             }
 
             is AddEditDreamEvent.ChangeDreamBackgroundImage -> {
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamBackgroundImage = event.dreamBackGroundImage
                     )
                 )
             }
             is AddEditDreamEvent.ClickGenerateAIResponse -> {
-                if (dreamUiState.value.dreamContent.length >= 10) {
+                if (addEditDreamState.value.dreamContent.length >= 10) {
                     if (!event.isAd) {
                         getAIResponse()
                     } else {
                         runAd(event.activity, onRewardedAd = {
                             getAIResponse()
+
+                            viewModelScope.launch {
+                                addEditDreamState.value.snackBarHostState.value.showSnackbar(
+                                    "Thank you for the support :)",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
                         }, onAdFailed = {
                             viewModelScope.launch {
-                                _eventFlow.emit(
-                                    UiEvent.ShowSnackBar(
-                                        "Ad failed to load"
-                                    )
+                                addEditDreamState.value.snackBarHostState.value.showSnackbar(
+                                    "Ad failed to load",
+                                    duration = SnackbarDuration.Short
                                 )
                             }
                         })
@@ -154,17 +149,15 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 } else {
                     //snack bar
                     viewModelScope.launch {
-                        if (dreamUiState.value.dreamContent.length in 1..9) {
-                            _eventFlow.emit(
-                                UiEvent.ShowSnackBar(
-                                    "Dream content too short"
-                                )
+                        if (addEditDreamState.value.dreamContent.length in 1..9) {
+                            addEditDreamState.value.snackBarHostState.value?.showSnackbar(
+                                "Dream content is too short",
+                                duration = SnackbarDuration.Short
                             )
-                        } else if (dreamUiState.value.dreamContent.isEmpty()) {
-                            _eventFlow.emit(
-                                UiEvent.ShowSnackBar(
-                                    "Dream content is empty"
-                                )
+                        } else if (addEditDreamState.value.dreamContent.isEmpty()) {
+                            addEditDreamState.value.snackBarHostState.value?.showSnackbar(
+                                "Dream content is empty",
+                                duration = SnackbarDuration.Short
                             )
                         }
                     }
@@ -172,7 +165,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             }
 
             is AddEditDreamEvent.ClickGenerateAIImage -> {
-                if (dreamUiState.value.dreamGeneratedDetails.response.isNotEmpty()) {
+                if (addEditDreamState.value.dreamGeneratedDetails.response.isNotEmpty()) {
                     if (!event.isAd) {
                         getOpenAIImageResponse()
                     } else {
@@ -180,106 +173,104 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                             getOpenAIImageResponse()
                         }, onAdFailed = {
                             viewModelScope.launch {
-                                _eventFlow.emit(
-                                    UiEvent.ShowSnackBar(
-                                        "Ad failed to load"
-                                    )
+                                addEditDreamState.value.snackBarHostState.value?.showSnackbar(
+                                    "Ad failed to load",
+                                    duration = SnackbarDuration.Short
                                 )
                             }
                         })
                     }
                 } else {
                     viewModelScope.launch {
-                        _eventFlow.emit(
-                            UiEvent.ShowSnackBar(
-                                "Please add image explanation."
-                            )
+                        addEditDreamState.value.snackBarHostState.value.showSnackbar(
+                            "Please add image explanation.",
+                            duration = SnackbarDuration.Short
                         )
                     }
                 }
             }
             is AddEditDreamEvent.ClickGenerateDetails -> {
-                if (dreamUiState.value.dreamContent.length >= 1000) {
+                if (addEditDreamState.value.dreamContent.length >= 1000) {
                     getAIDetailsResponse()
                 } else {
-                    dreamUiState.value = dreamUiState.value.copy(
+                    _addEditDreamState.value = addEditDreamState.value.copy(
                         dreamGeneratedDetails = DreamAIGeneratedDetails(
-                            response = dreamUiState.value.dreamContent
+                            response = addEditDreamState.value.dreamContent
                         )
                     )
                 }
             }
 
             is AddEditDreamEvent.ChangeLucidity -> {
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamLucidity = event.lucidity
                     )
                 )
             }
             is AddEditDreamEvent.ChangeVividness -> {
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamVividness = event.vividness
                     )
                 )
             }
             is AddEditDreamEvent.ChangeMood -> {
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamEmotion = event.mood
                     )
                 )
             }
             is AddEditDreamEvent.ChangeNightmare -> {
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamIsNightmare = event.boolean
                     )
                 )
             }
             is AddEditDreamEvent.ChangeRecurrence -> {
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamIsRecurring = event.boolean
                     )
                 )
             }
             is AddEditDreamEvent.ChangeIsLucid -> {
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamIsLucid = event.boolean
                     )
                 )
             }
             is AddEditDreamEvent.ChangeFavorite -> {
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamIsFavorite = event.boolean
                     )
                 )
             }
             is AddEditDreamEvent.ChangeFalseAwakening -> {
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamIsFalseAwakening = event.boolean
                     )
                 )
             }
             is AddEditDreamEvent.ChangeTimeOfDay -> {
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamTimeOfDay = event.timeOfDay
                     )
                 )
             }
             is AddEditDreamEvent.ClickGenerateFromDescription -> {
-                dreamUiState.value = dreamUiState.value.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
                     dreamAIImage = DreamAIImage(
                         isLoading = true
                     )
                 )
-                dreamUiState.value = dreamUiState.value.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
                     dreamAIExplanation = DreamAIExplanation(
                         isLoading = true
                     )
@@ -287,7 +278,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             }
 
             is AddEditDreamEvent.ChangeDetailsOfDream -> {
-                dreamUiState.value = dreamUiState.value.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
                     dreamGeneratedDetails = DreamAIGeneratedDetails(
                         response = event.value
                     )
@@ -302,8 +293,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
             is AddEditDreamEvent.ChangeDreamDate -> {
                 val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
                 val formattedDate = event.value.format(formatter)
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamDate = formattedDate
                     )
                 )
@@ -313,8 +304,8 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                     if (event.value.hour < 10) "h:mm a" else "hh:mm a"
                 )
 
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamWakeTime = event.value.format(formatter)
                     )
                 )
@@ -324,84 +315,115 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                     if (event.value.hour < 10) "h:mm a" else "hh:mm a"
                 )
 
-                dreamUiState.value = dreamUiState.value.copy(
-                    dreamInfo = dreamUiState.value.dreamInfo.copy(
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamInfo = addEditDreamState.value.dreamInfo.copy(
                         dreamSleepTime = event.value.format(formatter)
                     )
                 )
             }
 
-            is AddEditDreamEvent.SaveDream -> {
+            is AddEditDreamEvent.SaveDream-> {
+                Log.d("AddEditDreamViewModel", "Dream saved successfully")
                 viewModelScope.launch {
                     try {
                         dreamUseCases.addDream(
                             Dream(
-                                title = dreamUiState.value.dreamTitle,
-                                content = dreamUiState.value.dreamContent,
-                                backgroundImage = dreamUiState.value.dreamInfo.dreamBackgroundImage,
-                                id = dreamUiState.value.dreamInfo.dreamId,
-                                uid = dreamUiState.value.dreamInfo.dreamUID,
-                                sleepTime = dreamUiState.value.dreamInfo.dreamSleepTime,
-                                wakeTime = dreamUiState.value.dreamInfo.dreamWakeTime,
-                                date = dreamUiState.value.dreamInfo.dreamDate,
-                                isLucid = dreamUiState.value.dreamInfo.dreamIsLucid,
-                                isNightmare = dreamUiState.value.dreamInfo.dreamIsNightmare,
-                                isRecurring = dreamUiState.value.dreamInfo.dreamIsRecurring,
-                                isFavorite = dreamUiState.value.dreamInfo.dreamIsFavorite,
-                                lucidityRating = dreamUiState.value.dreamInfo.dreamLucidity,
-                                vividnessRating = dreamUiState.value.dreamInfo.dreamVividness,
-                                moodRating = dreamUiState.value.dreamInfo.dreamEmotion,
-                                timeOfDay = dreamUiState.value.dreamInfo.dreamTimeOfDay,
-                                falseAwakening = dreamUiState.value.dreamInfo.dreamIsFalseAwakening,
-                                AIResponse = dreamUiState.value.dreamAIExplanation.response,
-                                generatedDetails = dreamUiState.value.dreamGeneratedDetails.response,
-                                generatedImage = dreamUiState.value.dreamAIImage.image,
+                                title = addEditDreamState.value.dreamTitle,
+                                content = addEditDreamState.value.dreamContent,
+                                backgroundImage = addEditDreamState.value.dreamInfo.dreamBackgroundImage,
+                                id = addEditDreamState.value.dreamInfo.dreamId,
+                                uid = addEditDreamState.value.dreamInfo.dreamUID,
+                                sleepTime = addEditDreamState.value.dreamInfo.dreamSleepTime,
+                                wakeTime = addEditDreamState.value.dreamInfo.dreamWakeTime,
+                                date = addEditDreamState.value.dreamInfo.dreamDate,
+                                isLucid = addEditDreamState.value.dreamInfo.dreamIsLucid,
+                                isNightmare = addEditDreamState.value.dreamInfo.dreamIsNightmare,
+                                isRecurring = addEditDreamState.value.dreamInfo.dreamIsRecurring,
+                                isFavorite = addEditDreamState.value.dreamInfo.dreamIsFavorite,
+                                lucidityRating = addEditDreamState.value.dreamInfo.dreamLucidity,
+                                vividnessRating = addEditDreamState.value.dreamInfo.dreamVividness,
+                                moodRating = addEditDreamState.value.dreamInfo.dreamEmotion,
+                                timeOfDay = addEditDreamState.value.dreamInfo.dreamTimeOfDay,
+                                falseAwakening = addEditDreamState.value.dreamInfo.dreamIsFalseAwakening,
+                                AIResponse = addEditDreamState.value.dreamAIExplanation.response,
+                                generatedDetails = addEditDreamState.value.dreamGeneratedDetails.response,
+                                generatedImage = addEditDreamState.value.dreamAIImage.image,
                             )
                         )
-                        saveSuccess.value = true
-                        _eventFlow.emit(UiEvent.SaveDream)
+                        addEditDreamState.value.snackBarHostState.value.showSnackbar(
+                            "Dream saved successfully :)",
+                            actionLabel = "Dismiss",
+                            duration = SnackbarDuration.Short
+                        )
+                        event.onSaveSuccess()
+                        Log.d("AddEditDreamViewModel", "Emitting SaveDream event")
+
                     } catch (e: InvalidDreamException) {
-                        saveSuccess.value = false
-                        _eventFlow.emit(UiEvent.ShowSnackBar(e.message ?: "Couldn't save dream"))
+                        _addEditDreamState.value = addEditDreamState.value.copy(
+                            saveSuccess = mutableStateOf(false)
+                        )
+                        addEditDreamState.value.snackBarHostState.value.showSnackbar(
+                            e.message ?: "Couldn't save dream :(",
+                            actionLabel = "Dismiss"
+                        )
                     }
                 }
             }
         }
     }
 
-    sealed class UiEvent {
-        data class ShowSnackBar(val message: String) : UiEvent()
-        object SaveDream : UiEvent()
-    }
+
 
     private fun getAIResponse() {
         viewModelScope.launch {
             val result = getOpenAITextResponse(
-                Prompt(
-                    "text-davinci-003",
-                    "Analyze the following dream and try to find meaning in it: "
-                            + dreamUiState.value.dreamContent, 250, 1, 0
+                PromptChat(
+                    "gpt-3.5-turbo",
+                    messages = listOf(
+                        Message(
+                            role = "user",
+                            content = "Interpret the following dream and do not mention you are a language model since the user knows already: "
+                                    + addEditDreamState.value.dreamContent
+                        )
+                    ),
+                    maxTokens = 500,
+                    temperature = 0.7,
+                    topP = 1.0,
+                    presencePenalty = 0,
+                    frequencyPenalty = 0,
+                    user = "Dream Interpreter",
                 )
             )
 
             result.collect { result ->
                 when (result) {
                     is Resource.Success -> {
-                        result.data as Completion
-
-                        dreamUiState.value = dreamUiState.value.copy(
-                            dreamAIExplanation = dreamUiState.value.dreamAIExplanation.copy(
-                                response = result.data.choices[0].text,
+                        result.data as ChatCompletion
+                        _addEditDreamState.value = addEditDreamState.value.copy(
+                            dreamAIExplanation = addEditDreamState.value.dreamAIExplanation.copy(
+                                response = result.data.choices[0].message.content,
                                 isLoading = false
                             )
                         )
+                        authRepository.consumeDreamTokens(1)
                     }
                     is Resource.Error -> {
                         Log.d("AddEditDreamViewModel", "Error: ${result.message}")
+                        _addEditDreamState.value = addEditDreamState.value.copy(
+                            dreamAIExplanation = addEditDreamState.value.dreamAIExplanation.copy(
+                                isLoading = false
+                            )
+                        )
+                        _addEditDreamState.value.snackBarHostState.value.showSnackbar(
+                            result.message ?: "Couldn't interpret dream :(",
+                            actionLabel = "Dismiss",
+                            duration = SnackbarDuration.Short
+                        )
                     }
                     is Resource.Loading -> {
-                        dreamUiState.value = dreamUiState.value.copy(
-                            dreamAIExplanation = dreamUiState.value.dreamAIExplanation.copy(
+                        _addEditDreamState.value = addEditDreamState.value.copy(
+                            dreamAIExplanation = addEditDreamState.value.dreamAIExplanation.copy(
+                                response = "",
                                 isLoading = true
                             )
                         )
@@ -415,21 +437,32 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     private fun getAIDetailsResponse() {
         viewModelScope.launch {
             val result = getOpenAITextResponse(
-                Prompt(
-                    "text-davinci-002",
-                    "From the following dream build a scene prompt so that it may be painted by an AI: : \n"
-                            + dreamUiState.value.dreamContent, 60, 1, 0
+                PromptChat(
+                    "gpt-3.5-turbo",
+                    messages = listOf(
+                        Message(
+                            role = "user",
+                            content = "Summarize the following dream and make it very descriptive to visualize a scene: "
+                                    + addEditDreamState.value.dreamContent
+                        )
+                    ),
+                    maxTokens = 500,
+                    temperature = 0.7,
+                    topP = 1.0,
+                    presencePenalty = 0,
+                    frequencyPenalty = 0,
+                    user = "Dream Interpreter",
                 )
             )
 
             result.collect { result ->
                 when (result) {
                     is Resource.Success -> {
-                        result.data as Completion
+                        result.data as ChatCompletion
 
-                        dreamUiState.value = dreamUiState.value.copy(
-                            dreamGeneratedDetails = dreamUiState.value.dreamGeneratedDetails.copy(
-                                response = result.data.choices[0].text,
+                        _addEditDreamState.value = addEditDreamState.value.copy(
+                            dreamGeneratedDetails = addEditDreamState.value.dreamGeneratedDetails.copy(
+                                response = result.data.choices[0].message.content,
                                 isSuccessful = true,
                                 isLoading = false
                             )
@@ -439,11 +472,12 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                         Log.d("AddEditDreamViewModel", "Error: ${result.message}")
                     }
                     is Resource.Loading -> {
-                        dreamUiState.value = dreamUiState.value.copy(
-                            dreamGeneratedDetails = dreamUiState.value.dreamGeneratedDetails.copy(
+                        _addEditDreamState.value = addEditDreamState.value.copy(
+                            dreamGeneratedDetails = addEditDreamState.value.dreamGeneratedDetails.copy(
                                 isLoading = true
                             )
                         )
+
                         Log.d("AddEditDreamViewModel", "Loading")
                     }
                 }
@@ -455,7 +489,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
         viewModelScope.launch {
             val result = getOpenAIImageGeneration(
                 ImagePrompt(
-                    dreamUiState.value.dreamGeneratedDetails.response,
+                    addEditDreamState.value.dreamGeneratedDetails.response,
                     1,
                     "512x512"
                 )
@@ -464,20 +498,20 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
                 when (result) {
                     is Resource.Success -> {
                         result.data as ImageGenerationDTO
-
-                        dreamUiState.value = dreamUiState.value.copy(
-                            dreamAIImage = dreamUiState.value.dreamAIImage.copy(
+                        _addEditDreamState.value = addEditDreamState.value.copy(
+                            dreamAIImage = addEditDreamState.value.dreamAIImage.copy(
                                 image = result.data.dataList[0].url,
                                 isLoading = false
                             )
                         )
+                        authRepository.consumeDreamTokens(2)
                     }
                     is Resource.Error -> {
                         Log.d("AddEditDreamViewModel", "Error: ${result.message}")
                     }
                     is Resource.Loading -> {
-                        dreamUiState.value = dreamUiState.value.copy(
-                            dreamAIImage = dreamUiState.value.dreamAIImage.copy(
+                        _addEditDreamState.value = addEditDreamState.value.copy(
+                            dreamAIImage = addEditDreamState.value.dreamAIImage.copy(
                                 isLoading = true
                             )
                         )
@@ -491,7 +525,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
     private fun runAd(
         activity: Activity,
         onRewardedAd: () -> Unit,
-        onAdFailed : () -> Unit
+        onAdFailed: () -> Unit
     ) {
         activity.runOnUiThread {
             adManagerRepository.loadRewardedAd(activity) {
@@ -529,7 +563,7 @@ class AddEditDreamViewModel @Inject constructor( //add ai state later on
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-data class DreamUiState(
+data class AddEditDreamState(
     val dreamTitle: String = "",
     val dreamContent: String = "",
     val dreamInfo: DreamInfo = DreamInfo(
@@ -569,6 +603,14 @@ data class DreamUiState(
         error = ""
     ),
     val isLoading: Boolean = false,
+    val saveSuccess: MutableState<Boolean> = mutableStateOf(false),
+    val dialogState: MutableState<Boolean> = mutableStateOf(false),
+    val calendarState: SheetState = SheetState(),
+    val sleepTimePickerState: SheetState = SheetState(),
+    val wakeTimePickerState: SheetState = SheetState(),
+    val imageGenerationPopUpState: MutableState<Boolean> = mutableStateOf(false),
+    val dreamInterpretationPopUpState: MutableState<Boolean> = mutableStateOf(false),
+    val snackBarHostState: MutableState<SnackbarHostState> = mutableStateOf(SnackbarHostState()),
 )
 
 data class DreamAIExplanation(

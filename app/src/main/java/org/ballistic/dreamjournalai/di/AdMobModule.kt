@@ -18,6 +18,6 @@ object AdMobModule {
     @Singleton
     @Provides
     fun provideAdManagerRepository(): AdManagerRepository {
-        return AdManagerRepositoryImpl("ca-app-pub-3940256099942544/5224354917")
+        return AdManagerRepositoryImpl("ca-app-pub-8710979310678386/8178296701")
     }
 }

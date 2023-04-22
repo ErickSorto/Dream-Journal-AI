@@ -1,11 +1,9 @@
-package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components
+package org.ballistic.dreamjournalai.core.components
 
-import androidx.compose.animation.Animatable
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -24,11 +22,13 @@ fun TypewriterText(
     animationDuration: Int = 3000,
     onAnimationComplete: () -> Unit = {}
 ) {
-    val typedText = remember(text) { mutableStateOf(AnnotatedString("")) }
-    val animatedIndex = remember { androidx.compose.animation.core.Animatable(0f) }
+    val typedText = remember { mutableStateOf(AnnotatedString("")) }
+    val animatedIndex = remember { Animatable(0f) }
     val animationProgress by animateFloatAsState(targetValue = animatedIndex.value)
 
     LaunchedEffect(text) {
+        animatedIndex.snapTo(0f)
+        typedText.value = AnnotatedString("")
         animatedIndex.animateTo(
             targetValue = text.length.toFloat(),
             animationSpec = tween(animationDuration),

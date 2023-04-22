@@ -22,19 +22,18 @@ import androidx.compose.ui.window.Dialog
 import org.ballistic.dreamjournalai.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.PagerState
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
-@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun ImageGenerationPopUp(
-    viewModel: AddEditDreamViewModel = hiltViewModel(),
+    addEditDreamState: AddEditDreamState,
+    onAddEditDreamEvent: (AddEditDreamEvent) -> Unit,
     onDreamTokenClick: () -> Unit,
     onAdClick: () -> Unit,
     onClickOutside: () -> Unit,
-    pagerState: PagerState,
     modifier: Modifier = Modifier
 ) {
     Dialog(
@@ -66,9 +65,9 @@ fun ImageGenerationPopUp(
                         modifier = Modifier.padding(8.dp)
                     )
                     OutlinedTextField(
-                        value = viewModel.dreamUiState.value.dreamGeneratedDetails.response,
+                        value = addEditDreamState.dreamGeneratedDetails.response,
                         onValueChange = {
-                            viewModel.onEvent(AddEditDreamEvent.ChangeDetailsOfDream(it))
+                            onAddEditDreamEvent(AddEditDreamEvent.ChangeDetailsOfDream(it))
                         },
                         label = {
                             Text(

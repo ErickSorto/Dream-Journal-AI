@@ -30,18 +30,32 @@ object OpenAIModule {
     ): OkHttpClient = OkHttpClient.Builder().addInterceptor(httpLoggingInterceptor).build()
 
 
+//    @Provides
+//    @Singleton
+//    fun provideOpenAITextApi(
+//        okHttpClient: OkHttpClient
+//    ): OpenAITextApi {
+//        return Retrofit.Builder()
+//            .baseUrl("https://api.openai.com/v1/")
+//            .addConverterFactory(GsonConverterFactory.create())
+//            .client(okHttpClient)
+//            .build()
+//            .create(OpenAITextApi::class.java)
+//    }
+
     @Provides
     @Singleton
-    fun provideOpenAITextApi(
+    fun provideOpenAIChatApi(
         okHttpClient: OkHttpClient
     ): OpenAITextApi {
         return Retrofit.Builder()
-            .baseUrl("https://api.openai.com/v1/")
+            .baseUrl("https://api.openai.com/v1/chat/")
             .addConverterFactory(GsonConverterFactory.create())
             .client(okHttpClient)
             .build()
             .create(OpenAITextApi::class.java)
     }
+
 
     @Provides
     @Singleton

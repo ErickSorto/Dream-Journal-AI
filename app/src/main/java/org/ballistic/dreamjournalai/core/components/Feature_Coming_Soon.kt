@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.core.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,7 +20,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.ballistic.dreamjournalai.R
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TypewriterText
 
 @Composable
 fun FeatureComingSoonScreen(
@@ -38,11 +38,16 @@ fun FeatureComingSoonScreen(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.verticalScroll(rememberScrollState())
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .background(
+                    color = colorResource(id = R.color.dark_blue).copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(16.dp)
+                ),
         ) {
             TypewriterText(
                 text = "This feature is being actively worked on and will be available soon! Stay tuned!",
-                modifier = Modifier,
+                modifier = Modifier.padding(16.dp),
                 textAlign = TextAlign.Center,
                 animationDuration = animationDuration,
                 onAnimationComplete = { showButton.value = true }

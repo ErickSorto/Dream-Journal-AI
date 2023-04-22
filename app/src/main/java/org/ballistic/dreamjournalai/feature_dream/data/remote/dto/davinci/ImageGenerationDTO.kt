@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.feature_dream.data.remote.dto
+package org.ballistic.dreamjournalai.feature_dream.data.remote.dto.davinci
 
 import com.google.gson.annotations.SerializedName
 

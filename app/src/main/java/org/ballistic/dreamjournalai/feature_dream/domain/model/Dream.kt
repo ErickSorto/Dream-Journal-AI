@@ -49,16 +49,17 @@ data class Dream @RequiresApi(Build.VERSION_CODES.O) constructor(
 
     companion object { //backgroundssss
         val dreamBackgroundImages = listOf(
-            R.drawable.purple_lighthouse_background,
+            R.drawable.purple_skies_lighthouse,
             R.drawable.red_lighthouse_background,
             R.drawable.dark_blue_lighthouse_background,
             R.drawable.blue_lighthouse,
-            R.drawable.garden_lighthouse,
-            R.drawable.white_lighthouse_background,
-            R.drawable.gray_lighthouse_background,
+            R.drawable.full_life_lighthouse,
+            R.drawable.heaven_lighthouse,
+            R.drawable.dark_night_lighthouse,
             R.drawable.yellow_lighthouse_background,
-            R.drawable.trippy_dreambackground,
-            R.drawable.ocean_lighthouse
+            R.drawable.beautiful_lighthouse,
+            R.drawable.background_during_day,
+            R.drawable.sunrise_lighthouse
         )
     }
 

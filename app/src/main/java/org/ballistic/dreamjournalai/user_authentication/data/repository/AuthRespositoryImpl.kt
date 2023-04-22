@@ -8,13 +8,10 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.firebase.auth.*
 import com.google.firebase.firestore.FieldValue.serverTimestamp
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.GlobalScope.coroutineContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import org.ballistic.dreamjournalai.core.Constants.CREATED_AT
 import org.ballistic.dreamjournalai.core.Constants.DISPLAY_NAME
@@ -62,6 +59,26 @@ class AuthRepositoryImpl @Inject constructor(
 
     init {
         validateUser()
+    }
+
+    override suspend fun consumeDreamTokens(tokensToConsume: Int): Resource<Boolean> {
+        return withContext(Dispatchers.IO) {
+            val user = currentUser
+            if (user == null) {
+                Resource.Error("User not found.")
+            } else {
+                val userDocRef = db.collection(USERS).document(user.uid)
+                val snapshot = userDocRef.get().await()
+                val currentDreamTokens = snapshot.getLong("dreamTokens")?.toInt() ?: 0
+
+                if (currentDreamTokens >= tokensToConsume) {
+                    userDocRef.update("dreamTokens", currentDreamTokens - tokensToConsume).await()
+                    Resource.Success(true)
+                } else {
+                    Resource.Error("Not enough dream tokens available.")
+                }
+            }
+        }
     }
 
     private fun validateUser() {

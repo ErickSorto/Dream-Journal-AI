@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.material3.MaterialTheme.typography
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -21,9 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
@@ -33,7 +32,7 @@ import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.core.components.DreamTokenLayout
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.*
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 
 
@@ -42,34 +41,35 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewm
 @Composable
 fun AIPage(
     pagerState: PagerState,
-    viewModel: AddEditDreamViewModel = hiltViewModel(),
+    addEditDreamState: AddEditDreamState,
+    onAddEditDreamEvent: (AddEditDreamEvent) -> Unit,
     mainScreenViewModelState: MainScreenViewModelState
 ) {
 
     val pages = listOf("Painting", "Interpretation")
     val pagerSate2 = rememberPagerState()
 
-    val responseState = viewModel.dreamUiState.value.dreamAIExplanation
-    val imageState = viewModel.dreamUiState.value.dreamAIImage
-    val contentState = viewModel.dreamUiState.value.dreamContent
-    val detailState = viewModel.dreamUiState.value.dreamGeneratedDetails.response
+    val responseState = addEditDreamState.dreamAIExplanation
+    val imageState = addEditDreamState.dreamAIImage
+    val contentState = addEditDreamState.dreamContent
+    val detailState = addEditDreamState.dreamGeneratedDetails.response
     val infiniteTransition = rememberInfiniteTransition()
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
     val activity = LocalContext.current as Activity
     val painter =
-        rememberAsyncImagePainter(model = viewModel.dreamUiState.value.dreamAIImage.image.toString())
+        rememberAsyncImagePainter(model = addEditDreamState.dreamAIImage.image.toString())
 
-    LaunchedEffect(key1 = responseState){
-        if(responseState.isLoading) {
+    LaunchedEffect(key1 = responseState) {
+        if (responseState.isLoading) {
             scope.launch {
                 pagerSate2.animateScrollToPage(1)
             }
         }
     }
 
-    LaunchedEffect(key1 = imageState){
-        if(imageState.isLoading) {
+    LaunchedEffect(key1 = imageState) {
+        if (imageState.isLoading) {
             scope.launch {
                 pagerSate2.animateScrollToPage(0)
             }
@@ -77,25 +77,35 @@ fun AIPage(
     }
 
 
-    if (viewModel.imageGenerationPopUpState.value) {
+    if (addEditDreamState.imageGenerationPopUpState.value) {
         ImageGenerationPopUp(
-
+            addEditDreamState = addEditDreamState,
             onDreamTokenClick = {
-                viewModel.imageGenerationPopUpState.value = false
-                scope.launch {
-                    viewModel.onEvent(
-                        AddEditDreamEvent.ClickGenerateAIImage(
-                            detailState,
-                            activity,
-                            false
+                addEditDreamState.imageGenerationPopUpState.value = false
+                if (mainScreenViewModelState.dreamTokens.value <= 0) {
+                    scope.launch {
+                        addEditDreamState.snackBarHostState.value.showSnackbar(
+                            message = "Not enough dream tokens",
+                            actionLabel = "Dismiss",
+                            duration = SnackbarDuration.Short
                         )
-                    )
+                    }
+                } else {
+                    scope.launch {
+                        onAddEditDreamEvent(
+                            AddEditDreamEvent.ClickGenerateAIImage(
+                                detailState,
+                                activity,
+                                false
+                            )
+                        )
+                    }
                 }
             },
             onAdClick = {
-                viewModel.imageGenerationPopUpState.value = false
+                addEditDreamState.imageGenerationPopUpState.value = false
                 scope.launch {
-                    viewModel.onEvent(
+                    onAddEditDreamEvent(
                         AddEditDreamEvent.ClickGenerateAIImage(
                             detailState,
                             activity,
@@ -105,30 +115,18 @@ fun AIPage(
                 }
             },
             onClickOutside = {
-                viewModel.imageGenerationPopUpState.value = false
+                addEditDreamState.imageGenerationPopUpState.value = false
             },
-            pagerState = pagerState,
+            onAddEditDreamEvent = onAddEditDreamEvent,
         )
     }
 
-    if (viewModel.dreamInterpretationPopUpState.value) {
+    if (addEditDreamState.dreamInterpretationPopUpState.value) {
         DreamInterpretationPopUp(
-            onDreamTokenClick = {
-                viewModel.dreamInterpretationPopUpState.value = false
-                scope.launch {
-                    viewModel.onEvent(
-                        AddEditDreamEvent.ClickGenerateAIResponse(
-                            contentState,
-                            activity,
-                            false
-                        )
-                    )
-                }
-            },
             onAdClick = {
-                viewModel.dreamInterpretationPopUpState.value = false
+                addEditDreamState.dreamInterpretationPopUpState.value = false
                 scope.launch {
-                    viewModel.onEvent(
+                    onAddEditDreamEvent(
                         AddEditDreamEvent.ClickGenerateAIResponse(
                             contentState,
                             activity,
@@ -137,10 +135,32 @@ fun AIPage(
                     )
                 }
             },
-            onClickOutside = {
-                viewModel.dreamInterpretationPopUpState.value = false
+            onDreamTokenClick = {
+                addEditDreamState.dreamInterpretationPopUpState.value = false
+                if (mainScreenViewModelState.dreamTokens.value <= 0) {
+                    scope.launch {
+                        addEditDreamState.snackBarHostState.value.showSnackbar(
+                            message = "Not enough dream tokens",
+                            actionLabel = "Dismiss",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                } else {
+                    scope.launch {
+                        onAddEditDreamEvent(
+                            AddEditDreamEvent.ClickGenerateAIResponse(
+                                contentState,
+                                activity,
+                                false
+                            )
+                        )
+                    }
+                }
+
             },
-            pagerState = pagerState,
+            onClickOutside = {
+                addEditDreamState.dreamInterpretationPopUpState.value = false
+            },
         )
     }
 
@@ -185,7 +205,8 @@ fun AIPage(
                 DreamTokenLayout(mainScreenViewModelState = mainScreenViewModelState)
             }
 
-            HorizontalPager(count = pages.size,
+            HorizontalPager(
+                count = pages.size,
                 modifier = Modifier
                     .padding(8.dp)
                     .fillMaxWidth()
@@ -197,7 +218,7 @@ fun AIPage(
                 when (page) {
                     0 -> {
                         AIPainterPage(
-                            viewModel = viewModel ,
+                            addEditDreamState = addEditDreamState,
                             painter = painter,
                             infiniteTransition = infiniteTransition,
                             pagerState = pagerState,
@@ -205,7 +226,7 @@ fun AIPage(
                     }
                     1 -> {
                         AIInterpreterPage(
-                            viewModel = viewModel,
+                            addEditDreamState = addEditDreamState,
                             infiniteTransition = infiniteTransition,
                             pagerState = pagerState,
                         )
@@ -220,9 +241,10 @@ fun AIPage(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 repeat(pages.size) { iteration ->
-                    val color = if (pagerSate2.currentPage == iteration) Color.Black else Color.White.copy(
-                        alpha = 0.5f
-                    )
+                    val color =
+                        if (pagerSate2.currentPage == iteration) Color.Black else Color.White.copy(
+                            alpha = 0.5f
+                        )
 
                     val size = if (pagerSate2.currentPage == iteration) 12.dp else 10.dp
                     Box(
@@ -236,6 +258,9 @@ fun AIPage(
             }
         }
 
-        GenerateButtonsLayout(viewModel = viewModel, state = pagerState)
+        GenerateButtonsLayout(
+            addEditDreamState = addEditDreamState,
+            pagerState = pagerState
+        )
     }
 }

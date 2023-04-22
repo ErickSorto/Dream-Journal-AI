@@ -41,6 +41,7 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.compo
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.components.DrawerGroupHeading
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.store_billing.presentation.store_screen.StoreEvent
+import java.time.LocalDateTime
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(
@@ -107,7 +108,7 @@ fun MainScreenView(
     val searchedText = mainScreenViewModelState.searchedText.collectAsStateWithLifecycle()
 
     Image(
-        painter = rememberAsyncImagePainter(model = R.drawable.blue_lighthouse),
+        painter = rememberAsyncImagePainter(model = mainScreenViewModelState.backgroundResource),
         modifier = Modifier.fillMaxSize(),
         contentDescription = "Lighthouse",
         contentScale = ContentScale.Crop
@@ -338,6 +339,17 @@ fun MainScreenView(
             }
         }
     )
+
+    fun getBackgroundResource(): Int {
+        val currentTime = LocalDateTime.now()
+        val currentHour = currentTime.hour
+
+        return if (currentHour in 20..23 || currentHour in 0..5) {
+            R.drawable.blue_lighthouse
+        } else {
+            R.drawable.background_during_day
+        }
+    }
 }
 
 data class DrawerGroup(

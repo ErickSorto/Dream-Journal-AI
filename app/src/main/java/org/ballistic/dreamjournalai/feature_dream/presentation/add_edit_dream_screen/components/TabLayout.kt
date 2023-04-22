@@ -10,38 +10,49 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.UiComposable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages.AIPage
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages.DescriptionPage
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.pages.InfoPage
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 
 
 @RequiresApi(Build.VERSION_CODES.O)
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalPagerApi::class, ExperimentalComposeUiApi::class)
 @Composable
 @UiComposable
 fun TabLayout(
     dreamBackgroundImage: MutableState<Int>,
-    mainScreenViewModelState: MainScreenViewModelState
+    mainScreenViewModelState: MainScreenViewModelState,
+    addEditDreamState: AddEditDreamState,
+    onAddEditDreamEvent: (AddEditDreamEvent) -> Unit,
 ) {
     val pages = listOf("Description", "AI", "Info")
     val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
+
+    //keyboard control
+    val keyboardController = LocalSoftwareKeyboardController.current
+
 
     //create tab layout with 3 tabs, one for dream title and content, one for dream information and one for dream artificial intelligence
     TabRow(
         modifier = Modifier,
         selectedTabIndex = pagerState.currentPage,
         indicator = { tabPositions ->
-            TabRowDefaults.Indicator( // custom indicator
+            TabRowDefaults.Indicator(
+                // custom indicator
                 Modifier.pagerTabIndicatorOffset(pagerState, tabPositions),
                 color = Color.Black,
             )
@@ -54,6 +65,7 @@ fun TabLayout(
                 text = { Text(page, style = typography.titleSmall) },
                 selected = pagerState.currentPage == index,
                 onClick = {
+                    keyboardController?.hide()
                     scope.launch { pagerState.animateScrollToPage(index) }
                 }
             )
@@ -67,13 +79,26 @@ fun TabLayout(
     ) { page ->
         when (page) {
             0 -> {
-                DescriptionPage(pagerState)
+                DescriptionPage(
+                    pagerState,
+                    addEditDreamState = addEditDreamState,
+                    onAddEditDreamEvent = onAddEditDreamEvent
+                )
             }
             1 -> {
-                AIPage(pagerState, mainScreenViewModelState = mainScreenViewModelState)
+                AIPage(
+                    pagerState,
+                    addEditDreamState = addEditDreamState,
+                    onAddEditDreamEvent = onAddEditDreamEvent,
+                    mainScreenViewModelState = mainScreenViewModelState
+                )
             }
             2 -> {
-                InfoPage(dreamBackgroundImage)
+                InfoPage(
+                    dreamBackgroundImage,
+                    addEditDreamState = addEditDreamState,
+                    onAddEditDreamEvent = onAddEditDreamEvent
+                )
             }
         }
     }

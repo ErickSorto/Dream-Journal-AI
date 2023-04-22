@@ -7,11 +7,10 @@ import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,31 +24,46 @@ import com.google.accompanist.pager.PagerState
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.ArcRotationAnimation
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.InterpretCustomButton
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.PaintCustomButton
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TypewriterText
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.core.components.TypewriterText
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamState
 
 @OptIn(ExperimentalPagerApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AIInterpreterPage(
-    viewModel: AddEditDreamViewModel,
+    addEditDreamState: AddEditDreamState,
     infiniteTransition: InfiniteTransition,
     pagerState: PagerState,
 ) {
-    val responseState = viewModel.dreamUiState.value.dreamAIExplanation
+    val responseState = addEditDreamState.dreamAIExplanation
 
-    TypewriterText(
-        text = responseState.response.trim(),
-        modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 16.dp)
-    )
-    if (responseState.response == "" && !responseState.isLoading) {
-        InterpretCustomButton(
-            isFavorite = viewModel.dreamUiState.value.dreamInfo.dreamIsFavorite,
-            state = pagerState,
-            size = 120.dp,
-            fontSize = 24.sp
-        )
+
+    if (addEditDreamState.dreamAIExplanation.response != "") {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .padding()
+                .verticalScroll(rememberScrollState())
+        ) {
+            TypewriterText(
+                text = responseState.response.trim(),
+                modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 16.dp)
+            )
+        }
     }
+
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (responseState.response == "" && !responseState.isLoading) {
+            InterpretCustomButton(
+                addEditDreamState = addEditDreamState,
+                pagerState = pagerState,
+                size = 120.dp,
+                fontSize = 24.sp
+            )
+        }
+    }
+
     if (responseState.isLoading) {
         Box(
             modifier = Modifier
@@ -70,15 +84,15 @@ fun AIInterpreterPage(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AIPainterPage(
-    viewModel: AddEditDreamViewModel,
+    addEditDreamState: AddEditDreamState,
     painter: Painter,
     infiniteTransition: InfiniteTransition,
     pagerState: PagerState,
 ) {
-    val imageState = viewModel.dreamUiState.value.dreamAIImage
+    val imageState = addEditDreamState.dreamAIImage
 
     AnimatedVisibility(
-        visible = viewModel.dreamUiState.value.dreamAIImage.image != null,
+        visible = addEditDreamState.dreamAIImage.image != null,
         enter = fadeIn(),
         exit = fadeOut()
     ) {
@@ -95,8 +109,8 @@ fun AIPainterPage(
     }
     if (imageState.image == null && !imageState.isLoading) {
         PaintCustomButton(
-            isLucid = viewModel.dreamUiState.value.dreamInfo.dreamIsLucid,
-            state = pagerState,
+            addEditDreamState = addEditDreamState,
+            pagerState = pagerState,
             size = 120.dp,
             fontSize = 24.sp
         )

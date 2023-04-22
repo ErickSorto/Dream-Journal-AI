@@ -12,38 +12,38 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowRightAlt
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import kotlinx.coroutines.flow.collectLatest
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.AlertSave
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TabLayout
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenEvent
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
 
 @RequiresApi(Build.VERSION_CODES.O)
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun AddEditDreamScreen(
-    navController: NavController,
     dreamImage: Int,
-    addEditDreamViewModel: AddEditDreamViewModel = hiltViewModel(),
+    addEditDreamState: AddEditDreamState,
     mainScreenViewModelState: MainScreenViewModelState,
-    onMainEvent: (MainScreenEvent) -> Unit = {}
+    onMainEvent: (MainScreenEvent) -> Unit = {},
+    onAddEditDreamEvent: (AddEditDreamEvent) -> Unit = {},
+    onNavigateToDreamJournalScreen: () -> Unit = {},
 ) {
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    remember { SnackbarHostState() }
+
+    //keyboard controller
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     onMainEvent(MainScreenEvent.SetBottomBarState(false))
     onMainEvent(MainScreenEvent.SetFloatingActionButtonState(false))
@@ -51,30 +51,13 @@ fun AddEditDreamScreen(
     onMainEvent(MainScreenEvent.SetSearchingState(false))
 
     BackHandler {
-        addEditDreamViewModel.dialogState.value = !addEditDreamViewModel.dialogState.value
+        addEditDreamState.dialogState.value = !addEditDreamState.dialogState.value
     }
 
     val dreamBackgroundImage = remember {
         mutableStateOf(
-            if (dreamImage != -1) dreamImage else addEditDreamViewModel.dreamUiState.value.dreamInfo.dreamBackgroundImage
+            if (dreamImage != -1) dreamImage else addEditDreamState.dreamInfo.dreamBackgroundImage
         )
-    }
-
-    LaunchedEffect(key1 = true) {
-        addEditDreamViewModel.eventFlow.collectLatest { event ->
-            when (event) {
-                is AddEditDreamViewModel.UiEvent.ShowSnackBar -> {
-                    snackbarHostState.showSnackbar(
-                        message = event.message
-                    )
-                }
-                is AddEditDreamViewModel.UiEvent.SaveDream -> {
-                    navController.navigateUp()
-                }
-
-                else -> {}
-            }
-        }
     }
 
     Crossfade(targetState = dreamBackgroundImage.value) { image ->
@@ -94,21 +77,21 @@ fun AddEditDreamScreen(
         }
     }
 
-    if (addEditDreamViewModel.dialogState.value) {
+    if (addEditDreamState.dialogState.value) {
         AlertSave(
             onDismiss = {
-                navController.navigateUp()
-                addEditDreamViewModel.dialogState.value = false
+                onNavigateToDreamJournalScreen()
+                addEditDreamState.dialogState.value = false
             },
             onConfirm = {
-                addEditDreamViewModel.dialogState.value = false
-                addEditDreamViewModel.onEvent(AddEditDreamEvent.SaveDream)
-                if (addEditDreamViewModel.saveSuccess.value) {
-                    navController.navigateUp()
+                addEditDreamState.dialogState.value = false
+                onAddEditDreamEvent(AddEditDreamEvent.SaveDream(onSaveSuccess = { onNavigateToDreamJournalScreen() }))
+                if (addEditDreamState.saveSuccess.value) {
+                    onNavigateToDreamJournalScreen()
                 }
             },
             onClickOutside = {
-                addEditDreamViewModel.dialogState.value = false
+                addEditDreamState.dialogState.value = false
             }
         )
     }
@@ -119,7 +102,7 @@ fun AddEditDreamScreen(
                 title = { Text(text = "Dream Journal AI") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        addEditDreamViewModel.dialogState.value = true
+                        addEditDreamState.dialogState.value = true
                     }) {
                         Icon(
                             modifier = Modifier.rotate(180f),
@@ -129,7 +112,10 @@ fun AddEditDreamScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { addEditDreamViewModel.onEvent(AddEditDreamEvent.SaveDream) }) {
+                    IconButton(onClick = {
+                        keyboardController?.hide()
+                        onAddEditDreamEvent(AddEditDreamEvent.SaveDream(onSaveSuccess = { onNavigateToDreamJournalScreen() }))
+                    }) {
                         Icon(
                             imageVector = Icons.Filled.Save,
                             contentDescription = "Save Dream"
@@ -146,7 +132,7 @@ fun AddEditDreamScreen(
             )
         },
         snackbarHost = {
-            SnackbarHost(snackbarHostState)
+            SnackbarHost(addEditDreamState.snackBarHostState.value)
         },
         containerColor = Color.Transparent,
 
@@ -162,6 +148,8 @@ fun AddEditDreamScreen(
             TabLayout(
                 dreamBackgroundImage,
                 mainScreenViewModelState = mainScreenViewModelState,
+                addEditDreamState = addEditDreamState,
+                onAddEditDreamEvent = onAddEditDreamEvent
             )
         }
     }

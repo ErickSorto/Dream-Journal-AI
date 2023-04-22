@@ -16,12 +16,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DateAndTimeButtonsLayout(
-    viewModel: AddEditDreamViewModel = hiltViewModel(),
+    addEditDreamState: AddEditDreamState,
 ) {
     Row(
         modifier = Modifier
@@ -31,29 +32,29 @@ fun DateAndTimeButtonsLayout(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DateButton(viewModel = viewModel,
+        DateButton(addEditDreamState = addEditDreamState,
             modifier = Modifier
                 .weight(1f)
                 .background(Color.Transparent),
-            onClick = { viewModel.calendarState.show() })
+            onClick = { addEditDreamState.calendarState.show() })
         Spacer(
             modifier = Modifier
                 .width(1.dp)
                 .height(32.dp)
                 .background(Color.Black.copy(alpha = 0.8f))
         )
-        SleepTimeButton(viewModel = viewModel,
+        SleepTimeButton(addEditDreamState = addEditDreamState,
             modifier = Modifier.weight(1f),
-            onClick = { viewModel.sleepTimePickerState.show() })
+            onClick = { addEditDreamState.sleepTimePickerState.show() })
         Spacer(
             modifier = Modifier
                 .width(1.dp)
                 .height(32.dp)
                 .background(Color.Black.copy(alpha = 0.8f))
         )
-        WakeTimeButton(viewModel = viewModel,
+        WakeTimeButton(addEditDreamState = addEditDreamState,
             modifier = Modifier.weight(1f),
-            onClick = { viewModel.wakeTimePickerState.show() })
+            onClick = { addEditDreamState.wakeTimePickerState.show() })
     }
 
 }
@@ -61,7 +62,7 @@ fun DateAndTimeButtonsLayout(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DateButton(
-    viewModel: AddEditDreamViewModel,
+    addEditDreamState: AddEditDreamState,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
@@ -81,7 +82,7 @@ fun DateButton(
         ) {
             Text(text = "Date", fontSize = 12.sp, color = Color.Black)
             Text(
-                text = viewModel.dreamUiState.value.dreamInfo.dreamDate,
+                text = addEditDreamState.dreamInfo.dreamDate,
                 fontSize = 10.sp,
                 color = Color.Black,
                 modifier = Modifier.padding(vertical = 1.dp)
@@ -94,7 +95,7 @@ fun DateButton(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SleepTimeButton(
-    viewModel: AddEditDreamViewModel,
+    addEditDreamState: AddEditDreamState,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
@@ -115,7 +116,7 @@ fun SleepTimeButton(
 
             Text(text = "Sleep Time", fontSize = 12.sp, color = Color.Black)
             Text(
-                text =  viewModel.dreamUiState.value.dreamInfo.dreamSleepTime,
+                text = addEditDreamState.dreamInfo.dreamSleepTime,
                 fontSize = 14.sp,
                 color = Color.Black
             )
@@ -126,7 +127,7 @@ fun SleepTimeButton(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun WakeTimeButton(
-    viewModel: AddEditDreamViewModel,
+    addEditDreamState: AddEditDreamState,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
@@ -147,7 +148,7 @@ fun WakeTimeButton(
         ) {
             Text(text = "Wake Time", fontSize = 12.sp, color = Color.Black)
             Text(
-                text = viewModel.dreamUiState.value.dreamInfo.dreamWakeTime,
+                text = addEditDreamState.dreamInfo.dreamWakeTime,
                 fontSize = 14.sp,
                 color = Color.Black
             )

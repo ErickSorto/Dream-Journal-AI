@@ -1,12 +1,11 @@
 package org.ballistic.dreamjournalai.feature_dream.domain.repository
 
 import org.ballistic.dreamjournalai.core.Resource
-import org.ballistic.dreamjournalai.feature_dream.data.remote.dto.CompletionDTO
-import org.ballistic.dreamjournalai.feature_dream.domain.model.ImagePrompt
-import org.ballistic.dreamjournalai.feature_dream.domain.model.Prompt
+import org.ballistic.dreamjournalai.feature_dream.domain.model.ChatCompletion
+import org.ballistic.dreamjournalai.feature_dream.domain.model.PromptChat
 
 interface OpenAIRepository {
-    suspend fun getCompletion(
-      prompt: Prompt
-    ): Resource<CompletionDTO>
+
+    suspend fun getChatCompletion(prompt: PromptChat): Resource<ChatCompletion>
+
 }

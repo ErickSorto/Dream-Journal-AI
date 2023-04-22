@@ -47,4 +47,6 @@ interface AuthRepository {
     fun getAuthState(viewModelScope: CoroutineScope): AuthStateResponse
 
     val dreamTokens: StateFlow<Int>
+
+    suspend fun consumeDreamTokens(tokensToConsume: Int): Resource<Boolean>
 }
