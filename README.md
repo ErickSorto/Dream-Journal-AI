@@ -36,6 +36,10 @@
 
 > ℹ️ Some features may not work properly while user is offline.
 
+## Issues
+
+If you encounter any issues, including those related to offline mode, you can file them with the relevant details [here](https://github.com/ErickSorto/Dream-Journal-AI/issues)
+
 ## 🏋 Requirements
 
 - Java 17 or above
