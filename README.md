@@ -60,6 +60,8 @@ If you encounter any issues, including those related to offline mode, you can fi
 | 📸 Image Loading  | [Coil](https://coil-kt.github.io/coil/)                                                                                                                                                                                                  |
 | ⌚ Date and Time  | [Java Time](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/package-summary.html)                                                                                                                                |
 | 🔧 Supplementary  | [Accompanist](https://github.com/google/accompanist)                                                                                                                                                                                     |
+| 📢 Ads             | [Google AdMob](https://admob.google.com/home/)   
+| 💵 Billing         | [Google Play Billing](https://developer.android.com/google/play/billing/)    
 
 
 ## ✅ TODO
