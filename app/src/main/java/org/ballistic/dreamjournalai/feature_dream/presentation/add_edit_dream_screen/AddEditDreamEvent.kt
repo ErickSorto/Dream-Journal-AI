@@ -26,7 +26,7 @@ sealed class AddEditDreamEvent {
     data class ChangeDreamWakeTime(val value: LocalTime) : AddEditDreamEvent()
     data class ChangeDreamSleepTime(val value: LocalTime) : AddEditDreamEvent()
     data class ChangeDreamDate(val value: LocalDate) : AddEditDreamEvent()
-    object SaveDream : AddEditDreamEvent()
+    data class SaveDream(val onSaveSuccess : () -> Unit) : AddEditDreamEvent()
 
     object DeleteDream : AddEditDreamEvent()
 }

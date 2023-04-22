@@ -15,6 +15,7 @@ import org.ballistic.dreamjournalai.core.components.FeatureComingSoonScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.about_me_screen.AboutMeScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.account_settings.AccountSettingsScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamScreen
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.DreamJournalListScreen
 import org.ballistic.dreamjournalai.feature_dream.presentation.dream_list_screen.viewmodel.DreamJournalListViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.MainScreenEvent
@@ -78,11 +79,18 @@ fun ScreenGraph(
             )
         ) { value ->
             val image = value.arguments?.getInt("dreamImageBackground") ?: -1
+            val addEditDreamViewModel: AddEditDreamViewModel = hiltViewModel()
             AddEditDreamScreen(
-                navController = navController,
                 dreamImage = image,
                 mainScreenViewModelState = mainScreenViewModelState,
-            ) { onMainEvent(it) }
+                addEditDreamState = addEditDreamViewModel.addEditDreamState.collectAsStateWithLifecycle().value,
+                onMainEvent = { onMainEvent(it) },
+                onAddEditDreamEvent = { addEditDreamViewModel.onEvent(it) },
+                onNavigateToDreamJournalScreen = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.DreamJournalScreen.route)
+                },
+            )
         }
         // Add your new screens here
         composable(route = Screens.Favorites.route) {

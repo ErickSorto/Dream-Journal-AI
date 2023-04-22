@@ -18,25 +18,23 @@ import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.GenerateButtonsLayout
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TransparentHintTextField
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamState
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(DelicateCoroutinesApi::class, ExperimentalPagerApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun DescriptionPage(
-    state: PagerState
+    pagerState: PagerState,
+    addEditDreamState: AddEditDreamState,
+    onAddEditDreamEvent: (AddEditDreamEvent) -> Unit = {},
 ) {
-    val viewModel: AddEditDreamViewModel = hiltViewModel()
-    val titleState = viewModel.dreamUiState.value.dreamTitle
-    val contentState = viewModel.dreamUiState.value.dreamContent
-    val dreamUiState = viewModel.dreamUiState
+
 
     Column(
         modifier = Modifier
@@ -45,15 +43,15 @@ fun DescriptionPage(
     ) {
 
         TransparentHintTextField(
-            text = titleState,
+            text = addEditDreamState.dreamTitle,
             hint = LocalContext.current.getString(org.ballistic.dreamjournalai.R.string.hint_title),
             onValueChange = {
-                viewModel.onEvent(AddEditDreamEvent.EnteredTitle(it))
+                onAddEditDreamEvent(AddEditDreamEvent.EnteredTitle(it))
             },
             onFocusChange = {
-                viewModel.onEvent(AddEditDreamEvent.EnteredTitle(titleState))
+                onAddEditDreamEvent(AddEditDreamEvent.EnteredTitle(addEditDreamState.dreamTitle))
             },
-            isHintVisible = titleState.isBlank(),
+            isHintVisible = addEditDreamState.dreamTitle.isBlank(),
             singleLine = true,
             textStyle = MaterialTheme.typography.headlineLarge,
             modifier = Modifier
@@ -67,15 +65,15 @@ fun DescriptionPage(
         Spacer(modifier = Modifier.height(16.dp))
 
         TransparentHintTextField(
-            text = dreamUiState.value.dreamContent,
+            text = addEditDreamState.dreamContent,
             hint = LocalContext.current.getString(org.ballistic.dreamjournalai.R.string.hint_description),
             onValueChange = {
-                viewModel.onEvent(AddEditDreamEvent.EnteredContent(it))
+                onAddEditDreamEvent(AddEditDreamEvent.EnteredContent(it))
             },
             onFocusChange = {
-                viewModel.onEvent(AddEditDreamEvent.EnteredContent(contentState))
+                onAddEditDreamEvent(AddEditDreamEvent.EnteredContent(addEditDreamState.dreamContent))
             },
-            isHintVisible = contentState.isBlank(),
+            isHintVisible = addEditDreamState.dreamContent.isBlank(),
             textStyle = MaterialTheme.typography.bodyLarge,
             modifier = Modifier
                 .weight(1f)
@@ -86,8 +84,11 @@ fun DescriptionPage(
                 }.focusable()
         )
 
-        if (dreamUiState.value.dreamContent.isNotBlank() && dreamUiState.value.dreamContent.length > 10) {
-            GenerateButtonsLayout(viewModel = viewModel, state = state)
+        if (addEditDreamState.dreamContent.isNotBlank() && addEditDreamState.dreamContent.length > 10) {
+            GenerateButtonsLayout(
+                addEditDreamState = addEditDreamState,
+                pagerState = pagerState
+            )
         }
     }
 }

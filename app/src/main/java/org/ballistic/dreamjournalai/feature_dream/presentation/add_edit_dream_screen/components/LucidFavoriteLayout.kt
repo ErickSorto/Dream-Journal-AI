@@ -14,11 +14,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import org.ballistic.dreamjournalai.R
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.AddEditDreamEvent
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
 
 @Composable
 fun LucidFavoriteLayout(
-    viewModel: AddEditDreamViewModel = hiltViewModel(),
+    addEditDreamState: AddEditDreamState,
+    onAddEditDreamEvent: (AddEditDreamEvent) -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -26,12 +28,12 @@ fun LucidFavoriteLayout(
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         LucidCustomButton(
-            isLucid = viewModel.dreamUiState.value.dreamInfo.dreamIsLucid,
-            viewModel = viewModel
+            isLucid = addEditDreamState.dreamInfo.dreamIsLucid,
+            onAddEditDreamEvent = { onAddEditDreamEvent(it) }
         )
         FavoriteCustomButton(
-            isFavorite = viewModel.dreamUiState.value.dreamInfo.dreamIsFavorite,
-            viewModel = viewModel
+            isFavorite = addEditDreamState.dreamInfo.dreamIsFavorite,
+            onAddEditDreamEvent = { onAddEditDreamEvent(it) }
         )
     }
 }
@@ -39,10 +41,14 @@ fun LucidFavoriteLayout(
 @Composable
 fun LucidCustomButton(
     isLucid: Boolean,
-    viewModel: AddEditDreamViewModel = hiltViewModel(),
+    onAddEditDreamEvent: (AddEditDreamEvent) -> Unit
 ) {
     Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        IconButton(onClick = { viewModel.onEvent(AddEditDreamEvent.ChangeIsLucid(!isLucid))}) {
+        IconButton(onClick = {
+            onAddEditDreamEvent(AddEditDreamEvent.ChangeIsLucid(!isLucid))
+        }
+
+        ) {
             Icon(
                 painter = rememberAsyncImagePainter(R.drawable.lighthouse_vector),
                 contentDescription = "Lucid",
@@ -58,11 +64,13 @@ fun LucidCustomButton(
 @Composable
 fun FavoriteCustomButton(
     isFavorite: Boolean,
-    viewModel: AddEditDreamViewModel = hiltViewModel(),
+    onAddEditDreamEvent: (AddEditDreamEvent) -> Unit
 ) {
     Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         IconButton(
-            onClick = { viewModel.onEvent(AddEditDreamEvent.ChangeFavorite(!isFavorite)) },
+            onClick = {
+                onAddEditDreamEvent(AddEditDreamEvent.ChangeFavorite(!isFavorite))
+            },
             modifier = Modifier.size(40.dp),
         ) {
             Icon(

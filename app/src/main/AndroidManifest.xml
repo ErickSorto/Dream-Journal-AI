@@ -14,9 +14,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/dream_journal_ai_lighthouse_logo"
+        android:icon="@drawable/dream_logo"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/dream_journal_ai_lighthouse_logo"
+        android:roundIcon="@drawable/dream_logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.CustomSplashScreenTheme"
         tools:targetApi="31">
@@ -32,7 +32,7 @@
         </activity>
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-8710979310678386~8511801833"/>
+            android:value="ca-app-pub-8710979310678386~8561440088"/>
     </application>
 
 </manifest>

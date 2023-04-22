@@ -282,7 +282,7 @@ fun DreamToken500ButtonBuy(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "\$19.99",
+                    text = "\$9.99",
                     fontSize = 20.sp,
                     fontWeight = Bold,
                     maxLines = 1,
@@ -290,7 +290,7 @@ fun DreamToken500ButtonBuy(
                         .padding(8.dp, 8.dp, 8.dp, 0.dp)
                 )
                 Text(
-                    text = "Save 45%",
+                    text = "Save 60%",
                     fontSize = 12.sp,
                     fontWeight = Bold,
                     maxLines = 1,
@@ -362,7 +362,7 @@ fun MostPopularBanner(modifier: Modifier) {
             )
     ) {
         Text(
-            text = "Most Popular",
+            text = "Best Value (Save 60%)",
             modifier = Modifier
                 .padding(8.dp)
                 .align(Alignment.Center),

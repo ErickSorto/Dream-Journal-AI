@@ -3,7 +3,7 @@ package org.ballistic.dreamjournalai.feature_dream.data.repository
 import android.util.Log
 import org.ballistic.dreamjournalai.core.Resource
 import org.ballistic.dreamjournalai.feature_dream.data.remote.OpenAIDaliApi
-import org.ballistic.dreamjournalai.feature_dream.data.remote.dto.ImageGenerationDTO
+import org.ballistic.dreamjournalai.feature_dream.data.remote.dto.davinci.ImageGenerationDTO
 import org.ballistic.dreamjournalai.feature_dream.domain.model.ImagePrompt
 import org.ballistic.dreamjournalai.feature_dream.domain.repository.OpenAIImageRepository
 import javax.inject.Inject

@@ -23,15 +23,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.R
-import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamViewModel
-import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewmodel.MainScreenViewModelState
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamState
 
 
 //@OptIn(ExperimentalPagerApi::class, DelicateCoroutinesApi::class)
@@ -85,8 +83,8 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.viewm
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun GenerateButtonsLayout(
-    viewModel: AddEditDreamViewModel,
-    state: PagerState
+    addEditDreamState: AddEditDreamState,
+    pagerState: PagerState
 ) {
     Row(
         modifier = Modifier
@@ -97,14 +95,12 @@ fun GenerateButtonsLayout(
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         PaintCustomButton(
-            isLucid = viewModel.dreamUiState.value.dreamInfo.dreamIsLucid,
-            viewModel = viewModel,
-            state = state
+            addEditDreamState = addEditDreamState,
+            pagerState = pagerState
         )
         InterpretCustomButton(
-            isFavorite = viewModel.dreamUiState.value.dreamInfo.dreamIsFavorite,
-            viewModel = viewModel,
-            state = state
+            addEditDreamState = addEditDreamState,
+            pagerState = pagerState
         )
     }
 }
@@ -113,9 +109,8 @@ fun GenerateButtonsLayout(
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun PaintCustomButton(
-    isLucid: Boolean,
-    viewModel: AddEditDreamViewModel = hiltViewModel(),
-    state: PagerState,
+    addEditDreamState: AddEditDreamState,
+    pagerState: PagerState,
     size: Dp = 40.dp,
     fontSize: TextUnit = 16.sp
 ) {
@@ -128,9 +123,9 @@ fun PaintCustomButton(
             onClick = {
                 scope.launch {
                     delay(100)
-                    state.animateScrollToPage(1)
+                    pagerState.animateScrollToPage(1)
                 }
-                viewModel.imageGenerationPopUpState.value = true
+                addEditDreamState.imageGenerationPopUpState.value = true
             },
             modifier = Modifier.size(size)
         ) {
@@ -140,7 +135,7 @@ fun PaintCustomButton(
                 modifier = Modifier
                     .size(size)
                     .rotate(45f),
-                tint = if (isLucid) colorResource(R.color.sky_blue) else Color.Black
+                tint = if (addEditDreamState.dreamInfo.dreamIsLucid) colorResource(R.color.sky_blue) else Color.Black
             )
 
         }
@@ -152,9 +147,8 @@ fun PaintCustomButton(
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun InterpretCustomButton(
-    isFavorite: Boolean,
-    viewModel: AddEditDreamViewModel = hiltViewModel(),
-    state: PagerState,
+    addEditDreamState: AddEditDreamState,
+    pagerState: PagerState,
     size: Dp = 40.dp,
     fontSize: TextUnit = 16.sp
 ) {
@@ -167,9 +161,9 @@ fun InterpretCustomButton(
             onClick = {
                 scope.launch {
                     delay(100)
-                    state.animateScrollToPage(1)
+                    pagerState.animateScrollToPage(1)
                 }
-                viewModel.dreamInterpretationPopUpState.value = true
+                addEditDreamState.dreamInterpretationPopUpState.value = true
             },
             modifier = Modifier.size(size),
         ) {
@@ -179,7 +173,7 @@ fun InterpretCustomButton(
                 modifier = Modifier
                     .size(size)
                     .rotate(45f),
-                tint = if (isFavorite) colorResource(R.color.Yellow) else Color.Black
+                tint = if (addEditDreamState.dreamInfo.dreamIsFavorite) colorResource(R.color.Yellow) else Color.Black
             )
         }
         Text(text = "Interpret Dream", fontSize = fontSize)
@@ -189,7 +183,6 @@ fun InterpretCustomButton(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AdTokenLayout(
-    viewModel: AddEditDreamViewModel = hiltViewModel(),
     onAdClick: () -> Unit = {},
     onDreamTokenClick: () -> Unit = {}
 ) {

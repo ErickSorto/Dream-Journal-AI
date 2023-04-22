@@ -36,6 +36,7 @@ import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_sc
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.DateAndTimeButtonsLayout
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.DreamImageSelectionRow
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.LucidFavoriteLayout
+import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamState
 import java.time.Clock
 import java.time.LocalTime
 
@@ -45,50 +46,37 @@ import java.time.LocalTime
 @Composable
 fun InfoPage(
     dreamBackgroundImage: MutableState<Int>,
-    viewModel: AddEditDreamViewModel = hiltViewModel(),
+    addEditDreamState: AddEditDreamState,
+    onAddEditDreamEvent: (AddEditDreamEvent) -> Unit,
 ) {
-    CalendarDialog(state = viewModel.calendarState, config = CalendarConfig(
+    CalendarDialog(state = addEditDreamState.calendarState, config = CalendarConfig(
         monthSelection = true,
         yearSelection = true,
     ), selection = CalendarSelection.Date { date ->
-        viewModel.onEvent(
-            AddEditDreamEvent.ChangeDreamDate(
-                date
-            )
-        )
+        onAddEditDreamEvent(AddEditDreamEvent.ChangeDreamDate(date))
     })
-    ClockDialog(state = viewModel.sleepTimePickerState,
+    ClockDialog(state = addEditDreamState.sleepTimePickerState,
         config = ClockConfig(
             //default time 12:00am
-            defaultTime = Clock.systemDefaultZone().instant().atZone(Clock.systemDefaultZone().zone).toLocalTime(),
+            defaultTime = Clock.systemDefaultZone().instant().atZone(Clock.systemDefaultZone().zone)
+                .toLocalTime(),
             is24HourFormat = false,
-            ),
+        ),
         selection = ClockSelection.HoursMinutes { hour, minute ->
-            val hourFormat = if (hour > 12) hour - 12 else hour
-            val minuteFormat = if (minute == 0) "00" else minute
-            viewModel.onEvent(
-                AddEditDreamEvent.ChangeDreamSleepTime(
-                    LocalTime.of(hour, minute)
-                )
-            )
+            onAddEditDreamEvent(AddEditDreamEvent.ChangeDreamSleepTime(LocalTime.of(hour, minute)))
         }
     )
 
-    ClockDialog(state = viewModel.wakeTimePickerState,
+    ClockDialog(state = addEditDreamState.wakeTimePickerState,
         config = ClockConfig(
             //default time 12:00am
-            defaultTime = Clock.systemDefaultZone().instant().atZone(Clock.systemDefaultZone().zone).toLocalTime(),
+            defaultTime = Clock.systemDefaultZone().instant().atZone(Clock.systemDefaultZone().zone)
+                .toLocalTime(),
             is24HourFormat = false,
 
             ),
         selection = ClockSelection.HoursMinutes { hour, minute ->
-            val hourFormat = if (hour > 12) hour - 12 else hour
-            val minuteFormat = if (minute == 0) "00" else minute
-            viewModel.onEvent(
-                AddEditDreamEvent.ChangeDreamWakeTime(
-                    LocalTime.of(hour, minute)
-                )
-            )
+            onAddEditDreamEvent(AddEditDreamEvent.ChangeDreamWakeTime(LocalTime.of(hour, minute)))
         }
     )
 
@@ -116,7 +104,8 @@ fun InfoPage(
                 )
 
                 DreamImageSelectionRow(
-                    viewModel = viewModel, dreamBackgroundImage = dreamBackgroundImage
+                    dreamBackgroundImage = dreamBackgroundImage,
+                    onAddEditDreamEvent = onAddEditDreamEvent
                 )
             }
         }
@@ -136,8 +125,11 @@ fun InfoPage(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                LucidFavoriteLayout()
-                DateAndTimeButtonsLayout()
+                LucidFavoriteLayout(
+                    addEditDreamState = addEditDreamState,
+                    onAddEditDreamEvent = onAddEditDreamEvent
+                )
+                DateAndTimeButtonsLayout(addEditDreamState = addEditDreamState)
                 Row {
                     Text(
                         text = "Lucid Dream",
@@ -150,9 +142,9 @@ fun InfoPage(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Switch(
-                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsLucid,
+                        checked = addEditDreamState.dreamInfo.dreamIsLucid,
                         onCheckedChange = {
-                            viewModel.onEvent(AddEditDreamEvent.ChangeIsLucid(it))
+                            onAddEditDreamEvent(AddEditDreamEvent.ChangeIsLucid(it))
                         },
                         modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
@@ -179,9 +171,9 @@ fun InfoPage(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Switch(
-                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsNightmare,
+                        checked = addEditDreamState.dreamInfo.dreamIsNightmare,
                         onCheckedChange = {
-                            viewModel.onEvent(AddEditDreamEvent.ChangeNightmare(it))
+                            onAddEditDreamEvent(AddEditDreamEvent.ChangeNightmare(it))
                         },
                         modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
@@ -207,9 +199,9 @@ fun InfoPage(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Switch(
-                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsRecurring,
+                        checked = addEditDreamState.dreamInfo.dreamIsRecurring,
                         onCheckedChange = {
-                            viewModel.onEvent(AddEditDreamEvent.ChangeRecurrence(it))
+                            onAddEditDreamEvent(AddEditDreamEvent.ChangeRecurrence(it))
                         },
                         modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
@@ -236,9 +228,9 @@ fun InfoPage(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Switch(
-                        checked = viewModel.dreamUiState.value.dreamInfo.dreamIsFalseAwakening,
+                        checked = addEditDreamState.dreamInfo.dreamIsFalseAwakening,
                         onCheckedChange = {
-                            viewModel.onEvent(AddEditDreamEvent.ChangeFalseAwakening(it))
+                            onAddEditDreamEvent(AddEditDreamEvent.ChangeFalseAwakening(it))
                         },
                         modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)
@@ -254,7 +246,7 @@ fun InfoPage(
 
                 //slider for lucidity
                 Text(
-                    text = "Lucidity: " + viewModel.dreamUiState.value.dreamInfo.dreamLucidity,
+                    text = "Lucidity: " + addEditDreamState.dreamInfo.dreamLucidity,
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(alignment = Alignment.CenterHorizontally)
@@ -263,9 +255,9 @@ fun InfoPage(
                 )
 
                 Slider(
-                    value = viewModel.dreamUiState.value.dreamInfo.dreamLucidity.toFloat(),
+                    value = addEditDreamState.dreamInfo.dreamLucidity.toFloat(),
                     onValueChange = {
-                        viewModel.onEvent(AddEditDreamEvent.ChangeLucidity(it.toInt()))
+                        onAddEditDreamEvent(AddEditDreamEvent.ChangeLucidity(it.toInt()))
                     },
                     valueRange = 0f..10f,
                     steps = 9,
@@ -289,7 +281,7 @@ fun InfoPage(
 
                 //slider for vividness
                 Text(
-                    text = "Vividness: " + viewModel.dreamUiState.value.dreamInfo.dreamVividness,
+                    text = "Vividness: " + addEditDreamState.dreamInfo.dreamVividness,
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
@@ -298,9 +290,9 @@ fun InfoPage(
                 )
 
                 Slider(
-                    value = viewModel.dreamUiState.value.dreamInfo.dreamVividness.toFloat(),
+                    value = addEditDreamState.dreamInfo.dreamVividness.toFloat(),
                     onValueChange = {
-                        viewModel.onEvent(AddEditDreamEvent.ChangeVividness(it.toInt()))
+                        onAddEditDreamEvent(AddEditDreamEvent.ChangeVividness(it.toInt()))
                     },
                     valueRange = 0f..10f,
                     steps = 9,
@@ -324,7 +316,7 @@ fun InfoPage(
 
                 //slider for dreamMood
                 Text(
-                    text = "Mood: " + viewModel.dreamUiState.value.dreamInfo.dreamEmotion,
+                    text = "Mood: " + addEditDreamState.dreamInfo.dreamEmotion,
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
@@ -333,9 +325,9 @@ fun InfoPage(
                 )
 
                 Slider(
-                    value = viewModel.dreamUiState.value.dreamInfo.dreamEmotion.toFloat(),
+                    value = addEditDreamState.dreamInfo.dreamEmotion.toFloat(),
                     onValueChange = {
-                        viewModel.onEvent(AddEditDreamEvent.ChangeMood(it.toInt()))
+                        onAddEditDreamEvent(AddEditDreamEvent.ChangeMood(it.toInt()))
                     },
                     valueRange = 0f..10f,
                     steps = 9,
@@ -359,9 +351,9 @@ fun InfoPage(
                 //AI details text field
 
                 OutlinedTextField(
-                    value = viewModel.dreamUiState.value.dreamGeneratedDetails.response,
+                    value = addEditDreamState.dreamGeneratedDetails.response,
                     onValueChange = {
-                        viewModel.onEvent(AddEditDreamEvent.ChangeDetailsOfDream(it))
+                        onAddEditDreamEvent(AddEditDreamEvent.ChangeDetailsOfDream(it))
                     },
                     label = { Text(text = "Explanation for Image", style = typography.bodyLarge) },
                     modifier = Modifier
