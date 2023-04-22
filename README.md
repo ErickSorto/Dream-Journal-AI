@@ -3,8 +3,8 @@
 
 
 
-<a href="https://twitter.com/ericksorto" target="_blank">
-    <img alt="Twitter: ericksorto" src="https://img.shields.io/twitter/follow/ericksorto.svg?style=social" />
+<a href="https://ko-fi.com/ericksorto" target="_blank">
+    <img alt="Support on Ko-fi: ericksorto" src="https://ko-fi.com/img/githubbutton_sm.svg" />
 </a>
 
 > An AI-powered dream journal application that helps users record, analyze, and explore their dreams to gain insights into patterns, themes, and emotions.
