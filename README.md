@@ -57,3 +57,26 @@
 | ⌚ Date and Time  | [Java Time](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/package-summary.html)                                                                                                                                |
 | 🔧 Supplementary  | [Accompanist](https://github.com/google/accompanist)                                                                                                                                                                                     |
 
+
+## ✅ TODO
+
+- Add more features
+- Add better functionality while offline
+- Finish drawer screens
+- Refactor code
+
+## 🙇 Credits
+
+- Special thanks to [Amineib](https://github.com/Amineib) for their support.
+
+## 🤝 Contributing
+
+- See [CONTRIBUTING](/CONTRIBUTING.md)
+
+## ❤️ Show your support
+
+Give a ⭐️ if this project helped you!
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/ericksorto)
+
+
