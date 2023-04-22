@@ -15,10 +15,18 @@
 
 ### 🤳 Screenshots
 
-![](https://imgur.com/1stScreenshot)
-![](https://imgur.com/2ndScreenshot)
-![](https://imgur.com/3rdScreenshot)
-![](https://imgur.com/4thScreenshot)
+<div style="overflow-x: auto;">
+  <table>
+    <tr>
+      <td><img src="https://i.imgur.com/f5iVufE.png" alt="Screenshot 1" style="max-width: 100%; height: auto;"></td>
+      <td><img src="https://i.imgur.com/wmbqxUH.png" alt="Screenshot 2" style="max-width: 100%; height: auto;"></td>
+      <td><img src="https://i.imgur.com/Wm5q8vl.png" alt="Screenshot 3" style="max-width: 100%; height: auto;"></td>
+      <td><img src="https://i.imgur.com/x6r114B.png" alt="Screenshot 4" style="max-width: 100%; height: auto;"></td>
+      <td><img src="https://i.imgur.com/fv6v3m9.png" alt="Screenshot 5" style="max-width: 100%; height: auto;"></td>
+    </tr>
+  </table>
+</div>
+
 
 ## 💻 Install
 
@@ -37,16 +45,15 @@
 
 | Component         | Libraries                                                                                                                                                                                                                                |
 |-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 🎭 User Interface | [Jetpack Compose](https://developer.android.com/jetpack/compose)                                                                                                                                                                         |
+| 🎭 User Interface | [Jetpack Compose](https://developer.android.com/jetpack/compose)                                                                                                                                                                        |
 | 🏗 Architecture   | [MVVM](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel)                                                                                                                                                               |
 | 💉 DI             | [Dagger Hilt](https://dagger.dev/hilt/)                                                                                                                                                                                                  |
-| 🛣️ Navigation    | [Compose Navigation](https://developer.android.com/jetpack/compose/navigation)                                                                                                                                                           |
-| 🌊 Async          | [Jetpack Coroutines](https://developer.android.com/topic/libraries/architecture/coroutines)                                                                                                                                              |
+| 🛣️ Navigation    | [Compose Navigation](https://developer.android.com/jetpack/compose/navigation)                                                                                                                                                          |
+| 🌊 Async          | [Jetpack Coroutines](https://developer.android.com/kotlin/coroutines)                                                                                                                                                                   |
 | 🌐 Networking     | [Retrofit](https://square.github.io/retrofit/)                                                                                                                                                                                           |
-| 💵 Billing        | [Google Play Billing](https://developer.android.com/google/play/billing)                                                                                                                                                                 |
-| 📄 JSON           | [Kotlin Serialization](https://github.com/Kotlin/kotlinx.serialization)                                                                                                                                                                  |
-| 💾 Persistence    | [Room](https://developer.android.com/training/data-storage/room)                                                                                                                                                                         |
-| ⌨️ Logging        | Built-in Kotlin logging                                                                                                                                                                                                                  |
+| 💾 Persistence    | [Firebase](https://firebase.google.com/) (Remote Storage)                                                                                                                                                                                |
+| ⌨️ Logging        | [Logcat](https://developer.android.com/studio/debug/am-logcat) (Android)                                                                                                                                                                |
 | 📸 Image Loading  | [Coil](https://coil-kt.github.io/coil/)                                                                                                                                                                                                  |
-| ⌚ Date and Time  | [Java Date and Time](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java.base/java/time/package-summary.html)                                                                                                              |
+| ⌚ Date and Time  | [Java Time](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/package-summary.html)                                                                                                                                |
 | 🔧 Supplementary  | [Accompanist](https://github.com/google/accompanist)                                                                                                                                                                                     |
+
