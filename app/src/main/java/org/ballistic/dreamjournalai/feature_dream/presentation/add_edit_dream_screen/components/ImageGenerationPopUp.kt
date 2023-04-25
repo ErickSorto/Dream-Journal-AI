@@ -101,6 +101,7 @@ fun ImageGenerationPopUp(
                     AdTokenLayout(
                         onAdClick = onAdClick,
                         onDreamTokenClick = onDreamTokenClick,
+                        amount = 2
                     )
                 }
             }

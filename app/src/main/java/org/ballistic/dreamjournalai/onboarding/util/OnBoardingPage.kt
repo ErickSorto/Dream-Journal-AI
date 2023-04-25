@@ -10,19 +10,19 @@ sealed class OnBoardingPage(
     val description: String
 ) {
     object First : OnBoardingPage(
-        image = R.drawable.blue_lighthouse,
+        image = R.drawable.write_screenshot,
         title = "Dream Journal AI",
-        description = ""
+        description = "Welcome to Dream Journal AI!"
     )
 
     object Second : OnBoardingPage(
-        image = R.drawable.dark_blue_lighthouse_background,
+        image = R.drawable.paint_screenshot,
         title = "Paint and Interpret",
         description = "Paint your dream and let the AI interpret it for you!"
     )
 
     object Third : OnBoardingPage(
-        image = R.drawable.dark_blue_moon,
+        image = R.drawable.save_screenshot,
         title = "Save your dreams",
         description = "Save your dreams in the cloud and access them from anywhere."
     )

@@ -324,6 +324,7 @@ class AddEditDreamViewModel @Inject constructor(
 
             is AddEditDreamEvent.SaveDream-> {
                 Log.d("AddEditDreamViewModel", "Dream saved successfully")
+                _addEditDreamState.value.dreamIsSavingLoading.value = true
                 viewModelScope.launch {
                     try {
                         dreamUseCases.addDream(
@@ -350,15 +351,17 @@ class AddEditDreamViewModel @Inject constructor(
                                 generatedImage = addEditDreamState.value.dreamAIImage.image,
                             )
                         )
-                        addEditDreamState.value.snackBarHostState.value.showSnackbar(
-                            "Dream saved successfully :)",
-                            actionLabel = "Dismiss",
-                            duration = SnackbarDuration.Short
+                        _addEditDreamState.value = addEditDreamState.value.copy(
+                            saveSuccess = mutableStateOf(true)
                         )
+
                         event.onSaveSuccess()
                         Log.d("AddEditDreamViewModel", "Emitting SaveDream event")
 
                     } catch (e: InvalidDreamException) {
+                        _addEditDreamState.value = addEditDreamState.value.copy(
+                            dreamIsSavingLoading = mutableStateOf(false)
+                        )
                         _addEditDreamState.value = addEditDreamState.value.copy(
                             saveSuccess = mutableStateOf(false)
                         )
@@ -602,6 +605,7 @@ data class AddEditDreamState(
         isSuccessful = false,
         error = ""
     ),
+    val dreamIsSavingLoading: MutableState<Boolean> = mutableStateOf(false),
     val isLoading: Boolean = false,
     val saveSuccess: MutableState<Boolean> = mutableStateOf(false),
     val dialogState: MutableState<Boolean> = mutableStateOf(false),

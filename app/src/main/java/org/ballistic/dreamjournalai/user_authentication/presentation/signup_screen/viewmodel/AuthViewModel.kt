@@ -1,5 +1,7 @@
 package org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel
 
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -22,14 +24,16 @@ class AuthViewModel @Inject constructor(
     private val repo: AuthRepository,
     oneTapClient: SignInClient
 ) : ViewModel() {
-    private val _state = MutableStateFlow(AuthViewModelState(
-        repo = repo,
-        oneTapClient = oneTapClient,
-    ))
+    private val _state = MutableStateFlow(
+        AuthViewModelState(
+            repo = repo,
+            oneTapClient = oneTapClient,
+        )
+    )
     val state: StateFlow<AuthViewModelState> = _state.asStateFlow()
 
 
-     fun onEvent(event: AuthEvent) = viewModelScope.launch {
+    fun onEvent(event: AuthEvent) = viewModelScope.launch {
         when (event) {
             is AuthEvent.OneTapSignIn -> {
                 oneTapSignIn()
@@ -92,30 +96,35 @@ class AuthViewModel @Inject constructor(
         _state.value.oneTapSignInResponse.value = response
     }
 
-    private suspend fun signInWithGoogle(googleCredential: AuthCredential) = repo.firebaseSignInWithGoogle(
-        googleCredential
-    ).onEach { result ->
-        when (result) {
-            is Resource.Success -> {
-                _state.value = _state.value.copy(
-                    login = MutableStateFlow(LoginState(isLoggedIn = true)),
-                    signInWithGoogleResponse = MutableStateFlow(Resource.Success(result.data))
-                )
+    private suspend fun signInWithGoogle(googleCredential: AuthCredential) =
+        repo.firebaseSignInWithGoogle(
+            googleCredential
+        ).onEach { result ->
+            when (result) {
+                is Resource.Success -> {
+                    _state.value = _state.value.copy(
+                        login = MutableStateFlow(LoginState(isLoggedIn = true)),
+                        signInWithGoogleResponse = MutableStateFlow(Resource.Success(result.data))
+                    )
+                }
+                is Resource.Error -> {
+                    _state.value = _state.value.copy(
+                        login = MutableStateFlow(LoginState(error = result.message ?: "Error")),
+                        signInWithGoogleResponse = MutableStateFlow(
+                            Resource.Error(
+                                result.message ?: "Error"
+                            )
+                        )
+                    )
+                }
+                is Resource.Loading -> {
+                    _state.value = _state.value.copy(
+                        login = MutableStateFlow(LoginState(isLoading = true)),
+                        signInWithGoogleResponse = MutableStateFlow(Resource.Loading())
+                    )
+                }
             }
-            is Resource.Error -> {
-                _state.value = _state.value.copy(
-                    login = MutableStateFlow(LoginState(error = result.message ?: "Error")),
-                    signInWithGoogleResponse = MutableStateFlow(Resource.Error(result.message ?: "Error"))
-                )
-            }
-            is Resource.Loading -> {
-                _state.value = _state.value.copy(
-                    login = MutableStateFlow(LoginState(isLoading = true)),
-                    signInWithGoogleResponse = MutableStateFlow(Resource.Loading())
-                )
-            }
-        }
-    }.launchIn(viewModelScope)
+        }.launchIn(viewModelScope)
 
     private suspend fun loginWithEmailAndPassword(email: String, password: String) =
         repo.firebaseSignInWithEmailAndPassword(email, password).onEach { result ->
@@ -131,13 +140,21 @@ class AuthViewModel @Inject constructor(
 
             when (result) {
                 is Resource.Loading -> {
-                    _state.value = _state.value.copy(login = MutableStateFlow(LoginState(isLoading = true)))
+                    _state.value =
+                        _state.value.copy(login = MutableStateFlow(LoginState(isLoading = true)))
                 }
                 is Resource.Success -> {
-                    _state.value = _state.value.copy(login = MutableStateFlow(LoginState(isLoggedIn = true)))
+                    _state.value =
+                        _state.value.copy(login = MutableStateFlow(LoginState(isLoggedIn = true)))
                 }
                 is Resource.Error -> {
-                    _state.value = _state.value.copy(login = MutableStateFlow(LoginState(error = result.message ?: "Error")))
+                    _state.value = _state.value.copy(
+                        login = MutableStateFlow(
+                            LoginState(
+                                error = result.message ?: "Error"
+                            )
+                        )
+                    )
                 }
             }
         }.launchIn(viewModelScope)
@@ -155,13 +172,21 @@ class AuthViewModel @Inject constructor(
             repo.firebaseSignUpWithEmailAndPassword(email, password).onEach { result ->
                 when (result) {
                     is Resource.Success -> {
-                        _state.value = _state.value.copy(signUp = MutableStateFlow(SignUpState(signUp = result.data)))
+                        _state.value =
+                            _state.value.copy(signUp = MutableStateFlow(SignUpState(signUp = result.data)))
                     }
                     is Resource.Error -> {
-                        _state.value = _state.value.copy(signUp = MutableStateFlow(SignUpState(error = result.message ?: "Error")))
+                        _state.value = _state.value.copy(
+                            signUp = MutableStateFlow(
+                                SignUpState(
+                                    error = result.message ?: "Error"
+                                )
+                            )
+                        )
                     }
                     is Resource.Loading -> {
-                        _state.value = _state.value.copy(signUp = MutableStateFlow(SignUpState(isLoading = true)))
+                        _state.value =
+                            _state.value.copy(signUp = MutableStateFlow(SignUpState(isLoading = true)))
                     }
                 }
             }.launchIn(viewModelScope)
@@ -171,51 +196,84 @@ class AuthViewModel @Inject constructor(
         repo.sendEmailVerification().onEach {
             when (it) {
                 is Resource.Success -> {
-                    _state.value = _state.value.copy(emailVerification = MutableStateFlow(VerifyEmailState(sent = true)))
+                    _state.value =
+                        _state.value.copy(emailVerification = MutableStateFlow(VerifyEmailState(sent = true)))
+                    state.value.snackBarHostState.value.showSnackbar(
+                        "Verification sent to email",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Short
+                    )
                 }
                 is Resource.Error -> {
-                    _state.value = _state.value.copy(emailVerification = MutableStateFlow(VerifyEmailState(error = it.message ?: "Error")))
+                    _state.value = _state.value.copy(
+                        emailVerification = MutableStateFlow(
+                            VerifyEmailState(error = it.message ?: "Error")
+                        )
+                    )
                 }
                 is Resource.Loading -> {
-                    _state.value = _state.value.copy(emailVerification = MutableStateFlow(VerifyEmailState(isLoading = true)))
+                    _state.value = _state.value.copy(
+                        emailVerification = MutableStateFlow(
+                            VerifyEmailState(isLoading = true)
+                        )
+                    )
                 }
             }
         }.launchIn(viewModelScope)
     }
 
     private suspend fun sendPasswordResetEmail(email: String) = viewModelScope.launch {
-        _state.value = _state.value.copy(sendPasswordResetEmailResponse = mutableStateOf(Resource.Loading()))
-        _state.value = _state.value.copy(sendPasswordResetEmailResponse = mutableStateOf(repo.sendPasswordResetEmail(email)))
+        _state.value =
+            _state.value.copy(sendPasswordResetEmailResponse = mutableStateOf(Resource.Loading()))
+        _state.value = _state.value.copy(
+            sendPasswordResetEmailResponse = mutableStateOf(
+                repo.sendPasswordResetEmail(email)
+            )
+        )
     }
 
     private suspend fun reloadUser() = viewModelScope.launch {
         _state.value = _state.value.copy(reloadUserResponse = mutableStateOf(Resource.Loading()))
-        _state.value = _state.value.copy(reloadUserResponse = mutableStateOf(Resource.Success(repo.reloadFirebaseUser())))
+        _state.value =
+            _state.value.copy(reloadUserResponse = mutableStateOf(Resource.Success(repo.reloadFirebaseUser())))
     }
 
     private fun signOut() = viewModelScope.launch {
         repo.signOut()
     }
 
-    private suspend fun revokeAccess(password: String?, onSuccess: () -> Unit) = viewModelScope.launch {
+    private suspend fun revokeAccess(password: String?, onSuccess: () -> Unit) =
+        viewModelScope.launch {
 
-        repo.revokeAccess(
-            password,
-        ).onEach {
-            when (it) {
-                is Resource.Success -> {
-                    _state.value = _state.value.copy(revokeAccess = MutableStateFlow(RevokeAccessState(isRevoked = true)))
-                    onSuccess()
+            repo.revokeAccess(
+                password,
+            ).onEach {
+                when (it) {
+                    is Resource.Success -> {
+                        _state.value = _state.value.copy(
+                            revokeAccess = MutableStateFlow(
+                                RevokeAccessState(isRevoked = true)
+                            )
+                        )
+                        onSuccess()
+                    }
+                    is Resource.Error -> {
+                        _state.value = _state.value.copy(
+                            revokeAccess = MutableStateFlow(
+                                RevokeAccessState(error = it.message ?: "Error")
+                            )
+                        )
+                    }
+                    is Resource.Loading -> {
+                        _state.value = _state.value.copy(
+                            revokeAccess = MutableStateFlow(
+                                RevokeAccessState(isLoading = true)
+                            )
+                        )
+                    }
                 }
-                is Resource.Error -> {
-                    _state.value = _state.value.copy(revokeAccess = MutableStateFlow(RevokeAccessState(error = it.message ?: "Error")))
-                }
-                is Resource.Loading -> {
-                    _state.value = _state.value.copy(revokeAccess = MutableStateFlow(RevokeAccessState(isLoading = true)))
-                }
-            }
-        }.launchIn(viewModelScope)
-    }
+            }.launchIn(viewModelScope)
+        }
 }
 
 data class AuthViewModelState(
@@ -235,7 +293,9 @@ data class AuthViewModelState(
     val signInResponse: MutableState<Resource<SignInResponse>> = mutableStateOf(Resource.Success()),
     val signUpResponse: MutableState<Resource<SignUpResponse>> = mutableStateOf(Resource.Success()),
     val sendEmailVerificationResponse: MutableState<Resource<Boolean>> = mutableStateOf(Resource.Success()),
-    val sendPasswordResetEmailResponse: MutableState<SendPasswordResetEmailResponse> = mutableStateOf(Resource.Success()),
+    val sendPasswordResetEmailResponse: MutableState<SendPasswordResetEmailResponse> = mutableStateOf(
+        Resource.Success()
+    ),
     val reloadUserResponse: MutableState<Resource<ReloadUserResponse>> = mutableStateOf(Resource.Success()),
     val loginErrorMessage: MutableState<String> = mutableStateOf(""),
     val signUpErrorMessage: MutableState<String> = mutableStateOf(""),
@@ -246,9 +306,11 @@ data class AuthViewModelState(
     val isUserExist: StateFlow<Boolean> = repo.isUserExist,
     val emailVerified: StateFlow<Boolean> = repo.emailVerified,
     val isLoggedIn: StateFlow<Boolean> = repo.isLoggedIn,
+    val snackBarHostState: MutableState<SnackbarHostState> = mutableStateOf(SnackbarHostState()),
 )
+
 data class VerifyEmailState(
-    val verified : Boolean = false,
+    val verified: Boolean = false,
     val sent: Boolean = false,
     val isLoading: Boolean = false,
     val error: String = ""
@@ -259,6 +321,7 @@ data class RevokeAccessState(
     val isLoading: Boolean = false,
     val error: String = ""
 )
+
 data class LoginState(
     val isLoggedIn: Boolean = false,
     val isLoading: Boolean = false,
