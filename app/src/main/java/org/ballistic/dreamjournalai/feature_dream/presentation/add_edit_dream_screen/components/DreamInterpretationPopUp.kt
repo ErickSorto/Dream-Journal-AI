@@ -24,7 +24,6 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import org.ballistic.dreamjournalai.R
 
 @RequiresApi(Build.VERSION_CODES.O)
-@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun DreamInterpretationPopUp(
     onAdClick: () -> Unit,
@@ -61,7 +60,8 @@ fun DreamInterpretationPopUp(
                     )
                     AdTokenLayout(
                         onAdClick = onAdClick,
-                        onDreamTokenClick = onDreamTokenClick
+                        onDreamTokenClick = onDreamTokenClick,
+                        amount = 1
                     )
                 }
             }

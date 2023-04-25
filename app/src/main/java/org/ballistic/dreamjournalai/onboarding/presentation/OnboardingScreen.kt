@@ -8,10 +8,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -26,13 +30,13 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.OneTapSignIn
-import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.SignInGoogleButton
-import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.SignInWithGoogle
 import org.ballistic.dreamjournalai.onboarding.presentation.viewmodel.WelcomeViewModel
 import org.ballistic.dreamjournalai.onboarding.util.OnBoardingPage
 import org.ballistic.dreamjournalai.user_authentication.presentation.components.SignUpSignInForgotPasswordLayout
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.AuthEvent
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.OneTapSignIn
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.SignInGoogleButton
+import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.components.SignInWithGoogle
 import org.ballistic.dreamjournalai.user_authentication.presentation.signup_screen.viewmodel.AuthViewModelState
 
 @ExperimentalAnimationApi
@@ -47,7 +51,6 @@ fun OnboardingScreen(
 ) {
     val isUserExist = authViewModelState.isUserExist.collectAsStateWithLifecycle().value
     val isLoggedIn = authViewModelState.isLoggedIn.collectAsStateWithLifecycle().value
-    val signUpState = authViewModelState.signUp.collectAsStateWithLifecycle()
     val emailVerificationState = authViewModelState.emailVerified.collectAsStateWithLifecycle().value
 
     LaunchedEffect(key1 = isUserExist, key2 = emailVerificationState, key3 = isLoggedIn) {
@@ -82,79 +85,86 @@ fun OnboardingScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding()
+    Scaffold(
+        snackbarHost = { SnackbarHost (authViewModelState.snackBarHostState.value) },
+        containerColor = Color.Transparent
     ) {
-        HorizontalPager(
-            modifier = Modifier.weight(10f),
-            count = 4,
-            state = pagerState,
-            verticalAlignment = Alignment.Top,
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+        ) {
+            HorizontalPager(
+                modifier = Modifier.weight(10f),
+                count = 4,
+                state = pagerState,
+                verticalAlignment = Alignment.Top,
 
-            ) { position ->
-            PagerScreen(
-                onBoardingPage = pages[position], authViewModelState = authViewModelState,
+                ) { position ->
+                PagerScreen(
+                    onBoardingPage = pages[position], authViewModelState = authViewModelState,
+                    pagerState = pagerState,
+                    onEvent = { onEvent(it) },
+                    navigateToDreamJournalScreen = { navigateToDreamJournalScreen() }
+                )
+            }
+            HorizontalPagerIndicator(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 48.dp)
+                    .weight(1f),
                 pagerState = pagerState,
-                onEvent = { onEvent(it) },
-                navigateToDreamJournalScreen = { navigateToDreamJournalScreen() }
+                activeColor = Color.White,
             )
         }
-        HorizontalPagerIndicator(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .weight(1f),
-            pagerState = pagerState
-        )
-    }
-    val scope = rememberCoroutineScope()
+        val scope = rememberCoroutineScope()
 
 
 
 
-    LaunchedEffect(Unit) {
-        if (isLoggedIn && emailVerificationState) {
-            welcomeViewModel.saveOnBoardingState(completed = true)
-            navigateToDreamJournalScreen()
-        }
-    }
-
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                try {
-                    val credentials =
-                        authViewModelState.oneTapClient?.getSignInCredentialFromIntent(result.data)
-                    val googleIdToken = credentials?.googleIdToken
-                    val googleCredentials = GoogleAuthProvider.getCredential(googleIdToken, null)
-                    scope.launch {
-                        onEvent(AuthEvent.SignInWithGoogle(googleCredentials))
-                    }
-                } catch (it: ApiException) {
-                    print(it)
-                }
+        LaunchedEffect(Unit) {
+            if (isLoggedIn && emailVerificationState) {
+                welcomeViewModel.saveOnBoardingState(completed = true)
+                navigateToDreamJournalScreen()
             }
         }
 
-    fun launch(signInResult: BeginSignInResult) {
-        val intent = IntentSenderRequest.Builder(signInResult.pendingIntent.intentSender).build()
-        launcher.launch(intent)
-    }
+        val launcher =
+            rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    try {
+                        val credentials =
+                            authViewModelState.oneTapClient?.getSignInCredentialFromIntent(result.data)
+                        val googleIdToken = credentials?.googleIdToken
+                        val googleCredentials = GoogleAuthProvider.getCredential(googleIdToken, null)
+                        scope.launch {
+                            onEvent(AuthEvent.SignInWithGoogle(googleCredentials))
+                        }
+                    } catch (it: ApiException) {
+                        print(it)
+                    }
+                }
+            }
 
-    OneTapSignIn(launch = {
-        launch(it)
-    }, authViewModelState = authViewModelState)
-
-    SignInWithGoogle(navigateToHomeScreen = { signedIn ->
-        if (signedIn) {
-            welcomeViewModel.saveOnBoardingState(completed = true)
-            navigateToDreamJournalScreen()
+        fun launch(signInResult: BeginSignInResult) {
+            val intent = IntentSenderRequest.Builder(signInResult.pendingIntent.intentSender).build()
+            launcher.launch(intent)
         }
-    }, authViewModelState = authViewModelState)
+
+        OneTapSignIn(launch = {
+            launch(it)
+        }, authViewModelState = authViewModelState)
+
+        SignInWithGoogle(navigateToHomeScreen = { signedIn ->
+            if (signedIn) {
+                welcomeViewModel.saveOnBoardingState(completed = true)
+                navigateToDreamJournalScreen()
+            }
+        }, authViewModelState = authViewModelState)
+    }
 }
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalPagerApi::class)
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun PagerScreen(
     onBoardingPage: OnBoardingPage,
@@ -180,8 +190,7 @@ fun PagerScreen(
         ) {
             Image(
                 modifier = Modifier
-                    .fillMaxWidth(0.5f)
-                    .fillMaxHeight(0.7f),
+                    .fillMaxWidth(0.7f),
                 painter = painterResource(id = onBoardingPage.image),
                 contentDescription = "Pager Image"
             )
@@ -190,17 +199,19 @@ fun PagerScreen(
                 text = onBoardingPage.title,
                 fontSize = MaterialTheme.typography.h4.fontSize,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                color = Color.White
             )
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 40.dp)
-                    .padding(top = 20.dp),
+                    .padding(top = 10.dp),
                 text = onBoardingPage.description,
                 fontSize = MaterialTheme.typography.subtitle1.fontSize,
                 fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                color = Color.White
             )
         }
     }

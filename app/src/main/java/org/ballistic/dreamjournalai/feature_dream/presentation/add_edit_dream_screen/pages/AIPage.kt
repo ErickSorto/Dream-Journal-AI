@@ -82,7 +82,7 @@ fun AIPage(
             addEditDreamState = addEditDreamState,
             onDreamTokenClick = {
                 addEditDreamState.imageGenerationPopUpState.value = false
-                if (mainScreenViewModelState.dreamTokens.value <= 0) {
+                if (mainScreenViewModelState.dreamTokens.value <= 1) {
                     scope.launch {
                         addEditDreamState.snackBarHostState.value.showSnackbar(
                             message = "Not enough dream tokens",

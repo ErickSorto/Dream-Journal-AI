@@ -70,7 +70,7 @@ class DreamRepositoryImpl(
                                 generatedImage = data["generatedImage"] as String?,
                                 generatedDetails = data["generatedDetails"] as String? ?: "",
                                 id = document.id,
-                                uid = data["uid"] as String
+                                uid = data["uid"] as String? ?: ""
                             )
                         } else {
                             null
@@ -111,7 +111,7 @@ class DreamRepositoryImpl(
                         generatedImage = data["generatedImage"] as String?,
                         generatedDetails = data["generatedDetails"] as String? ?: "",
                         id = document.id,
-                        uid = data["uid"] as String
+                        uid = data["uid"] as String? ?: ""
                     )
                     Resource.Success(dream)
                 } else {
@@ -125,13 +125,13 @@ class DreamRepositoryImpl(
         }
     }
 
-
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun insertDream(dream: Dream): Resource<Unit> {
         return try {
             val existingDream = getDream(dream.id ?: "")
+            var newDream = dream.copy(uid = userID(), id = "")
 
-            suspend fun uploadImageIfNeeded(dream: Dream): Dream {
+            suspend fun uploadImageIfNeeded(dream: Dream, oldImageUrl: String? = null): Dream {
                 if (dream.generatedImage != null && !dream.generatedImage.startsWith("https://firebasestorage.googleapis.com/")) {
                     return withContext(Dispatchers.IO) {
                         val storageRef = FirebaseStorage.getInstance().reference.child("${userID()}/images/${UUID.randomUUID()}.jpg")
@@ -141,6 +141,13 @@ class DreamRepositoryImpl(
                         val uploadTask = storageRef.putBytes(imageBytes)
                         uploadTask.await()
                         val downloadUrl = storageRef.downloadUrl.await()
+
+                        // Delete the old image if it exists
+                        if (oldImageUrl != null) {
+                            val oldImageRef = FirebaseStorage.getInstance().getReferenceFromUrl(oldImageUrl)
+                            oldImageRef.delete().await()
+                        }
+
                         dream.copy(generatedImage = downloadUrl.toString())
                     }
                 }
@@ -170,11 +177,9 @@ class DreamRepositoryImpl(
                     generatedImage = dream.generatedImage,
                     generatedDetails = dream.generatedDetails
                 )
-                val updatedDreamWithImage = uploadImageIfNeeded(updatedDream)
+                val updatedDreamWithImage = uploadImageIfNeeded(updatedDream, existingDream.data.generatedImage)
                 dreamsCollection?.document(updatedDreamWithImage.id ?: "")?.set(updatedDreamWithImage)?.await()
             } else {
-                // Dream does not exist, insert it
-                var newDream = dream.copy(uid = userID()) // Set the uid property here
                 val newDreamRef = getCollectionReferenceForDreams()?.document()
                 newDream = newDream.copy(id = newDreamRef?.id)
                 val newDreamWithImage = uploadImageIfNeeded(newDream)
@@ -185,9 +190,6 @@ class DreamRepositoryImpl(
             Resource.Error("Error inserting dream: ${e.message}")
         }
     }
-
-
-
 
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun deleteDream(id: String): Resource<Unit> {

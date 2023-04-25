@@ -22,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.AlertSave
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.components.TabLayout
 import org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_screen.viewmodel.AddEditDreamState
@@ -40,7 +41,7 @@ fun AddEditDreamScreen(
     onNavigateToDreamJournalScreen: () -> Unit = {},
 ) {
 
-    remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     //keyboard controller
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -51,7 +52,9 @@ fun AddEditDreamScreen(
     onMainEvent(MainScreenEvent.SetSearchingState(false))
 
     BackHandler {
-        addEditDreamState.dialogState.value = !addEditDreamState.dialogState.value
+        if (!addEditDreamState.dreamIsSavingLoading.value) {
+            addEditDreamState.dialogState.value = !addEditDreamState.dialogState.value
+        }
     }
 
     val dreamBackgroundImage = remember {
@@ -85,10 +88,10 @@ fun AddEditDreamScreen(
             },
             onConfirm = {
                 addEditDreamState.dialogState.value = false
-                onAddEditDreamEvent(AddEditDreamEvent.SaveDream(onSaveSuccess = { onNavigateToDreamJournalScreen() }))
-                if (addEditDreamState.saveSuccess.value) {
+                onAddEditDreamEvent(AddEditDreamEvent.SaveDream(onSaveSuccess = {
+                    onMainEvent(MainScreenEvent.ShowSnackBar("Dream Saved Successfully :)"))
                     onNavigateToDreamJournalScreen()
-                }
+                }))
             },
             onClickOutside = {
                 addEditDreamState.dialogState.value = false
@@ -101,9 +104,10 @@ fun AddEditDreamScreen(
             CenterAlignedTopAppBar(
                 title = { Text(text = "Dream Journal AI") },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        addEditDreamState.dialogState.value = true
-                    }) {
+                    IconButton(
+                        onClick = { addEditDreamState.dialogState.value = true },
+                        enabled = !addEditDreamState.dreamIsSavingLoading.value
+                    ) {
                         Icon(
                             modifier = Modifier.rotate(180f),
                             imageVector = Icons.Filled.ArrowRightAlt,
@@ -114,8 +118,11 @@ fun AddEditDreamScreen(
                 actions = {
                     IconButton(onClick = {
                         keyboardController?.hide()
-                        onAddEditDreamEvent(AddEditDreamEvent.SaveDream(onSaveSuccess = { onNavigateToDreamJournalScreen() }))
-                    }) {
+                        onAddEditDreamEvent(AddEditDreamEvent.SaveDream(onSaveSuccess = {
+                            onMainEvent(MainScreenEvent.ShowSnackBar("Dream Saved Successfully :)"))
+                            onNavigateToDreamJournalScreen()
+                        }))
+                    }, enabled = !addEditDreamState.dreamIsSavingLoading.value) {
                         Icon(
                             imageVector = Icons.Filled.Save,
                             contentDescription = "Save Dream"

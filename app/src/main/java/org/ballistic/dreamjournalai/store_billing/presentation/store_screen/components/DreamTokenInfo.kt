@@ -15,7 +15,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -282,7 +281,7 @@ fun DreamToken500ButtonBuy(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "\$9.99",
+                    text = "\$4.99",
                     fontSize = 20.sp,
                     fontWeight = Bold,
                     maxLines = 1,
@@ -290,7 +289,7 @@ fun DreamToken500ButtonBuy(
                         .padding(8.dp, 8.dp, 8.dp, 0.dp)
                 )
                 Text(
-                    text = "Save 60%",
+                    text = "Save 50%",
                     fontSize = 12.sp,
                     fontWeight = Bold,
                     maxLines = 1,
@@ -332,7 +331,7 @@ fun DreamToken100ButtonBuy(
 
             Column(modifier = Modifier.align(Alignment.CenterEnd)) {
                 Text(
-                    text = "\$4.99",
+                    text = "\$1.99",
                     fontSize = 20.sp,
                     fontWeight = Bold,
                     maxLines = 1,
@@ -362,7 +361,7 @@ fun MostPopularBanner(modifier: Modifier) {
             )
     ) {
         Text(
-            text = "Best Value (Save 60%)",
+            text = "Best Value (Save 50%)",
             modifier = Modifier
                 .padding(8.dp)
                 .align(Alignment.Center),

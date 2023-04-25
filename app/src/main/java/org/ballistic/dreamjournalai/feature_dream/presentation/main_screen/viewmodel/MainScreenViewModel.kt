@@ -2,6 +2,7 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.main_screen.view
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -94,6 +95,15 @@ class MainScreenViewModel @Inject constructor(
                             message = it
                         )
                     }
+                }
+            }
+            is MainScreenEvent.ShowSnackBar -> {
+                viewModelScope.launch {
+                    _mainScreenViewModelState.value.scaffoldState.snackBarHostState.value.showSnackbar(
+                        message = event.message,
+                        duration = SnackbarDuration.Short,
+                        actionLabel = "Dismiss"
+                    )
                 }
             }
         }
