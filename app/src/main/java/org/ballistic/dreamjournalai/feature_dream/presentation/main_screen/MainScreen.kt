@@ -155,7 +155,7 @@ fun MainScreenView(
                         }
                     }
                     Text(
-                        text = "Version: 1.0.6",
+                        text = "Version: 1.0.8",
                         color = Color.White,
                         modifier = Modifier
                             .padding(bottom = 16.dp, top = 8.dp)
