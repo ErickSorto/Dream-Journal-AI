@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -19,6 +20,7 @@ fun TypewriterText(
     modifier: Modifier = Modifier,
     textAlign: TextAlign = TextAlign.Center,
     style: TextStyle = MaterialTheme.typography.bodyLarge,
+    color : Color = Color.White,
     animationDuration: Int = 3000,
     onAnimationComplete: () -> Unit = {}
 ) {
@@ -44,7 +46,8 @@ fun TypewriterText(
             text = typedText.value,
             modifier = modifier,
             textAlign = textAlign,
-            style = style
+            style = style,
+            color = color
         )
     }
 }
