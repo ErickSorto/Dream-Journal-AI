@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -50,7 +51,7 @@ fun AIInterpreterPage(
             TypewriterText(
                 text = responseState.response.trim(),
                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 16.dp),
-                color = Color.Black,
+                color = colorResource(id = org.ballistic.dreamjournalai.R.color.white),
             )
         }
     }
