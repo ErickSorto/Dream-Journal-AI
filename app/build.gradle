@@ -151,4 +151,6 @@ dependencies {
 
     //billing client
     implementation 'com.android.billingclient:billing:5.2.0'
+
+    implementation "com.github.skydoves:cloudy:0.1.2"
 }
