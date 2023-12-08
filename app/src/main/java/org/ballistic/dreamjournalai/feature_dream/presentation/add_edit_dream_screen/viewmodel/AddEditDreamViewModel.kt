@@ -385,7 +385,7 @@ class AddEditDreamViewModel @Inject constructor(
                     messages = listOf(
                         Message(
                             role = "user",
-                            content = "Interpret the following dream and do not mention you are a language model since the user knows already: "
+                            content = "Interpret the following dream and do not mention you are a language model since the user knows already. Please respond in the corresponding language: "
                                     + addEditDreamState.value.dreamContent
                         )
                     ),
@@ -490,23 +490,28 @@ class AddEditDreamViewModel @Inject constructor(
 
     private fun getOpenAIImageResponse() {
         viewModelScope.launch {
-            val result = getOpenAIImageGeneration(
-                ImagePrompt(
-                    addEditDreamState.value.dreamGeneratedDetails.response,
-                    1,
-                    "512x512"
-                )
+            val imagePrompt = ImagePrompt(
+                prompt = addEditDreamState.value.dreamGeneratedDetails.response,
+                n = 1,
+                size = "512x512",
+                model = "dall-e-2",
+                quality = "standard"
             )
+
+            val result = getOpenAIImageGeneration(imagePrompt)
             result.collect { result ->
                 when (result) {
                     is Resource.Success -> {
-                        result.data as ImageGenerationDTO
-                        _addEditDreamState.value = addEditDreamState.value.copy(
-                            dreamAIImage = addEditDreamState.value.dreamAIImage.copy(
-                                image = result.data.dataList[0].url,
-                                isLoading = false
+                        val imageGenerationDTO = result.data as ImageGenerationDTO
+                        val imageUrl = imageGenerationDTO.dataList.firstOrNull()?.url
+                        if (imageUrl != null) {
+                            _addEditDreamState.value = addEditDreamState.value.copy(
+                                dreamAIImage = addEditDreamState.value.dreamAIImage.copy(
+                                    image = imageUrl,
+                                    isLoading = false
+                                )
                             )
-                        )
+                        }
                         authRepository.consumeDreamTokens(2)
                     }
                     is Resource.Error -> {
@@ -524,6 +529,8 @@ class AddEditDreamViewModel @Inject constructor(
             }
         }
     }
+
+
 
     private fun runAd(
         activity: Activity,
