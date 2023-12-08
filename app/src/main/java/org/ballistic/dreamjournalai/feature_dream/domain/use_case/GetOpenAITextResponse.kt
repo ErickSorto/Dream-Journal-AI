@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.feature_dream.domain.use_case
 
 import android.util.Log
+import androidx.annotation.Keep
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
@@ -13,6 +14,7 @@ import retrofit2.HttpException
 import javax.inject.Inject
 
 //UseCase
+@Keep
 class GetOpenAITextResponse @Inject constructor(
     private val repository: OpenAIRepository,
 ) {

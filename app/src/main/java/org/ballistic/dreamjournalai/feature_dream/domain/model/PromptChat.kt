@@ -1,8 +1,10 @@
 package org.ballistic.dreamjournalai.feature_dream.domain.model
 
+import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
 import org.ballistic.dreamjournalai.feature_dream.data.remote.dto.gptchat.Message
 
+@Keep
 data class PromptChat(
     val model: String,
     val messages: List<Message>,

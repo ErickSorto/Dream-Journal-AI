@@ -2,9 +2,10 @@ package org.ballistic.dreamjournalai.feature_dream.data.remote.dto.gptchat
 
 
 
+import com.google.errorprone.annotations.Keep
 import com.google.gson.annotations.SerializedName
 import org.ballistic.dreamjournalai.feature_dream.domain.model.ChatCompletion
-
+@Keep
 data class CompletionChatDTO(
     val id: String,
     @SerializedName("object")
@@ -13,7 +14,7 @@ data class CompletionChatDTO(
     val choices: List<Choice>,
     val usage: Usage
 )
-
+@Keep
 fun CompletionChatDTO.toChatCompletion() = ChatCompletion(
     id = id,
     objectValue = objectValue,
