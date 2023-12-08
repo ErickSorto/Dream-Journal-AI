@@ -3,6 +3,7 @@ package org.ballistic.dreamjournalai.feature_dream.presentation.add_edit_dream_s
 import android.app.Activity
 import android.os.Build
 import android.util.Log
+import androidx.annotation.Keep
 import androidx.annotation.RequiresApi
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -376,7 +377,7 @@ class AddEditDreamViewModel @Inject constructor(
     }
 
 
-
+    @Keep
     private fun getAIResponse() {
         viewModelScope.launch {
             val result = getOpenAITextResponse(
@@ -385,7 +386,7 @@ class AddEditDreamViewModel @Inject constructor(
                     messages = listOf(
                         Message(
                             role = "user",
-                            content = "Interpret the following dream and do not mention you are a language model since the user knows already. Please respond in the corresponding language: "
+                            content = "Interpret the following dream and do not mention you are a language model since the user knows already. Please respond in the corresponding language the dream is written in: "
                                     + addEditDreamState.value.dreamContent
                         )
                     ),
@@ -398,7 +399,7 @@ class AddEditDreamViewModel @Inject constructor(
                 )
             )
 
-            result.collect { result ->
+            result.collectLatest { result ->
                 when (result) {
                     is Resource.Success -> {
                         result.data as ChatCompletion
@@ -572,6 +573,7 @@ class AddEditDreamViewModel @Inject constructor(
     }
 }
 
+@Keep
 @RequiresApi(Build.VERSION_CODES.O)
 data class AddEditDreamState(
     val dreamTitle: String = "",

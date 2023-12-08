@@ -1,5 +1,8 @@
 package org.ballistic.dreamjournalai.feature_dream.domain.model
 
+import androidx.annotation.Keep
+
+@Keep
 data class ImagePrompt(
     val prompt: String,
     val n: Int,
