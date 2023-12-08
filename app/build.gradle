@@ -10,7 +10,6 @@ plugins {
 }
 
 
-
 android {
     compileSdk 33
 
@@ -18,8 +17,8 @@ android {
         applicationId "org.ballistic.dreamjournalai"
         minSdk 23
         targetSdk 33
-        versionCode 18
-        versionName "1.0.8"
+        versionCode 23
+        versionName "1.0.9"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -33,8 +32,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
-            shrinkResources false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
