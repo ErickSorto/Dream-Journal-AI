@@ -36,6 +36,7 @@ import org.ballistic.dreamjournalai.user_authentication.domain.repository.AuthRe
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -378,8 +379,6 @@ class AddEditDreamViewModel @Inject constructor(
         }
     }
 
-
-    @Keep
     private fun getAIResponse() {
         viewModelScope.launch {
             // Indicate loading state
@@ -393,12 +392,18 @@ class AddEditDreamViewModel @Inject constructor(
             try {
                 val openAI = OpenAI(BuildConfig.API_KEY)
 
+                //system language
+                val currentLocale = Locale.getDefault().language
+
                 val chatCompletionRequest = ChatCompletionRequest(
                     model = ModelId("gpt-3.5-turbo"),
                     messages = listOf(
                         ChatMessage(
                             role = ChatRole.User,
-                            content = "Interpret the following dream and do not mention you are a language model since the user knows already. Please respond in the corresponding language the dream is written in: ${addEditDreamState.value.dreamContent}"
+                            content = "Interpret the following dream and do not mention" +
+                                    " you are a language model since the user knows already." +
+                                    "Respond in this language" +
+                                    " $currentLocale: ${addEditDreamState.value.dreamContent}"
                         )
                     )
                 )
@@ -431,7 +436,6 @@ class AddEditDreamViewModel @Inject constructor(
     }
 
 
-    @Keep
     private fun getAIDetailsResponse() {
         viewModelScope.launch {
             // Indicate loading state

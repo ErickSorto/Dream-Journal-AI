@@ -17,7 +17,7 @@ android {
         applicationId "org.ballistic.dreamjournalai"
         minSdk 23
         targetSdk 34
-        versionCode 39
+        versionCode 41
         versionName "1.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -50,17 +50,18 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion '1.4.4'
+        kotlinCompilerExtensionVersion '1.5.6'
     }
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
+    namespace 'org.ballistic.dreamjournalai'
+
     kapt {
         correctErrorTypes true
     }
-    namespace 'org.ballistic.dreamjournalai'
 }
 
 
@@ -91,7 +92,7 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-test-manifest:1.6.0-beta02"
+    debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
     testImplementation 'junit:junit:4.13.2'
 
     // Compose Extensions and Libraries
@@ -116,7 +117,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-ads:22.6.0'
 
     // Hilt (Dependency Injection)
-    def hilt_version = "2.48"
+    def hilt_version = "2.49"
     implementation("com.google.dagger:hilt-android:$hilt_version")
     kapt("com.google.dagger:hilt-android-compiler:$hilt_version")
     kapt("androidx.hilt:hilt-compiler:1.1.0")
@@ -127,7 +128,12 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.2"
 
     // Networking
-    implementation "com.squareup.okhttp3:logging-interceptor:4.10.0"
+    // define a BOM and its version
+    implementation(platform("com.squareup.okhttp3:okhttp-bom:4.11.0"))
+
+    // define any required OkHttp artifacts without version
+    implementation("com.squareup.okhttp3:okhttp")
+    implementation("com.squareup.okhttp3:logging-interceptor")
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation "com.squareup.retrofit2:converter-gson:2.9.0"
     implementation 'io.ktor:ktor-client-okhttp:2.3.2'
