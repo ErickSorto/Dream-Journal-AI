@@ -21,6 +21,7 @@ import org.ballistic.dreamjournalai.shared.core.domain.DictionaryRepository
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_symbols.domain.SymbolEvent
+import co.touchlab.kermit.Logger
 
 class DictionaryScreenViewModel(
     private val authRepository: AuthRepository,
@@ -226,13 +227,23 @@ class DictionaryScreenViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             // Use the repository function you created
             val words = dictionaryRepository.loadDictionaryWordsFromCsv("dream_dictionary.csv")
+            Logger.d("DictionaryVM") { "Loaded dictionary words: size=${words.size}" }
 
             _symbolScreenState.update { state ->
                 state.copy(
                     dictionaryWordList = words.toMutableList()
                 )
             }
-            filterWordsByLetter('A')
+
+            // Choose default letter: prefer 'A' if available, else the smallest available letter
+            val availableLetters = words.mapNotNull { it.word.firstOrNull()?.uppercaseChar() }.toSet()
+            val defaultLetter = when {
+                availableLetters.contains('A') -> 'A'
+                availableLetters.isNotEmpty() -> availableLetters.minOrNull() ?: 'A'
+                else -> 'A'
+            }
+            Logger.d("DictionaryVM") { "Default letter chosen: $defaultLetter (available=${availableLetters.sorted()})" }
+            filterWordsByLetter(defaultLetter)
         }
     }
 

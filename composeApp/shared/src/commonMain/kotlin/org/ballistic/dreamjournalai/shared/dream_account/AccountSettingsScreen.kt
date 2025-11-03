@@ -1,41 +1,29 @@
 package org.ballistic.dreamjournalai.shared.dream_account
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.mmk.kmpauth.google.GoogleButtonUiContainer
-import com.mmk.kmpauth.google.GoogleUser
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.ic_google_logo
-import org.ballistic.dreamjournalai.shared.core.Constants.SIGN_IN_WITH_GOOGLE
+import dev.gitlive.firebase.auth.GoogleAuthProvider as FirebaseGoogleAuthProvider
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.dream_account.components.DreamAccountSettingsScreenTopBar
 import org.ballistic.dreamjournalai.shared.dream_account.components.LogoutDeleteLayout
@@ -50,9 +38,6 @@ import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.sig
 import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
-import org.jetbrains.compose.resources.painterResource
-
 
 @Composable
 fun AccountSettingsScreen(
@@ -69,6 +54,16 @@ fun AccountSettingsScreen(
     val isEmailVerified = loginViewModelState.isEmailVerified
     val isUserLoggedIn = loginViewModelState.isLoggedIn
     val animationDisplay = remember { mutableStateOf(false) }
+
+    // Navigate to Home only when transitioning from not-logged-in to logged-in+verified
+    val loggedInAndVerified = isUserLoggedIn && isEmailVerified && !isUserAnonymous
+    var prevLoggedInAndVerified by remember { mutableStateOf(loggedInAndVerified) }
+    LaunchedEffect(loggedInAndVerified) {
+        if (!prevLoggedInAndVerified && loggedInAndVerified) {
+            navigateToDreamJournalScreen()
+        }
+        prevLoggedInAndVerified = loggedInAndVerified
+    }
 
     Scaffold(
         topBar = {
@@ -143,21 +138,18 @@ fun AccountSettingsScreen(
                 )
 
                 MyGoogleSignInButton(
-                    onGotToken = { googleIdToken ->
-                        // 1) Build dev.gitlive credential
-                        val googleCredential = dev.gitlive.firebase.auth.GoogleAuthProvider.credential(
-                            idToken = googleIdToken,
-                            accessToken = null
+                    { account ->
+                        val googleCredential = FirebaseGoogleAuthProvider.credential(
+                            idToken = account.idToken,
+                            accessToken = account.accessTokenOrNonce
                         )
-                        // 2) Call your existing KMM logic
                         onLoginEvent(LoginEvent.SignInWithGoogle(googleCredential))
                     },
-                    onError = { errorMsg ->
-                        // Show a snackbar, set isLoading=false, etc.
+                    {
                         onLoginEvent(LoginEvent.ToggleLoading(false))
-                        println("Google sign-in error: $errorMsg")
+                        println("Google sign-in error: $it")
                     },
-                    isLoading = !isLoading
+                    isLoading
                 )
 
                 if (!isUserAnonymous) {
@@ -197,70 +189,5 @@ fun AccountSettingsScreen(
 }
 
 
-@Composable
-fun MyGoogleSignInButton(
-    onGotToken: (String) -> Unit,
-    onError: (String) -> Unit = {},
-    isLoading: Boolean
-) {
-    // This uses the "non-Firebase" KMPAuth container
-    GoogleButtonUiContainer(
-        onGoogleSignInResult = { googleUser: GoogleUser? ->
-            // googleUser will be null if sign-in failed or user cancelled
-            if (googleUser != null) {
-                val token = googleUser.idToken
-                onGotToken(token)
-            } else {
-                onError("Google sign-in cancelled or failed.")
-            }
-        }
-    ) {
-        SignInGoogleButton(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            isVisible = true,
-            isEnabled = isLoading,
-            onClick = { this.onClick() }
-        )
-    }
-}
-
-@Composable
-fun SignInGoogleButton(
-    modifier: Modifier,
-    isVisible: Boolean,
-    isEnabled: Boolean,
-    onClick: () -> Unit,
-) {
-
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        AnimatedVisibility(
-            visible = isVisible,
-            enter = slideInHorizontally(initialOffsetX = { 1000 }),
-            exit = slideOutHorizontally { -1000 }
-        ) {
-            Button(
-                modifier = Modifier.padding().fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = SkyBlue
-                ),
-                enabled = isEnabled,
-                onClick = onClick
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.ic_google_logo),
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp)
-                )
-                Text(
-                    text = SIGN_IN_WITH_GOOGLE,
-                    modifier = Modifier.padding(start = 8.dp),
-                    fontSize = 18.sp,
-                    color = Color.Black
-                )
-            }
-        }
-    }
-}
+// `MyGoogleSignInButton` is implemented per-platform in androidMain/iosMain (see `GoogleSignInCompose.*`).
+// Keep the SignInGoogleButton UI helper here — platform actuals call it.

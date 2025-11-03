@@ -120,6 +120,7 @@ class StoreScreenViewModel(
         _storeScreenViewModelState.update { it.copy(isBillingClientLoading = true) }
 
         val storeProducts = fetchStoreProducts()
+        logger.d { "Store products available: ${storeProducts.map { it.id }}" }
         val storeProduct = storeProducts.find { it.id == productId }
 
         if (storeProduct != null) {
@@ -194,7 +195,7 @@ class StoreScreenViewModel(
                 productIds = productIds,
                 onError = { error ->
                     logger.e { "Error fetching products: $error" }
-                    cont.resume(emptyList()) {}
+                    cont.resume(emptyList()) { cause, _, _ -> }
                 },
                 onSuccess = { storeProducts ->
                     logger.d { "Products fetched successfully: $storeProducts" }

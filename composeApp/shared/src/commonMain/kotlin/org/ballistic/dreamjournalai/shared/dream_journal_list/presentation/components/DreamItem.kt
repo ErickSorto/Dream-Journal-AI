@@ -50,8 +50,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.skydoves.landscapist.ImageOptions
-import com.skydoves.landscapist.coil3.CoilImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.rememberAsyncImagePainter
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.background_during_day
 import dreamjournalai.composeapp.shared.generated.resources.baseline_cached_24
@@ -150,7 +150,7 @@ fun DreamItem(
             Box(
                 modifier = Modifier
                     .padding(12.dp, 12.dp, 4.dp, 12.dp)
-                    .size(118.dp)
+                    .size(116.dp)
                     .background(Color.Transparent)
                     .shadow(4.dp, RoundedCornerShape(8.dp), true)
 
@@ -164,18 +164,28 @@ fun DreamItem(
                 val chosenBackground = imageResId
 
                 if (generatedImage != null) {
-                    CoilImage(
-                        imageModel = { generatedImage },
-                        modifier = Modifier.fillMaxSize().shimmerEffect(),
-                        imageOptions = ImageOptions(
-                            contentScale = ContentScale.Crop,
-                            contentDescription = "Dream Image"
+                    // Use painter + state to control shimmer only while loading
+                    val painter = rememberAsyncImagePainter(model = generatedImage)
+                    val painterState = painter.state
+                    Box(Modifier.fillMaxSize()) {
+                        Image(
+                            painter = painter,
+                            contentDescription = "Dream Image",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
                         )
-                    )
+                        if (painterState.value is AsyncImagePainter.State.Loading) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .shimmerEffect()
+                            )
+                        }
+                    }
                 } else {
                     Image(
                         painter = painterResource(chosenBackground),
-                        modifier = Modifier.fillMaxSize().shimmerEffect(),
+                        modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
                         contentDescription = "Dream Image"
                     )
@@ -247,22 +257,22 @@ fun DreamItem(
                     )
                 }
 
-                if (dream.falseAwakening) {
+                if (dream.isLucid) {
                     Icon(
-                        painter = painterResource(Res.drawable.false_awakening_icon),
-                        tint = Purple,
-                        contentDescription = "Day Dream",
+                        painter = painterResource(Res.drawable.lighthouse_vector),
+                        tint = SkyBlue,
+                        contentDescription = "Lucid",
                         modifier = Modifier
                             .size(26.dp)
                             .padding(bottom = 4.dp),
                     )
                 }
 
-                if (dream.isLucid) {
+                if (dream.falseAwakening) {
                     Icon(
-                        painter = painterResource(Res.drawable.lighthouse_vector),
-                        tint = SkyBlue,
-                        contentDescription = "Lucid",
+                        painter = painterResource(Res.drawable.false_awakening_icon),
+                        tint = Purple,
+                        contentDescription = "Day Dream",
                         modifier = Modifier
                             .size(26.dp)
                             .padding(bottom = 4.dp),
@@ -275,13 +285,14 @@ fun DreamItem(
 
 @Composable
 fun shimmerBrush(transition: InfiniteTransition): Brush {
-    val translateAnim = transition.animateFloat(
+    val translateAnim by transition.animateFloat(
         initialValue = -1000f,
         targetValue = 1000f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 4000, easing = LinearOutSlowInEasing),
             repeatMode = RepeatMode.Restart
-        ), label = ""
+        ),
+        label = ""
     )
 
     return Brush.linearGradient(
@@ -292,8 +303,8 @@ fun shimmerBrush(transition: InfiniteTransition): Brush {
             Color.White.copy(alpha = 0.9f),
             Color.White.copy(alpha = 0.6f)
         ),
-        start = Offset(translateAnim.value - 300f, translateAnim.value - 300f),
-        end = Offset(translateAnim.value + 300f, translateAnim.value + 300f)
+        start = Offset(translateAnim - 300f, translateAnim - 300f),
+        end = Offset(translateAnim + 300f, translateAnim + 300f)
     )
 }
 
@@ -327,7 +338,3 @@ fun Modifier.shimmerEffect(): Modifier = composed {
         size = it.size  // Update the size when the layout changes
     }
 }
-
-
-
-

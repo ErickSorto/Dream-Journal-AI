@@ -15,4 +15,5 @@ sealed class LoginEvent {
     data class EnteredForgotPasswordEmail(val email: String) : LoginEvent()
     data class ToggleLoading(val isLoading: Boolean) : LoginEvent()
     data object BeginAuthStateListener : LoginEvent()
+    data class ReauthAndDelete(val googleCredential: AuthCredential) : LoginEvent()
 }

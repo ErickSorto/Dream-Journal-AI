@@ -158,7 +158,7 @@ fun DreamJournalListScreen(
 
                 // Sticky Header for the Date
                 stickyHeader {
-                    DateHeader(dateString = formatCustomDate(date))
+                    DateHeader(dateString = formatCustomDate(date), paddingStart = 20)
                 }
 
                 // Items for Each Dream in the Date Group
@@ -168,7 +168,7 @@ fun DreamJournalListScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 10.dp)
-                            .padding(horizontal = 12.dp),
+                            .padding(horizontal = 20.dp),
                         scope = scope,
                         onClick = {
                             onDreamListEvent(DreamListEvent.TriggerVibration)

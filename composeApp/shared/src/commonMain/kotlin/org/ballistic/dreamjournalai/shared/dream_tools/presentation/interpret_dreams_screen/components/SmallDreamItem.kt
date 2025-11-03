@@ -26,8 +26,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.skydoves.landscapist.ImageOptions
-import com.skydoves.landscapist.coil3.CoilImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.rememberAsyncImagePainter
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.baseline_question_mark_24
 import dreamjournalai.composeapp.shared.generated.resources.baseline_star_24
@@ -81,9 +81,7 @@ fun SmallDreamItem(
                     .background(Color.Transparent)
                     .shadow(4.dp, CircleShape, true)
             ) {
-                val model = if (dream.generatedImage.isNotEmpty()) {
-                    dream.generatedImage
-                } else {
+                dream.generatedImage.ifEmpty {
                     imageResId
                 }
 
@@ -97,15 +95,32 @@ fun SmallDreamItem(
                         tint = RedOrange
                     )
                 } else {
-                    CoilImage(
-                        imageModel = {
-                            model
-                        },
-                        modifier = Modifier.fillMaxSize().shimmerEffect(),
-                        imageOptions = ImageOptions(
+                    if (dream.generatedImage.isNotEmpty()) {
+                        val painter = rememberAsyncImagePainter(model = dream.generatedImage)
+                        val painterState = painter.state
+                        Box(Modifier.fillMaxSize()) {
+                            Image(
+                                painter = painter,
+                                contentDescription = "Dream Image",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                            if (painterState is AsyncImagePainter.State.Loading) {
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .shimmerEffect()
+                                )
+                            }
+                        }
+                    } else {
+                        Image(
+                            painter = painterResource(imageResId),
+                            contentDescription = "Dream Image",
+                            modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
-                        ),
-                    )
+                        )
+                    }
                 }
             }
             Spacer(modifier = Modifier.width(8.dp))

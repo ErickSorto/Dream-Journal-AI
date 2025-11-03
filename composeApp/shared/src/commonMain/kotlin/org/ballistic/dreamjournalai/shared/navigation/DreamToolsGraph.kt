@@ -2,6 +2,9 @@ package org.ballistic.dreamjournalai.shared.navigation
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,6 +37,10 @@ fun DreamToolsGraph(
         NavHost(
             navController = navController,
             startDestination = Route.Tools,
+            enterTransition = { fadeIn(animationSpec = tween(500)) },
+            exitTransition = { fadeOut(animationSpec = tween(500)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(500)) },
+            popExitTransition = { fadeOut(animationSpec = tween(500)) }
         ) {
             composable<Route.Tools> {
                 DreamToolsScreen(
@@ -46,6 +53,7 @@ fun DreamToolsGraph(
             }
             composable<ToolRoute.RandomDreamPicker> {
                 val args = it.toRoute<ToolRoute.RandomDreamPicker>()
+                val dreamDrawable = DreamDrawable.valueOf(args.imageID)
 
                 val randomDreamToolScreenViewModel = koinViewModel<RandomDreamToolScreenViewModel>()
                 val randomDreamToolScreenState =
@@ -54,8 +62,8 @@ fun DreamToolsGraph(
 
                 RandomDreamToolScreen(
                     animatedVisibilityScope = this,
-                    imageID =  args.imageID.toDrawableResource(),
-                    imagePath = args.imageID.name,
+                    imageID =  dreamDrawable.toDrawableResource(),
+                    imagePath = dreamDrawable.name,
                     bottomPadding = bottomPaddingValue,
                     randomDreamToolScreenState = randomDreamToolScreenState.value,
                     onEvent = {
@@ -73,11 +81,12 @@ fun DreamToolsGraph(
             composable<ToolRoute.AnalyzeMultipleDreamsDetails> { backStackEntry ->
                 // 1) Get the typed route from the NavBackStackEntry.
                 val route = backStackEntry.toRoute<ToolRoute.AnalyzeMultipleDreamsDetails>()
+                val dreamDrawable = DreamDrawable.valueOf(route.imageID)
 
                 // 3) Pass the resulting DrawableResource to the screen.
                 InterpretDreamsDetailScreen(
-                    imageID = route.imageID.toDrawableResource(),
-                    imagePath = route.imageID.name,
+                    imageID = dreamDrawable.toDrawableResource(),
+                    imagePath = dreamDrawable.name,
                     animatedVisibilityScope = this,  // from SharedTransitionScope
                     bottomPadding = bottomPaddingValue,
                     onNavigate = {

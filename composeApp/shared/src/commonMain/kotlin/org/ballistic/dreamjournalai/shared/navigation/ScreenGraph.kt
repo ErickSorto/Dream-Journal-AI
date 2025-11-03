@@ -2,24 +2,24 @@ package org.ballistic.dreamjournalai.shared.navigation
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import co.touchlab.kermit.Logger
-import dreamjournalai.composeapp.shared.generated.resources.Res
 import org.ballistic.dreamjournalai.shared.dream_account.AccountSettingsScreen
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.AddEditDreamScreen
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamViewModel
@@ -59,7 +59,11 @@ fun ScreenGraph(
         NavHost(
             navController = navController,
             startDestination = Route.DreamJournalScreen,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            enterTransition = { fadeIn(animationSpec = tween(500)) },
+            exitTransition = { fadeOut(animationSpec = tween(500)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(500)) },
+            popExitTransition = { fadeOut(animationSpec = tween(500)) }
         ) {
             composable<Route.DreamJournalScreen> {
                 val dreamJournalListViewModel = koinViewModel<DreamJournalListViewModel>()
@@ -206,11 +210,10 @@ fun ScreenGraph(
                     onSignupEvent = { signupViewModel.onEvent(it) },
                     navigateToDreamJournalScreen = {
                         navController.navigate(Route.DreamJournalScreen) {
-                            // Pop up to the root of the navigation graph, so the back stack is cleared
-                            popUpTo(navController.graph.startDestDisplayName) { //TODO: check this
+                            // Clear up to DreamJournalScreen so it becomes the root after login
+                            popUpTo(Route.DreamJournalScreen) {
                                 inclusive = true
                             }
-                            // Avoid multiple copies of the same destination when reselecting the same item
                             launchSingleTop = true
                         }
                     }

@@ -1,0 +1,28 @@
+{
+  "" : {
+    "diagnostics" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/iosApp-master.dia",
+    "emit-module-dependencies" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/iosApp-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/iosApp-master-emit-module.dia",
+    "swift-dependencies" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/iosApp-master.swiftdeps"
+  },
+  "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/iosApp/ContentView.swift" : {
+    "const-values" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/iosApp/iosAppApp.swift" : {
+    "const-values" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/iosAppApp.swiftconstvalues",
+    "dependencies" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/iosAppApp.d",
+    "diagnostics" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/iosAppApp.dia",
+    "index-unit-output-path" : "/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/iosAppApp.o",
+    "llvm-bc" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/iosAppApp.bc",
+    "object" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/iosAppApp.o",
+    "swift-dependencies" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/iosAppApp.swiftdeps",
+    "swiftmodule" : "/Users/ericksorto/AndroidStudioProjects/Dream-Journal-AI/composeApp/iosApp/build/iosApp.build/Debug-iphonesimulator/iosApp.build/Objects-normal/arm64/iosAppApp~partial.swiftmodule"
+  }
+}

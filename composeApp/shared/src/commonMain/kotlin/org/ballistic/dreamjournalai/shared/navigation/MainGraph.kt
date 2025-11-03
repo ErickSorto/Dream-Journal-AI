@@ -1,6 +1,9 @@
 package org.ballistic.dreamjournalai.shared.navigation
 
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,6 +30,10 @@ fun MainGraph(
     NavHost(
         navController = navController,
         startDestination = Route.OnboardingScreen,
+        enterTransition = { fadeIn(animationSpec = tween(500)) },
+        exitTransition = { fadeOut(animationSpec = tween(500)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(500)) },
+        popExitTransition = { fadeOut(animationSpec = tween(500)) },
         modifier = Modifier.fillMaxSize()
     ) {
         composable<Route.OnboardingScreen> {

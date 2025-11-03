@@ -54,6 +54,7 @@ class MassInterpretationRepositoryImpl(
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun getInterpretations(): Flow<List<MassInterpretation>> {
         val collectionRef = getCollectionReferenceForMassInterpretations()
             ?: return flowOf(emptyList())

@@ -4,10 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
 
 @Composable
 actual fun Modifier.dynamicBottomNavigationPadding(): Modifier {
-    val orientation = LocalContext.current.resources.configuration.orientation
+    val orientation = LocalConfiguration.current.orientation
     return if (orientation == Configuration.ORIENTATION_PORTRAIT) {
         this
     } else {

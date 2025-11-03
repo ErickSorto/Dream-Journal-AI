@@ -9,11 +9,11 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.NavigationBar
@@ -28,20 +28,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import org.ballistic.dreamjournalai.shared.navigation.BottomNavigationRoutes
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkPurple
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
-
+import org.ballistic.dreamjournalai.shared.navigation.BottomNavigationRoutes
+import org.ballistic.dreamjournalai.shared.navigation.Route
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 
 @Composable
 fun BottomNavigation(
@@ -51,16 +51,9 @@ fun BottomNavigation(
     modifier: Modifier
 ) {
     NavigationBar(
-        containerColor = SkyBlue,
+        containerColor = Color.Transparent,
         contentColor = Color.Black,
         modifier = modifier
-            .clip(
-                RoundedCornerShape(
-                    topStart = 8.dp,
-                    topEnd = 8.dp
-                )
-            )
-            .height(60.dp)
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -94,11 +87,6 @@ fun BottomNavigation(
                 ), label = ""
             )
 
-            val iconColor by animateColorAsState(
-                targetValue = if (isSelected.value) DarkPurple else Color.LightGray,
-                animationSpec = tween(durationMillis = 500), label = ""
-            )
-
             // Apply immediate scale change on selection
             LaunchedEffect(isSelected) {
                 scale.animateTo(
@@ -110,21 +98,52 @@ fun BottomNavigation(
             NavigationBarItem(
                 icon = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            item.icon,
-                            contentDescription = item.title,
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    // Combine both scaling effects for a dynamic, floating appearance
-                                    val finalScale =
-                                        if (isSelected.value) floatingScale * scale.value else scale.value
-                                    scaleX = finalScale
-                                    scaleY = finalScale
-                                    rotationZ = if (isSelected.value) rotation else 0f
-                                }
-                                .size(24.dp), // Example icon size, adjust as needed
-                            tint = iconColor
-                        )
+                        Box(
+                            modifier = Modifier.graphicsLayer {
+                                val finalScale = if (isSelected.value) floatingScale * scale.value else scale.value
+                                scaleX = finalScale
+                                scaleY = finalScale
+                                rotationZ = if (isSelected.value) rotation else 0f
+                            }
+                        ) {
+                            // Gold highlight icon (bottom layer)
+                            if (isSelected.value) {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = null, // decorative
+                                    modifier = Modifier
+                                        .offset(y = 1.5.dp, x = (-.8).dp)
+                                        .size(24.dp),
+                                    tint = Color(0xFFFAB4A6) // Soft Peachy-Pink Highlight
+                                )
+                            }
+
+                            // Main icon (top layer)
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.title,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .graphicsLayer(alpha = 0.99f)
+                                    .drawWithCache {
+                                        onDrawWithContent {
+                                            drawContent()
+                                            if (isSelected.value) {
+                                                drawRect(
+                                                    brush = Brush.verticalGradient(
+                                                        listOf(
+                                                            Color(0xFFF48FB1), // Softer Pink
+                                                            Color(0xFFF06292)  // Soft Pink
+                                                        )
+                                                    ),
+                                                    blendMode = BlendMode.SrcIn
+                                                )
+                                            }
+                                        }
+                                    },
+                                tint = if (isSelected.value) Color.Unspecified else Color.LightGray
+                            )
+                        }
 
                         AnimatedVisibility(
                             visible = isSelected.value,
@@ -144,7 +163,8 @@ fun BottomNavigation(
                     onMainEvent(MainScreenEvent.TriggerVibration)
                     if (currentRoute != item.route.toString()) {
                         navController.navigate(item.route) {
-                            popUpTo(navController.graph.findStartDestination().displayName) { //TODO: Check this
+                            // Ensure we pop to a real destination ID, not a label
+                            popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }
                             launchSingleTop = true
@@ -153,8 +173,6 @@ fun BottomNavigation(
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    unselectedIconColor = Color.Black.copy(alpha = 0.5f),
-                    selectedIconColor = Color.Black,
                     indicatorColor = LightBlack.copy(alpha = 0.2f),
                 ),
                 alwaysShowLabel = true,
