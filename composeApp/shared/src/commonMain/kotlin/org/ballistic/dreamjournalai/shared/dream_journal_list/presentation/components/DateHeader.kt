@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.TimeZone
@@ -20,16 +19,20 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.core.util.getDayOfWeekDisplayName
 import org.ballistic.dreamjournalai.shared.core.util.getStartOfWeek
 import org.ballistic.dreamjournalai.shared.core.util.parseCustomDate
+import kotlin.time.ExperimentalTime
 
 
+@OptIn(ExperimentalTime::class)
 @Composable
-fun DateHeader(dateString: String) {
+fun DateHeader(dateString: String,
+               paddingStart: Int = 12
+) {
     val displayString = remember(dateString) {
         // Define the system's default time zone
         val timeZone = TimeZone.currentSystemDefault()
 
         // Get today's date
-        val todayDate = Clock.System.todayIn(timeZone)
+        val todayDate = kotlin.time.Clock.System.todayIn(timeZone)
 
         // Get yesterday's date
         val yesterdayDate = todayDate.minus(DatePeriod(days = 1))
@@ -61,7 +64,7 @@ fun DateHeader(dateString: String) {
 
     Box(
         modifier = Modifier
-            .padding(start = 12.dp, top = 8.dp, end = 8.dp, bottom = 8.dp)
+            .padding(start = paddingStart.dp, top = 8.dp, end = 8.dp, bottom = 8.dp)
             .background(
                 color = LightBlack.copy(alpha = 0.8f),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)

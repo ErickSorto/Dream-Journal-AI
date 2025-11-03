@@ -31,9 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.skydoves.landscapist.ImageOptions
-import com.skydoves.landscapist.coil3.CoilImage
-import dev.gitlive.firebase.auth.GoogleAuthProvider
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.blue_lighthouse
 import kotlinx.coroutines.CoroutineScope
@@ -185,21 +182,18 @@ fun OnboardingScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             MyGoogleSignInButton(
-                onGotToken = { googleIdToken ->
-                    // 1) Build dev.gitlive credential
-                    val googleCredential = GoogleAuthProvider.credential(
-                        idToken = googleIdToken,
-                        accessToken = null
+                { account ->
+                    val googleCredential = dev.gitlive.firebase.auth.GoogleAuthProvider.credential(
+                        idToken = account.idToken,
+                        accessToken = account.accessTokenOrNonce
                     )
-                    // 2) Call your existing KMM logic
                     onLoginEvent(LoginEvent.SignInWithGoogle(googleCredential))
                 },
-                onError = { errorMsg ->
-                    // Show a snackbar, set isLoading=false, etc.
+                {
                     onLoginEvent(LoginEvent.ToggleLoading(false))
-                    println("Google sign-in error: $errorMsg")
+                    println("Google sign-in error: $it")
                 },
-                isLoading = !isLoading
+                isLoading
             )
 
             if (!isUserAnonymous) {

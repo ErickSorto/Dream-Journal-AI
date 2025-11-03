@@ -39,10 +39,10 @@ import androidx.compose.ui.draw.clip
 //import com.google.accompanist.permissions.ExperimentalPermissionsApi
 //import com.google.accompanist.permissions.isGranted
 //import com.google.accompanist.permissions.rememberPermissionState
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.ExperimentalTime
 
 //import org.ballistic.dreamjournalai.shared.dream_notifications.domain.NotificationEvent
 //import org.ballistic.dreamjournalai.shared.dream_notifications.presentation.viewmodel.NotificationScreenState
@@ -181,13 +181,13 @@ import kotlinx.datetime.toLocalDateTime
 //    }
 //}
 //
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 fun DialWithDialogExample(
     onConfirm: (TimePickerState) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val currentTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    val currentTime = kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 
     val timePickerState = rememberTimePickerState(
         initialHour = currentTime.hour,

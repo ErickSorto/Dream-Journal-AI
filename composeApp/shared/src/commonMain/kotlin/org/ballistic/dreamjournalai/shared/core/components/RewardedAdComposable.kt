@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import app.lexilabs.basic.ads.DependsOnGoogleMobileAds
-import app.lexilabs.basic.ads.RewardedAd
+import app.lexilabs.basic.ads.composable.RewardedAd
 import coil3.compose.LocalPlatformContext
 
 @OptIn(DependsOnGoogleMobileAds::class)

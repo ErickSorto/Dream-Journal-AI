@@ -6,6 +6,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.AuthResult
@@ -82,8 +83,9 @@ class LoginViewModel(
 
 
     fun onEvent(event: LoginEvent) = viewModelScope.launch {
+        Logger.withTag("LoginVM").d { "onEvent received: ${event::class.simpleName}" }
 
-        when (event) {
+         when (event) {
             is LoginEvent.SignInWithGoogle -> {
                 signInWithGoogle(event.googleCredential)
             }
@@ -117,6 +119,7 @@ class LoginViewModel(
             }
 
             is LoginEvent.RevokeAccess -> {
+                Logger.withTag("LoginVM").d { "RevokeAccess event passwordProvided=${event.password?.isNotBlank() == true}" }
                 revokeAccess(event.password)
             }
 
@@ -125,6 +128,10 @@ class LoginViewModel(
             }
             is LoginEvent.BeginAuthStateListener -> {
                 beginAuthStateListener()
+            }
+
+            is LoginEvent.ReauthAndDelete -> {
+                reauthWithGoogleAndDelete(event.googleCredential)
             }
         }
     }
@@ -150,47 +157,88 @@ class LoginViewModel(
 
 
     private suspend fun signInWithGoogle(googleCredential: AuthCredential) {
-        handleResource(
-            resourceFlow = repo.firebaseSignInWithGoogle(googleCredential),
-            transform = {
-                viewModelScope.launch {
-                    try{
-                        if (it.second != null && it.second != ""){
-                            repo.transferDreamsFromAnonymousToPermanent(
-                                it.first.user?.uid ?: "", it.second ?: ""
-                            )
-                        }
-                    } catch (e: Exception) {
-                        //TODO: Handle error
-                    }
-                }
-                _state.value.copy(
-                    isEmailVerified = it.first.user?.isEmailVerified ?: false,
-                    isLoggedIn = true,
-                    isUserExist = it.first.user != null,
-                    signInWithGoogleResponse = MutableStateFlow(Resource.Success(it))
-                )
-            },
-            errorTransform = { error ->
-                viewModelScope.launch {
-                    _state.value.snackBarHostState.value.showSnackbar(
-                        error, duration = SnackbarDuration.Long, actionLabel = "Dismiss"
-                    )
-                }
-                _state.value.copy(
-                    isLoading = false,
-                    error = error,
-                    signInWithGoogleResponse = MutableStateFlow(Resource.Error(error))
-                )
-            },
-            loadingTransform = {
-                _state.value.copy(
-                    isLoading = true,
-                    signInWithGoogleResponse = MutableStateFlow(Resource.Loading())
-                )
-            }
-        )
-    }
+        Logger.d { "signInWithGoogle() called in LoginViewModel with credential=$googleCredential" }
+         handleResource(
+             resourceFlow = repo.firebaseSignInWithGoogle(googleCredential),
+             transform = {
+                Logger.d { "LoginViewModel: firebaseSignInWithGoogle emitted success result, starting transfer/updates" }
+                 viewModelScope.launch {
+                     try{
+                         if (it.second != null && it.second != ""){
+                            Logger.d { "Transferring dreams from anon=${it.second} to new user=${it.first.user?.uid}" }
+                             repo.transferDreamsFromAnonymousToPermanent(
+                                 it.first.user?.uid ?: "", it.second ?: ""
+                             )
+                         }
+                     } catch (_: Exception) {
+                        Logger.e("LoginViewModel") { "transferDreamsFromAnonymousToPermanent failed" }
+                     }
+                 }
+                 // Update the state to reflect the newly-signed in user and stop loading
+                 // Immediately update the state so UI observers react without waiting.
+                 _state.update { current ->
+                     current.copy(
+                         user = it.first.user,
+                         isEmailVerified = it.first.user?.isEmailVerified ?: false,
+                         isLoggedIn = true,
+                         isUserAnonymous = it.first.user?.isAnonymous ?: false,
+                         isUserExist = it.first.user != null,
+                         isLoading = false,
+                         signInWithGoogleResponse = MutableStateFlow(Resource.Success(it))
+                     )
+                 }
+
+                 // Reload user and ensure auth state listener is active. Do this after the immediate update.
+                 viewModelScope.launch {
+                     try {
+                        Logger.d { "LoginViewModel: reloading firebase user" }
+                         repo.reloadFirebaseUser()
+                     } catch (_: Exception) {
+                        Logger.e("LoginViewModel") { "reloadFirebaseUser failed" }
+                     }
+
+                     val refreshedUser = Firebase.auth.currentUser
+                        Logger.d { "LoginViewModel: refreshedUser=${refreshedUser?.uid}, isAnonymous=${refreshedUser?.isAnonymous}" }
+                     _state.update { current ->
+                         current.copy(
+                             user = refreshedUser,
+                             isEmailVerified = refreshedUser?.isEmailVerified ?: false,
+                             isLoggedIn = refreshedUser != null,
+                             isUserAnonymous = refreshedUser?.isAnonymous ?: false,
+                             isUserExist = repo.isUserExist.value,
+                             isLoading = false
+                         )
+                     }
+
+                     // Ensure auth state listener is active so other parts of the app see the change
+                    beginAuthStateListener()
+                 }
+
+                 // Return the updated state to the handler
+                 _state.value
+              },
+             errorTransform = { error ->
+                Logger.e("LoginViewModel") { "signInWithGoogle error: $error" }
+                 viewModelScope.launch {
+                     _state.value.snackBarHostState.value.showSnackbar(
+                         error, duration = SnackbarDuration.Long, actionLabel = "Dismiss"
+                     )
+                 }
+                 _state.value.copy(
+                     isLoading = false,
+                     error = error,
+                     signInWithGoogleResponse = MutableStateFlow(Resource.Error(error))
+                 )
+             },
+             loadingTransform = {
+                Logger.d { "signInWithGoogle loadingTransform: setting loading=true" }
+                 _state.value.copy(
+                     isLoading = true,
+                     signInWithGoogleResponse = MutableStateFlow(Resource.Loading())
+                 )
+             }
+         )
+     }
 
 
     private suspend fun loginWithEmailAndPassword(email: String, password: String) {
@@ -242,9 +290,17 @@ class LoginViewModel(
     }
 
     private suspend fun revokeAccess(password: String?) {
+        Logger.withTag("LoginVM").d { "revokeAccess start passwordProvided=${password?.isNotBlank() == true}" }
         handleResource(
             resourceFlow = repo.revokeAccess(password),
             transform = {
+                Logger.withTag("LoginVM").d { "revokeAccess success -> isRevoked=true, isLoggedIn=false" }
+                viewModelScope.launch {
+                    _state.value.snackBarHostState.value.showSnackbar(
+                        message = "Account deleted successfully",
+                        duration = SnackbarDuration.Short
+                    )
+                }
                 _state.value.copy(
                     revokeAccess = MutableStateFlow(
                         RevokeAccessState(isRevoked = true)
@@ -253,6 +309,26 @@ class LoginViewModel(
                 )
             },
             errorTransform = { error ->
+                Logger.withTag("LoginVM").e { "revokeAccess error: $error" }
+                viewModelScope.launch {
+                    val lower = error.lowercase()
+                    val needsRecent = listOf(
+                        "requires-recent-login",
+                        "recent login",
+                        "requires recent",
+                        "recently",
+                        "reauth",
+                        "sensitive and requires"
+                    ).any { lower.contains(it) }
+                    val msg = if (needsRecent)
+                        "Please sign in again, then try deleting your account."
+                    else error
+                    _state.value.snackBarHostState.value.showSnackbar(
+                        message = msg,
+                        duration = SnackbarDuration.Long,
+                        actionLabel = "Dismiss"
+                    )
+                }
                 _state.value.copy(
                     revokeAccess = MutableStateFlow(
                         RevokeAccessState(error = error)
@@ -260,6 +336,7 @@ class LoginViewModel(
                 )
             },
             loadingTransform = {
+                Logger.withTag("LoginVM").d { "revokeAccess loading" }
                 _state.value.copy(
                     revokeAccess = MutableStateFlow(
                         RevokeAccessState(
@@ -269,6 +346,33 @@ class LoginViewModel(
                 )
             }
         )
+    }
+
+    private suspend fun reauthWithGoogleAndDelete(googleCredential: AuthCredential) {
+        Logger.withTag("LoginVM").d { "reauthWithGoogleAndDelete start" }
+        try {
+            // Reauthenticate current user with provided Google credential
+            val user = Firebase.auth.currentUser
+            if (user == null) {
+                Logger.withTag("LoginVM").e { "reauthWithGoogleAndDelete: no current user" }
+                _state.value.snackBarHostState.value.showSnackbar(
+                    message = "No authenticated user",
+                    duration = SnackbarDuration.Short
+                )
+                return
+            }
+            Logger.withTag("LoginVM").d { "reauthenticating with Google credential" }
+            user.reauthenticate(googleCredential)
+            Logger.withTag("LoginVM").d { "reauthenticate success, proceeding to delete" }
+            revokeAccess(null)
+        } catch (e: Exception) {
+            Logger.withTag("LoginVM").e { "reauthWithGoogleAndDelete error: ${e.message}" }
+            _state.value.snackBarHostState.value.showSnackbar(
+                message = e.message ?: "Reauthentication failed",
+                duration = SnackbarDuration.Long,
+                actionLabel = "Dismiss"
+            )
+        }
     }
 }
 

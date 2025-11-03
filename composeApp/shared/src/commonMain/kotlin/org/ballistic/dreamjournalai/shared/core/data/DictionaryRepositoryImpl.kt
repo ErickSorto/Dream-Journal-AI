@@ -15,23 +15,62 @@ class DictionaryRepositoryImpl(
         val lines = fileReader.readDictionaryWordsFromCsv(fileName)
         val words = mutableListOf<DictionaryWord>()
 
-        // Skip the CSV header by dropping the first line
-        lines.drop(1).forEach { line ->
-            val tokens = csvRegex.findAll(line).map { it.value.trim('"') }.toList()
-            if (tokens.size >= 3) {
-                val cost = tokens.last().toIntOrNull() ?: 0
-                words.add(
-                    DictionaryWord(
-                        word = tokens.first(),
-                        definition = tokens.drop(1).dropLast(1).joinToString(","),
-                        isUnlocked = cost == 0,
-                        cost = cost
+        // If file has a header line with columns, allow drop(1); otherwise keep all.
+        // We'll detect rows with a numeric last token to decide if it looks like the 3-column format.
+        val candidateLines = if (lines.isNotEmpty() && looksLikeHeader(lines.first())) {
+            lines.drop(1)
+        } else lines
+
+        candidateLines.forEach { line ->
+            val tokens = csvRegex.findAll(line).map { it.value.trim('"').trim() }.toList()
+            if (tokens.isEmpty()) return@forEach
+
+            val lastIsInt = tokens.lastOrNull()?.toIntOrNull() != null
+            // 3-column row: word, definition..., cost
+            if (tokens.size >= 3 && lastIsInt) {
+                val cost = tokens.last().toInt()
+                val word = tokens.first()
+                val definition = tokens.drop(1).dropLast(1).joinToString(",")
+                if (word.isNotBlank()) {
+                    words.add(
+                        DictionaryWord(
+                            word = word,
+                            definition = definition,
+                            isUnlocked = cost == 0,
+                            cost = cost
+                        )
                     )
-                )
+                }
+            } else {
+                // Flat word-list line (comma-separated words): create entry for each token
+                tokens.forEach { token ->
+                    val w = token.trim()
+                    if (w.isNotEmpty()) {
+                        words.add(
+                            DictionaryWord(
+                                word = w,
+                                definition = "",
+                                isUnlocked = true,
+                                cost = 0
+                            )
+                        )
+                    }
+                }
             }
         }
 
-        return words
+        // Deduplicate by word, keep first occurrence
+        val distinct = LinkedHashMap<String, DictionaryWord>()
+        for (dw in words) {
+            if (!distinct.containsKey(dw.word)) distinct[dw.word] = dw
+        }
+        return distinct.values.toList()
+    }
+
+    private fun looksLikeHeader(firstLine: String): Boolean {
+        val headerHints = listOf("word", "definition", "cost", "meaning")
+        val lower = firstLine.lowercase()
+        return headerHints.any { it in lower }
     }
 
     override fun dictionaryWordsInDreamFilterList(

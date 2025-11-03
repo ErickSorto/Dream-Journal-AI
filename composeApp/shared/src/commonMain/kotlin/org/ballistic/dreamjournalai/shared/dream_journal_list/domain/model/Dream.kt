@@ -13,18 +13,18 @@ import dreamjournalai.composeapp.shared.generated.resources.purple_skies_lightho
 import dreamjournalai.composeapp.shared.generated.resources.red_lighthouse_background
 import dreamjournalai.composeapp.shared.generated.resources.sunrise_lighthouse
 import dreamjournalai.composeapp.shared.generated.resources.yellow_lighthouse_background
-import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.time.ExperimentalTime
 
 @Serializable
-data class Dream(
+data class Dream @OptIn(ExperimentalTime::class) constructor(
     val title: String = "",
     val content: String = "",
-    val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    val date: String = Clock.System.now()
+    val timestamp: Long = kotlin.time.Clock.System.now().toEpochMilliseconds(),
+    val date: String = kotlin.time.Clock.System.now()
         .toLocalDateTime(TimeZone.currentSystemDefault())
         .date
         .toString(),  // e.g. "2023-07-07"

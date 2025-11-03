@@ -16,3 +16,4 @@ local.properties
 /composeApp/release/
 /composeApp/google-services.json
 /composeApp/src/main/assets
+/iosApp/GoogleService-Info.plist

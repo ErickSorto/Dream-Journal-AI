@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
+import kotlinx.serialization.Serializable
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthStateResponse
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.ReloadUserResponse
@@ -40,6 +40,7 @@ import org.ballistic.dreamjournalai.shared.core.Constants.DISPLAY_NAME
 import org.ballistic.dreamjournalai.shared.core.Constants.EMAIL
 import org.ballistic.dreamjournalai.shared.core.Constants.USERS
 import org.ballistic.dreamjournalai.shared.core.Resource
+import kotlin.time.ExperimentalTime
 
 class AuthRepositoryImpl (
     private val auth: FirebaseAuth,
@@ -66,27 +67,31 @@ class AuthRepositoryImpl (
         googleCredential: AuthCredential
     ): Flow<Resource<Pair<AuthResult, String?>>> {
         return flow {
-            emit(Resource.Loading())
-            try {
-                val anonymousUserId = if (auth.currentUser?.isAnonymous == true) {
-                    auth.currentUser?.uid
-                } else {
-                    null
-                }
+            Logger.d { "AuthRepositoryImpl: firebaseSignInWithGoogle called with credential=$googleCredential" }
+             emit(Resource.Loading())
+             try {
+                 val anonymousUserId = if (auth.currentUser?.isAnonymous == true) {
+                     auth.currentUser?.uid
+                 } else {
+                     null
+                 }
 
-                val result = auth.signInWithCredential(googleCredential)
+                 val result = auth.signInWithCredential(googleCredential)
 
-                val isNewUser = result.additionalUserInfo?.isNewUser == true
+                Logger.d { "AuthRepositoryImpl: signInWithCredential succeeded user=${result.user?.uid}, isNew=${result.additionalUserInfo?.isNewUser}" }
+                 val isNewUser = result.additionalUserInfo?.isNewUser == true
 
-                emit(Resource.Success(Pair(result, anonymousUserId)))
-            } catch (e: FirebaseAuthUserCollisionException) {
-                emit(Resource.Error("An existing user account was found with the same credentials: ${e.message}"))
-            } catch (e: Exception) {
-                emit(Resource.Error("Failed to sign in with Google: ${e.message}"))
-            }
+                 emit(Resource.Success(Pair(result, anonymousUserId)))
+             } catch (e: FirebaseAuthUserCollisionException) {
+                Logger.e("AuthRepositoryImpl") { "FirebaseAuthUserCollisionException: ${e.message}" }
+                 emit(Resource.Error("An existing user account was found with the same credentials: ${e.message}"))
+             } catch (e: Exception) {
+                Logger.e("AuthRepositoryImpl") { "firebaseSignInWithGoogle failed: ${e.message}" }
+                 emit(Resource.Error("Failed to sign in with Google: ${e.message}"))
+             }
 
-        }
-    }
+         }
+     }
 
     override suspend fun consumeDreamTokens(tokensToConsume: Int): Resource<Boolean> {
         return withContext(Dispatchers.IO) {
@@ -267,6 +272,7 @@ class AuthRepositoryImpl (
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     override suspend fun firebaseSignUpWithEmailAndPassword(
         email: String,
         password: String
@@ -279,40 +285,33 @@ class AuthRepositoryImpl (
             null
         }
 
+        @Serializable
+        data class CreateAccountResponse(val message: String)
+
         return flow {
             emit(Resource.Loading())
 
             try {
-                // Prepare the data to send to your Cloud Function
                 val data = mapOf(
                     "email" to email,
                     "password" to password
                 )
 
-                // Call the "createAccountAndSendEmailVerification" Cloud Function
                 val result = Firebase.functions
                     .httpsCallable("createAccountAndSendEmailVerification")
                     .invoke(data)
 
-                // Decode the result into a Map
-                val dataMap = result.data<Map<String, Any>>() //TODO: Remove ANY
+                val response = result.data<CreateAccountResponse>()
+                val message = response.message
 
-                // Extract the "message" field
-                val message = dataMap["message"] as? String
-                    ?: throw Exception("Invalid response from Firebase Function")
+                addUserToFirestore(registrationTimestamp = kotlin.time.Clock.System.now().toEpochMilliseconds())
 
-                // Optionally add user details to FireStore
-                addUserToFirestore(registrationTimestamp = Clock.System.now().toEpochMilliseconds())
-
-                // Emit success
                 emit(Resource.Success(message))
 
             } catch (e: Exception) {
-                // Emit any errors
                 emit(Resource.Error("SignUp error: ${e.message}"))
             }
         }.catch { e ->
-            // Catch any downstream exceptions
             emit(Resource.Error(e.toString()))
         }
     }
@@ -397,26 +396,27 @@ class AuthRepositoryImpl (
             emit(Resource.Loading())
 
             try {
-                // Get the currently logged-in user via dev.gitlive
                 val user = Firebase.auth.currentUser
                     ?: throw IllegalStateException("No authenticated user found")
 
-                // If a password is provided, re-authenticate the user
-                if (password != null && !user.email.isNullOrBlank()) {
+                Logger.withTag("AuthRepo").d { "revokeAccess start uid=${user.uid} email=${user.email} providerData=${user.providerData.map { it.providerId }} passwordProvided=${!password.isNullOrBlank()}" }
+
+                if (!password.isNullOrBlank() && !user.email.isNullOrBlank()) {
                     val credential = EmailAuthProvider.credential(user.email!!, password)
-                    // 'reauthenticate(...)' is already a suspend function in GitLive
+                    Logger.withTag("AuthRepo").d { "reauthenticating user=${user.uid} via EmailAuthProvider" }
                     user.reauthenticate(credential)
+                    Logger.withTag("AuthRepo").d { "reauthenticate success" }
+                } else {
+                    Logger.withTag("AuthRepo").d { "skipping reauth (no password provided or missing email)" }
                 }
 
-                // Perform any additional cleanup or revocation as needed
-                // e.g., if you have an external OAuth service, etc.
-
-                // Finally, delete the user
                 user.delete()
+                Logger.withTag("AuthRepo").d { "user.delete() success" }
 
                 emit(Resource.Success(true))
 
             } catch (e: Exception) {
+                Logger.withTag("AuthRepo").e { "revokeAccess error: ${e.message}" }
                 emit(Resource.Error("Failed to revoke access: ${e.message}", false))
             }
         }
@@ -440,30 +440,31 @@ class AuthRepositoryImpl (
         permanentUid: String,
         anonymousUid: String
     ) {
+        @Serializable
+        data class HandleAccountLinkingResponse(
+            val success: Boolean = false,
+            val message: String? = null
+        )
         withContext(Dispatchers.IO) {
             try {
-                // Call the "handleAccountLinking" Cloud Function
                 val result = Firebase.functions
                     .httpsCallable("handleAccountLinking")
                     .invoke(
                         mapOf("permanentUid" to permanentUid, "anonymousUid" to anonymousUid)
                     )
 
-                // Decode the response into a map
-                val data = result.data<Map<String, Any>>() //TODO: Remove ANY
-                val success = data["success"] == true
+                // Decode into a typed, serializable model to avoid Any serializer issues
+                val data = result.data<HandleAccountLinkingResponse>()
+                val success = data.success
 
                 if (success) {
-                    // Dreams transferred successfully
                     println("Dreams transferred successfully. Proceed to clean up anonymous account if needed.")
                 } else {
-                    // If 'success' was false or missing
-                    println("Failed to transfer dreams: ${data["message"]}")
+                    println("Failed to transfer dreams: ${data.message}")
                 }
             } catch (e: Exception) {
                 when (e) {
                     is FirebaseFunctionsException -> {
-                        // Handle Firebase Functions–specific errors
                         println("Firebase Functions error: code=${e.code}, details=${e.details}")
                     }
                     else -> {

@@ -49,6 +49,7 @@ fun AlertSave(
                 Text("Discard Changes", color = RedOrange)
             }
         },
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.medium,
+        containerColor = Color(0xFF2C2C2C),
     )
 }

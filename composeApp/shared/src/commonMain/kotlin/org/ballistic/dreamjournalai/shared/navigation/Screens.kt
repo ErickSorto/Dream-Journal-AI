@@ -90,36 +90,36 @@ sealed class Route{
  */
 @Serializable
 sealed class ToolRoute(
-    val image: DreamDrawable
+    val image: String
 ) {
     @Serializable
     data class AnalyzeMultipleDreamsDetails(
-        val imageID: DreamDrawable
+        val imageID: String
     ) : ToolRoute(imageID)
 
     @Serializable
     data class RandomDreamPicker(
-        val imageID: DreamDrawable
+        val imageID: String
     ) : ToolRoute(imageID)
 
     @Serializable
     data class PaintDreamWorld(
-        val imageID: DreamDrawable
+        val imageID: String
     ) : ToolRoute(imageID)
 
     @Serializable
     data class DreamJournalReminder(
-        val imageID: DreamDrawable
+        val imageID: String
     ) : ToolRoute(imageID)
 
     @Serializable
     data class DynamicLucidChecker(
-        val imageID: DreamDrawable
+        val imageID: String
     ) : ToolRoute(imageID)
 
     @Serializable
     data class Statistics(
-        val imageID: DreamDrawable
+        val imageID: String
     ) : ToolRoute(imageID)
 }
 
@@ -133,7 +133,7 @@ enum class DreamTools(
         title = "Interpret Multiple Dreams",
         description = "Interpret multiple dreams at once using AI",
         route = ToolRoute.AnalyzeMultipleDreamsDetails(
-            imageID = DreamDrawable.MASS_INTERPRETATION_TOOL
+            imageID = DreamDrawable.MASS_INTERPRETATION_TOOL.name
         ),
         enabled = true
     ),
@@ -141,7 +141,7 @@ enum class DreamTools(
         title = "Random Dream Picker",
         description = "Pick a random dream from your dream journal",
         route = ToolRoute.RandomDreamPicker(
-            imageID = DreamDrawable.DICE_TOOL
+            imageID = DreamDrawable.DICE_TOOL.name
         ),
         enabled = true
     ),
@@ -149,7 +149,7 @@ enum class DreamTools(
         title = "Analyze Statistics",
         description = "Analyze your dream statistics using AI",
         route = ToolRoute.Statistics(
-            imageID = DreamDrawable.DREAM_STATISTIC_ANALYZER_TOOL
+            imageID = DreamDrawable.DREAM_STATISTIC_ANALYZER_TOOL.name
         ),
         enabled = false
     ),
@@ -157,7 +157,7 @@ enum class DreamTools(
         title = "Dynamic Lucid Checker",
         description = "Dynamic Lucid Reminder Task",
         route = ToolRoute.DynamicLucidChecker(
-            imageID = DreamDrawable.REALITY_CHECK_REMINDER_TOOL
+            imageID = DreamDrawable.REALITY_CHECK_REMINDER_TOOL.name
         ),
         enabled = false
     ),
@@ -165,7 +165,7 @@ enum class DreamTools(
         title = "Dream Journal Reminder",
         description = "Set a reminder to write in your dream journal",
         route = ToolRoute.DreamJournalReminder(
-            imageID = DreamDrawable.DREAM_JOURNAL_REMINDER_TOOL
+            imageID = DreamDrawable.DREAM_JOURNAL_REMINDER_TOOL.name
         ),
         enabled = false
     ),
@@ -173,7 +173,7 @@ enum class DreamTools(
         title = "Dream World",
         description = "Dream World Painter",
         route = ToolRoute.PaintDreamWorld(
-            imageID = DreamDrawable.DREAM_WORLD_PAINTER_TOOL
+            imageID = DreamDrawable.DREAM_WORLD_PAINTER_TOOL.name
         ),
         enabled = false
     );
@@ -218,7 +218,3 @@ fun DreamDrawable.toDrawableResource(): DrawableResource {
         DreamDrawable.DREAM_WORLD_PAINTER_TOOL       -> Res.drawable.dream_world_painter_tool
     }
 }
-
-
-
-

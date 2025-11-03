@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import androidx.work.Configuration
 import androidx.work.WorkManager
+import co.touchlab.crashkios.crashlytics.enableCrashlytics
 import com.mmk.kmpnotifier.notification.NotifierManager
 import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfiguration
 import com.revenuecat.purchases.kmp.LogLevel
@@ -14,14 +15,12 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import org.ballistic.dreamjournalai.shared.di.initKoin
 import org.koin.android.ext.koin.androidContext
-import com.mmk.kmpauth.google.GoogleAuthCredentials
-import com.mmk.kmpauth.google.GoogleAuthProvider
-import dreamjournalai.composeapp.shared.generated.resources.Res
 
 class DreamJournalAIApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        GoogleAuthProvider.create(credentials = GoogleAuthCredentials(serverId = "433518106186-fas918qt78ffo3t0rl2eg86ta05sic89.apps.googleusercontent.com"))
+        enableCrashlytics()
+       // GoogleAuthProvider.credential(credentials = GoogleAuthCredentials(serverId = "433518106186-fas918qt78ffo3t0rl2eg86ta05sic89.apps.googleusercontent.com"))
 
         createNotificationChannel()
         initializeWorkManager()
