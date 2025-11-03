@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.core.util.OpenAIApiKeyUtil.getOpenAISecretKey
@@ -28,6 +27,7 @@ import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.util.OrderType
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
+import kotlin.time.ExperimentalTime
 
 //TODO: Make sure ads work as intended
 class InterpretDreamsViewModel(
@@ -230,6 +230,7 @@ class InterpretDreamsViewModel(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     private suspend fun makeAIRequest(
         command: String,
         cost: Int,
@@ -260,7 +261,7 @@ class InterpretDreamsViewModel(
             val massInterpretation = MassInterpretation(
                 interpretation = completion.choices.firstOrNull()?.message?.content ?: "",
                 listOfDreamIDs = interpretDreamsScreenState.value.chosenDreams.map { it.id },
-                date = Clock.System.now().toEpochMilliseconds(),
+                date = kotlin.time.Clock.System.now().toEpochMilliseconds(),
                 model = if (modelId == "gpt-4o") "Advanced" else "Standard",
                 id = null
             )

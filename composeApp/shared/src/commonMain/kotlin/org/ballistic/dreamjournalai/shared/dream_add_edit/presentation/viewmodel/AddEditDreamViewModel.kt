@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -43,11 +42,13 @@ import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.InvalidDreamException
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.DictionaryWord
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 // Get current date
-private val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+@OptIn(ExperimentalTime::class)
+private val now = kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 private val currentDate = now.date
 
 // Static sleep and wake times
@@ -174,7 +175,7 @@ class AddEditDreamViewModel(
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
+    @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
     fun onEvent(event: AddEditDreamEvent) {
         when (event) {
             is AddEditDreamEvent.ChangeDreamBackgroundImage -> {
@@ -682,7 +683,7 @@ class AddEditDreamViewModel(
                             uid = addEditDreamState.value.dreamInfo.dreamUID,
                             title = titleTextFieldState.value.text.toString(),
                             content = contentTextFieldState.value.text.toString(),
-                            timestamp = Clock.System.now().toEpochMilliseconds(),
+                            timestamp = kotlin.time.Clock.System.now().toEpochMilliseconds(),
                             date = addEditDreamState.value.dreamInfo.dreamDate,
                             sleepTime = addEditDreamState.value.dreamInfo.dreamSleepTime,
                             wakeTime = addEditDreamState.value.dreamInfo.dreamWakeTime,

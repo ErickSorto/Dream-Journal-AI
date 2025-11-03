@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.lexilabs.basic.ads.DependsOnGoogleMobileAds
-import app.lexilabs.basic.ads.RewardedAd
+import app.lexilabs.basic.ads.composable.RewardedAd
 import coil3.compose.LocalPlatformContext
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding

@@ -30,7 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
@@ -44,6 +44,7 @@ import org.ballistic.dreamjournalai.shared.dream_notifications.presentation.comp
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -238,7 +239,7 @@ fun SliderWithLabel(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 fun DatePickerModal(
     onDateSelected: (LocalDate?) -> Unit,

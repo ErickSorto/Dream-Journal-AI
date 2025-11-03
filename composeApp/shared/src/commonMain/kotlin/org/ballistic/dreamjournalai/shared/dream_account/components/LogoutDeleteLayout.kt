@@ -13,32 +13,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.gitlive.firebase.auth.GoogleAuthProvider
+import co.touchlab.kermit.Logger
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.GoogleAuthProvider as FirebaseGoogleAuthProvider
+import dev.gitlive.firebase.auth.auth
+import org.ballistic.dreamjournalai.shared.dream_account.MyGoogleSignInButton
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.PasswordField
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.LoginViewModelState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
-import org.koin.core.component.getScopeId
 
 @Composable
 fun LogoutDeleteLayout(
     loginViewModelState: LoginViewModelState,
     onLoginEvent: (LoginEvent) -> Unit = {},
 ) {
-// Add a mutable state for user password input and a flag for Google account users
     val userPassword = remember { mutableStateOf("") }
+    val showDialog = remember { mutableStateOf(false) }
 
-    // Check the user's provider ID to determine if they are using a Google account
-    fun checkIfGoogleAccount(): Boolean {
-        loginViewModelState.user?.providerData?.let { providerData ->
-            for (info in providerData) {
-                if (info.providerId == GoogleAuthProvider.getScopeId()) {
-                    return true
-                }
-            }
-        }
-        return false
+    fun requiresPassword(): Boolean {
+        val providers = Firebase.auth.currentUser?.providerData
+        val needs = providers?.any { it.providerId == "password" } == true
+        Logger.withTag("LogoutDelete").d { "requiresPassword=$needs providers=${providers?.map { it.providerId }}" }
+        return needs
     }
 
     Box(
@@ -53,48 +51,27 @@ fun LogoutDeleteLayout(
         ) {
 
             Button(
-                onClick = {
-                    onLoginEvent(LoginEvent.SignOut)
-                },
+                onClick = { onLoginEvent(LoginEvent.SignOut) },
                 modifier = Modifier.fillMaxWidth(.5f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = SkyBlue
-                )
+                colors = ButtonDefaults.buttonColors(containerColor = SkyBlue)
             ) {
-                Text(
-                    text = "Logout",
-                    fontSize = 15.sp,
-                    color = Color.Black
-                )
+                Text(text = "Logout", fontSize = 15.sp, color = Color.Black)
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-
-
             Button(
                 onClick = {
-                    // Call RevokeAccess with the user password for email/password users or null for Google users
-                    onLoginEvent(
-                        LoginEvent.RevokeAccess(
-                            password = null
-                            )
-                    )
+                    Logger.withTag("LogoutDelete").d { "Delete button clicked, opening confirm dialog" }
+                    showDialog.value = true
                 },
                 modifier = Modifier.fillMaxWidth(.5f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = RedOrange
-                )
+                colors = ButtonDefaults.buttonColors(containerColor = RedOrange)
             ) {
-                Text(
-                    text = "Delete Account",
-                    fontSize = 15.sp,
-                    color = Color.White
-                )
+                Text(text = "Delete Account", fontSize = 15.sp, color = Color.White)
             }
 
-            // Show a password input field if the user is not signed in with a Google account
-            if (!checkIfGoogleAccount()) {
+            if (requiresPassword()) {
                 PasswordField(
                     isLoginLayout = false,
                     password = userPassword.value,
@@ -105,5 +82,26 @@ fun LogoutDeleteLayout(
                 Spacer(modifier = Modifier.height(20.dp))
             }
         }
+
+        ConfirmDeleteAccountDialog(
+            visible = showDialog.value,
+            requirePassword = requiresPassword(),
+            password = userPassword.value,
+            onPasswordChange = { userPassword.value = it },
+            onDismiss = {
+                Logger.withTag("LogoutDelete").d { "Confirm dialog dismissed" }
+                showDialog.value = false
+            },
+            onConfirm = {
+                val needsPass = requiresPassword()
+                Logger.withTag("LogoutDelete").d { "Confirm delete clicked, requiresPassword=$needsPass passwordLength=${userPassword.value.length}" }
+                showDialog.value = false
+                onLoginEvent(
+                    LoginEvent.RevokeAccess(
+                        password = if (needsPass) userPassword.value else null
+                    )
+                )
+            },
+        )
     }
 }

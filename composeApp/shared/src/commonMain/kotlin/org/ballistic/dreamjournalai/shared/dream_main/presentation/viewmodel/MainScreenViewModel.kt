@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
@@ -31,6 +30,7 @@ import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.core.util.StoreLinkOpener
 import org.jetbrains.compose.resources.DrawableResource
+import kotlin.time.ExperimentalTime
 
 class MainScreenViewModel(
     private val repo: AuthRepository,
@@ -48,8 +48,9 @@ class MainScreenViewModel(
         )
     }
 
+    @OptIn(ExperimentalTime::class)
     private fun getBackgroundResource(): DrawableResource {
-        val currentTime =  Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val currentTime =  kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val currentHour = currentTime.hour
 
         return if (currentHour in 20..23 || currentHour in 0..5) {

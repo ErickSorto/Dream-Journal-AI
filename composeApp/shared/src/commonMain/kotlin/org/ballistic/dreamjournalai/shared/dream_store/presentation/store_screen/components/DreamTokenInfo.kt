@@ -35,16 +35,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.skydoves.landscapist.ImageOptions
-import com.skydoves.landscapist.coil3.CoilImage
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.dream_token
-import kotlinx.datetime.Clock
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LighterYellow
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
 import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.viewmodel.StoreScreenViewModelState
 import org.jetbrains.compose.resources.painterResource
+import kotlin.time.ExperimentalTime
 
 
 @Composable
@@ -96,15 +94,15 @@ fun DreamToken500ButtonBuy(
         ),
         enabled = !storeScreenViewModelState.isBillingClientLoading
     ) {
-        CoilImage(
-            imageModel = { Res.drawable.dream_token },
+        // Replaced CoilImage with Compose Image for static resource
+        Image(
+            painter = painterResource(Res.drawable.dream_token),
+            contentDescription = "Dream Token",
             modifier = Modifier
                 .offset(x = (-12).dp)
                 .padding(end = 4.dp)
                 .size(48.dp),
-            imageOptions = ImageOptions(
-                contentScale = ContentScale.FillBounds
-            ),
+            contentScale = ContentScale.FillBounds
         )
         Box(modifier = Modifier.fillMaxWidth()) {
             Text(
@@ -266,13 +264,14 @@ private fun lerp(fraction: Float): Float {
     return (1 - fraction) * -1000f + fraction * 1000f
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun singleClick(
     lastClickTimeState: MutableState<Long>,
     onClick: () -> Unit
 ): () -> Unit {
     return {
-        val now = Clock.System.now().toEpochMilliseconds()
+        val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
         if (now - lastClickTimeState.value >= 300) {
             onClick()
             lastClickTimeState.value = now

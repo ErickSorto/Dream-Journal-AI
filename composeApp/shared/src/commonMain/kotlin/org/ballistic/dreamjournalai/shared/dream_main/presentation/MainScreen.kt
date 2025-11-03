@@ -17,6 +17,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -50,15 +52,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import coil3.compose.AsyncImage
-import com.skydoves.landscapist.ImageOptions
-import com.skydoves.landscapist.coil3.CoilImage
 import dev.icerock.moko.permissions.DeniedAlwaysException
 import dev.icerock.moko.permissions.DeniedException
 import dev.icerock.moko.permissions.Permission
@@ -67,18 +68,18 @@ import dev.icerock.moko.permissions.compose.BindEffect
 import dev.icerock.moko.permissions.compose.PermissionsControllerFactory
 import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
 import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.background_during_day
 import dreamjournalai.composeapp.shared.generated.resources.blue_lighthouse
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.shared.navigation.DrawerNavigation
-import org.ballistic.dreamjournalai.shared.navigation.Route
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Yellow
+import org.ballistic.dreamjournalai.shared.core.platform.getPlatformName
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
+import org.ballistic.dreamjournalai.shared.dream_main.presentation.components.BottomNavigation
 import org.ballistic.dreamjournalai.shared.dream_main.presentation.components.DrawerGroupHeading
 import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
+import org.ballistic.dreamjournalai.shared.navigation.DrawerNavigation
+import org.ballistic.dreamjournalai.shared.navigation.Route
 import org.ballistic.dreamjournalai.shared.navigation.ScreenGraph
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.components.BottomNavigation
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
@@ -139,7 +140,7 @@ fun MainScreenView(
             title = "Settings",
             items = listOf(
                 DrawerNavigation.AccountSettings,
-             //   DrawerNavigation.NotificationSettings,
+                //   DrawerNavigation.NotificationSettings,
                 //    Screens.DreamSettings,
             )
         ),
@@ -181,56 +182,59 @@ fun MainScreenView(
         drawerState = mainScreenViewModelState.drawerMain,
         gesturesEnabled = mainScreenViewModelState.isDrawerEnabled,
         drawerContent = {
-            Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                ModalDrawerSheet {
-                    Spacer(Modifier.height(12.dp))
+            ModalDrawerSheet(modifier = Modifier.fillMaxHeight()) {
+                Column(modifier = Modifier.fillMaxHeight()) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Spacer(Modifier.height(12.dp))
 
-                    drawerGroups.forEach { group ->
-                        DrawerGroupHeading(title = group.title)
+                        drawerGroups.forEach { group ->
+                            DrawerGroupHeading(title = group.title)
 
-                        group.items.forEach { item ->
-                            NavigationDrawerItem(
-                                icon = {
-                                    if (item == DrawerNavigation.RateMyApp) {
-                                        AnimatedHeartIcon()
-                                    } else {
-                                        Icon(
-                                            item.icon,
-                                            contentDescription = null
-                                        )
-                                    }
-                                },
-                                label = { Text(item.title ?: "") },
-                                selected = item == selectedItem.value,
-                                onClick = {
-                                    onMainEvent(MainScreenEvent.TriggerVibration)
-                                    coroutineScope.launch {
-                                        mainScreenViewModelState.drawerMain.close()
-                                    }
-                                    selectedItem.value = item
-
-                                    if (item == DrawerNavigation.RateMyApp) {
-                                        onMainEvent(MainScreenEvent.OpenStoreLink)
-                                    } else {
-                                        navController.navigate(item.route) {
-                                            popUpTo(DrawerNavigation.DreamJournalScreen.route) {
-                                                saveState = true
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = true
+                            group.items.forEach { item ->
+                                NavigationDrawerItem(
+                                    icon = {
+                                        if (item == DrawerNavigation.RateMyApp) {
+                                            AnimatedHeartIcon()
+                                        } else {
+                                            Icon(
+                                                item.icon,
+                                                contentDescription = null
+                                            )
                                         }
-                                    }
-                                },
-                                modifier = Modifier
-                                    .padding(NavigationDrawerItemDefaults.ItemPadding)
-                                    .fillMaxWidth()
-                            )
+                                    },
+                                    label = { Text(item.title ?: "") },
+                                    selected = item == selectedItem.value,
+                                    onClick = {
+                                        onMainEvent(MainScreenEvent.TriggerVibration)
+                                        coroutineScope.launch {
+                                            mainScreenViewModelState.drawerMain.close()
+                                        }
+                                        selectedItem.value = item
+
+                                        if (item == DrawerNavigation.RateMyApp) {
+                                            onMainEvent(MainScreenEvent.OpenStoreLink)
+                                        } else {
+                                            navController.navigate(item.route) {
+                                                popUpTo(DrawerNavigation.DreamJournalScreen.route) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .padding(NavigationDrawerItemDefaults.ItemPadding)
+                                        .fillMaxWidth()
+                                )
+                            }
                         }
                     }
+
                     Text(
                         text = "Version: 1.2.8",
                         color = if (isSystemInDarkTheme()) Color.White else Color.Black,
@@ -253,22 +257,48 @@ fun MainScreenView(
                         enter = slideInVertically(initialOffsetY = { it + 100 }),
                         exit = slideOutVertically(targetOffsetY = { it + 100 })
                     ) {
-                        BottomNavigation(
-                            navController = navController,
-                            modifier = Modifier.navigationBarsPadding(),
-                            onMainEvent = { onMainEvent(it) },
-                            isNavigationEnabled = mainScreenViewModelState.isBottomBarEnabledState
-                        )
+                        val bottomPadding = if (getPlatformName() == "iOS") 0.dp else 16.dp
                         Box(
                             modifier = Modifier
+                                .padding(start = 8.dp, end = 8.dp, bottom = bottomPadding)
                                 .navigationBarsPadding()
-                                .offset(y = (-24).dp)
-                                .fillMaxWidth()
+                                .height(72.dp)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
                         ) {
+
+                            // Glassmorphic background with gradient
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            colors = listOf(
+                                                Color(128, 0, 128, 153), // Vibrant Purple with transparency
+                                                Color(255, 20, 147, 128),  // Deep Pink with transparency
+                                                Color(128, 0, 128, 153) // Vibrant Purple with transparency
+                                            )
+                                        )
+                                    )
+                                    .blur(10.dp)
+                            )
+
+                            // BottomNavigation aligned to the bottom of the Box
+                            BottomNavigation(
+                                navController = navController,
+                                modifier = Modifier.align(Alignment.BottomCenter),
+                                onMainEvent = onMainEvent,
+                                isNavigationEnabled = mainScreenViewModelState.isBottomBarEnabledState
+                            )
+
+                            // FAB aligned to the top-center of the Box
                             FloatingActionButton(
                                 onClick = {
                                     if (mainScreenViewModelState.isBottomBarEnabledState) {
                                         onMainEvent(MainScreenEvent.TriggerVibration)
+                                        // Temporarily disable bottom navigation to avoid rapid taps navigating elsewhere
+                                        onMainEvent(MainScreenEvent.SetBottomBarEnabledState(false))
                                         navController.navigate(
                                             Route.AddEditDreamScreen(
                                                 dreamID = "",
@@ -280,25 +310,42 @@ fun MainScreenView(
                                                 inclusive = true
                                             }
                                         }
+                                        // Re-enable bottom bar shortly after navigation starts
+                                        coroutineScope.launch {
+                                            delay(700)
+                                            onMainEvent(MainScreenEvent.SetBottomBarEnabledState(true))
+                                        }
                                     }
                                 },
-                                containerColor = Yellow,
-                                elevation = FloatingActionButtonDefaults.elevation(
-                                    3.dp,
-                                    4.dp
-                                ),
+                                elevation = FloatingActionButtonDefaults.elevation(3.dp, 4.dp),
                                 shape = CircleShape,
                                 modifier = Modifier
-                                    .size(60.dp)
-                                    .align(Alignment.Center)
-
+                                    .align(Alignment.TopCenter)
+                                    .offset(y = (-18).dp)
+                                    .size(68.dp),
+                                containerColor = Color.Transparent
                             ) {
-                                Icon(
-                                    Icons.Filled.Add,
-                                    tint = Color.White,
-                                    contentDescription = "Add dream",
-                                    modifier = Modifier.size(32.dp)
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            brush = Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color(255, 105, 180),
+                                                    Color(110, 40, 110)
+                                                )
+                                            ),
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Add,
+                                        tint = Color.White,
+                                        contentDescription = "Add dream",
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
                             }
                         }
                     }

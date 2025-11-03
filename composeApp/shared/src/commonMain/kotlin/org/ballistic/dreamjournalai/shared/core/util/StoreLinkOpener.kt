@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.shared.core.util
 
+
 expect interface StoreLinkOpener {
     /**
      * Opens the store link for the current platform.

@@ -75,7 +75,7 @@ fun formatCustomDate(date: LocalDate): String {
     val monthAbbr = MONTH_ABBR_MAP.entries.find { it.value == date.month.number }?.key
         ?: throw IllegalArgumentException("Invalid month number: ${date.month.number}")
 
-    return "$monthAbbr ${date.dayOfMonth}, ${date.year}"
+    return "$monthAbbr ${date.day}, ${date.year}"
 }
 
 /**
@@ -114,7 +114,7 @@ fun formatLocalDate(localDate: LocalDate): String {
     val shortMonthNames = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
     val monthName = shortMonthNames[localDate.month.ordinal]
-    val day = localDate.dayOfMonth
+    val day = localDate.day
     val year = localDate.year
     return "$monthName $day, $year"
 }
@@ -187,8 +187,8 @@ fun getDaysInMonth(year: Int, month: Int): Int {
  */
 fun addOneDay(dateTime: LocalDateTime): LocalDateTime {
     var year = dateTime.year
-    var month = dateTime.monthNumber
-    var day = dateTime.dayOfMonth + 1
+    var month = dateTime.month.number
+    var day = dateTime.day + 1
 
     val daysInMonth = getDaysInMonth(year, month)
 
@@ -211,8 +211,8 @@ fun addOneDay(dateTime: LocalDateTime): LocalDateTime {
 fun addMinutes(dateTime: LocalDateTime, minutesToAdd: Int): LocalDateTime {
     var totalMinutes = dateTime.hour * 60 + dateTime.minute + minutesToAdd
     var year = dateTime.year
-    var month = dateTime.monthNumber
-    var day = dateTime.dayOfMonth
+    var month = dateTime.month.number
+    var day = dateTime.day
 
     // Adjust if totalMinutes is negative (going back in time)
     while (totalMinutes < 0) {

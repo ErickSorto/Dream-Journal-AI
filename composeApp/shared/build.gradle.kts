@@ -1,6 +1,7 @@
 import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -9,31 +10,65 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.googleServices)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.kotlinCocoapods)
 }
 
 kotlin {
     androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "17"
-            }
+        compilerOptions {
+            freeCompilerArgs.add("-Xexpect-actual-classes")
+        }
+    }
+    iosArm64 {
+        compilerOptions {
+            freeCompilerArgs.add("-Xexpect-actual-classes")
+        }
+    }
+    iosSimulatorArm64 {
+        compilerOptions {
+            freeCompilerArgs.add("-Xexpect-actual-classes")
+        }
+    }
+    // (optional if you test on Intel Mac)
+    // iosX64()
+
+    cocoapods {
+        version = "1.0"
+        summary = "Shared Kotlin code for the app"
+        homepage = "https.example.com"
+        ios.deploymentTarget = "13.0"
+        // Point to the top-level iOS app Podfile
+        podfile = project.file("../../iosApp/Podfile")
+
+        pod("GoogleSignIn") {
+            extraOpts += listOf("-compiler-option", "-fmodules")
+        }
+
+
+
+        // Pod name and framework name should match how Swift imports it: `import ComposeApp`
+        name = "ComposeApp"
+        framework {
+            baseName = "ComposeApp"
+            isStatic = true
+            linkerOpts.add("-lsqlite3")
         }
     }
 
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            export("io.github.mirzemehdi:kmpnotifier:1.4.0")
-            baseName = "ComposeApp"
-            isStatic = true
-        }
-    }
+
+//    listOf(
+//        iosArm64(),
+//        iosSimulatorArm64()
+//    ).forEach { iosTarget ->
+//        iosTarget.binaries.framework {
+//            baseName = "shared"
+//            isStatic = true
+//        }
+//    }
 
     sourceSets {
         commonMain.dependencies {
+            implementation("co.touchlab.crashkios:crashlytics:0.9.0")
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -41,11 +76,11 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
-            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10")
+            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.1")
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.kotlin.stdlib)
             implementation(libs.datetime)
-            implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc10")
+            implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13")
 
 
             //Image
@@ -54,15 +89,12 @@ kotlin {
             implementation(libs.kotlinx.serialization.json.v180rc)
 
             //firebase functions
-            implementation(libs.googleid)
             implementation(libs.firebaseFirestore)
             implementation(libs.firebaseFunctions)
             implementation(libs.firebaseStorage)
             implementation(libs.firebaseAuth)
-            implementation(libs.firebaseAnalytics)
 
             implementation(libs.lexilabs.basic.ads)
-            implementation(libs.playServicesAds)
 
 
 
@@ -71,9 +103,9 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
 
-            implementation(libs.kmpauth.google) //Google One Tap Sign-In
-            implementation(libs.kmpauth.firebase) //Integrated Authentications with Firebase
-            implementation(libs.kmpauth.uihelper) //UiHelper SignIn buttons (AppleSignIn, GoogleSignInButton)
+//            implementation(libs.kmpauth.google) //Google One Tap Sign-In
+//            implementation(libs.kmpauth.firebase) //Integrated Authentications with Firebase
+//            implementation(libs.kmpauth.uihelper) //UiHelper SignIn buttons (AppleSignIn, GoogleSignInButton)
 
             //openai
             implementation(project.dependencies.platform(libs.openaiClientBom))
@@ -81,7 +113,7 @@ kotlin {
 
             implementation(compose.materialIconsExtended)
 
-            implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+            implementation("io.coil-kt.coil3:coil-compose:3.3.0")
 
             implementation(libs.in1.app.review.kmp.google.play)
 
@@ -112,6 +144,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
 
+
             //koin
             implementation(libs.koin.android)
             implementation(libs.koin.androidx.compose)
@@ -128,13 +161,20 @@ kotlin {
             implementation(libs.ktor.client.android)
             implementation(libs.ktor.serialization.kotlinx.json)
 
-            implementation("io.coil-kt.coil3:coil-network-ktor2:3.0.0")
-            implementation("io.coil-kt.coil3:coil-network-ktor3:3.0.0")
+            implementation("io.coil-kt.coil3:coil-network-ktor2:3.3.0")
+            implementation("io.coil-kt.coil3:coil-network-ktor3:3.3.0")
+
+
+            implementation(libs.playServicesAds)
+            implementation(libs.googleid)
+            implementation(libs.credentials)
+            implementation(libs.credentialsPlayServicesAuth)
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.8.0"))
         }
 
         iosMain {
             dependencies {
-                implementation("io.ktor:ktor-client-darwin:3.0.0")
+                implementation(libs.ktor.client.darwin)
                 // Add iOS-specific dependencies here. This a source set created by Kotlin Gradle
                 // Plugin (KGP) that each specific iOS target (e.g., iosX64) depends on as
                 // part of KMP’s default source set hierarchy. Note that this source set depends
@@ -142,13 +182,16 @@ kotlin {
                 // KMP dependencies declared in commonMain.
             }
         }
+
+        named { it.lowercase().startsWith("ios") }.configureEach {
+            languageSettings {
+                optIn("kotlinx.cinterop.ExperimentalForeignApi")
+            }
+        }
     }
 }
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-}
+
+
 android {
     namespace = "org.ballistic.dreamjournalai.shared"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -175,8 +218,8 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -189,6 +232,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     dependencies {
         debugImplementation(libs.compose.ui.tooling)
     }
@@ -197,5 +241,3 @@ android {
         kotlinCompilerExtensionVersion = libs.versions.compose.toString()
     }
 }
-
-

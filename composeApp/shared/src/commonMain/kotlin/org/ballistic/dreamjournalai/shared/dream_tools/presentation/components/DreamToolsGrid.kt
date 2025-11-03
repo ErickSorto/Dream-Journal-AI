@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.components.singleClick
+import org.ballistic.dreamjournalai.shared.navigation.DreamDrawable
 import org.ballistic.dreamjournalai.shared.navigation.DreamTools
 import org.ballistic.dreamjournalai.shared.navigation.ToolRoute
 import org.ballistic.dreamjournalai.shared.navigation.toDrawableResource
@@ -37,7 +38,7 @@ fun SharedTransitionScope.DreamToolsGrid(
             val tool = dreamToolsList[index]
             DreamToolItem(
                 title = tool.title,
-                icon = tool.route.image.toDrawableResource(),
+                icon = DreamDrawable.valueOf(tool.route.image).toDrawableResource(),
                 description = tool.description,
                 enabled = tool.enabled,
                 onClick = singleClick(
@@ -45,7 +46,7 @@ fun SharedTransitionScope.DreamToolsGrid(
                     onClick = { onNavigate(tool.route) }
                 ),
                 modifier = Modifier.sharedElement(
-                    rememberSharedContentState(key = "image/${tool.route.image.name}"),
+                    rememberSharedContentState(key = "image/${tool.route.image}"),
                     animatedVisibilityScope = animatedVisibilityScope,
                     boundsTransform = { _, _ ->
                         tween(500)

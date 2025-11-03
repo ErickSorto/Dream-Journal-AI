@@ -41,9 +41,12 @@ fun SignInGoogleButton(
             exit = slideOutHorizontally { -1000 }
         ) {
             Button(
-                modifier = Modifier.padding().fillMaxWidth(),
+                modifier = Modifier.padding(top = 8.dp).fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SkyBlue
+                    containerColor = SkyBlue,
+                    disabledContainerColor = SkyBlue,
+                    contentColor = Color.Black,
+                    disabledContentColor = Color.Black
                 ),
                 enabled = isEnabled,
                 onClick = onClick

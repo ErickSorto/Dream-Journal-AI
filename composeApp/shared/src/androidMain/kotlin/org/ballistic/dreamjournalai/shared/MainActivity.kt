@@ -37,7 +37,8 @@ class MainActivity : ComponentActivity() {
             App(
                 onSplashFinished = {
                     keepSplashOpened = false
-                }
+                },
+                context = this@MainActivity
             )
         }
     }
