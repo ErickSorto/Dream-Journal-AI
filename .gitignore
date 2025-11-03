@@ -1,3 +1,4 @@
+# IntelliJ / Android Studio
 *.iml
 .gradle
 /local.properties
@@ -8,25 +9,47 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
+
+# Build outputs
 /build
-/captures
+**/build/
+**/out/
 .externalNativeBuild
 .cxx
+
+# Local config files
 local.properties
+
+# Android-specific
+/captures
 /composeApp/release/
 /composeApp/google-services.json
 /composeApp/src/main/assets
+
+# iOS-specific
 /iosApp/GoogleService-Info.plist
+/iosApp/Pods/
+/iosApp/build/
+/iosApp/iosApp.xcworkspace/xcuserdata/
+/iosApp/Pods/Pods.xcodeproj/xcuserdata/
+
+# KMM shared outputs
+composeApp/shared/build/
+
+# Kotlin/Native caches and intermediates
+.kotlin/
+**/.konan/
+**/*.klib
+
+# Generated frameworks (CocoaPods + KMP)
+composeApp/shared/build/bin/**/pod*Framework/**
+
+# Xcode derived data
+**/DerivedData/
 
 # Ignore all nested build outputs across the repo
 **/build/
 **/out/
 
-# Ignore Kotlin/Native and cinterop metadata caches
-.kotlin/
-
-# Ignore Xcode derived data if ever present
-**/DerivedData/
-
-# Explicitly ignore KMP shared build outputs (defensive)
-composeApp/shared/build/
+# Optional OS files
+.DS_Store
