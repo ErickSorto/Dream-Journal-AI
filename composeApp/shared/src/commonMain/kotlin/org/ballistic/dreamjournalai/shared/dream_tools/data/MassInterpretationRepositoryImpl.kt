@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.shared.dream_tools.data
 
 
+import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -8,10 +9,15 @@ import dev.gitlive.firebase.firestore.FirebaseFirestoreException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import org.ballistic.dreamjournalai.shared.core.Constants
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.MassInterpretationRepository
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.model.MassInterpretation
+
+private val readLogger = Logger.withTag("DJAI/Reads/MassInterpretations")
 
 class MassInterpretationRepositoryImpl(
     private val db: FirebaseFirestore
@@ -42,6 +48,7 @@ class MassInterpretationRepositoryImpl(
             val updatedInterpretation = massInterpretation.copy(id = docRef.id)
 
             // In GitLive, set(...) is already a suspend function
+            readLogger.d { "Log.d(\"DJAI/Reads/MassInterpretations\"){ addInterpretation(id=${updatedInterpretation.id}) – write operation (no read) }" }
             docRef.set(updatedInterpretation)
 
             Resource.Success(Unit)
@@ -59,20 +66,34 @@ class MassInterpretationRepositoryImpl(
         val collectionRef = getCollectionReferenceForMassInterpretations()
             ?: return flowOf(emptyList())
 
-        return collectionRef.snapshots().map { querySnapshot ->
-            querySnapshot.documents.mapNotNull { document ->
-                // 'data' is a Map<String, Any> or null
-                val data = document.data<Map<String, Any>>() ?: return@mapNotNull null
-
-                MassInterpretation(
-                    interpretation = data["interpretation"] as? String ?: "",
-                    listOfDreamIDs = (data["listOfDreamIDs"] as? List<String?>) ?: emptyList(),
-                    date = data["date"] as? Long ?: 0L,
-                    model = data["model"] as? String ?: "",
-                    id = document.id // Or if you want to store the Firestore doc ID here
-                )
+        var emissions = 0
+        return collectionRef.snapshots()
+            .onStart { readLogger.d { "Log.d(\"DJAI/Reads/MassInterpretations\"){ Subscribing to interpretations snapshots for uid=${currentUser?.uid} }" } }
+            .onEach { qs ->
+                emissions += 1
+                readLogger.d { "Log.d(\"DJAI/Reads/MassInterpretations\"){ Snapshot #$emissions received, documents=${qs.documents.size} }" }
             }
-        }
+            .onCompletion { cause ->
+                if (cause == null) {
+                    readLogger.d { "Log.d(\"DJAI/Reads/MassInterpretations\"){ Unsubscribed after $emissions emissions }" }
+                } else {
+                    readLogger.d { "Log.d(\"DJAI/Reads/MassInterpretations\"){ Completed with error: ${cause.message} after $emissions emissions }" }
+                }
+            }
+            .map { querySnapshot ->
+                querySnapshot.documents.mapNotNull { document ->
+                    // 'data' is a Map<String, Any> or null
+                    val data = document.data<Map<String, Any>>() ?: return@mapNotNull null
+
+                    MassInterpretation(
+                        interpretation = data["interpretation"] as? String ?: "",
+                        listOfDreamIDs = (data["listOfDreamIDs"] as? List<String?>) ?: emptyList(),
+                        date = data["date"] as? Long ?: 0L,
+                        model = data["model"] as? String ?: "",
+                        id = document.id // Or if you want to store the Firestore doc ID here
+                    )
+                }
+            }
     }
 
     override suspend fun removeInterpretation(massInterpretation: MassInterpretation): Resource<Unit> {
@@ -81,6 +102,7 @@ class MassInterpretationRepositoryImpl(
             if (massInterpretation.id.isNullOrEmpty()) {
                 return Resource.Error("Cannot remove interpretation without an ID")
             }
+            readLogger.d { "Log.d(\"DJAI/Reads/MassInterpretations\"){ removeInterpretation(id=${massInterpretation.id}) – write operation (no read) }" }
             collectionReference?.document(massInterpretation.id)?.delete()
             Resource.Success()
         } catch (e: FirebaseFirestoreException) {
@@ -88,4 +110,3 @@ class MassInterpretationRepositoryImpl(
         }
     }
 }
-

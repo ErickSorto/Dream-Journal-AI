@@ -46,10 +46,3 @@ composeApp/shared/build/bin/**/pod*Framework/**
 
 # Xcode derived data
 **/DerivedData/
-
-# Ignore all nested build outputs across the repo
-**/build/
-**/out/
-
-# Optional OS files
-.DS_Store
