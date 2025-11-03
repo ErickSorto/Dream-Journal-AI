@@ -16,3 +16,19 @@ local.properties
 /composeApp/release/
 /composeApp/google-services.json
 /composeApp/src/main/assets
+/composeApp/**/build/
+/composeApp/shared/build/
+/.kotlin/
+
+# iOS/CocoaPods and Xcode user data
+/iosApp/Pods/
+/iosApp/build/
+/iosApp/iosApp.xcworkspace/xcuserdata/
+/iosApp/Pods/Pods.xcodeproj/xcuserdata/
+
+# Kotlin/Native and KMP intermediates
+**/*.klib
+**/.konan/
+
+# Generated frameworks
+composeApp/shared/build/bin/**/pod*Framework/**
