@@ -15,6 +15,9 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.ballistic.dreamjournalai.shared.core.Constants.USERS
@@ -29,6 +32,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 private val logger = Logger.withTag("DreamRepositoryImpl")
+private val readLogger = Logger.withTag("DJAI/Reads/Dreams")
 
 class DreamRepositoryImpl(
     private val db: FirebaseFirestore
@@ -43,6 +47,10 @@ class DreamRepositoryImpl(
 
     private var currentDreamId: String = ""
 
+    // Rough counters (client-side approximation only)
+    private var dreamsSnapshotEmissions: Int = 0
+    private var singleDocReads: Int = 0
+
     // Add this function to get the current user's UID
     private fun userID(): String? {
         return Firebase.auth.currentUser?.uid
@@ -52,11 +60,29 @@ class DreamRepositoryImpl(
         val collection = getCollectionReferenceForDreams()
             ?: return flowOf(emptyList())
 
-        return collection.snapshots().map { querySnapshot ->
-            querySnapshot.documents.mapNotNull { doc ->
-                doc.toDream()
+        return collection
+            .snapshots()
+            .onStart {
+                dreamsSnapshotEmissions = 0
+                readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ Subscribing to getDreams() snapshots for uid=${userID()} }" }
             }
-        }
+            .onEach { querySnapshot ->
+                dreamsSnapshotEmissions += 1
+                val count = querySnapshot.documents.size
+                readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ Dreams snapshot #$dreamsSnapshotEmissions received, documents=$count }" }
+            }
+            .onCompletion { cause ->
+                if (cause == null) {
+                    readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ Unsubscribed from getDreams() snapshots cleanly after $dreamsSnapshotEmissions emissions }" }
+                } else {
+                    readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ getDreams() snapshots completed with error: ${cause.message} after $dreamsSnapshotEmissions emissions }" }
+                }
+            }
+            .map { querySnapshot ->
+                querySnapshot.documents.mapNotNull { doc ->
+                    doc.toDream()
+                }
+            }
     }
 
     private fun DocumentSnapshot.toDream(): Dream? {
@@ -69,6 +95,8 @@ class DreamRepositoryImpl(
     }
 
     override suspend fun getDream(id: String): Resource<Dream> {
+        readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ getDream(id=$id) – performing single document read }" }
+        singleDocReads += 1
         return try {
             // 1) Get the doc reference from your "my_dreams" subcollection
             val docRef = getCollectionReferenceForDreams()?.document(id)
@@ -79,15 +107,18 @@ class DreamRepositoryImpl(
 
             // 3) Check if the document exists, parse the data
             if (snapshot.exists) {
+                readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ getDream(id=$id) – read success (exists=true). Total singleDocReads=$singleDocReads }" }
 
                 val dream = snapshot.getDream()  // see extension below
 
                 Resource.Success(dream)
             } else {
+                readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ getDream(id=$id) – document not found }" }
                 Resource.Error("Dream not found")
             }
 
         } catch (e: Exception) {
+            readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ getDream(id=$id) – error: ${e.message} }" }
             Resource.Error("Error fetching dream: ${e.message}")
         }
     }
@@ -216,6 +247,7 @@ class DreamRepositoryImpl(
 
 
     override suspend fun deleteDream(id: String): Resource<Unit> {
+        readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ deleteDream(id=$id) – will fetch dream first to remove image (additional read) }" }
         return try {
             // 1) Fetch the dream first
             val dreamResult = getDream(id)

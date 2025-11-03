@@ -4,11 +4,12 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -19,6 +20,7 @@ import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.Dr
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.util.OrderType
 
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DreamJournalListViewModel(
     private val dreamUseCases: DreamUseCases,
     private val vibratorUtil: VibratorUtil,
@@ -27,17 +29,16 @@ class DreamJournalListViewModel(
 
     private val _dreamJournalListState = MutableStateFlow(DreamJournalListState())
     val dreamJournalListState: StateFlow<DreamJournalListState> = _dreamJournalListState.asStateFlow()
-
     private val _searchTextFieldState = MutableStateFlow(TextFieldState())
-
     val searchTextFieldState: StateFlow<TextFieldState> = _searchTextFieldState.asStateFlow()
 
     private var recentlyDeletedDream: Dream? = null
 
-    private var getDreamJob: Job? = null
+    // Track order as a flow to drive a single hot subscription
+    private val orderTypeFlow: MutableStateFlow<OrderType> = MutableStateFlow(OrderType.Date)
 
     init {
-        getDreams(OrderType.Date)
+        onEvent(DreamListEvent.FetchDreams)
     }
 
     fun onEvent(event: DreamListEvent) {
@@ -51,8 +52,6 @@ class DreamJournalListViewModel(
             is DreamListEvent.TriggerReview -> {
                 // For example, check conditions before prompting
                 val dreamCount = dreamJournalListState.value.dreams.size
-                // or load from DB, or pass in from the composable, etc.
-
                 if (dreamCount >= 2) {
 //                    viewModelScope.launch {
 //                        reviewComponent.requestInAppReview().collect { resultCode ->
@@ -76,10 +75,11 @@ class DreamJournalListViewModel(
                 }
             }
             is DreamListEvent.Order -> {
-                if (dreamJournalListState.value.orderType == event.orderType) {
-                    return
+                // Update order type; the single subscription will react via flatMapLatest
+                if (dreamJournalListState.value.orderType != event.orderType) {
+                    _dreamJournalListState.value = _dreamJournalListState.value.copy(orderType = event.orderType)
+                    orderTypeFlow.value = event.orderType
                 }
-                getDreams(event.orderType)
             }
             is DreamListEvent.SetSearchingState -> {
                 _dreamJournalListState.value = _dreamJournalListState.value.copy(
@@ -99,32 +99,29 @@ class DreamJournalListViewModel(
                 )
             }
             is DreamListEvent.FetchDreams -> {
-                getDreams(dreamJournalListState.value.orderType)
+                // Build a single subscription that reacts to order changes and search text
+                orderTypeFlow
+                    .flatMapLatest { orderType ->
+                        dreamUseCases.getDreams(orderType)
+                    }
+                    .combine(
+                        snapshotFlow { searchTextFieldState.value.text }
+                    ) { dreams, searchText ->
+                        if (searchText.isBlank()) dreams
+                        else dreams.filter { it.doesMatchSearchQuery(searchText.toString()) }
+                    }
+                    .onEach { filteredDreams ->
+                        _dreamJournalListState.value = _dreamJournalListState.value.copy(
+                            dreams = filteredDreams,
+                            orderType = orderTypeFlow.value,
+                        )
+                    }
+                    .launchIn(viewModelScope)
             }
         }
     }
-
-    private fun getDreams(orderType: OrderType) {
-        getDreamJob?.cancel()
-        getDreamJob = dreamUseCases.getDreams(orderType)
-            .combine(
-                snapshotFlow { searchTextFieldState.value.text }
-            ) { dreams, searchText ->
-                if (searchText.isBlank()) {
-                    dreams
-                } else {
-                    dreams.filter { it.doesMatchSearchQuery(searchText.toString()) }
-                }
-            }
-            .onEach { filteredDreams ->
-                _dreamJournalListState.value = dreamJournalListState.value.copy(
-                    dreams = filteredDreams,
-                    orderType = orderType,
-                )
-            }
-            .launchIn(viewModelScope)
-    }
 }
+
 
 data class DreamJournalListState(
     val dreams: List<Dream> = emptyList(),

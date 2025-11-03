@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.shared.dream_journal_list.presentation
 
+import co.touchlab.kermit.Logger
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -14,19 +15,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
@@ -54,39 +48,16 @@ fun DreamJournalListScreen(
     onDreamListEvent: (DreamListEvent) -> Unit = {},
     onNavigateToDream: (dreamID: String?, backgroundID: Int) -> Unit
 ) {
+    val uiLogger = Logger.withTag("DJAI/UI/DreamListScreen")
     val scope = rememberCoroutineScope()
 
-    val dreamState by rememberUpdatedState(dreamJournalListState.dreams)
-    val dreamCount = dreamJournalListState.dreams.size
-    val isRecentlySaved = mainScreenViewModelState.isDreamRecentlySaved
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                onDreamListEvent(DreamListEvent.FetchDreams)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
     LaunchedEffect(Unit) {
+        uiLogger.d { "Log.d(\"DJAI/UI/DreamListScreen\"){ LaunchedEffect(Unit) – setting main UI chrome visibility }" }
         onMainEvent(MainScreenEvent.SetBottomBarVisibilityState(true))
         onMainEvent(MainScreenEvent.SetFloatingActionButtonState(true))
         onMainEvent(MainScreenEvent.SetDrawerState(true))
     }
 
-//    // The key part: trigger in-app review from the VM if conditions are met
-//    LaunchedEffect(isRecentlySaved) {
-//        if (dreamCount >= 2 && isRecentlySaved) {
-//            delay(1000)
-//            // Dispatch the "TriggerReview" event to the VM
-//            onDreamListEvent(DreamListEvent.TriggerReview)
-//        }
-//    }
 
     if (dreamJournalListState.bottomDeleteCancelSheetState) {
         ActionBottomSheet(
