@@ -17,3 +17,16 @@ local.properties
 /composeApp/google-services.json
 /composeApp/src/main/assets
 /iosApp/GoogleService-Info.plist
+
+# Ignore all nested build outputs across the repo
+**/build/
+**/out/
+
+# Ignore Kotlin/Native and cinterop metadata caches
+.kotlin/
+
+# Ignore Xcode derived data if ever present
+**/DerivedData/
+
+# Explicitly ignore KMP shared build outputs (defensive)
+composeApp/shared/build/
