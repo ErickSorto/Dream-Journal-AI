@@ -1,5 +1,6 @@
 package org.ballistic.dreamjournalai.shared.dream_journal_list.presentation
 
+import co.touchlab.kermit.Logger
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -12,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -63,10 +63,12 @@ fun DreamJournalListScreen(
     }
 
     LaunchedEffect(Unit) {
+        uiLogger.d { "Log.d(\"DJAI/UI/DreamListScreen\"){ LaunchedEffect(Unit) – setting main UI chrome visibility }" }
         onMainEvent(MainScreenEvent.SetBottomBarVisibilityState(true))
         onMainEvent(MainScreenEvent.SetFloatingActionButtonState(true))
         onMainEvent(MainScreenEvent.SetDrawerState(true))
     }
+
 
     if (dreamJournalListState.bottomDeleteCancelSheetState) {
         ActionBottomSheet(
