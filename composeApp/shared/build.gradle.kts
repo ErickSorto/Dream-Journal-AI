@@ -68,6 +68,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.4.0")
             implementation("co.touchlab.crashkios:crashlytics:0.9.0")
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -131,7 +132,7 @@ kotlin {
             implementation(libs.koalaplot.core)
             implementation(libs.ktor.client.core)
 
-            implementation("co.touchlab:kermit:2.0.4")
+            implementation("co.touchlab:kermit:2.0.8")
         }
 
         commonTest {

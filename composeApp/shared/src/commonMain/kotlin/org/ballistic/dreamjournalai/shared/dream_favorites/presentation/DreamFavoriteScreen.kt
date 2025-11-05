@@ -14,10 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -39,23 +36,19 @@ import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.compo
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_favorites.presentation.components.DreamFavoriteScreenTopBar
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.shared.dream_favorites.presentation.viewmodel.DreamFavoriteScreenState
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.core.util.formatCustomDate
 import org.ballistic.dreamjournalai.shared.core.util.parseCustomDate
-import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DreamFavoriteScreen(
     dreamFavoriteScreenState: DreamFavoriteScreenState,
-    mainScreenViewModelState: MainScreenViewModelState,
     bottomPaddingValue: Dp,
     onEvent: (FavoriteEvent) -> Unit,
-    onNavigateToDream: (dreamID: String?, backgroundID: Int) -> Unit,
-    onMainEvent: (MainScreenEvent) -> Unit // Add onMainEvent parameter
+    onNavigateToDream: (dreamID: String?, backgroundID: Int) -> Unit
 ) {
     val scope = rememberCoroutineScope()
 
@@ -89,8 +82,6 @@ fun DreamFavoriteScreen(
     Scaffold(
         topBar = {
             DreamFavoriteScreenTopBar(
-                mainScreenViewModelState = mainScreenViewModelState,
-                onOpenDrawer = { onMainEvent(MainScreenEvent.ToggleDrawerState(DrawerValue.Open)) }
             )
         },
         containerColor = Color.Transparent
@@ -146,7 +137,7 @@ fun DreamFavoriteScreen(
                         val parsedDate = parseCustomDate(dream.date)
                         // Return a pair (LocalDate, Dream)
                         parsedDate to dream
-                    } catch (e: IllegalArgumentException) {
+                    } catch (_: IllegalArgumentException) {
                         null
                     }
                 }

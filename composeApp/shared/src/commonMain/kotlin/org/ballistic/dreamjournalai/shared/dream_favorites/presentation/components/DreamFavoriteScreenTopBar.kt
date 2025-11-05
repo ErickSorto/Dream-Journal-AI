@@ -24,13 +24,10 @@ import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DreamFavoriteScreenTopBar(
-    mainScreenViewModelState: MainScreenViewModelState,
-    onOpenDrawer: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
 

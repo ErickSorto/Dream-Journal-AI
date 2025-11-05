@@ -21,16 +21,12 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DreamAccountSettingsScreenTopBar(
-    mainScreenViewModelState: MainScreenViewModelState,
-    onOpenDrawer: () -> Unit = {}
-) {
+fun DreamAccountSettingsScreenTopBar() {
     val scope = rememberCoroutineScope()
 
     CenterAlignedTopAppBar(

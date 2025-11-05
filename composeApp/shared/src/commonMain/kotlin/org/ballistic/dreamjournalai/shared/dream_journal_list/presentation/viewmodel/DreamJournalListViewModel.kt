@@ -1,11 +1,11 @@
 package org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.viewmodel
 
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.DreamListEvent
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
@@ -26,6 +29,10 @@ class DreamJournalListViewModel(
  //   private val reviewComponent: ReviewComponent
 ) : ViewModel() {
 
+    companion object {
+        private const val UNDO_TIMEOUT_MS = 10_000L // align with SnackbarDuration.Long
+    }
+
     private val _dreamJournalListState = MutableStateFlow(DreamJournalListState())
     val dreamJournalListState: StateFlow<DreamJournalListState> = _dreamJournalListState.asStateFlow()
 
@@ -34,6 +41,11 @@ class DreamJournalListViewModel(
     val searchTextFieldState: StateFlow<TextFieldState> = _searchTextFieldState.asStateFlow()
 
     private var recentlyDeletedDream: Dream? = null
+
+    // ids hidden locally until user confirms or undo timeout elapses
+    private val filteredOutIds = MutableStateFlow<Set<String>>(emptySet())
+    // job per pending delete to cancel on undo
+    private val pendingDeletes = mutableMapOf<String, Job>()
 
     private var getDreamJob: Job? = null
 
@@ -45,8 +57,32 @@ class DreamJournalListViewModel(
         when (event) {
             is DreamListEvent.DeleteDream -> {
                 viewModelScope.launch {
-                    dreamUseCases.deleteDream(event.dream)
+                    val id = event.dream.id
+                    if (id == null) {
+                        // Fallback: if no id, perform immediate delete (cannot defer reliably)
+                        dreamUseCases.deleteDream(event.dream)
+                        return@launch
+                    }
+                    // Soft-delete locally: hide from list and schedule finalization
                     recentlyDeletedDream = event.dream
+                    filteredOutIds.value = filteredOutIds.value + id
+                    // schedule finalize
+                    pendingDeletes[id]?.cancel()
+                    pendingDeletes[id] = launch {
+                        delay(UNDO_TIMEOUT_MS)
+                        // If still pending (no undo), perform remote delete
+                        dreamUseCases.deleteDream(event.dream)
+                        filteredOutIds.value = filteredOutIds.value - id
+                        pendingDeletes.remove(id)
+                        if (recentlyDeletedDream?.id == id) recentlyDeletedDream = null
+                    }
+                    // Reintroduce undo snackbar via centralized controller
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
+                            message = "Dream deleted",
+                            action = SnackbarAction("Undo") { viewModelScope.launch { onEvent(DreamListEvent.RestoreDream) } }
+                        )
+                    )
                 }
             }
             is DreamListEvent.TriggerReview -> {
@@ -71,8 +107,20 @@ class DreamJournalListViewModel(
             }
             is DreamListEvent.RestoreDream -> {
                 viewModelScope.launch {
-                    val dreamToRestore = recentlyDeletedDream?.copy(generatedImage = "") ?: return@launch
-                    dreamUseCases.addDream(dreamToRestore)
+                    val dreamToRestore = recentlyDeletedDream ?: return@launch
+                    val id = dreamToRestore.id
+                    if (id != null) {
+                        // Cancel pending remote delete if any and unfilter locally
+                        pendingDeletes[id]?.cancel()
+                        pendingDeletes.remove(id)
+                        filteredOutIds.value = filteredOutIds.value - id
+                        // If remote delete already happened (race), re-add dream
+                        // We can't trivially detect it without an extra call; adding is idempotent enough
+                        dreamUseCases.addDream(dreamToRestore)
+                    } else {
+                        // No id: just re-add to repository
+                        dreamUseCases.addDream(dreamToRestore)
+                    }
                     recentlyDeletedDream = null
                 }
             }
@@ -111,15 +159,14 @@ class DreamJournalListViewModel(
             .combine(
                 snapshotFlow { searchTextFieldState.value.text }
             ) { dreams, searchText ->
-                if (searchText.isBlank()) {
-                    dreams
-                } else {
-                    dreams.filter { it.doesMatchSearchQuery(searchText.toString()) }
-                }
+                if (searchText.isBlank()) dreams else dreams.filter { it.doesMatchSearchQuery(searchText.toString()) }
             }
-            .onEach { filteredDreams ->
+            .combine(filteredOutIds) { dreams, filteredIds ->
+                dreams.filter { it.id == null || it.id !in filteredIds }
+            }
+            .onEach { visibleDreams ->
                 _dreamJournalListState.value = dreamJournalListState.value.copy(
-                    dreams = filteredDreams,
+                    dreams = visibleDreams,
                     orderType = orderType,
                 )
             }

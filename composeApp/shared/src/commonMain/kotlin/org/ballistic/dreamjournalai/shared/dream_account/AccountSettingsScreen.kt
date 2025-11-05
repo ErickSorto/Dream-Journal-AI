@@ -40,7 +40,6 @@ import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.sig
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.SignupEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.LoginViewModelState
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.SignupViewModelState
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 
@@ -48,12 +47,10 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 fun AccountSettingsScreen(
     loginViewModelState: LoginViewModelState,
     signupViewModelState: SignupViewModelState,
-    mainScreenViewModelState: MainScreenViewModelState,
     onLoginEvent: (LoginEvent) -> Unit = {},
     onSignupEvent: (SignupEvent) -> Unit = {},
     navigateToOnboardingScreen: () -> Unit = {},
-    navigateToDreamJournalScreen: () -> Unit = {},
-    onMainEvent: (org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent) -> Unit = {}
+    navigateToDreamJournalScreen: () -> Unit = {}
 ) {
     val isLoading = loginViewModelState.isLoading
     val isUserAnonymous = loginViewModelState.isUserAnonymous
@@ -94,8 +91,6 @@ fun AccountSettingsScreen(
     Scaffold(
         topBar = {
             DreamAccountSettingsScreenTopBar(
-                mainScreenViewModelState = mainScreenViewModelState,
-                onOpenDrawer = { onMainEvent(org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent.ToggleDrawerState(androidx.compose.material3.DrawerValue.Open)) }
             )
         },
         snackbarHost = {

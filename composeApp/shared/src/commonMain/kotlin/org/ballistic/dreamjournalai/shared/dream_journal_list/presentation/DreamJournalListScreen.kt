@@ -10,16 +10,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
@@ -27,23 +22,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.shared.SnackbarController
-import org.ballistic.dreamjournalai.shared.SnackbarEvent
-import org.ballistic.dreamjournalai.shared.SnackbarAction
 import kotlinx.datetime.LocalDate
-import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
-import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.core.util.formatCustomDate
 import org.ballistic.dreamjournalai.shared.core.util.parseCustomDate
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.DreamListEvent
+import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components.DateHeader
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components.DreamItem
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components.DreamListScreenTopBar
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.viewmodel.DreamJournalListState
+import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 
 
@@ -58,11 +48,6 @@ fun DreamJournalListScreen(
     onDreamListEvent: (DreamListEvent) -> Unit = {},
     onNavigateToDream: (dreamID: String?, backgroundID: Int) -> Unit
 ) {
-    val scope = rememberCoroutineScope()
-
-    val dreamState by rememberUpdatedState(dreamJournalListState.dreams)
-    val dreamCount = dreamJournalListState.dreams.size
-    val isRecentlySaved = mainScreenViewModelState.isDreamRecentlySaved
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
@@ -83,15 +68,6 @@ fun DreamJournalListScreen(
         onMainEvent(MainScreenEvent.SetDrawerState(true))
     }
 
-//    // The key part: trigger in-app review from the VM if conditions are met
-//    LaunchedEffect(isRecentlySaved) {
-//        if (dreamCount >= 2 && isRecentlySaved) {
-//            delay(1000)
-//            // Dispatch the "TriggerReview" event to the VM
-//            onDreamListEvent(DreamListEvent.TriggerReview)
-//        }
-//    }
-
     if (dreamJournalListState.bottomDeleteCancelSheetState) {
         ActionBottomSheet(
             modifier = Modifier.padding(),
@@ -101,34 +77,24 @@ fun DreamJournalListScreen(
             onClick = {
                 onDreamListEvent(DreamListEvent.ToggleBottomDeleteCancelSheetState(false))
                 onDreamListEvent(DreamListEvent.DeleteDream(dream = dreamJournalListState.chosenDreamToDelete!!))
-                scope.launch {
-                    SnackbarController.sendEvent(
-                        SnackbarEvent(
-                            message = "Dream deleted",
-                            action = SnackbarAction("Undo") {
-                                onDreamListEvent(DreamListEvent.RestoreDream)
-                            },
-                        )
-                    )
-                }
-            },
-            onClickOutside = {
-                onDreamListEvent(DreamListEvent.ToggleBottomDeleteCancelSheetState(false))
-            }
-        )
-    }
+                // Undo is handled in the viewmodel via events now
+             },
+             onClickOutside = {
+                 onDreamListEvent(DreamListEvent.ToggleBottomDeleteCancelSheetState(false))
+             }
+         )
+     }
 
     Scaffold(
         topBar = {
             DreamListScreenTopBar(
-                dreamJournalListState = dreamJournalListState,
-                mainScreenViewModelState = mainScreenViewModelState,
-                searchTextFieldState = searchTextFieldState,
+                 dreamJournalListState = dreamJournalListState,
+                 mainScreenViewModelState = mainScreenViewModelState,
+                 searchTextFieldState = searchTextFieldState,
                 onDreamListEvent = onDreamListEvent,
-                onOpenDrawer = { onMainEvent(MainScreenEvent.ToggleDrawerState(DrawerValue.Open)) },
-            )
-        },
-        containerColor = Color.Transparent
+             )
+         },
+         containerColor = Color.Transparent
     ) { innerPadding ->
 
         val topPadding = innerPadding.calculateTopPadding()
@@ -146,7 +112,7 @@ fun DreamJournalListScreen(
                     try {
                         val parsedDate = parseCustomDate(dream.date)
                         Pair(parsedDate, dream)
-                    } catch (e: IllegalArgumentException) {
+                    } catch (_: IllegalArgumentException) {
                         null
                     }
                 }

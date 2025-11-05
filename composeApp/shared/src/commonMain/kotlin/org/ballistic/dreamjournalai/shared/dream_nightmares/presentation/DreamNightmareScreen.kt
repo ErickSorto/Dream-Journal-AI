@@ -17,7 +17,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,7 +33,6 @@ import org.ballistic.dreamjournalai.shared.core.util.formatCustomDate
 import org.ballistic.dreamjournalai.shared.core.util.parseCustomDate
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components.DateHeader
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components.DreamItem
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.shared.dream_nightmares.domain.NightmareEvent
 import org.ballistic.dreamjournalai.shared.dream_nightmares.presentation.components.DreamNightmareScreenTopBar
 import org.ballistic.dreamjournalai.shared.dream_nightmares.presentation.viewmodel.DreamNightmareScreenState
@@ -43,13 +41,10 @@ import org.ballistic.dreamjournalai.shared.dream_nightmares.presentation.viewmod
 @Composable
 fun DreamNightmareScreen(
     dreamNightmareScreenState: DreamNightmareScreenState,
-    mainScreenViewModelState: MainScreenViewModelState,
     bottomPaddingValue: Dp,
     onEvent: (NightmareEvent) -> Unit,
-    onNavigateToDream: (dreamID: String?, backgroundID: Int) -> Unit,
-    onMainEvent: (org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent) -> Unit = {}
+    onNavigateToDream: (dreamID: String?, backgroundID: Int) -> Unit
 ) {
-    val scope = rememberCoroutineScope()
 
     // Bottom sheet if deleting a dream
     if (dreamNightmareScreenState.bottomDeleteCancelSheetState) {
@@ -75,8 +70,6 @@ fun DreamNightmareScreen(
     Scaffold(
         topBar = {
             DreamNightmareScreenTopBar(
-                mainScreenViewModelState = mainScreenViewModelState,
-                onOpenDrawer = { onMainEvent(org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent.ToggleDrawerState(androidx.compose.material3.DrawerValue.Open)) }
             )
         },
         containerColor = Color.Transparent,
@@ -128,7 +121,7 @@ fun DreamNightmareScreen(
                     try {
                         val parsedDate = parseCustomDate(dream.date)
                         parsedDate to dream
-                    } catch (e: IllegalArgumentException) {
+                    } catch (_: IllegalArgumentException) {
                         // If parse fails, skip this dream or handle differently
                         null
                     }
