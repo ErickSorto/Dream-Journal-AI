@@ -32,7 +32,7 @@ class MainScreenViewModel(
     private val vibratorUtil: VibratorUtil,
     private val storeLinkOpener: StoreLinkOpener
 ) : ViewModel() {
-    private val _mainScreenViewModelState = MutableStateFlow(MainScreenViewModelState(authRepo = repo))
+    private val _mainScreenViewModelState = MutableStateFlow(MainScreenViewModelState())
     val mainScreenViewModelState: StateFlow<MainScreenViewModelState> = _mainScreenViewModelState.asStateFlow()
 
     init {
@@ -120,7 +120,7 @@ class MainScreenViewModel(
                 if (result is Resource.Error) {
                     result.message?.let { msg ->
                         viewModelScope.launch {
-                            org.ballistic.dreamjournalai.shared.SnackbarController.sendEvent(
+                            SnackbarController.sendEvent(
                                 org.ballistic.dreamjournalai.shared.SnackbarEvent(
                                     message = msg,
                                     action = org.ballistic.dreamjournalai.shared.SnackbarAction("Dismiss") { }
@@ -188,7 +188,6 @@ data class MainScreenViewModelState(
     val isBottomBarEnabledState : Boolean = true,
     // ViewModel no longer holds a Compose DrawerState; instead expose a simple boolean intent
     val isDrawerOpen: Boolean = false,
-    val authRepo: AuthRepository,
     // Keep search text as a plain String for stability; composables handle input
     val searchedText: String = "",
     val dreamTokens: Int = 0,

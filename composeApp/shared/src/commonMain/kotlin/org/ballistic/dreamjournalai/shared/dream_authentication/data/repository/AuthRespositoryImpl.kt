@@ -63,6 +63,7 @@ class AuthRepositoryImpl (
     private val _isUserAnonymous = MutableStateFlow(false)
     override val isUserAnonymous: StateFlow<Boolean> = _isUserAnonymous
 
+    @OptIn(ExperimentalTime::class)
     override suspend fun firebaseSignInWithGoogle(
         googleCredential: AuthCredential
     ): Flow<Resource<Pair<AuthResult, String?>>> {
@@ -80,6 +81,11 @@ class AuthRepositoryImpl (
 
                 Logger.d { "AuthRepositoryImpl: signInWithCredential succeeded user=${result.user?.uid}, isNew=${result.additionalUserInfo?.isNewUser}" }
                  val isNewUser = result.additionalUserInfo?.isNewUser == true
+
+                // For brand-new Google users, create the Firestore doc with safe defaults.
+                if (isNewUser) {
+                    addUserToFirestore(registrationTimestamp = kotlin.time.Clock.System.now().toEpochMilliseconds())
+                }
 
                  emit(Resource.Success(Pair(result, anonymousUserId)))
              } catch (e: FirebaseAuthUserCollisionException) {
@@ -267,8 +273,25 @@ class AuthRepositoryImpl (
     }
     private suspend fun addUserToFirestore(registrationTimestamp: Long) {
         auth.currentUser?.apply {
-            val user = toUser(registrationTimestamp)
-            db.collection(USERS).document(uid).set(user)
+            val docRef = db.collection(USERS).document(uid)
+            val snapshot = try { docRef.get() } catch (_: Exception) { null }
+
+            val hasDoc = snapshot?.exists == true
+            val hasTokens = try { snapshot?.get<Any>("dreamTokens") != null } catch (_: Exception) { false }
+
+            if (!hasDoc) {
+                // Create brand-new user doc with safe defaults (includes starting tokens)
+                val user = toUser(registrationTimestamp)
+                docRef.set(user)
+            } else if (!hasTokens) {
+                // Doc exists but tokens missing: set only missing fields without touching existing values
+                docRef.update(
+                    mapOf(
+                        "dreamTokens" to 25L,
+                        "unlockedWords" to emptyList<String>()
+                    )
+                )
+            }
         }
     }
 
@@ -359,11 +382,11 @@ class AuthRepositoryImpl (
                     emit(Resource.Success(result))
                 }
             } catch (e: FirebaseAuthUserCollisionException) {
-                val result = auth.signInWithEmailAndPassword(email, password)
-                emit(Resource.Success(result))
-            } catch (e: Exception) {
-                emit(Resource.Error(e.toString()))
-            }
+                 val result = auth.signInWithEmailAndPassword(email, password)
+                 emit(Resource.Success(result))
+             } catch (e: Exception) {
+                 emit(Resource.Error(e.toString()))
+             }
             validateUser()
         }
     }
@@ -492,12 +515,12 @@ class AuthRepositoryImpl (
             // 2) Collect snapshots in this same flow builder
             docRef.snapshots().collect { snapshot ->
                 val data = snapshot.get<String>("dreamTokens")
-                val dreamTokens = data.toString()
-                _dreamTokens.value = dreamTokens.toInt()
+                val dreamTokens = data
+                 _dreamTokens.value = dreamTokens.toInt()
 
-                // 3) Emit a success each time we get new data
-                emit(Resource.Success(dreamTokens))
-            }
+                 // 3) Emit a success each time we get new data
+                 emit(Resource.Success(dreamTokens))
+             }
         }.catch { e ->
             // 4) Catch any exceptions thrown in the flow
             emit(Resource.Error(e.message ?: "Unknown error"))
@@ -506,9 +529,12 @@ class AuthRepositoryImpl (
 }
 
 fun FirebaseUser.toUser(registrationTimestamp: Long) = mapOf(
-    DISPLAY_NAME to displayName,
-    EMAIL to email,
-    CREATED_AT to serverTimestamp,
-    "registrationTimestamp" to registrationTimestamp,
-    "lastSignInTimestamp" to serverTimestamp,
-)
+     DISPLAY_NAME to displayName,
+     EMAIL to email,
+     CREATED_AT to serverTimestamp,
+     "registrationTimestamp" to registrationTimestamp,
+     "lastSignInTimestamp" to serverTimestamp,
+    // Defaults for a brand new account (only applied on first doc creation)
+    "dreamTokens" to 25L,
+    "unlockedWords" to emptyList<String>(),
+ )

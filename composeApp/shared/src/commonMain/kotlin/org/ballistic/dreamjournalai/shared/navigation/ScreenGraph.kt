@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,16 +50,23 @@ import org.koin.core.parameter.parametersOf
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ScreenGraph(
-    navController: NavHostController,
+    navControllerProvider: () -> NavHostController,
     mainScreenViewModelState: MainScreenViewModelState,
     bottomPaddingValue: Dp,
     onMainEvent: (MainScreenEvent) -> Unit = {},
     onNavigateToOnboardingScreen: () -> Unit = {},
 ) {
 
+    // Accept a provider lambda instead of a raw NavHostController parameter so the
+    // composable signature stays stable. We then read the controller and keep a
+    // rememberUpdatedState reference to it for safe, up-to-date usage inside the
+    // NavHost and any navigation lambdas.
+    val providedNavController = navControllerProvider()
+    val currentNavController by rememberUpdatedState(providedNavController)
+
     SharedTransitionLayout{
         NavHost(
-            navController = navController,
+            navController = currentNavController,
             startDestination = Route.DreamJournalScreen,
             modifier = Modifier.fillMaxSize(),
             enterTransition = { fadeIn(animationSpec = tween(500)) },
@@ -79,8 +88,8 @@ fun ScreenGraph(
                     onMainEvent = { onMainEvent(it) },
                     onDreamListEvent = { dreamJournalListViewModel.onEvent(it) },
                     onNavigateToDream = { dreamID, backgroundID ->
-                        navController.popBackStack()
-                        navController.navigate(
+                        currentNavController.popBackStack()
+                        currentNavController.navigate(
                             Route.AddEditDreamScreen(
                                 dreamID = dreamID,
                                 backgroundID = backgroundID
@@ -101,8 +110,8 @@ fun ScreenGraph(
                     onMainEvent = { onMainEvent(it) },
                     onStoreEvent = { storeScreenViewModel.onEvent(it) },
                     navigateToAccountScreen = {
-                        navController.popBackStack()
-                        navController.navigate(Route.AccountSettings)
+                        currentNavController.popBackStack()
+                        currentNavController.navigate(Route.AccountSettings)
                     }
                 )
             }
@@ -135,7 +144,7 @@ fun ScreenGraph(
                     addEditDreamViewModel.contentTextFieldState.collectAsStateWithLifecycle().value
 
                 //println("Dream ID: ${navController.currentBackStackEntry?.savedStateHandle?.get<String>("dreamID")}")
-                Logger.d("ScreenGraph") { "Dream ID: ${navController.currentBackStackEntry?.savedStateHandle?.get<String>("dreamID")}" }
+                Logger.d("ScreenGraph") { "Dream ID: ${currentNavController.currentBackStackEntry?.savedStateHandle?.get<String>("dreamID")}" }
                 AddEditDreamScreen(
                     dreamImage = image,
                     dreamTitleState = dreamTitle,
@@ -145,11 +154,11 @@ fun ScreenGraph(
                     onAddEditDreamEvent = { addEditDreamViewModel.onEvent(it) },
                     animateVisibilityScope = this,
                     onNavigateToDreamJournalScreen = {
-                        navController.popBackStack()
-                        navController.navigate(Route.DreamJournalScreen)
+                        currentNavController.popBackStack()
+                        currentNavController.navigate(Route.DreamJournalScreen)
                     },
                     onImageClick = { imageID ->
-                        navController.navigate(
+                        currentNavController.navigate(
                             Route.FullScreenImageScreen(imageID)
                         )
                     }
@@ -164,7 +173,7 @@ fun ScreenGraph(
                     imageID = args.imageID,
                     animatedVisibilityScope = this,
                     onBackPress = {
-                        navController.navigateUp()
+                        currentNavController.navigateUp()
                     },
                     onFullScreenEvent = {
                         fullScreenViewModel.onEvent(it)
@@ -179,19 +188,17 @@ fun ScreenGraph(
                     .collectAsStateWithLifecycle()
                 DreamFavoriteScreen(
                     dreamFavoriteScreenState = dreamFavoriteScreenState.value,
-                    mainScreenViewModelState = mainScreenViewModelState,
                     bottomPaddingValue = bottomPaddingValue,
                     onEvent = { dreamFavoriteScreenViewModel.onEvent(it) },
                     onNavigateToDream = { dreamID, backgroundID ->
-                        navController.popBackStack()
-                        navController.navigate(
+                        currentNavController.popBackStack()
+                        currentNavController.navigate(
                             Route.AddEditDreamScreen(
                                 dreamID = dreamID,
                                 backgroundID = backgroundID
                             )
                         )
                     },
-                    onMainEvent = onMainEvent
                 )
             }
 
@@ -203,24 +210,22 @@ fun ScreenGraph(
                 val signupViewModelState = signupViewModel.state.collectAsStateWithLifecycle().value
 
                 AccountSettingsScreen(
-                    loginViewModelState = loginViewModelState,
-                    signupViewModelState = signupViewModelState,
-                    mainScreenViewModelState = mainScreenViewModelState,
-                    navigateToOnboardingScreen = onNavigateToOnboardingScreen,
-                    onLoginEvent = { loginViewModel.onEvent(it) },
-                    onSignupEvent = { signupViewModel.onEvent(it) },
-                    navigateToDreamJournalScreen = {
-                        navController.navigate(Route.DreamJournalScreen) {
-                            // Clear up to DreamJournalScreen so it becomes the root after login
-                            popUpTo(Route.DreamJournalScreen) {
-                                inclusive = true
-                            }
-                            launchSingleTop = true
-                        }
-                    },
-                    onMainEvent = onMainEvent
-                )
-            }
+                     loginViewModelState = loginViewModelState,
+                     signupViewModelState = signupViewModelState,
+                     navigateToOnboardingScreen = onNavigateToOnboardingScreen,
+                     onLoginEvent = { loginViewModel.onEvent(it) },
+                     onSignupEvent = { signupViewModel.onEvent(it) },
+                     navigateToDreamJournalScreen = {
+                        currentNavController.navigate(Route.DreamJournalScreen) {
+                             // Clear up to DreamJournalScreen so it becomes the root after login
+                             popUpTo(Route.DreamJournalScreen) {
+                                 inclusive = true
+                             }
+                             launchSingleTop = true
+                         }
+                     }
+                 )
+             }
 
             composable<Route.DreamToolGraphScreen> {
                 DreamToolsGraph(
@@ -228,18 +233,18 @@ fun ScreenGraph(
                     bottomPaddingValue = bottomPaddingValue,
                     onMainEvent = onMainEvent,
                     onNavigate = { dreamID, backgroundID ->
-                        navController.popBackStack()
-                        navController.navigate(
-                            Route.AddEditDreamScreen(dreamID = dreamID, backgroundID = backgroundID)
-                        ) {
-                            popUpTo(Route.DreamJournalScreen) {
-                                saveState = true
-                                inclusive = true
-                            }
-                        }
-                    }
-                )
-            }
+                        currentNavController.popBackStack()
+                        currentNavController.navigate(
+                             Route.AddEditDreamScreen(dreamID = dreamID, backgroundID = backgroundID)
+                         ) {
+                             popUpTo(Route.DreamJournalScreen) {
+                                 saveState = true
+                                 inclusive = true
+                             }
+                         }
+                     }
+                 )
+             }
 
             composable<Route.Statistics> {
                 val dreamStatisticScreenViewModel = koinViewModel<DreamStatisticScreenViewModel>()
@@ -282,19 +287,17 @@ fun ScreenGraph(
                         .collectAsStateWithLifecycle()
                 DreamNightmareScreen(
                     dreamNightmareScreenState = dreamNightmareScreenState.value,
-                    mainScreenViewModelState = mainScreenViewModelState,
                     bottomPaddingValue = bottomPaddingValue,
                     onEvent = { dreamNightmareScreenViewModel.onEvent(it) },
                     onNavigateToDream = { dreamID, backgroundID ->
-                        navController.popBackStack()
-                        navController.navigate(
+                        currentNavController.popBackStack()
+                        currentNavController.navigate(
                             Route.AddEditDreamScreen(
                                 dreamID = dreamID,
                                 backgroundID = backgroundID
                             )
                         )
-                    },
-                    onMainEvent = onMainEvent
+                    }
                 )
             }
 

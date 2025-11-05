@@ -7,8 +7,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
@@ -114,11 +112,11 @@ fun MainScreenView(
                 try {
                     // Request the permission
                     controller.providePermission(Permission.REMOTE_NOTIFICATION)
-                } catch (deniedAlways: DeniedAlwaysException) {
+                } catch (_: DeniedAlwaysException) {
                     // The user has denied the permission *always* (Don’t ask again).
                     // Handle your fallback scenario here — e.g., show a dialog explaining
                     // that notifications won't work, or navigate the user somewhere else.
-                } catch (denied: DeniedException) {
+                } catch (_: DeniedException) {
                     // The user has denied the permission (but not “don’t ask again”).
                     // You could decide to ask again or show rationale to the user.
                 }
@@ -196,7 +194,7 @@ fun MainScreenView(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     // Track when we're driving the drawer programmatically to avoid echo-loops
-    var programmaticChangeInProgress = remember { mutableStateOf(false) }
+    val programmaticChangeInProgress = remember { mutableStateOf(false) }
 
     // Drive the drawer from a simple controller to avoid VM<->UI races
     ObserveAsEvents(DrawerController.events, key1 = drawerState) { cmd ->
@@ -263,7 +261,7 @@ fun MainScreenView(
                                              onMainEvent(MainScreenEvent.OpenStoreLink)
                                          } else {
                                              navController.navigate(item.route) {
-                                                 popUpTo(DrawerNavigation.DreamJournalScreen.route) {
+                                                 popUpTo(Route.DreamJournalScreen) {
                                                      saveState = true
                                                  }
                                                  launchSingleTop = true
@@ -355,7 +353,7 @@ fun MainScreenView(
                                 onMainEvent = onMainEvent,
                                 onNavigate = { route ->
                                     navController.navigate(route) {
-                                        popUpTo(org.ballistic.dreamjournalai.shared.navigation.Route.DreamJournalScreen) {
+                                        popUpTo(Route.DreamJournalScreen) {
                                             saveState = true
                                         }
                                         launchSingleTop = true
@@ -429,16 +427,16 @@ fun MainScreenView(
 
 
                     ScreenGraph(
-                        navController = navController,
+                        navControllerProvider = { navController },
                         mainScreenViewModelState = mainScreenViewModelState,
                         bottomPaddingValue = mainScreenViewModelState.paddingValues.calculateBottomPadding(),
                         onMainEvent = { onMainEvent(it) },
                         onNavigateToOnboardingScreen = { onNavigateToOnboardingScreen() }
                     )
 
-            }
-        }
-    )
+             }
+         }
+     )
 }
 
 data class DrawerGroup(
