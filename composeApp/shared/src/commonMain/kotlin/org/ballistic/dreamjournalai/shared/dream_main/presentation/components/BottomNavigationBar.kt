@@ -1,7 +1,6 @@
 package org.ballistic.dreamjournalai.shared.dream_main.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -22,9 +21,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,9 +31,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.currentBackStackEntryAsState
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.navigation.BottomNavigationRoutes
 import org.ballistic.dreamjournalai.shared.navigation.Route
@@ -45,9 +39,10 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 
 @Composable
 fun BottomNavigation(
-    navController: NavController,
+    currentRoute: String?,
     isNavigationEnabled: Boolean,
     onMainEvent: (MainScreenEvent) -> Unit,
+    onNavigate: (Route) -> Unit,
     modifier: Modifier
 ) {
     NavigationBar(
@@ -55,18 +50,20 @@ fun BottomNavigation(
         contentColor = Color.Black,
         modifier = modifier
     ) {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
         val infiniteTransition = rememberInfiniteTransition(label = "")
         BottomNavigationRoutes.entries.forEachIndexed { index, item ->
-            val isSelected by remember(currentRoute) {
-                mutableStateOf(
-                    derivedStateOf { currentRoute == item.route::class.qualifiedName }
-                )
+            val qualified = item.route::class.qualifiedName
+            val simple = item.route::class.simpleName
+            val isSelected = when {
+                currentRoute == qualified -> true
+                currentRoute == item.route.toString() -> true
+                simple != null && (currentRoute?.endsWith(".$simple") == true) -> true
+                simple != null && (currentRoute?.contains(simple) == true) -> true
+                else -> false
             }
 
             // Setup for on-click and selection-based scaling
-            val targetScale = if (isSelected.value) 1.25f else 1.1f
+            val targetScale = if (isSelected) 1.25f else 1.1f
             val scale = remember { Animatable(targetScale) }
 
             // Continuous floating effect setup
@@ -100,14 +97,14 @@ fun BottomNavigation(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier.graphicsLayer {
-                                val finalScale = if (isSelected.value) floatingScale * scale.value else scale.value
+                                val finalScale = if (isSelected) floatingScale * scale.value else scale.value
                                 scaleX = finalScale
                                 scaleY = finalScale
-                                rotationZ = if (isSelected.value) rotation else 0f
+                                rotationZ = if (isSelected) rotation else 0f
                             }
                         ) {
                             // Gold highlight icon (bottom layer)
-                            if (isSelected.value) {
+                            if (isSelected) {
                                 Icon(
                                     imageVector = item.icon,
                                     contentDescription = null, // decorative
@@ -128,7 +125,7 @@ fun BottomNavigation(
                                     .drawWithCache {
                                         onDrawWithContent {
                                             drawContent()
-                                            if (isSelected.value) {
+                                            if (isSelected) {
                                                 drawRect(
                                                     brush = Brush.verticalGradient(
                                                         listOf(
@@ -141,12 +138,12 @@ fun BottomNavigation(
                                             }
                                         }
                                     },
-                                tint = if (isSelected.value) Color.Unspecified else Color.LightGray
+                                tint = if (isSelected) Color.Unspecified else Color.LightGray
                             )
                         }
 
                         AnimatedVisibility(
-                            visible = isSelected.value,
+                            visible = isSelected,
                             modifier = Modifier.padding(start = 4.dp),
                         ) {
                             Text(
@@ -158,18 +155,11 @@ fun BottomNavigation(
                         }
                     }
                 },
-                selected = isSelected.value,
+                selected = isSelected,
                 onClick = {
                     onMainEvent(MainScreenEvent.TriggerVibration)
-                    if (currentRoute != item.route.toString()) {
-                        navController.navigate(item.route) {
-                            // Ensure we pop to a real destination ID, not a label
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                    if (!isSelected) {
+                        onNavigate(item.route)
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(

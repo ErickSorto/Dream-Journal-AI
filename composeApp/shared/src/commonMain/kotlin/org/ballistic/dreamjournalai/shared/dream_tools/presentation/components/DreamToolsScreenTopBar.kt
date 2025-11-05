@@ -18,6 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import co.touchlab.kermit.Logger
+import org.ballistic.dreamjournalai.shared.DrawerCommand
+import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
@@ -26,6 +29,7 @@ import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.Mai
 @Composable
 fun DreamToolsScreenTopBar(
     mainScreenViewModelState: MainScreenViewModelState,
+    onOpenDrawer: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
 
@@ -48,7 +52,8 @@ fun DreamToolsScreenTopBar(
         navigationIcon = {
             IconButton(onClick = {
                 scope.launch {
-                    mainScreenViewModelState.drawerMain.open()
+                    Logger.d("TopBar") { "Tools: Menu icon clicked -> request open drawer" }
+                    DrawerController.send(DrawerCommand.Open)
                 }
             }) {
                 Icon(

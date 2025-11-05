@@ -16,7 +16,8 @@ import dreamjournalai.composeapp.shared.generated.resources.baseline_cached_24
 import dreamjournalai.composeapp.shared.generated.resources.baseline_star_24
 import dreamjournalai.composeapp.shared.generated.resources.false_awakening_icon
 import dreamjournalai.composeapp.shared.generated.resources.lighthouse_vector
-import dreamjournalai.composeapp.shared.generated.resources.nightmare_icon
+import dreamjournalai.composeapp.shared.generated.resources.nightmare_ghost_closed
+import dreamjournalai.composeapp.shared.generated.resources.nightmare_ghost_open
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Green
@@ -145,14 +146,12 @@ fun NightmareCustomButton(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(8.dp))
-            Icon(
-                painter = painterResource(Res.drawable.nightmare_icon),
-                contentDescription = "Nightmare",
-                modifier = Modifier.size(36.dp),
-                tint = if (isNightmare) RedOrange else White.copy(
-                    alpha = 0.5f
-                )
-            )
+        Icon(
+            painter = painterResource(if (isNightmare) Res.drawable.nightmare_ghost_open else Res.drawable.nightmare_ghost_closed),
+            contentDescription = if (isNightmare) "Nightmare (selected)" else "Nightmare (unselected)",
+            modifier = Modifier.size(36.dp),
+            tint = if (isNightmare) RedOrange else White.copy(alpha = 0.5f)
+        )
         Text(
             text = "Nightmare",
             color = White,

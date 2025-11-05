@@ -29,10 +29,8 @@ fun App (
                 modifier = Modifier.fillMaxSize(),
                 color = Color.Transparent
             ) {
-                val navController = rememberNavController()
                 //  val screen by splashViewModel.state
                 MainGraph(
-                    navController = navController,
                     onDataLoaded = onSplashFinished
                 )
             }

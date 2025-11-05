@@ -29,7 +29,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.DrawerCommand
+import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
@@ -45,6 +48,7 @@ fun SymbolScreenTopBar(
     symbolScreenState: SymbolScreenState,
     searchedTextFieldState: TextFieldState,
     onDictionaryEvent: (SymbolEvent) -> Unit = {},
+    onOpenDrawer: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     CenterAlignedTopAppBar(
@@ -102,7 +106,8 @@ fun SymbolScreenTopBar(
         navigationIcon = {
             IconButton(onClick = {
                 scope.launch {
-                    mainScreenViewModelState.drawerMain.open()
+                    Logger.d("TopBar") { "Symbols: Menu icon clicked -> request open drawer" }
+                    DrawerController.send(DrawerCommand.Open)
                 }
             }) {
                 Icon(

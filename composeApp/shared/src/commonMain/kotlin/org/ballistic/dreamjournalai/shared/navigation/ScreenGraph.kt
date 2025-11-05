@@ -156,7 +156,7 @@ fun ScreenGraph(
                 )
             }
 
-            composable<Route.FullScreenImageScreen>{
+            composable<Route.FullScreenImageScreen>{ it ->
                 val args = it.toRoute<Route.FullScreenImageScreen>()
                 val fullScreenViewModel = koinViewModel<FullScreenViewModel>()
 
@@ -190,7 +190,8 @@ fun ScreenGraph(
                                 backgroundID = backgroundID
                             )
                         )
-                    }
+                    },
+                    onMainEvent = onMainEvent
                 )
             }
 
@@ -216,7 +217,8 @@ fun ScreenGraph(
                             }
                             launchSingleTop = true
                         }
-                    }
+                    },
+                    onMainEvent = onMainEvent
                 )
             }
 
@@ -250,7 +252,8 @@ fun ScreenGraph(
                     bottomPaddingValue = bottomPaddingValue,
                     onEvent = {
                         dreamStatisticScreenViewModel.onEvent(it)
-                    }
+                    },
+                    onMainEvent = onMainEvent
                 )
             }
 
@@ -290,7 +293,8 @@ fun ScreenGraph(
                                 backgroundID = backgroundID
                             )
                         )
-                    }
+                    },
+                    onMainEvent = onMainEvent
                 )
             }
 

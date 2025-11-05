@@ -26,9 +26,9 @@ fun SignupLoginLayout(
             .navigationBarsPadding(),
     ) {
 
-        SignupLoginTabLayout(loginViewModelState = loginViewModelState)
+        SignupLoginTabLayout(loginViewModelState = loginViewModelState, onLayoutChange = onLoginEvent)
         when {
-            loginViewModelState.isLoginLayout.value -> {
+            loginViewModelState.isLoginLayout -> {
                 LoginLayout(
                     loginViewModelState = loginViewModelState,
                     onLoginEvent = {
@@ -38,20 +38,23 @@ fun SignupLoginLayout(
                 )
             }
 
-            loginViewModelState.isForgotPasswordLayout.value -> {
+            loginViewModelState.isForgotPasswordLayout -> {
                 ForgotPasswordLayout(
                     loginViewModelState = loginViewModelState,
-                ) {
-                    onLoginEvent(it)
-                }
+                    authEvent = {
+                        onLoginEvent(it)
+                    }
+                )
             }
 
-            loginViewModelState.isSignUpLayout.value -> {
+            loginViewModelState.isSignUpLayout -> {
                 SignupLayout(
                     signupViewModelState = signupViewModelState,
+                    isLoginLayout = loginViewModelState.isLoginLayout,
                     onSignupEvent = {
                         onSignupEvent(it)
                     },
+                    onLoginEvent = { onLoginEvent(it) }
                 )
             }
         }

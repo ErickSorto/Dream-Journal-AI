@@ -55,7 +55,7 @@ fun DreamImageSelectionRow(
     )
 
     // Create the shimmer brush
-    val shimmerBrush = shimmerBrush(infiniteTransition)
+    val shimmerBrush = shimmerBrush()
     val glowColor = Color.White
 
     Row(

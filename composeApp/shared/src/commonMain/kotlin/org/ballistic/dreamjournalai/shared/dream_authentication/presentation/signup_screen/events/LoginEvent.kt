@@ -16,4 +16,9 @@ sealed class LoginEvent {
     data class ToggleLoading(val isLoading: Boolean) : LoginEvent()
     data object BeginAuthStateListener : LoginEvent()
     data class ReauthAndDelete(val googleCredential: AuthCredential) : LoginEvent()
+
+    // Layout control events — composables should emit these to request layout changes
+    data object ShowLoginLayout : LoginEvent()
+    data object ShowSignUpLayout : LoginEvent()
+    data object ShowForgotPasswordLayout : LoginEvent()
 }

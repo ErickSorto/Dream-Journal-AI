@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,12 +19,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.gitlive.firebase.auth.GoogleAuthProvider as FirebaseGoogleAuthProvider
+import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.ObserveAsEvents
+import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.dream_account.components.DreamAccountSettingsScreenTopBar
 import org.ballistic.dreamjournalai.shared.dream_account.components.LogoutDeleteLayout
@@ -47,7 +52,8 @@ fun AccountSettingsScreen(
     onLoginEvent: (LoginEvent) -> Unit = {},
     onSignupEvent: (SignupEvent) -> Unit = {},
     navigateToOnboardingScreen: () -> Unit = {},
-    navigateToDreamJournalScreen: () -> Unit = {}
+    navigateToDreamJournalScreen: () -> Unit = {},
+    onMainEvent: (org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent) -> Unit = {}
 ) {
     val isLoading = loginViewModelState.isLoading
     val isUserAnonymous = loginViewModelState.isUserAnonymous
@@ -65,13 +71,35 @@ fun AccountSettingsScreen(
         prevLoggedInAndVerified = loggedInAndVerified
     }
 
+    // Local SnackbarHostState owned by the composable
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    // Observe global snackbar events and show them here
+    ObserveAsEvents(
+        flow = SnackbarController.events,
+        key1 = snackbarHostState
+    ) { event ->
+        // show snackbar on UI scope
+        scope.launch {
+            snackbarHostState.currentSnackbarData?.dismiss()
+            val result = snackbarHostState.showSnackbar(
+                message = event.message
+            )
+            if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+                event.action?.action?.invoke()
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
-            DreamAccountSettingsScreenTopBar(mainScreenViewModelState = mainScreenViewModelState)
+            DreamAccountSettingsScreenTopBar(
+                mainScreenViewModelState = mainScreenViewModelState,
+                onOpenDrawer = { onMainEvent(org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent.ToggleDrawerState(androidx.compose.material3.DrawerValue.Open)) }
+            )
         },
         snackbarHost = {
-            SnackbarHost(hostState = signupViewModelState.snackBarHostState.value)
-            SnackbarHost(hostState = loginViewModelState.snackBarHostState.value)
+            SnackbarHost(hostState = snackbarHostState)
         },
         containerColor = Color.Transparent,
         modifier = Modifier

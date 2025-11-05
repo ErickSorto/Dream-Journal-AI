@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components
 
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.typography
@@ -44,6 +46,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,16 +54,17 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImagePainter
-import coil3.compose.rememberAsyncImagePainter
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.background_during_day
 import dreamjournalai.composeapp.shared.generated.resources.baseline_cached_24
 import dreamjournalai.composeapp.shared.generated.resources.baseline_star_24
 import dreamjournalai.composeapp.shared.generated.resources.false_awakening_icon
 import dreamjournalai.composeapp.shared.generated.resources.lighthouse_vector
-import dreamjournalai.composeapp.shared.generated.resources.nightmare_icon
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import dreamjournalai.composeapp.shared.generated.resources.nightmare_ghost_closed
+import dreamjournalai.composeapp.shared.generated.resources.nightmare_ghost_open
+import kotlinx.coroutines.delay
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream.Companion.dreamBackgroundImages
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
@@ -72,13 +76,16 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Yellow
 import org.jetbrains.compose.resources.painterResource
+import androidx.compose.animation.Crossfade
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.alpha
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DreamItem(
     modifier: Modifier = Modifier,
     dream: Dream,
-    scope: CoroutineScope,
     hasBorder: Boolean = false,
     onClick: () -> Unit,
     onDeleteClick: () -> Unit = {}
@@ -90,17 +97,20 @@ fun DreamItem(
             Res.drawable.background_during_day
         }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "")
-    val borderThickness = infiniteTransition.animateFloat(
-        initialValue = 4f,
-        targetValue = 6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3000, easing = LinearOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ), label = ""
-    )
+    // Only run border/shimmer animations if hasBorder is true to avoid unnecessary redraws
+    val borderThickness = if (hasBorder) {
+        val t = rememberInfiniteTransition(label = "border")
+        t.animateFloat(
+            initialValue = 4f,
+            targetValue = 6f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 3000, easing = LinearOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ), label = "borderThickness"
+        )
+    } else null
 
-    val shimmerBrush = shimmerBrush(infiniteTransition)
+    val shimmerBrush = if (hasBorder) shimmerBrush() else null
     val glowColor = Color.White
 
     val chosenModifier = if (hasBorder) {
@@ -112,8 +122,8 @@ fun DreamItem(
                 ambientColor = glowColor
             )
             .border(
-            width = borderThickness.value.dp,
-            brush = shimmerBrush,
+            width = (borderThickness?.value ?: 4f).dp,
+            brush = shimmerBrush!!,
             shape = RoundedCornerShape(8.dp)
         )
     } else {
@@ -132,12 +142,8 @@ fun DreamItem(
                 },
                 onLongClick = {
                     isLongPressTriggered = true
-                    scope.launch {
-                        if (isLongPressTriggered) {
-                            onDeleteClick()
-                        }
-                        isLongPressTriggered = false // Reset after handling
-                    }
+                    if (isLongPressTriggered) onDeleteClick()
+                    isLongPressTriggered = false // Reset after handling
                 }
             )
     ) {
@@ -164,32 +170,46 @@ fun DreamItem(
                 val chosenBackground = imageResId
 
                 if (generatedImage != null) {
-                    // Use painter + state to control shimmer only while loading
-                    val painter = rememberAsyncImagePainter(model = generatedImage)
-                    val painterState = painter.state
-                    Box(Modifier.fillMaxSize()) {
-                        Image(
-                            painter = painter,
-                            contentDescription = "Dream Image",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                        if (painterState.value is AsyncImagePainter.State.Loading) {
+                    SubcomposeAsyncImage(
+                        model = generatedImage,
+                        contentDescription = "Dream Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            // Fallback + shimmer while loading/empty
+                            Image(
+                                painter = painterResource(chosenBackground),
+                                contentDescription = "Dream Image Placeholder",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .shimmerEffect()
                             )
+                        },
+                        error = {
+                            // Fallback on error
+                            Image(
+                                painter = painterResource(chosenBackground),
+                                contentDescription = "Dream Image Fallback",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        },
+                        success = {
+                            SubcomposeAsyncImageContent()
                         }
-                    }
-                } else {
-                    Image(
-                        painter = painterResource(chosenBackground),
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                        contentDescription = "Dream Image"
                     )
-                }
+                } else {
+                     Image(
+                         painter = painterResource(chosenBackground),
+                         modifier = Modifier.fillMaxSize(),
+                         contentScale = ContentScale.Crop,
+                         contentDescription = "Dream Image"
+                     )
+                 }
             }
             Spacer(modifier = Modifier.width(8.dp))
             Column(
@@ -236,10 +256,7 @@ fun DreamItem(
                 }
 
                 if (dream.isNightmare) {
-                    Icon(
-                        painter = painterResource(Res.drawable.nightmare_icon),
-                        tint = RedOrange,
-                        contentDescription = "Nightmare",
+                    NightmareGhostAnimatedIcon(
                         modifier = Modifier
                             .size(26.dp)
                             .padding(bottom = 4.dp),
@@ -284,7 +301,8 @@ fun DreamItem(
 }
 
 @Composable
-fun shimmerBrush(transition: InfiniteTransition): Brush {
+fun shimmerBrush(): Brush {
+    val transition = rememberInfiniteTransition(label = "borderBrush")
     val translateAnim by transition.animateFloat(
         initialValue = -1000f,
         targetValue = 1000f,
@@ -336,5 +354,66 @@ fun Modifier.shimmerEffect(): Modifier = composed {
         )
     ).onGloballyPositioned {
         size = it.size  // Update the size when the layout changes
+    }
+}
+
+@Composable
+private fun NightmareGhostAnimatedIcon(
+    modifier: Modifier = Modifier,
+    tintOpen: Color = RedOrange,
+    tintClosed: Color = White,         // closed is white
+    holdOpenMillis: Int = 5000,        // hold at full open ~5s
+    closedHoldMillis: Int = 900,       // brief closed pause
+    crossfadeMillis: Int = 260,        // snappy swap
+    moveDurationMillis: Int = 800,     // slower move/grow/shrink (was 420)
+    moveDistanceDp: Float = 2f         // further ascend/descend (was 3f)
+) {
+    var isOpen by remember { mutableStateOf(false) } // start closed
+
+    // Controlled scale and vertical position (dp)
+    val scale = remember { Animatable(0.94f) }
+    val offsetY = remember { Animatable(0f) } // dp units; 0 when open, -moveDistance when closed
+
+    // Timeline: closed (hold) -> open (descend+grow) -> hold -> closed (ascend+shrink)
+    LaunchedEffect(Unit) {
+        while (true) {
+            // Closed hold at current position
+            delay(closedHoldMillis.toLong())
+
+            // Open: crossfade to red and animate down to baseline while growing
+            isOpen = true
+            kotlinx.coroutines.coroutineScope {
+                launch { scale.animateTo(1.06f, animationSpec = tween(durationMillis = moveDurationMillis, easing = LinearOutSlowInEasing)) }
+                launch { offsetY.animateTo(0f, animationSpec = tween(durationMillis = moveDurationMillis, easing = LinearOutSlowInEasing)) }
+            }
+
+            // Hold fully open
+            delay(holdOpenMillis.toLong())
+
+            // Close: crossfade to white and animate up a bit while shrinking
+            isOpen = false
+            kotlinx.coroutines.coroutineScope {
+                launch { scale.animateTo(0.90f, animationSpec = tween(durationMillis = moveDurationMillis, easing = LinearOutSlowInEasing)) }
+                launch { offsetY.animateTo(-moveDistanceDp, animationSpec = tween(durationMillis = moveDurationMillis, easing = LinearOutSlowInEasing)) }
+            }
+            // loop repeats (will hold closed again)
+        }
+    }
+
+    Crossfade(targetState = isOpen, animationSpec = tween(crossfadeMillis, easing = LinearOutSlowInEasing), label = "") { open ->
+        val painter = painterResource(if (open) Res.drawable.nightmare_ghost_open else Res.drawable.nightmare_ghost_closed)
+        val tint = if (open) tintOpen else tintClosed
+        Icon(
+            painter = painter,
+            contentDescription = if (open) "Nightmare (open)" else "Nightmare (closed)",
+            tint = tint,
+            modifier = modifier
+                .offset(y = offsetY.value.dp)
+                .graphicsLayer {
+                    scaleX = scale.value
+                    scaleY = scale.value
+                }
+                .alpha(if (open) 1f else 0.77f)
+        )
     }
 }

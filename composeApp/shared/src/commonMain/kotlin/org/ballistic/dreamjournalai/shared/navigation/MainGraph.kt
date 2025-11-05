@@ -5,12 +5,16 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import dev.icerock.moko.permissions.compose.BindEffect
 import dev.icerock.moko.permissions.compose.PermissionsControllerFactory
 import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
@@ -21,12 +25,13 @@ import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.Mai
 import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.OnboardingScreen
 import org.koin.compose.viewmodel.koinViewModel
 
+
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun MainGraph(
-    navController: NavHostController,
     onDataLoaded: () -> Unit,
 ) {
+    val navController = rememberNavController()
     NavHost(
         navController = navController,
         startDestination = Route.OnboardingScreen,

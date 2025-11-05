@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
@@ -27,6 +28,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
+import org.ballistic.dreamjournalai.shared.SnackbarAction
 import kotlinx.datetime.LocalDate
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_favorites.domain.FavoriteEvent
@@ -41,6 +45,7 @@ import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.core.util.formatCustomDate
 import org.ballistic.dreamjournalai.shared.core.util.parseCustomDate
+import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -49,7 +54,8 @@ fun DreamFavoriteScreen(
     mainScreenViewModelState: MainScreenViewModelState,
     bottomPaddingValue: Dp,
     onEvent: (FavoriteEvent) -> Unit,
-    onNavigateToDream: (dreamID: String?, backgroundID: Int) -> Unit
+    onNavigateToDream: (dreamID: String?, backgroundID: Int) -> Unit,
+    onMainEvent: (MainScreenEvent) -> Unit // Add onMainEvent parameter
 ) {
     val scope = rememberCoroutineScope()
 
@@ -66,21 +72,12 @@ fun DreamFavoriteScreen(
             buttonText = "Delete",
             onClick = {
                 scope.launch {
-                    val snackResult =
-                        mainScreenViewModelState.scaffoldState.snackBarHostState.value.showSnackbar(
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
                             message = "Dream deleted",
-                            actionLabel = "Undo",
-                            duration = SnackbarDuration.Long
+                            action = SnackbarAction("Undo") { onEvent(FavoriteEvent.RestoreDream) }
                         )
-
-                    mainScreenViewModelState.scaffoldState.snackBarHostState.value.currentSnackbarData?.dismiss()
-
-                    if (snackResult == SnackbarResult.ActionPerformed) {
-                        onEvent(FavoriteEvent.RestoreDream)
-                    } else {
-                        dreamFavoriteScreenState.dreamToDelete?.let { FavoriteEvent.DeleteDream(it) }
-                            ?.let { onEvent(it) }
-                    }
+                    )
                 }
             },
             onClickOutside = {
@@ -91,7 +88,10 @@ fun DreamFavoriteScreen(
 
     Scaffold(
         topBar = {
-            DreamFavoriteScreenTopBar(mainScreenViewModelState = mainScreenViewModelState)
+            DreamFavoriteScreenTopBar(
+                mainScreenViewModelState = mainScreenViewModelState,
+                onOpenDrawer = { onMainEvent(MainScreenEvent.ToggleDrawerState(DrawerValue.Open)) }
+            )
         },
         containerColor = Color.Transparent
     ) { paddingValues ->
@@ -167,7 +167,6 @@ fun DreamFavoriteScreen(
                 items(dreams) { (_, dream) ->
                     DreamItem(
                         dream = dream,
-                        scope = scope,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 10.dp)

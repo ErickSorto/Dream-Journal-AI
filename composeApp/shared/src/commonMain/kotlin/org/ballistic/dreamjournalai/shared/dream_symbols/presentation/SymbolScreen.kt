@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
@@ -84,7 +85,8 @@ fun SymbolScreen(
                 mainScreenViewModelState = mainScreenViewModelState,
                 symbolScreenState = symbolScreenState,
                 searchedTextFieldState = searchTextFieldState,
-                onDictionaryEvent = onEvent
+                onDictionaryEvent = onEvent,
+                onOpenDrawer = { onMainEvent(MainScreenEvent.ToggleDrawerState(DrawerValue.Open)) }
             )
         },
         containerColor = Color.Transparent,

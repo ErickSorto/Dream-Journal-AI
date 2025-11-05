@@ -1,19 +1,14 @@
 package org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
-import dev.icerock.moko.permissions.PermissionsController
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.background_during_day
+import dreamjournalai.composeapp.shared.generated.resources.blue_lighthouse
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,12 +18,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
-import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
-import dreamjournalai.composeapp.shared.generated.resources.blue_lighthouse
+import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.core.util.StoreLinkOpener
+import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
+import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.jetbrains.compose.resources.DrawableResource
 import kotlin.time.ExperimentalTime
 
@@ -75,6 +70,7 @@ class MainScreenViewModel(
     }
 
     fun onEvent (event: MainScreenEvent) = viewModelScope.launch {
+        Logger.d("MainScreenViewModel") { "onEvent: $event" }
         when (event) {
             is MainScreenEvent.SetBottomBarVisibilityState -> {
                 viewModelScope.launch {
@@ -114,35 +110,42 @@ class MainScreenViewModel(
                 }
             }
             is MainScreenEvent.SearchDreams -> {
-                mainScreenViewModelState.value.searchedText.value = event.query
+                // store plain string in state; composables should handle text input and emit events
+                _mainScreenViewModelState.value = _mainScreenViewModelState.value.copy(
+                    searchedText = event.query
+                )
             }
             is MainScreenEvent.ConsumeDreamTokens -> {
                 val result = repo.consumeDreamTokens(event.tokensToConsume)
                 if (result is Resource.Error) {
-                    result.message?.let {
-                        _mainScreenViewModelState.value.scaffoldState.snackBarHostState.value.showSnackbar(
-                            message = it
-                        )
+                    result.message?.let { msg ->
+                        viewModelScope.launch {
+                            org.ballistic.dreamjournalai.shared.SnackbarController.sendEvent(
+                                org.ballistic.dreamjournalai.shared.SnackbarEvent(
+                                    message = msg,
+                                    action = org.ballistic.dreamjournalai.shared.SnackbarAction("Dismiss") { }
+                                )
+                            )
+                        }
                     }
                 }
             }
             is MainScreenEvent.ShowSnackBar -> {
                 viewModelScope.launch {
-                    _mainScreenViewModelState.value.scaffoldState.snackBarHostState.value.showSnackbar(
-                        message = event.message,
-                        duration = SnackbarDuration.Short,
-                        actionLabel = "Dismiss"
+                    SnackbarController.sendEvent(
+                        org.ballistic.dreamjournalai.shared.SnackbarEvent(
+                            message = event.message,
+                            action = org.ballistic.dreamjournalai.shared.SnackbarAction("Dismiss") { }
+                        )
                     )
                 }
             }
             is MainScreenEvent.ToggleDrawerState -> {
-                viewModelScope.launch {
-                    if(event.drawerValue == DrawerValue.Closed) {
-                        _mainScreenViewModelState.value.drawerMain.close()
-                    } else {
-                        _mainScreenViewModelState.value.drawerMain.open()
-                    }
-                }
+                // ViewModel does not own a DrawerState (Compose UI object). Instead, store intent as a boolean.
+                Logger.d("MainScreenViewModel") { "ToggleDrawerState -> ${event.drawerValue}" }
+                _mainScreenViewModelState.value = _mainScreenViewModelState.value.copy(
+                    isDrawerOpen = (event.drawerValue != DrawerValue.Closed)
+                )
             }
             is MainScreenEvent.UserInteracted -> {
                 repo.recordUserInteraction()
@@ -183,9 +186,11 @@ data class MainScreenViewModelState(
     val scaffoldState: ScaffoldState = ScaffoldState(),
     val isDrawerEnabled : Boolean = true,
     val isBottomBarEnabledState : Boolean = true,
-    val drawerMain: DrawerState = DrawerState(DrawerValue.Closed),
+    // ViewModel no longer holds a Compose DrawerState; instead expose a simple boolean intent
+    val isDrawerOpen: Boolean = false,
     val authRepo: AuthRepository,
-    val searchedText: MutableStateFlow<String> = MutableStateFlow(""),
+    // Keep search text as a plain String for stability; composables handle input
+    val searchedText: String = "",
     val dreamTokens: Int = 0,
     val backgroundResource: DrawableResource = Res.drawable.background_during_day,
     val paddingValues: PaddingValues = PaddingValues(0.dp),
@@ -196,5 +201,4 @@ data class ScaffoldState (
     val topBarState: Boolean = true,
     val floatingActionButtonState: Boolean = true,
     val isUserSearching : Boolean = false,
-    val snackBarHostState: MutableState<SnackbarHostState> = mutableStateOf(SnackbarHostState()),
 )

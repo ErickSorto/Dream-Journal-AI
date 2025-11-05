@@ -31,7 +31,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.DrawerCommand
+import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
@@ -48,6 +51,7 @@ fun DreamListScreenTopBar(
     mainScreenViewModelState: MainScreenViewModelState,
     searchTextFieldState: TextFieldState,
     onDreamListEvent: (DreamListEvent) -> Unit = {},
+    onOpenDrawer: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -106,9 +110,8 @@ fun DreamListScreenTopBar(
         navigationIcon = {
             IconButton(onClick = {
                 onDreamListEvent(DreamListEvent.TriggerVibration)
-                scope.launch {
-                    mainScreenViewModelState.drawerMain.open()
-                }
+                Logger.d("TopBar") { "DreamList: Menu icon clicked -> request open drawer" }
+                scope.launch { DrawerController.send(DrawerCommand.Open) }
             }) {
                 Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = White)
             }

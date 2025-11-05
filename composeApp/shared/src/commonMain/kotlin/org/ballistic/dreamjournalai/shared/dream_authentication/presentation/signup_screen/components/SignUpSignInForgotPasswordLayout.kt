@@ -35,16 +35,15 @@ import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.sig
 
 
 @Composable
-fun SignupLoginTabLayout(loginViewModelState: LoginViewModelState) {
-    if (!loginViewModelState.isForgotPasswordLayout.value) {
+fun SignupLoginTabLayout(loginViewModelState: LoginViewModelState, onLayoutChange: (LoginEvent) -> Unit) {
+    if (!loginViewModelState.isForgotPasswordLayout) {
         Row {
             LoginOrSignupTab(
                 text = "Login",
-                isLoginLayout = loginViewModelState.isLoginLayout.value,
-                isSignUpLayout = loginViewModelState.isSignUpLayout.value,
+                isLoginLayout = loginViewModelState.isLoginLayout,
+                isSignUpLayout = loginViewModelState.isSignUpLayout,
                 isClicked = {
-                    loginViewModelState.isLoginLayout.value = true
-                    loginViewModelState.isSignUpLayout.value = false
+                    onLayoutChange(LoginEvent.ShowLoginLayout)
                 },
                 modifier = Modifier
                     .weight(1f)
@@ -52,11 +51,10 @@ fun SignupLoginTabLayout(loginViewModelState: LoginViewModelState) {
             )
             LoginOrSignupTab(
                 text = "Signup",
-                isLoginLayout = loginViewModelState.isLoginLayout.value,
-                isSignUpLayout = loginViewModelState.isSignUpLayout.value,
+                isLoginLayout = loginViewModelState.isLoginLayout,
+                isSignUpLayout = loginViewModelState.isSignUpLayout,
                 isClicked = {
-                    loginViewModelState.isLoginLayout.value = false
-                    loginViewModelState.isSignUpLayout.value = true
+                    onLayoutChange(LoginEvent.ShowSignUpLayout)
                 },
                 modifier = Modifier
                     .weight(1f)
@@ -102,8 +100,7 @@ fun ForgotPasswordLayout(
 
         Button(
             onClick = {
-                loginViewModelState.isForgotPasswordLayout.value = false
-                loginViewModelState.isLoginLayout.value = true
+                authEvent(LoginEvent.ShowLoginLayout)
             },
             modifier = Modifier.fillMaxWidth(.5f),
             colors = buttonColors(
@@ -120,8 +117,7 @@ fun ForgotPasswordLayout(
 
     ForgotPassword(
         navigateBack = {
-            loginViewModelState.isLoginLayout.value = true
-            loginViewModelState.isForgotPasswordLayout.value = false
+            authEvent(LoginEvent.ShowLoginLayout)
         },
         showResetPasswordMessage = { /*TODO*/ },
         showErrorMessage = { /*TODO*/ },
@@ -133,7 +129,9 @@ fun ForgotPasswordLayout(
 @Composable
 fun SignupLayout(
     signupViewModelState: SignupViewModelState,
+    isLoginLayout: Boolean,
     onSignupEvent: (SignupEvent) -> Unit,
+    onLoginEvent: (LoginEvent) -> Unit = {}
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
 
@@ -158,8 +156,8 @@ fun SignupLayout(
             onValueChange = { newValue ->
                 onSignupEvent(SignupEvent.EnteredSignUpPassword(newValue))
             },
-            forgotPassword = { signupViewModelState.isForgotPasswordLayout.value = true },
-            isLoginLayout = signupViewModelState.isLoginLayout.value,
+            forgotPassword = { onLoginEvent(LoginEvent.ShowForgotPasswordLayout) },
+            isLoginLayout = isLoginLayout,
             isVisible = remember {
                 mutableStateOf(true)
             },
@@ -188,6 +186,7 @@ fun SignupLayout(
         }
     }
 }
+
 
 @Composable
 fun LoginLayout(
@@ -238,10 +237,9 @@ fun LoginLayout(
                 onLoginEvent(LoginEvent.EnteredLoginPassword(newValue))
             },
             forgotPassword = {
-                loginViewModelState.isForgotPasswordLayout.value = true
-                loginViewModelState.isLoginLayout.value = false
+                onLoginEvent(LoginEvent.ShowForgotPasswordLayout)
             },
-            isLoginLayout = loginViewModelState.isLoginLayout.value,
+            isLoginLayout = loginViewModelState.isLoginLayout,
             isVisible = composablesData.first { it.key == "Password" }.visible
         )
 
