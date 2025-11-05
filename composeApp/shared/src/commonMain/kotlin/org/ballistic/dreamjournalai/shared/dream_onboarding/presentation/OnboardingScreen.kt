@@ -16,12 +16,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,10 +37,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.blue_lighthouse
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.ObserveAsEvents
+import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.dream_account.MyGoogleSignInButton
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.AnonymousButton
@@ -72,7 +76,25 @@ fun OnboardingScreen(
     val transition = updateTransition(visible.value, label = "")
     val showSubheader = remember { mutableStateOf(false) }
     val isLoading = loginViewModelState.isLoading
-    val scope = CoroutineScope(Dispatchers.Main)
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember {
+        SnackbarHostState()
+    }
+    ObserveAsEvents(
+        flow = SnackbarController.events,
+        snackbarHostState
+    ) { event ->
+        scope.launch {
+            snackbarHostState.currentSnackbarData?.dismiss()
+            val result  = snackbarHostState.showSnackbar(
+                message = event.message,
+                duration = SnackbarDuration.Long
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                event.action?.action?.invoke()
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         delay(1000)
@@ -103,8 +125,9 @@ fun OnboardingScreen(
 
     Scaffold(
         snackbarHost = {
-            SnackbarHost(hostState = signupViewModelState.snackBarHostState.value)
-            SnackbarHost(hostState = loginViewModelState.snackBarHostState.value)
+            SnackbarHost(
+                hostState = snackbarHostState,
+            )
         },
         containerColor = Color.Transparent
     ) { it ->
@@ -154,7 +177,7 @@ fun OnboardingScreen(
                         onAnimationComplete = {
                             scope.launch {
                                 if (!showLoginLayout.value) {
-                                    loginViewModelState.isLoginLayout.value = true
+                                    onLoginEvent(LoginEvent.ShowLoginLayout)
                                 }
                                 showLoginLayout.value = true
                                 delay(1000)  // Delay for 1 second

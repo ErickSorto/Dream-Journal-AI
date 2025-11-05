@@ -1,16 +1,11 @@
 package org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel
 
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.AuthCredential
-import dev.gitlive.firebase.auth.AuthResult
-import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.auth.auth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -27,6 +22,9 @@ import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repositor
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.ReloadUserResponse
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.SendPasswordResetEmailResponse
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.SignInResponse
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
+import org.ballistic.dreamjournalai.shared.SnackbarAction
 
 class LoginViewModel(
     private val repo: AuthRepository
@@ -133,6 +131,17 @@ class LoginViewModel(
             is LoginEvent.ReauthAndDelete -> {
                 reauthWithGoogleAndDelete(event.googleCredential)
             }
+
+            // handle layout control events by updating plain boolean flags
+            is LoginEvent.ShowLoginLayout -> {
+                _state.update { it.copy(isLoginLayout = true, isSignUpLayout = false, isForgotPasswordLayout = false) }
+            }
+            is LoginEvent.ShowSignUpLayout -> {
+                _state.update { it.copy(isLoginLayout = false, isSignUpLayout = true, isForgotPasswordLayout = false) }
+            }
+            is LoginEvent.ShowForgotPasswordLayout -> {
+                _state.update { it.copy(isLoginLayout = false, isSignUpLayout = false, isForgotPasswordLayout = true) }
+            }
         }
     }
 
@@ -178,13 +187,26 @@ class LoginViewModel(
                  // Immediately update the state so UI observers react without waiting.
                  _state.update { current ->
                      current.copy(
-                         user = it.first.user,
+                         user = it.first.user?.let { u ->
+                             UserUi(
+                                 uid = u.uid,
+                                 displayName = u.displayName,
+                                 email = u.email,
+                                 isAnonymous = u.isAnonymous,
+                                 photoUrl = null
+                             )
+                         },
                          isEmailVerified = it.first.user?.isEmailVerified ?: false,
                          isLoggedIn = true,
                          isUserAnonymous = it.first.user?.isAnonymous ?: false,
                          isUserExist = it.first.user != null,
                          isLoading = false,
-                         signInWithGoogleResponse = MutableStateFlow(Resource.Success(it))
+                         signInWithGoogleResponse = SignInUiState.Success(
+                             SignInResultUi(
+                                 userId = it.first.user?.uid,
+                                 previousAnonymousId = it.second
+                             )
+                         )
                      )
                  }
 
@@ -201,7 +223,15 @@ class LoginViewModel(
                         Logger.d { "LoginViewModel: refreshedUser=${refreshedUser?.uid}, isAnonymous=${refreshedUser?.isAnonymous}" }
                      _state.update { current ->
                          current.copy(
-                             user = refreshedUser,
+                             user = refreshedUser?.let { u ->
+                                 UserUi(
+                                     uid = u.uid,
+                                     displayName = u.displayName,
+                                     email = u.email,
+                                     isAnonymous = u.isAnonymous,
+                                     photoUrl = null
+                                 )
+                             },
                              isEmailVerified = refreshedUser?.isEmailVerified ?: false,
                              isLoggedIn = refreshedUser != null,
                              isUserAnonymous = refreshedUser?.isAnonymous ?: false,
@@ -220,21 +250,24 @@ class LoginViewModel(
              errorTransform = { error ->
                 Logger.e("LoginViewModel") { "signInWithGoogle error: $error" }
                  viewModelScope.launch {
-                     _state.value.snackBarHostState.value.showSnackbar(
-                         error, duration = SnackbarDuration.Long, actionLabel = "Dismiss"
+                     SnackbarController.sendEvent(
+                         SnackbarEvent(
+                             error,
+                             SnackbarAction("Dismiss") { }
+                         )
                      )
                  }
                  _state.value.copy(
                      isLoading = false,
                      error = error,
-                     signInWithGoogleResponse = MutableStateFlow(Resource.Error(error))
+                     signInWithGoogleResponse = SignInUiState.Error(error)
                  )
              },
              loadingTransform = {
                 Logger.d { "signInWithGoogle loadingTransform: setting loading=true" }
                  _state.value.copy(
                      isLoading = true,
-                     signInWithGoogleResponse = MutableStateFlow(Resource.Loading())
+                     signInWithGoogleResponse = SignInUiState.Loading
                  )
              }
          )
@@ -253,10 +286,11 @@ class LoginViewModel(
             },
             errorTransform = { error ->
                 viewModelScope.launch {
-                    _state.value.snackBarHostState.value.showSnackbar(
-                        error,
-                        duration = SnackbarDuration.Long,
-                        actionLabel = "dismiss"
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
+                            error,
+                            SnackbarAction("dismiss") { }
+                        )
                     )
                 }
                 _state.value.copy(
@@ -269,19 +303,16 @@ class LoginViewModel(
     }
 
     private fun sendPasswordResetEmail(email: String) = viewModelScope.launch {
-        _state.value =
-            _state.value.copy(sendPasswordResetEmailResponse = mutableStateOf(Resource.Loading()))
+        _state.value = _state.value.copy(sendPasswordResetEmailResponse = Resource.Loading())
         _state.value = _state.value.copy(
-            sendPasswordResetEmailResponse = mutableStateOf(
-                repo.sendPasswordResetEmail(email)
-            )
+            sendPasswordResetEmailResponse = repo.sendPasswordResetEmail(email)
         )
     }
 
     private fun reloadUser() = viewModelScope.launch {
-        _state.value = _state.value.copy(reloadUserResponse = mutableStateOf(Resource.Loading()))
+        _state.value = _state.value.copy(reloadUserResponse = Resource.Loading())
         _state.value =
-            _state.value.copy(reloadUserResponse = mutableStateOf(Resource.Success(repo.reloadFirebaseUser())))
+            _state.value.copy(reloadUserResponse = Resource.Success(repo.reloadFirebaseUser()))
     }
 
     private fun signOut() = viewModelScope.launch {
@@ -296,15 +327,15 @@ class LoginViewModel(
             transform = {
                 Logger.withTag("LoginVM").d { "revokeAccess success -> isRevoked=true, isLoggedIn=false" }
                 viewModelScope.launch {
-                    _state.value.snackBarHostState.value.showSnackbar(
-                        message = "Account deleted successfully",
-                        duration = SnackbarDuration.Short
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
+                            message = "Account deleted successfully",
+                            action = null
+                        )
                     )
                 }
                 _state.value.copy(
-                    revokeAccess = MutableStateFlow(
-                        RevokeAccessState(isRevoked = true)
-                    ),
+                    revokeAccess = RevokeAccessState(isRevoked = true),
                     isLoggedIn = false,
                 )
             },
@@ -323,26 +354,21 @@ class LoginViewModel(
                     val msg = if (needsRecent)
                         "Please sign in again, then try deleting your account."
                     else error
-                    _state.value.snackBarHostState.value.showSnackbar(
-                        message = msg,
-                        duration = SnackbarDuration.Long,
-                        actionLabel = "Dismiss"
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
+                            message = msg,
+                            action = SnackbarAction("Dismiss") { }
+                        )
                     )
                 }
                 _state.value.copy(
-                    revokeAccess = MutableStateFlow(
-                        RevokeAccessState(error = error)
-                    )
+                    revokeAccess = RevokeAccessState(error = error)
                 )
             },
             loadingTransform = {
                 Logger.withTag("LoginVM").d { "revokeAccess loading" }
                 _state.value.copy(
-                    revokeAccess = MutableStateFlow(
-                        RevokeAccessState(
-                            isLoading = true
-                        )
-                    )
+                    revokeAccess = RevokeAccessState(isLoading = true)
                 )
             }
         )
@@ -355,9 +381,11 @@ class LoginViewModel(
             val user = Firebase.auth.currentUser
             if (user == null) {
                 Logger.withTag("LoginVM").e { "reauthWithGoogleAndDelete: no current user" }
-                _state.value.snackBarHostState.value.showSnackbar(
-                    message = "No authenticated user",
-                    duration = SnackbarDuration.Short
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = "No authenticated user",
+                        action = null
+                    )
                 )
                 return
             }
@@ -367,43 +395,69 @@ class LoginViewModel(
             revokeAccess(null)
         } catch (e: Exception) {
             Logger.withTag("LoginVM").e { "reauthWithGoogleAndDelete error: ${e.message}" }
-            _state.value.snackBarHostState.value.showSnackbar(
-                message = e.message ?: "Reauthentication failed",
-                duration = SnackbarDuration.Long,
-                actionLabel = "Dismiss"
+            SnackbarController.sendEvent(
+                SnackbarEvent(
+                    message = e.message ?: "Reauthentication failed",
+                    action = SnackbarAction("Dismiss") { }
+                )
             )
         }
     }
 }
 
 data class LoginViewModelState(
-    val loginEmail: String = "",
-    val loginPassword: String = "",
-    val forgotPasswordEmail: String = "",
-    val signInWithGoogleResponse: MutableStateFlow<Resource<Pair<AuthResult, String?>>> = MutableStateFlow(
-        Resource.Loading()
-    ),
-    val isLoginLayout: MutableState<Boolean> = mutableStateOf(true),
-    val isSignUpLayout: MutableState<Boolean> = mutableStateOf(false),
-    val isForgotPasswordLayout: MutableState<Boolean> = mutableStateOf(false),
-    val signInResponse: MutableState<Resource<SignInResponse>> = mutableStateOf(Resource.Success()),
-    val sendPasswordResetEmailResponse: MutableState<SendPasswordResetEmailResponse> = mutableStateOf(
-        Resource.Success()
-    ),
-    val reloadUserResponse: MutableState<Resource<ReloadUserResponse>> = mutableStateOf(Resource.Success()),
-    val revokeAccess: StateFlow<RevokeAccessState> = MutableStateFlow(RevokeAccessState()),
-    val user: FirebaseUser? = null,
+     val loginEmail: String = "",
+     val loginPassword: String = "",
+     val forgotPasswordEmail: String = "",
+     val signInWithGoogleResponse: SignInUiState = SignInUiState.Loading,
+    // Layout flags replaced with stable booleans
+    val isLoginLayout: Boolean = true,
+    val isSignUpLayout: Boolean = false,
+    val isForgotPasswordLayout: Boolean = false,
+    val signInResponse: Resource<SignInResponse> = Resource.Success(),
+    val sendPasswordResetEmailResponse: SendPasswordResetEmailResponse = Resource.Success(),
+    val reloadUserResponse: Resource<ReloadUserResponse> = Resource.Success(),
+    val revokeAccess: RevokeAccessState = RevokeAccessState(),
+    val user: UserUi? = null,
     val isUserExist: Boolean = false,
     val isEmailVerified: Boolean = false,
     val isLoggedIn: Boolean = false,
     val isLoading: Boolean = false,
     val error: String = "",
     val isUserAnonymous: Boolean = false,
-    val snackBarHostState: MutableState<SnackbarHostState> = mutableStateOf(SnackbarHostState()),
-)
+ )
 
 data class RevokeAccessState(
-    val isRevoked: Boolean = false,
-    val isLoading: Boolean = false,
-    val error: String = ""
+     val isRevoked: Boolean = false,
+     val isLoading: Boolean = false,
+     val error: String = ""
+ )
+
+@Immutable
+data class UserUi(
+    val uid: String?,
+    val displayName: String? = null,
+    val email: String? = null,
+    val isAnonymous: Boolean = false,
+    val photoUrl: String? = null,
 )
+
+@Immutable
+data class SignInResultUi(
+    val userId: String?,
+    val previousAnonymousId: String?
+)
+
+// Concrete, non-generic UI state for the sign-in-with-Google flow.
+// Using a concrete sealed type avoids Compose runtime stability checks that happen for generic type parameters.
+@Immutable
+sealed class SignInUiState {
+    @Immutable
+    object Loading : SignInUiState()
+
+    @Immutable
+    data class Success(val result: SignInResultUi) : SignInUiState()
+
+    @Immutable
+    data class Error(val message: String) : SignInUiState()
+}

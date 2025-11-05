@@ -32,6 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -40,8 +41,12 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -49,6 +54,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -60,6 +66,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import co.touchlab.kermit.Logger
 import dev.icerock.moko.permissions.DeniedAlwaysException
 import dev.icerock.moko.permissions.DeniedException
 import dev.icerock.moko.permissions.Permission
@@ -71,7 +79,12 @@ import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.blue_lighthouse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.ObserveAsEvents
+import org.ballistic.dreamjournalai.shared.DrawerController
+import org.ballistic.dreamjournalai.shared.DrawerCommand
+import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.core.platform.getPlatformName
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_main.presentation.components.BottomNavigation
@@ -178,8 +191,39 @@ fun MainScreenView(
         contentDescription = "Background Image"
     )
 
+    // Local drawer state owned by the composable for Compose stability. The ViewModel exposes
+    // an intent flag `isDrawerOpen`; we react to it below.
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+
+    // Track when we're driving the drawer programmatically to avoid echo-loops
+    var programmaticChangeInProgress = remember { mutableStateOf(false) }
+
+    // Drive the drawer from a simple controller to avoid VM<->UI races
+    ObserveAsEvents(DrawerController.events, key1 = drawerState) { cmd ->
+        Logger.d("MainScreen") { "DrawerCommand: $cmd | current=${drawerState.currentValue} anim=${drawerState.isAnimationRunning}" }
+        programmaticChangeInProgress.value = true
+        coroutineScope.launch {
+            try {
+                when (cmd) {
+                    is DrawerCommand.Open -> if (drawerState.currentValue != DrawerValue.Open) drawerState.open()
+                    is DrawerCommand.Close -> if (drawerState.currentValue != DrawerValue.Closed) drawerState.close()
+                    is DrawerCommand.Toggle -> if (drawerState.currentValue == DrawerValue.Open) drawerState.close() else drawerState.open()
+                }
+            } finally {
+                programmaticChangeInProgress.value = false
+            }
+        }
+    }
+
+    LaunchedEffect(drawerState) {
+        snapshotFlow { drawerState.currentValue }
+            .collectLatest { current ->
+                Logger.d("MainScreen") { "Drawer currentValue=$current | anim=${drawerState.isAnimationRunning} | programmatic=${programmaticChangeInProgress.value}" }
+            }
+    }
+
     ModalNavigationDrawer(
-        drawerState = mainScreenViewModelState.drawerMain,
+        drawerState = drawerState,
         gesturesEnabled = mainScreenViewModelState.isDrawerEnabled,
         drawerContent = {
             ModalDrawerSheet(modifier = Modifier.fillMaxHeight()) {
@@ -198,7 +242,7 @@ fun MainScreenView(
                                 NavigationDrawerItem(
                                     icon = {
                                         if (item == DrawerNavigation.RateMyApp) {
-                                            AnimatedHeartIcon()
+                                            AnimatedHeartIcon(animate = drawerState.currentValue == DrawerValue.Open)
                                         } else {
                                             Icon(
                                                 item.icon,
@@ -209,24 +253,24 @@ fun MainScreenView(
                                     label = { Text(item.title ?: "") },
                                     selected = item == selectedItem.value,
                                     onClick = {
-                                        onMainEvent(MainScreenEvent.TriggerVibration)
-                                        coroutineScope.launch {
-                                            mainScreenViewModelState.drawerMain.close()
-                                        }
-                                        selectedItem.value = item
+                                         onMainEvent(MainScreenEvent.TriggerVibration)
+                                         coroutineScope.launch {
+                                             drawerState.close()
+                                         }
+                                     selectedItem.value = item
 
                                         if (item == DrawerNavigation.RateMyApp) {
-                                            onMainEvent(MainScreenEvent.OpenStoreLink)
-                                        } else {
-                                            navController.navigate(item.route) {
-                                                popUpTo(DrawerNavigation.DreamJournalScreen.route) {
-                                                    saveState = true
-                                                }
-                                                launchSingleTop = true
-                                                restoreState = true
-                                            }
-                                        }
-                                    },
+                                             onMainEvent(MainScreenEvent.OpenStoreLink)
+                                         } else {
+                                             navController.navigate(item.route) {
+                                                 popUpTo(DrawerNavigation.DreamJournalScreen.route) {
+                                                     saveState = true
+                                                 }
+                                                 launchSingleTop = true
+                                                 restoreState = true
+                                             }
+                                         }
+                                     },
                                     modifier = Modifier
                                         .padding(NavigationDrawerItemDefaults.ItemPadding)
                                         .fillMaxWidth()
@@ -247,9 +291,27 @@ fun MainScreenView(
             }
         },
         content = {
+            // Local snackbar host state — main view model no longer holds snackbar UI state.
+            val snackbarHostState = remember { SnackbarHostState() }
+
+            // Observe events from the centralized controller and show them on the local host.
+            ObserveAsEvents(SnackbarController.events) { event ->
+                coroutineScope.launch {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    val result = snackbarHostState.showSnackbar(
+                        message = event.message,
+                        actionLabel = event.action?.name,
+                        duration = SnackbarDuration.Long
+                    )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        event.action?.action?.invoke()
+                    }
+                }
+            }
+
             Scaffold(
                 snackbarHost = {
-                    SnackbarHost(mainScreenViewModelState.scaffoldState.snackBarHostState.value)
+                    SnackbarHost(snackbarHostState)
                 },
                 bottomBar = {
                     AnimatedVisibility(
@@ -285,11 +347,22 @@ fun MainScreenView(
                             )
 
                             // BottomNavigation aligned to the bottom of the Box
+                            val navBackStackEntry by navController.currentBackStackEntryAsState()
+                            val currentRoute = navBackStackEntry?.destination?.route
                             BottomNavigation(
-                                navController = navController,
-                                modifier = Modifier.align(Alignment.BottomCenter),
+                                currentRoute = currentRoute,
+                                isNavigationEnabled = mainScreenViewModelState.isBottomBarEnabledState,
                                 onMainEvent = onMainEvent,
-                                isNavigationEnabled = mainScreenViewModelState.isBottomBarEnabledState
+                                onNavigate = { route ->
+                                    navController.navigate(route) {
+                                        popUpTo(org.ballistic.dreamjournalai.shared.navigation.Route.DreamJournalScreen) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                modifier = Modifier.align(Alignment.BottomCenter)
                             )
 
                             // FAB aligned to the top-center of the Box
@@ -354,7 +427,7 @@ fun MainScreenView(
             ) { innerPadding ->
                 onMainEvent(MainScreenEvent.UpdatePaddingValues(innerPadding))
 
-                AnimatedVisibility(visible = true, enter = fadeIn(), exit = fadeOut()) {
+
                     ScreenGraph(
                         navController = navController,
                         mainScreenViewModelState = mainScreenViewModelState,
@@ -362,7 +435,7 @@ fun MainScreenView(
                         onMainEvent = { onMainEvent(it) },
                         onNavigateToOnboardingScreen = { onNavigateToOnboardingScreen() }
                     )
-                }
+
             }
         }
     )
@@ -374,21 +447,30 @@ data class DrawerGroup(
 )
 
 @Composable
-fun AnimatedHeartIcon() {
-    val infiniteTransition = rememberInfiniteTransition(label = "")
-    val size by infiniteTransition.animateFloat(
-        initialValue = 24f,
-        targetValue = 28f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 800),  // Slower animation
-            repeatMode = RepeatMode.Reverse
-        ), label = ""
-    )
+fun AnimatedHeartIcon(animate: Boolean = true) {
+    if (animate) {
+        val infiniteTransition = rememberInfiniteTransition(label = "")
+        val size by infiniteTransition.animateFloat(
+            initialValue = 24f,
+            targetValue = 28f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 800),  // Slower animation
+                repeatMode = RepeatMode.Reverse
+            ), label = ""
+        )
 
-    Icon(
-        imageVector = Icons.Default.Favorite,
-        contentDescription = "Animated Heart",
-        tint = Color.Red,
-        modifier = Modifier.size(size.dp)
-    )
+        Icon(
+            imageVector = Icons.Default.Favorite,
+            contentDescription = "Animated Heart",
+            tint = Color.Red,
+            modifier = Modifier.size(size.dp)
+        )
+    } else {
+        Icon(
+            imageVector = Icons.Default.Favorite,
+            contentDescription = "Heart",
+            tint = Color.Red,
+            modifier = Modifier.size(24.dp)
+        )
+    }
 }

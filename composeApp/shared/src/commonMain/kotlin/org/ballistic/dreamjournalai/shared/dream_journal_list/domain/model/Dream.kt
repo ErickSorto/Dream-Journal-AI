@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model
 
 
+import androidx.compose.runtime.Stable
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.background_during_day
 import dreamjournalai.composeapp.shared.generated.resources.beautiful_lighthouse
@@ -19,6 +20,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.time.ExperimentalTime
 
+@Stable
 @Serializable
 data class Dream @OptIn(ExperimentalTime::class) constructor(
     val title: String = "",

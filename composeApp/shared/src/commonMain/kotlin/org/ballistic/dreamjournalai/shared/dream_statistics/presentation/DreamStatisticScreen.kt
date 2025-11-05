@@ -33,7 +33,8 @@ fun DreamStatisticScreen(
     dreamStatisticScreenState: DreamStatisticScreenState,
     mainScreenViewModelState: MainScreenViewModelState,
     bottomPaddingValue: Dp,
-    onEvent: (StatisticEvent) -> Unit
+    onEvent: (StatisticEvent) -> Unit,
+    onMainEvent: (org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent) -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "")
 
@@ -43,7 +44,10 @@ fun DreamStatisticScreen(
 
     Scaffold(
         topBar = {
-            DreamStatisticScreenTopBar(mainScreenViewModelState = mainScreenViewModelState)
+            DreamStatisticScreenTopBar(
+                mainScreenViewModelState = mainScreenViewModelState,
+                onOpenDrawer = { onMainEvent(org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent.ToggleDrawerState(androidx.compose.material3.DrawerValue.Open)) }
+            )
         },
         containerColor = Color.Transparent,
     ) {

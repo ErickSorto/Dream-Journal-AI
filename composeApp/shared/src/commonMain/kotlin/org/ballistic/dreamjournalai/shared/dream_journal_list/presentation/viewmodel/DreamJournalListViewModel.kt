@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.viewmodel
 
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -125,6 +126,7 @@ class DreamJournalListViewModel(
             .launchIn(viewModelScope)
     }
 }
+
 
 data class DreamJournalListState(
     val dreams: List<Dream> = emptyList(),

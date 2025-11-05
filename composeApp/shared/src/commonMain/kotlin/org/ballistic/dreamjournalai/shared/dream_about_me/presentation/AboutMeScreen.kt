@@ -36,7 +36,8 @@ fun AboutMeScreen(
 
     Scaffold(
         topBar = {
-            DreamAboutMeScreenTopBar(mainScreenViewModelState = mainScreenViewModelState)
+            DreamAboutMeScreenTopBar(
+            )
         },
         containerColor = Color.Transparent,
     ) {

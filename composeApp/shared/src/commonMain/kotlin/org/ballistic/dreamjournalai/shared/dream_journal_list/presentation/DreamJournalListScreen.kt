@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
@@ -28,6 +29,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
+import org.ballistic.dreamjournalai.shared.SnackbarAction
 import kotlinx.datetime.LocalDate
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
@@ -98,16 +102,14 @@ fun DreamJournalListScreen(
                 onDreamListEvent(DreamListEvent.ToggleBottomDeleteCancelSheetState(false))
                 onDreamListEvent(DreamListEvent.DeleteDream(dream = dreamJournalListState.chosenDreamToDelete!!))
                 scope.launch {
-                    val result =
-                        mainScreenViewModelState.scaffoldState.snackBarHostState.value.showSnackbar(
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
                             message = "Dream deleted",
-                            actionLabel = "Undo",
-                            duration = SnackbarDuration.Long
+                            action = SnackbarAction("Undo") {
+                                onDreamListEvent(DreamListEvent.RestoreDream)
+                            },
                         )
-
-                    if (result == SnackbarResult.ActionPerformed) {
-                        onDreamListEvent(DreamListEvent.RestoreDream)
-                    }
+                    )
                 }
             },
             onClickOutside = {
@@ -122,7 +124,8 @@ fun DreamJournalListScreen(
                 dreamJournalListState = dreamJournalListState,
                 mainScreenViewModelState = mainScreenViewModelState,
                 searchTextFieldState = searchTextFieldState,
-                onDreamListEvent = onDreamListEvent
+                onDreamListEvent = onDreamListEvent,
+                onOpenDrawer = { onMainEvent(MainScreenEvent.ToggleDrawerState(DrawerValue.Open)) },
             )
         },
         containerColor = Color.Transparent
@@ -169,7 +172,6 @@ fun DreamJournalListScreen(
                             .fillMaxWidth()
                             .padding(bottom = 10.dp)
                             .padding(horizontal = 20.dp),
-                        scope = scope,
                         onClick = {
                             onDreamListEvent(DreamListEvent.TriggerVibration)
                             onNavigateToDream(dream.id, dream.backgroundImage)

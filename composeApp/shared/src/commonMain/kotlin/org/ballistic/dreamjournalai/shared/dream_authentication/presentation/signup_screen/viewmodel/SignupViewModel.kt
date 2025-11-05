@@ -1,7 +1,5 @@
 package org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel
 
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -19,6 +17,9 @@ import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.SignUpResponse
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.SignupEvent
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
+import org.ballistic.dreamjournalai.shared.SnackbarAction
 
 class SignupViewModel(
     private val repo: AuthRepository
@@ -70,19 +71,21 @@ class SignupViewModel(
             resourceFlow = repo.firebaseSignUpWithEmailAndPassword(email, password),
             transform = { result ->
                 viewModelScope.launch {
-                    _state.value.snackBarHostState.value.showSnackbar(
-                        result,
-                        duration = SnackbarDuration.Long,
-                        actionLabel = "dismiss"
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
+                            result,
+                            SnackbarAction("dismiss") { }
+                        )
                     )
                 }
             },
             errorTransform = { error ->
                 viewModelScope.launch {
-                    _state.value.snackBarHostState.value.showSnackbar(
-                        error,
-                        duration = SnackbarDuration.Short,
-                        actionLabel = "dismiss"
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
+                            error,
+                            SnackbarAction("dismiss") { }
+                        )
                     )
                 }
                 _state.value.copy(
@@ -109,10 +112,11 @@ class SignupViewModel(
             },
             errorTransform = { error ->
                 viewModelScope.launch {
-                    _state.value.snackBarHostState.value.showSnackbar(
-                        error,
-                        duration = SnackbarDuration.Short,
-                        actionLabel = "dismiss"
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
+                            error,
+                            SnackbarAction("dismiss") { }
+                        )
                     )
                 }
                 _state.value.copy(error = error)
@@ -122,31 +126,34 @@ class SignupViewModel(
     }
 
     private suspend fun checkSignUpFields(): Boolean {
-        _state.value.snackBarHostState.value.currentSnackbarData?.dismiss()
+        // currentSnackbarData dismissal is UI-specific; instead emit a snackbar event on invalid fields
         return when {
             _state.value.signUpEmail.isEmpty() || _state.value.signUpPassword.isEmpty() -> {
-                state.value.snackBarHostState.value.showSnackbar(
-                    "Email or password is empty",
-                    duration = SnackbarDuration.Short,
-                    actionLabel = "dismiss"
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = "Email or password is empty",
+                        action = SnackbarAction("dismiss") { }
+                    )
                 )
                 false
             }
 
             !_state.value.signUpEmail.contains("@") || !_state.value.signUpEmail.contains(".") -> {
-                state.value.snackBarHostState.value.showSnackbar(
-                    "Email is not in correct format",
-                    duration = SnackbarDuration.Short,
-                    actionLabel = "dismiss"
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = "Email is not in correct format",
+                        action = SnackbarAction("dismiss") { }
+                    )
                 )
                 false
             }
 
             _state.value.signUpPassword.length < 6 -> {
-                state.value.snackBarHostState.value.showSnackbar(
-                    "Password must be at least 6 characters",
-                    duration = SnackbarDuration.Short,
-                    actionLabel = "dismiss"
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = "Password must be at least 6 characters",
+                        action = SnackbarAction("dismiss") { }
+                    )
                 )
                 false
             }
@@ -158,26 +165,24 @@ class SignupViewModel(
     }
 }
 
+
 data class SignupViewModelState(
     val loginEmail: String = "",
     val loginPassword: String = "",
     val signUpEmail: String = "",
     val signUpPassword: String = "",
     val forgotPasswordEmail: String = "",
-    val isLoginLayout: MutableState<Boolean> = mutableStateOf(false),
-    val isSignUpLayout: MutableState<Boolean> = mutableStateOf(false),
-    val isForgotPasswordLayout: MutableState<Boolean> = mutableStateOf(false),
-    val signUpResponse: MutableState<Resource<SignUpResponse>> = mutableStateOf(Resource.Success()),
-    val sendEmailVerificationResponse: MutableState<Resource<Boolean>> = mutableStateOf(Resource.Success()),
-    val emailVerification: StateFlow<VerifyEmailState> = MutableStateFlow(VerifyEmailState()),
-    val revokeAccess: StateFlow<RevokeAccessState> = MutableStateFlow(RevokeAccessState()),
-    val isUserExist: Boolean = false,
-    val isEmailVerified: Boolean = false,
-    val isLoggedIn: Boolean = false,
-    val isLoading: Boolean = false,
-    val error: String = "",
-    val isUserAnonymous: Boolean = false,
-    val snackBarHostState: MutableState<SnackbarHostState> = mutableStateOf(SnackbarHostState()),
+    // layout flags removed to keep state stable; use LoginViewModel to control UI layout
+    val signUpResponse: Resource<SignUpResponse> = Resource.Success(),
+    val sendEmailVerificationResponse: Resource<Boolean> = Resource.Success(),
+    val emailVerification: VerifyEmailState = VerifyEmailState(),
+    val revokeAccess: RevokeAccessState = RevokeAccessState(),
+     val isUserExist: Boolean = false,
+     val isEmailVerified: Boolean = false,
+     val isLoggedIn: Boolean = false,
+     val isLoading: Boolean = false,
+     val error: String = "",
+     val isUserAnonymous: Boolean = false,
 )
 
 data class VerifyEmailState(

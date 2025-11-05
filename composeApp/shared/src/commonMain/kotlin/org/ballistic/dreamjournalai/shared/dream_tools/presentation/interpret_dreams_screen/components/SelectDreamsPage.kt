@@ -76,7 +76,6 @@ fun SelectDreamsPage(
                         .fillMaxWidth()
                         .padding(bottom = 10.dp)
                         .padding(horizontal = 12.dp),
-                    scope = scope,
                     onClick = {
                         onEvent(InterpretDreamsToolEvent.TriggerVibration)
                         val chosenDreamSizeLimit = 15

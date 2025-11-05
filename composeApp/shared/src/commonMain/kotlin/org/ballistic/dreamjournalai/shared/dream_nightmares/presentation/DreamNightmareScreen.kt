@@ -46,7 +46,8 @@ fun DreamNightmareScreen(
     mainScreenViewModelState: MainScreenViewModelState,
     bottomPaddingValue: Dp,
     onEvent: (NightmareEvent) -> Unit,
-    onNavigateToDream: (dreamID: String?, backgroundID: Int) -> Unit
+    onNavigateToDream: (dreamID: String?, backgroundID: Int) -> Unit,
+    onMainEvent: (org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
 
@@ -74,7 +75,8 @@ fun DreamNightmareScreen(
     Scaffold(
         topBar = {
             DreamNightmareScreenTopBar(
-                mainScreenViewModelState = mainScreenViewModelState
+                mainScreenViewModelState = mainScreenViewModelState,
+                onOpenDrawer = { onMainEvent(org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent.ToggleDrawerState(androidx.compose.material3.DrawerValue.Open)) }
             )
         },
         containerColor = Color.Transparent,
@@ -149,7 +151,6 @@ fun DreamNightmareScreen(
                             .fillMaxWidth()
                             .padding(bottom = 10.dp)
                             .padding(horizontal = 12.dp),
-                        scope = scope,
                         onClick = {
                             onNavigateToDream(dream.id, dream.backgroundImage)
                         },

@@ -14,7 +14,7 @@ fun ForgotPassword(
     showErrorMessage: (errorMessage: String?) -> Unit
 ) {
     HandleSendPasswordResetEmailResponse(
-        loginViewModelState.sendPasswordResetEmailResponse.value,
+        loginViewModelState.sendPasswordResetEmailResponse,
         navigateBack,
         showResetPasswordMessage,
         showErrorMessage
@@ -47,4 +47,3 @@ private fun HandleSendPasswordResetEmailResponse(
         }
     }
 }
-

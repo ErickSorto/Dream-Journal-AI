@@ -9,7 +9,7 @@ fun LogIn(
     loginViewModelState: LoginViewModelState,
     showErrorMessage: (errorMessage: String?) -> Unit,
 ) {
-    when(val signInResponse = loginViewModelState.signInResponse.value) {
+    when(val signInResponse = loginViewModelState.signInResponse) {
         is Resource.Loading<*> -> ProgressBar()
         is Resource.Success<*> -> Unit
         is Resource.Error<*> -> signInResponse.apply {}
