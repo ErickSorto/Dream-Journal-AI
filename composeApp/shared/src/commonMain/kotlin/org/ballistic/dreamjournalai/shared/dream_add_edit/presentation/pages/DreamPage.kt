@@ -19,7 +19,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import co.touchlab.kermit.Logger
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.hint_description
 import dreamjournalai.composeapp.shared.generated.resources.hint_title
@@ -46,8 +45,7 @@ fun DreamPage(
             .background(color = Color.Transparent)
             .padding(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 16.dp)
     ) {
-        Logger.d("DreamPage") { "focusManager: $focusManager" }
-        //make content disappear and reappear super quickly
+        // reduce log noise
         TransparentHintTextField(
             hint = stringResource(Res.string.hint_title),
             isHintVisible = titleTextFieldState.text.isBlank(),
@@ -64,7 +62,6 @@ fun DreamPage(
                 },
             textFieldState = titleTextFieldState,
             onEvent = {
-                Logger.d("DreamPage") { "onAddEditDreamEvent: $it" }
                 onAddEditDreamEvent(it)
             }
         )
@@ -119,4 +116,3 @@ fun DreamPage(
 
     }
 }
-

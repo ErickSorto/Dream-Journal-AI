@@ -15,19 +15,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.auth.GoogleAuthProvider as FirebaseGoogleAuthProvider
 import dev.gitlive.firebase.auth.auth
-import org.ballistic.dreamjournalai.shared.dream_account.MyGoogleSignInButton
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.PasswordField
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
-import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.LoginViewModelState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
 
 @Composable
 fun LogoutDeleteLayout(
-    loginViewModelState: LoginViewModelState,
     onLoginEvent: (LoginEvent) -> Unit = {},
+    onLogoutClick: () -> Unit = {},
 ) {
     val userPassword = remember { mutableStateOf("") }
     val showDialog = remember { mutableStateOf(false) }
@@ -51,7 +48,10 @@ fun LogoutDeleteLayout(
         ) {
 
             Button(
-                onClick = { onLoginEvent(LoginEvent.SignOut) },
+                onClick = {
+                    onLogoutClick()
+                    onLoginEvent(LoginEvent.SignOut)
+                },
                 modifier = Modifier.fillMaxWidth(.5f),
                 colors = ButtonDefaults.buttonColors(containerColor = SkyBlue)
             ) {

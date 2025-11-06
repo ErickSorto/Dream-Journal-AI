@@ -259,6 +259,15 @@ public extension Purchases {
         self.attribution.setCreative(creative)
     }
 
+    @available(iOS, deprecated, renamed: "purchase(_:completion:)")
+    @available(tvOS, deprecated, renamed: "purchase(_:completion:)")
+    @available(watchOS, deprecated, renamed: "purchase(_:completion:)")
+    @available(macOS, deprecated, renamed: "purchase(_:completion:)")
+    @available(macCatalyst, deprecated, renamed: "purchase(_:completion:)")
+    @objc(params:withCompletion:)
+    func purchaseWithParams(_ params: PurchaseParams, completion: @escaping PurchaseCompletedBlock) {
+        self.purchase(params, completion: completion)
+    }
 }
 
 public extension StoreProduct {
@@ -328,10 +337,14 @@ extension CustomerInfo {
 
 public extension Configuration.Builder {
 
+    #if !ENABLE_CUSTOM_ENTITLEMENT_COMPUTATION
+
     @available(*, deprecated, message: "Use .with(storeKitVersion:) to enable StoreKit 2")
     @objc func with(usesStoreKit2IfAvailable: Bool) -> Configuration.Builder {
         return self.with(storeKitVersion: usesStoreKit2IfAvailable ? .storeKit2 : .default)
     }
+
+    #endif
 
 }
 

@@ -15,8 +15,10 @@ import Foundation
 
 protocol DiagnosticsFileHandlerType: Sendable {
 
+    func updateDelegate(_ delegate: DiagnosticsFileHandlerDelegate?) async
+
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
-    func getEntries() async -> [DiagnosticsEvent]
+    func getEntries() async -> [DiagnosticsEvent?]
 
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
     func appendEvent(diagnosticsEvent: DiagnosticsEvent) async
@@ -32,22 +34,32 @@ protocol DiagnosticsFileHandlerType: Sendable {
 
 }
 
+protocol DiagnosticsFileHandlerDelegate: AnyObject, Sendable {
+    func onFileSizeIncreasedBeyondAutomaticSyncLimit() async
+}
+
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 actor DiagnosticsFileHandler: DiagnosticsFileHandlerType {
 
-    private let fileHandler: FileHandler
+    private weak var delegate: DiagnosticsFileHandlerDelegate?
+
+    private let fileHandler: FileHandlerType
 
     init?() {
         do {
-            self.fileHandler = try .init(Self.diagnosticsFile)
+            self.fileHandler = try FileHandler(Self.diagnosticsFile)
         } catch {
             Logger.error("Initialization error: \(error.localizedDescription)")
             return nil
         }
     }
 
-    init(_ fileHandler: FileHandler) {
+    init(_ fileHandler: FileHandlerType) {
         self.fileHandler = fileHandler
+    }
+
+    func updateDelegate(_ delegate: DiagnosticsFileHandlerDelegate?) async {
+        self.delegate = delegate
     }
 
     func appendEvent(diagnosticsEvent: DiagnosticsEvent) async {
@@ -56,13 +68,21 @@ actor DiagnosticsFileHandler: DiagnosticsFileHandlerType {
             return
         }
 
-        await self.fileHandler.append(line: jsonString)
+        do {
+            try await self.fileHandler.append(line: jsonString)
+        } catch {
+            Logger.error(Strings.diagnostics.failed_to_store_diagnostics_event(error: error))
+        }
+
+        if await self.isDiagnosticsFileBigEnoughToSync() {
+            await self.delegate?.onFileSizeIncreasedBeyondAutomaticSyncLimit()
+        }
     }
 
-    func getEntries() async -> [DiagnosticsEvent] {
+    func getEntries() async -> [DiagnosticsEvent?] {
         do {
             return try await self.fileHandler.readLines()
-                .compactMap { try? JSONDecoder.default.decode(jsonData: $0.asData) }
+                .map { try? JSONDecoder.default.decode(jsonData: $0.asData) }
                 .extractValues()
         } catch {
             Logger.error(Strings.diagnostics.error_fetching_events(error: error))
@@ -101,6 +121,7 @@ actor DiagnosticsFileHandler: DiagnosticsFileHandlerType {
     }
 
     private static let maxFileSizeInKb: Double = 500
+    private static let minFileSizeEnoughToSyncInKb: Double = 200
 }
 
 // MARK: - Private
@@ -125,6 +146,15 @@ private extension DiagnosticsFileHandler {
             )[0]
         }
 
+    }
+
+    private func isDiagnosticsFileBigEnoughToSync() async -> Bool {
+        do {
+            return try await self.fileHandler.fileSizeInKB() > Self.minFileSizeEnoughToSyncInKb
+        } catch {
+            Logger.error(Strings.diagnostics.failed_check_diagnostics_size(error: error))
+            return true
+        }
     }
 
     private func decodeDiagnosticsEvent(from line: String) -> DiagnosticsEvent? {

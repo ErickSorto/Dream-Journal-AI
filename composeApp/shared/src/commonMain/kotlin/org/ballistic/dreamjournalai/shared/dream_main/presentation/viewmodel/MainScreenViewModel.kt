@@ -5,7 +5,6 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.background_during_day
 import dreamjournalai.composeapp.shared.generated.resources.blue_lighthouse
@@ -36,7 +35,6 @@ class MainScreenViewModel(
     val mainScreenViewModelState: StateFlow<MainScreenViewModelState> = _mainScreenViewModelState.asStateFlow()
 
     init {
-        Logger.d("MainScreenViewModel") { "MainScreenViewModel initialized" }
         updateBackgroundPeriodically()
         _mainScreenViewModelState.value = _mainScreenViewModelState.value.copy(
             backgroundResource = getBackgroundResource()
@@ -70,8 +68,7 @@ class MainScreenViewModel(
     }
 
     fun onEvent (event: MainScreenEvent) = viewModelScope.launch {
-        Logger.d("MainScreenViewModel") { "onEvent: $event" }
-        when (event) {
+         when (event) {
             is MainScreenEvent.SetBottomBarVisibilityState -> {
                 viewModelScope.launch {
                     _mainScreenViewModelState.value = _mainScreenViewModelState.value.copy(
@@ -142,11 +139,10 @@ class MainScreenViewModel(
             }
             is MainScreenEvent.ToggleDrawerState -> {
                 // ViewModel does not own a DrawerState (Compose UI object). Instead, store intent as a boolean.
-                Logger.d("MainScreenViewModel") { "ToggleDrawerState -> ${event.drawerValue}" }
-                _mainScreenViewModelState.value = _mainScreenViewModelState.value.copy(
-                    isDrawerOpen = (event.drawerValue != DrawerValue.Closed)
-                )
-            }
+                 _mainScreenViewModelState.value = _mainScreenViewModelState.value.copy(
+                     isDrawerOpen = (event.drawerValue != DrawerValue.Closed)
+                 )
+             }
             is MainScreenEvent.UserInteracted -> {
                 repo.recordUserInteraction()
             }

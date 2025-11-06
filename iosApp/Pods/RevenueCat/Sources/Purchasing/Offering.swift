@@ -28,6 +28,27 @@ import Foundation
  */
 @objc(RCOffering) public final class Offering: NSObject {
 
+    /// Initialize a ``PaywallComponents``
+    public struct PaywallComponents {
+
+        /**
+         Paywall components configuration defined in RevenueCat dashboard.
+         */
+        public let uiConfig: UIConfig
+
+        /**
+         Paywall components configuration defined in RevenueCat dashboard.
+         */
+        public let data: PaywallComponentsData
+
+        /// Initialize a ``PaywallComponents``.
+        public init(uiConfig: UIConfig, data: PaywallComponentsData) {
+            self.uiConfig = uiConfig
+            self.data = data
+        }
+
+    }
+
     /**
      Unique identifier defined in RevenueCat dashboard.
      */
@@ -46,16 +67,30 @@ import Foundation
     @objc public var metadata: [String: Any] { self._metadata.data }
 
     /**
-    Paywall configuration defined in RevenueCat dashboard.
+     Paywall configuration defined in RevenueCat dashboard.
+
+     Use ``hasPaywall`` to check if the offering has a paywall.
      */
     public let paywall: PaywallData?
 
-    #if PAYWALL_COMPONENTS
     /**
-    Paywall components configuration defined in RevenueCat dashboard.
+     Paywall components configuration defined in RevenueCat dashboard.
+
+     Use ``hasPaywall`` to check if the offering has a paywall.
      */
-    public let paywallComponentsData: PaywallComponentsData?
-    #endif
+    public let paywallComponents: PaywallComponents?
+
+    /**
+     Whether the offering contains a paywall.
+     */
+    public var hasPaywall: Bool {
+        return paywall != nil || paywallComponents != nil
+    }
+
+    /**
+     Draft paywall components configuration defined in RevenueCat dashboard.
+     */
+    @_spi(Internal) public let draftPaywallComponents: PaywallComponents?
 
     /**
      Array of ``Package`` objects available for purchase.
@@ -96,6 +131,11 @@ import Foundation
      Weekly ``Package`` type configured in the RevenueCat dashboard, if available.
      */
     @objc public let weekly: Package?
+
+    /**
+     The url to purchase this package on the web
+     */
+    @objc public let webCheckoutUrl: URL?
 
     public override var description: String {
         return """
@@ -144,44 +184,60 @@ import Foundation
         identifier: String,
         serverDescription: String,
         metadata: [String: Any] = [:],
-        availablePackages: [Package]
+        availablePackages: [Package],
+        webCheckoutUrl: URL?
     ) {
-        #if PAYWALL_COMPONENTS
         self.init(
             identifier: identifier,
             serverDescription: serverDescription,
             metadata: metadata,
             paywall: nil,
-            paywallComponentsData: nil,
-            availablePackages: availablePackages
+            paywallComponents: nil,
+            availablePackages: availablePackages,
+            webCheckoutUrl: webCheckoutUrl
         )
-        #else
-        self.init(
-            identifier: identifier,
-            serverDescription: serverDescription,
-            metadata: metadata,
-            paywall: nil,
-            availablePackages: availablePackages
-        )
-        #endif
     }
 
-    #if PAYWALL_COMPONENTS
     /// Initialize an ``Offering`` given a list of ``Package``s.
-    public init(
+    public convenience init(
         identifier: String,
         serverDescription: String,
         metadata: [String: Any] = [:],
         paywall: PaywallData? = nil,
-        paywallComponentsData: PaywallComponentsData? = nil,
-        availablePackages: [Package]
+        paywallComponents: PaywallComponents? = nil,
+        availablePackages: [Package],
+        webCheckoutUrl: URL?
+    ) {
+        self.init(
+            identifier: identifier,
+            serverDescription: serverDescription,
+            metadata: metadata,
+            paywall: paywall,
+            paywallComponents: paywallComponents,
+            draftPaywallComponents: nil,
+            availablePackages: availablePackages,
+            webCheckoutUrl: webCheckoutUrl
+        )
+    }
+
+    init(
+        identifier: String,
+        serverDescription: String,
+        metadata: [String: Any] = [:],
+        paywall: PaywallData? = nil,
+        paywallComponents: PaywallComponents? = nil,
+        draftPaywallComponents: PaywallComponents?,
+        availablePackages: [Package],
+        webCheckoutUrl: URL?
     ) {
         self.identifier = identifier
         self.serverDescription = serverDescription
         self.availablePackages = availablePackages
         self._metadata = Metadata(data: metadata)
         self.paywall = paywall
-        self.paywallComponentsData = paywallComponentsData
+        self.paywallComponents = paywallComponents
+        self.draftPaywallComponents = draftPaywallComponents
+        self.webCheckoutUrl = webCheckoutUrl
 
         var foundPackages: [PackageType: Package] = [:]
 
@@ -230,72 +286,39 @@ import Foundation
 
         super.init()
     }
-    #else
-    /// Initialize an ``Offering`` given a list of ``Package``s.
-    public init(
-        identifier: String,
-        serverDescription: String,
-        metadata: [String: Any] = [:],
-        paywall: PaywallData? = nil,
-        availablePackages: [Package]
-    ) {
-        self.identifier = identifier
-        self.serverDescription = serverDescription
-        self.availablePackages = availablePackages
-        self._metadata = Metadata(data: metadata)
-        self.paywall = paywall
-
-        var foundPackages: [PackageType: Package] = [:]
-
-        var lifetime: Package?
-        var annual: Package?
-        var sixMonth: Package?
-        var threeMonth: Package?
-        var twoMonth: Package?
-        var monthly: Package?
-        var weekly: Package?
-
-        for package in availablePackages {
-            Self.checkForNilAndLogReplacement(previousPackages: foundPackages, newPackage: package)
-
-            switch package.packageType {
-            case .lifetime: lifetime = package
-            case .annual: annual = package
-            case .sixMonth: sixMonth = package
-            case .threeMonth: threeMonth = package
-            case .twoMonth: twoMonth = package
-            case .monthly: monthly = package
-            case .weekly: weekly = package
-            case .custom where package.storeProduct.productCategory == .nonSubscription:
-                // Non-subscription product, ignoring
-                continue
-
-            case .custom:
-                Logger.debug(Strings.offering.custom_package_type(package))
-                continue
-
-            case .unknown:
-                Logger.warn(Strings.offering.unknown_package_type(package))
-                continue
-            }
-
-            foundPackages[package.packageType] = package
-        }
-
-        self.lifetime = lifetime
-        self.annual = annual
-        self.sixMonth = sixMonth
-        self.threeMonth = threeMonth
-        self.twoMonth = twoMonth
-        self.monthly = monthly
-        self.weekly = weekly
-
-        super.init()
-    }
-    #endif
 
     // swiftlint:enable cyclomatic_complexity
 
+}
+
+@_spi(Internal)
+public extension Offering {
+
+    /// Copies the Offering and sets the given `presentedOfferingContext` on all `availablePackages`
+    func withPresentedOfferingContext(_ presentedOfferingContext: PresentedOfferingContext) -> Self {
+        return Self(
+            identifier: identifier,
+            serverDescription: serverDescription,
+            metadata: metadata,
+            paywall: paywall,
+            paywallComponents: paywallComponents,
+            draftPaywallComponents: draftPaywallComponents,
+            availablePackages: availablePackages.map { $0.withPresentedOfferingContext(presentedOfferingContext) },
+            webCheckoutUrl: webCheckoutUrl
+        )
+    }
+}
+
+fileprivate extension Package {
+    func withPresentedOfferingContext(_ presentedOfferingContext: PresentedOfferingContext) -> Self {
+        return Self(
+            identifier: identifier,
+            packageType: packageType,
+            storeProduct: storeProduct,
+            presentedOfferingContext: presentedOfferingContext,
+            webCheckoutUrl: webCheckoutUrl
+        )
+    }
 }
 
 extension Offering {
@@ -310,20 +333,21 @@ extension Offering {
     }
 
     /// - Returns: The `metadata` value associated to `key` for the expected `Decodable` type,
-    /// or `nil` if not found.
-    /// - Throws: Error if the content couldn't be deserialized to the expected type.
+    /// or `nil` if not found or if the content couldn't be deserialized to the expected type.
     /// - Note: This decodes JSON using `JSONDecoder.KeyDecodingStrategy.convertFromSnakeCase`.
     public func getMetadataValue<T: Decodable>(for key: String) -> T? {
-        do {
-            guard let value = self.metadata[key] else { return nil }
-            let data = try JSONSerialization.data(withJSONObject: value)
+        guard let value = self.metadata[key] else { return nil }
 
-            return try JSONDecoder.default.decode(
-                T.self,
-                jsonData: data,
-                logErrors: true
-            )
-        } catch {
+        if JSONSerialization.isValidJSONObject(value),
+            let data = try? JSONSerialization.data(withJSONObject: value) {
+            return try? JSONDecoder.default.decode(
+                            T.self,
+                            jsonData: data,
+                            logErrors: true
+                        )
+        } else if let value = value as? T {
+            return value
+        } else {
             return nil
         }
     }
@@ -336,6 +360,8 @@ extension Offering: Identifiable {
     public var id: String { return self.identifier }
 
 }
+
+extension Offering.PaywallComponents: Sendable {}
 
 extension Offering: Sendable {}
 

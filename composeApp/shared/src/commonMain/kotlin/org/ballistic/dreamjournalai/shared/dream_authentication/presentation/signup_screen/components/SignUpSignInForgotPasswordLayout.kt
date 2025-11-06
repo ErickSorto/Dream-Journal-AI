@@ -13,8 +13,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -192,24 +195,51 @@ fun SignupLayout(
 fun LoginLayout(
     loginViewModelState: LoginViewModelState,
     onLoginEvent: (LoginEvent) -> Unit,
-    onAnimationComplete: () -> Unit = {}
+    onAnimationComplete: () -> Unit = {},
+    shouldAnimate: Boolean = true,
+    staggerMillis: Long = 220L,
+    // External stagger control (optional)
+    emailVisible: MutableState<Boolean>? = null,
+    passwordVisible: MutableState<Boolean>? = null,
+    loginButtonVisible: MutableState<Boolean>? = null,
+    useExternalStagger: Boolean = false,
+    preferFadeExit: Boolean = false,
 ) {
 
-    val staggeredDelay = 200L
-    val composablesData = listOf(
-        ComposableData(key = "Email", visible = remember { mutableStateOf(false) }),
-        ComposableData(key = "Password", visible = remember { mutableStateOf(false) }),
-        ComposableData(key = "LoginButton", visible = remember { mutableStateOf(false) }),
-        ComposableData(key = "SignInGoogleButton", visible = remember { mutableStateOf(false) }),
-        ComposableData(key = "AnonymousButton", visible = remember { mutableStateOf(false) }),
-    )
+    val enterDuration = 300
+    val staggeredDelay = staggerMillis
 
-    LaunchedEffect(key1 = true) {
-        for (composableData in composablesData) {
-            delay(staggeredDelay)
-            composableData.visible.value = true
+    // Local default visibility states when not using external stagger
+    val localStates = remember {
+        listOf(
+            ComposableData(key = "Email", visible = mutableStateOf(false)),
+            ComposableData(key = "Password", visible = mutableStateOf(false)),
+            ComposableData(key = "LoginButton", visible = mutableStateOf(false)),
+        )
+    }
+
+    // Decide which states to use
+    val emailState = emailVisible ?: localStates.first { it.key == "Email" }.visible
+    val passwordState = passwordVisible ?: localStates.first { it.key == "Password" }.visible
+    val loginButtonState = loginButtonVisible ?: localStates.first { it.key == "LoginButton" }.visible
+
+    // Only run internal stagger when not using external one
+    LaunchedEffect(shouldAnimate, staggerMillis, useExternalStagger) {
+        if (!useExternalStagger) {
+            if (shouldAnimate) {
+                localStates.forEachIndexed { index, composableData ->
+                    if (index == 0) {
+                        composableData.visible.value = true
+                    } else {
+                        delay(staggeredDelay)
+                        composableData.visible.value = true
+                    }
+                }
+            } else {
+                localStates.forEach { it.visible.value = true }
+            }
+            onAnimationComplete()
         }
-        onAnimationComplete()
     }
 
     Column(
@@ -221,10 +251,11 @@ fun LoginLayout(
                 .padding(horizontal = 16.dp)
                 .focusable(),
             email = loginViewModelState.loginEmail,
-            onValueChange = {
-                onLoginEvent(LoginEvent.EnteredLoginEmail(it))
-            },
-            isVisible = composablesData.first { it.key == "Email" }.visible
+            onValueChange = { onLoginEvent(LoginEvent.EnteredLoginEmail(it)) },
+            isVisible = emailState,
+            animate = shouldAnimate,
+            enterDurationMillis = enterDuration,
+            exitWithFade = preferFadeExit,
         )
 
         PasswordField(
@@ -233,24 +264,28 @@ fun LoginLayout(
                 .padding(horizontal = 16.dp)
                 .focusable(),
             password = loginViewModelState.loginPassword,
-            onValueChange = { newValue ->
-                onLoginEvent(LoginEvent.EnteredLoginPassword(newValue))
-            },
-            forgotPassword = {
-                onLoginEvent(LoginEvent.ShowForgotPasswordLayout)
-            },
+            onValueChange = { newValue -> onLoginEvent(LoginEvent.EnteredLoginPassword(newValue)) },
+            forgotPassword = { onLoginEvent(LoginEvent.ShowForgotPasswordLayout) },
             isLoginLayout = loginViewModelState.isLoginLayout,
-            isVisible = composablesData.first { it.key == "Password" }.visible
+            isVisible = passwordState,
+            animate = shouldAnimate,
+            enterDurationMillis = enterDuration,
+            exitWithFade = preferFadeExit,
         )
 
         LoginButton(
             modifier = Modifier.fillMaxWidth(.5f),
             loginViewModelState = loginViewModelState,
             onLoginEvent = onLoginEvent,
-            isVisible = composablesData.first { it.key == "LoginButton" }.visible,
+            isVisible = loginButtonState,
+            animate = shouldAnimate,
+            enterDurationMillis = enterDuration,
+            exitWithFade = preferFadeExit,
         )
     }
-    LogIn(showErrorMessage = { /*TODO*/ }, loginViewModelState = loginViewModelState)
+    if (!useExternalStagger) {
+        LogIn(showErrorMessage = { /*TODO*/ }, loginViewModelState = loginViewModelState)
+    }
 }
 
 @Composable

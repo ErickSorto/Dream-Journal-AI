@@ -10,6 +10,7 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.functions.functions
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -35,6 +36,7 @@ class StoreScreenViewModel(
 
     private val productIds = listOf("dream_token_100", "dream_tokens_500")
     private var authStateJob: Job? = null
+    private var tokensJob: Job? = null
 
     init {
         logger.d { "Initializing StoreScreenViewModel" }
@@ -54,10 +56,12 @@ class StoreScreenViewModel(
         authStateJob = viewModelScope.launch {
             logger.d { "Starting auth state listener" }
             Firebase.auth.authStateChanged.collect { user ->
-                logger.d { "Auth state changed: isAnonymous=${user?.isAnonymous}" }
+                logger.d { "Auth state changed: isAnonymous=${user?.isAnonymous} uid=${user?.uid}" }
                 _storeScreenViewModelState.update { currentState ->
                     currentState.copy(isUserAnonymous = user?.isAnonymous == true)
                 }
+                // Re-bind dream tokens listener to the current user doc
+                restartTokensListener()
             }
         }
     }
@@ -68,9 +72,45 @@ class StoreScreenViewModel(
         authStateJob = null
     }
 
+    private fun restartTokensListener() {
+        viewModelScope.launch {
+            tokensJob?.cancelAndJoin()
+            tokensJob = launch {
+                collectDreamTokens()
+            }
+        }
+    }
+
+    private suspend fun collectDreamTokens() {
+        logger.d { "(re)collecting dream tokens for current user" }
+        authRepository.addDreamTokensFlowListener().collect { resource ->
+            when (resource) {
+                is Resource.Success -> {
+                    logger.d { "Dream tokens updated: ${resource.data}" }
+                    _storeScreenViewModelState.update {
+                        it.copy(dreamTokens = resource.data?.toInt() ?: 0)
+                    }
+                }
+                is Resource.Error -> {
+                    logger.e { "Error fetching dream tokens: ${resource.message}" }
+                    // Optionally reset to 0 if logged out
+                    _storeScreenViewModelState.update { state ->
+                        val isLoggedIn = Firebase.auth.currentUser != null
+                        if (!isLoggedIn) state.copy(dreamTokens = 0) else state
+                    }
+                }
+                is Resource.Loading -> {
+                    logger.d { "Loading dream tokens..." }
+                }
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         stopAuthStateListener()
+        tokensJob?.cancel()
+        tokensJob = null
     }
 
     fun onEvent(event: StoreEvent) {
@@ -92,25 +132,8 @@ class StoreScreenViewModel(
                 }
             }
             is StoreEvent.GetDreamTokens -> {
-                viewModelScope.launch {
-                    logger.d { "Fetching dream tokens..." }
-                    authRepository.addDreamTokensFlowListener().collect { resource ->
-                        when (resource) {
-                            is Resource.Success -> {
-                                logger.d { "Dream tokens updated: ${resource.data}" }
-                                _storeScreenViewModelState.update {
-                                    it.copy(dreamTokens = resource.data?.toInt() ?: 0)
-                                }
-                            }
-                            is Resource.Error -> {
-                                logger.e { "Error fetching dream tokens: ${resource.message}" }
-                            }
-                            is Resource.Loading -> {
-                                logger.d { "Loading dream tokens..." }
-                            }
-                        }
-                    }
-                }
+                // Always (re)start listener for current user
+                restartTokensListener()
             }
         }
     }

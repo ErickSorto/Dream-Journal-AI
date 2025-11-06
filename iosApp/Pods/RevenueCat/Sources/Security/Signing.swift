@@ -155,7 +155,7 @@ extension Signing {
         case informational(PublicKey)
         case enforced(PublicKey)
 
-        static let `default`: Self = .disabled
+        static let `default`: Self = .informational(Signing.loadPublicKey())
 
         var publicKey: PublicKey? {
             switch self {
@@ -220,6 +220,7 @@ extension Signing {
 
         /// Number of bytes where the component begins
         fileprivate var offset: Int {
+            // swiftlint:disable:next force_unwrapping
             return Self.offsets[self]!
         }
 

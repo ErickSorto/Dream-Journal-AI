@@ -24,42 +24,80 @@ class OfferingsManager {
     private let backend: Backend
     private let offeringsFactory: OfferingsFactory
     private let productsManager: ProductsManagerType
+    private let diagnosticsTracker: DiagnosticsTrackerType?
+    private let dateProvider: DateProvider
 
     init(deviceCache: DeviceCache,
          operationDispatcher: OperationDispatcher,
          systemInfo: SystemInfo,
          backend: Backend,
          offeringsFactory: OfferingsFactory,
-         productsManager: ProductsManagerType) {
+         productsManager: ProductsManagerType,
+         diagnosticsTracker: DiagnosticsTrackerType?,
+         dateProvider: DateProvider = DateProvider()) {
         self.deviceCache = deviceCache
         self.operationDispatcher = operationDispatcher
         self.systemInfo = systemInfo
         self.backend = backend
         self.offeringsFactory = offeringsFactory
         self.productsManager = productsManager
+        self.diagnosticsTracker = diagnosticsTracker
+        self.dateProvider = dateProvider
     }
 
     func offerings(
         appUserID: String,
         fetchPolicy: FetchPolicy = .default,
         fetchCurrent: Bool = false,
+        trackDiagnostics: Bool = true,
         completion: (@MainActor @Sendable (Result<Offerings, Error>) -> Void)?
     ) {
-        guard !fetchCurrent else {
-            self.fetchFromNetwork(appUserID: appUserID, fetchPolicy: fetchPolicy, completion: completion)
-            return
-        }
-
-        guard let memoryCachedOfferings = self.cachedOfferings else {
-            self.fetchFromNetwork(appUserID: appUserID, fetchPolicy: fetchPolicy, completion: completion)
-            return
-        }
-
-        Logger.debug(Strings.offering.vending_offerings_cache_from_memory)
-        self.dispatchCompletionOnMainThreadIfPossible(completion, value: .success(memoryCachedOfferings))
+        self.trackGetOfferingsStartedIfNeeded(trackDiagnostics: trackDiagnostics)
+        let startTime = self.dateProvider.now()
 
         self.systemInfo.isApplicationBackgrounded { isAppBackgrounded in
-            if self.deviceCache.isOfferingsCacheStale(isAppBackgrounded: isAppBackgrounded) {
+
+            guard !fetchCurrent && !self.systemInfo.dangerousSettings.uiPreviewMode else {
+                self.fetchFromNetwork(appUserID: appUserID,
+                                      fetchPolicy: fetchPolicy) { [weak self] result in
+                    self?.trackGetOfferingsResultIfNeeded(trackDiagnostics: trackDiagnostics,
+                                                          startTime: startTime,
+                                                          cacheStatus: .notChecked,
+                                                          error: result.error,
+                                                          requestedProductIds: result.value?.requestedProductIds,
+                                                          notFoundProductIds: result.value?.notFoundProductIds)
+                    completion?(result.map(\.offerings))
+                }
+                return
+            }
+
+            guard let memoryCachedOfferings = self.cachedOfferings else {
+                self.fetchFromNetwork(appUserID: appUserID,
+                                      fetchPolicy: fetchPolicy) { [weak self] result in
+                    self?.trackGetOfferingsResultIfNeeded(trackDiagnostics: trackDiagnostics,
+                                                          startTime: startTime,
+                                                          cacheStatus: .notFound,
+                                                          error: result.error,
+                                                          requestedProductIds: result.value?.requestedProductIds,
+                                                          notFoundProductIds: result.value?.notFoundProductIds)
+                    completion?(result.map(\.offerings))
+                }
+                return
+            }
+
+            let cacheStatus = self.deviceCache.offeringsCacheStatus(isAppBackgrounded: isAppBackgrounded)
+            Logger.debug(Strings.offering.vending_offerings_cache_from_memory)
+            self.trackGetOfferingsResultIfNeeded(trackDiagnostics: trackDiagnostics,
+                                                 startTime: startTime,
+                                                 cacheStatus: cacheStatus,
+                                                 error: nil,
+                                                 requestedProductIds: nil,
+                                                 notFoundProductIds: nil)
+
+            self.dispatchCompletionOnMainThreadIfPossible(completion,
+                                                          value: .success(memoryCachedOfferings))
+
+            if cacheStatus == .stale {
                 self.updateOfferingsCache(appUserID: appUserID,
                                           isAppBackgrounded: isAppBackgrounded,
                                           fetchPolicy: fetchPolicy,
@@ -76,14 +114,17 @@ class OfferingsManager {
         appUserID: String,
         isAppBackgrounded: Bool,
         fetchPolicy: FetchPolicy = .default,
-        completion: (@MainActor @Sendable (Result<Offerings, Error>) -> Void)?
+        completion: (@MainActor @Sendable (Result<OfferingsResultData, Error>) -> Void)?
     ) {
+        // We keep track of preferred locales at the time of launching the request
+        let preferredLocales = systemInfo.preferredLocales
         self.backend.offerings.getOfferings(appUserID: appUserID, isAppBackgrounded: isAppBackgrounded) { result in
             switch result {
             case let .success(response):
                 self.handleOfferingsBackendResult(with: response,
                                                   appUserID: appUserID,
                                                   fetchPolicy: fetchPolicy,
+                                                  preferredLocales: preferredLocales,
                                                   completion: completion)
 
             case let .failure(.networkError(networkError)) where networkError.isServerDown:
@@ -124,7 +165,9 @@ class OfferingsManager {
         self.invalidateCachedOfferings(appUserID: appUserID)
 
         if cachedOfferings != nil {
-            self.offerings(appUserID: appUserID, fetchPolicy: .ignoreNotFoundProducts) { @Sendable _ in }
+            self.offerings(appUserID: appUserID,
+                           fetchPolicy: .ignoreNotFoundProducts,
+                           trackDiagnostics: false) { @Sendable _ in }
         }
     }
 
@@ -135,7 +178,7 @@ private extension OfferingsManager {
     func fetchFromNetwork(
         appUserID: String,
         fetchPolicy: FetchPolicy = .default,
-        completion: (@MainActor @Sendable (Result<Offerings, Error>) -> Void)?
+        completion: (@MainActor @Sendable (Result<OfferingsResultData, Error>) -> Void)?
     ) {
         Logger.debug(Strings.offering.no_cached_offerings_fetching_from_network)
 
@@ -150,7 +193,7 @@ private extension OfferingsManager {
     func fetchCachedOfferingsFromDisk(
         appUserID: String,
         fetchPolicy: FetchPolicy,
-        completion: (@escaping @Sendable (Offerings?) -> Void)
+        completion: (@escaping @Sendable (OfferingsResultData?) -> Void)
     ) {
         guard let data = self.deviceCache.cachedOfferingsResponseData(appUserID: appUserID),
               let response: OfferingsResponse = try? JSONDecoder.default.decode(jsonData: data, logErrors: true) else {
@@ -163,14 +206,14 @@ private extension OfferingsManager {
             fetchPolicy: fetchPolicy,
             completion: { [cache = self.deviceCache] result in
                 switch result {
-                case let .success(offerings):
+                case let .success(offeringsResultData):
                     Logger.debug(Strings.offering.vending_offerings_cache_from_disk)
 
                     // Cache in memory but as stale, so it can be re-updated when possible
-                    cache.cacheInMemory(offerings: offerings)
-                    cache.clearOfferingsCacheTimestamp()
+                    cache.cacheInMemory(offerings: offeringsResultData.offerings)
+                    cache.forceOfferingsCacheStale()
 
-                    completion(offerings)
+                    completion(offeringsResultData)
 
                 case .failure:
                     completion(nil)
@@ -182,7 +225,7 @@ private extension OfferingsManager {
     func createOfferings(
         from response: OfferingsResponse,
         fetchPolicy: FetchPolicy,
-        completion: @escaping (@Sendable (Result<Offerings, Error>) -> Void)
+        completion: @escaping (@Sendable (Result<OfferingsResultData, Error>) -> Void)
     ) {
         let productIdentifiers = response.productIdentifiers
 
@@ -192,11 +235,15 @@ private extension OfferingsManager {
             return
         }
 
-        self.productsManager.products(withIdentifiers: productIdentifiers) { result in
+        self.fetchProducts(withIdentifiers: productIdentifiers, fromResponse: response) { result in
             let products = result.value ?? []
 
             guard products.isEmpty == false else {
-                completion(.failure(Self.createErrorForEmptyResult(result.error)))
+                // Check if empty products is likely caused by https://github.com/RevenueCat/purchases-ios/issues/4954
+                // There is a widely reported bug in the iOS 18.4 Simulator affecting some HTTP requests
+                let showSimulatorWarning = self.systemInfo.isSubjectToKnownIssue_18_4_sim()
+                completion(.failure(Self.createErrorForEmptyResult(result.error,
+                                                                   showSimulatorWarning: showSimulatorWarning)))
                 return
             }
 
@@ -218,7 +265,9 @@ private extension OfferingsManager {
             }
 
             if let createdOfferings = self.offeringsFactory.createOfferings(from: productsByID, data: response) {
-                completion(.success(createdOfferings))
+                completion(.success(OfferingsResultData(offerings: createdOfferings,
+                                                        requestedProductIds: productIdentifiers,
+                                                        notFoundProductIds: missingProductIDs)))
             } else {
                 completion(.failure(.noOfferingsFound()))
             }
@@ -229,15 +278,18 @@ private extension OfferingsManager {
         with response: OfferingsResponse,
         appUserID: String,
         fetchPolicy: FetchPolicy,
-        completion: (@MainActor @Sendable (Result<Offerings, Error>) -> Void)?
+        preferredLocales: [String],
+        completion: (@MainActor @Sendable (Result<OfferingsResultData, Error>) -> Void)?
     ) {
         self.createOfferings(from: response, fetchPolicy: fetchPolicy) { result in
             switch result {
-            case let .success(offerings):
+            case let .success(offeringsResultData):
                 Logger.rcSuccess(Strings.offering.offerings_stale_updated_from_network)
 
-                self.deviceCache.cache(offerings: offerings, appUserID: appUserID)
-                self.dispatchCompletionOnMainThreadIfPossible(completion, value: .success(offerings))
+                self.deviceCache.cache(offerings: offeringsResultData.offerings,
+                                       preferredLocales: preferredLocales,
+                                       appUserID: appUserID)
+                self.dispatchCompletionOnMainThreadIfPossible(completion, value: .success(offeringsResultData))
 
             case let .failure(error):
                 self.handleOfferingsUpdateError(error, completion: completion)
@@ -245,10 +297,14 @@ private extension OfferingsManager {
         }
     }
 
-    private static func createErrorForEmptyResult(_ error: PurchasesError?) -> OfferingsManager.Error {
+    private static func createErrorForEmptyResult(_ error: PurchasesError?,
+                                                  showSimulatorWarning: Bool = false) -> OfferingsManager.Error {
         if let purchasesError = error,
            case ErrorCode.productRequestTimedOut = purchasesError.error {
             return .timeout(purchasesError)
+        } else if showSimulatorWarning {
+            return .configurationError(Strings.offering.known_issue_ios_18_4_simulator_products_not_found.description,
+                                       underlyingError: error?.asPublicError)
         } else {
             return .configurationError(Strings.offering.configuration_error_products_not_found.description,
                                        underlyingError: error?.asPublicError)
@@ -257,7 +313,7 @@ private extension OfferingsManager {
 
     func handleOfferingsUpdateError(
         _ error: Error,
-        completion: (@MainActor @Sendable (Result<Offerings, Error>) -> Void)?
+        completion: (@MainActor @Sendable (Result<OfferingsResultData, Error>) -> Void)?
     ) {
         Logger.appleError(Strings.offering.fetching_offerings_error(error: error,
                                                                     underlyingError: error.underlyingError))
@@ -275,6 +331,130 @@ private extension OfferingsManager {
         }
     }
 
+    private func fetchProducts(
+        withIdentifiers identifiers: Set<String>,
+        fromResponse response: OfferingsResponse,
+        completion: @escaping ProductsManagerType.Completion
+    ) {
+        if self.systemInfo.dangerousSettings.uiPreviewMode {
+            let previewProducts = self.createPreviewProducts(productIdentifiers: identifiers, fromResponse: response)
+            completion(.success(previewProducts))
+        } else {
+            self.productsManager.products(withIdentifiers: identifiers, completion: completion)
+        }
+    }
+
+    // MARK: - For UI Preview mode
+
+    /// Generates a set of dummy `StoreProduct`s with hardcoded information exclusively for UI Preview mode.
+    private func createPreviewProducts(
+        productIdentifiers: Set<String>,
+        fromResponse response: OfferingsResponse
+    ) -> Set<StoreProduct> {
+        let packagesByProductID = response.packages.dictionaryAllowingDuplicateKeys { $0.platformProductIdentifier }
+        let products = productIdentifiers.map { identifier -> StoreProduct in
+            let productType = self.inferredPreviewProductType(from: packagesByProductID[identifier],
+                                                              productIdentifier: identifier)
+
+            let introductoryDiscount: TestStoreProductDiscount? = {
+                // To allow introductory offers in UI Preview mode,
+                // all dummy yearly subscriptions have a 1-week free trial
+                guard productType.period?.unit == .year else { return nil }
+                return TestStoreProductDiscount(
+                    identifier: "intro",
+                    price: 0,
+                    localizedPriceString: "$0.00",
+                    paymentMode: .freeTrial,
+                    subscriptionPeriod: SubscriptionPeriod(value: 1, unit: .week),
+                    numberOfPeriods: 1,
+                    type: .introductory
+                )
+            }()
+
+            let testProduct = TestStoreProduct(
+                localizedTitle: "PRO \(productType.type)",
+                price: Decimal(productType.price),
+                localizedPriceString: String(format: "$%.2f", productType.price),
+                productIdentifier: identifier,
+                productType: productType.period == nil ? .nonConsumable : .autoRenewableSubscription,
+                localizedDescription: productType.type + (productType.period == nil ? "" : " subscription"),
+                subscriptionGroupIdentifier: productType.period == nil ? nil : "group",
+                subscriptionPeriod: productType.period,
+                introductoryDiscount: introductoryDiscount,
+                discounts: []
+            )
+
+            return testProduct.toStoreProduct()
+        }
+
+        return Set(products)
+    }
+
+    private func inferredPreviewProductType(
+        from package: OfferingsResponse.Offering.Package?,
+        productIdentifier: String
+    ) -> PreviewProductType {
+        if let package,
+           let previewProductType = PreviewProductType(packageType: Package.packageType(from: package.identifier)) {
+            return previewProductType
+        } else {
+            // Try to guess basing on the product identifier
+            let id = productIdentifier.lowercased()
+
+            let packageType: PackageType
+            if id.contains("lifetime") || id.contains("forever") || id.contains("permanent") {
+                packageType = .lifetime
+            } else if id.contains("annual") || id.contains("year") {
+                packageType = .annual
+            } else if id.contains("sixmonth") || id.contains("6month") {
+                packageType = .sixMonth
+            } else if id.contains("threemonth") || id.contains("3month") || id.contains("quarter") {
+                packageType = .threeMonth
+            } else if id.contains("twomonth") || id.contains("2month") {
+                packageType = .twoMonth
+            } else if id.contains("month") {
+                packageType = .monthly
+            } else if id.contains("week") {
+                packageType = .weekly
+            } else {
+                packageType = .custom
+            }
+            return PreviewProductType(packageType: packageType) ?? .default
+        }
+    }
+
+    func trackGetOfferingsStartedIfNeeded(trackDiagnostics: Bool) {
+        if #available(iOS 15.0, tvOS 15.0, macOS 12.0, watchOS 8.0, *),
+            trackDiagnostics,
+           let diagnosticsTracker = self.diagnosticsTracker {
+            diagnosticsTracker.trackOfferingsStarted()
+        }
+    }
+
+    // swiftlint:disable:next function_parameter_count
+    func trackGetOfferingsResultIfNeeded(trackDiagnostics: Bool,
+                                         startTime: Date,
+                                         cacheStatus: CacheStatus,
+                                         error: Error?,
+                                         requestedProductIds: Set<String>?,
+                                         notFoundProductIds: Set<String>?) {
+        if #available(iOS 15.0, tvOS 15.0, macOS 12.0, watchOS 8.0, *),
+            trackDiagnostics,
+           let diagnosticsTracker = self.diagnosticsTracker {
+
+            let responseTime = self.dateProvider.now().timeIntervalSince(startTime)
+
+            diagnosticsTracker.trackOfferingsResult(requestedProductIds: requestedProductIds,
+                                                    notFoundProductIds: notFoundProductIds,
+                                                    errorMessage: error?.localizedDescription,
+                                                    errorCode: error?.asPurchasesError.errorCode,
+                                                    // WIP Add verification result property once we
+                                                    // expose verification result in offerings object
+                                                    verificationResult: nil,
+                                                    cacheStatus: cacheStatus,
+                                                    responseTime: responseTime)
+        }
+    }
 }
 
 extension OfferingsManager {
@@ -401,4 +581,60 @@ extension OfferingsManager.Error: CustomNSError {
         }
     }
 
+}
+
+struct OfferingsResultData {
+    let offerings: Offerings
+    let requestedProductIds: Set<String>
+    let notFoundProductIds: Set<String>
+}
+
+/// For UI Preview mode only.
+private struct PreviewProductType {
+    let type: String
+    let price: Double
+    let period: SubscriptionPeriod?
+
+    static let `default` = PreviewProductType(type: "lifetime", price: 249.99, period: nil)
+
+    private init(type: String, price: Double, period: SubscriptionPeriod?) {
+        self.type = type
+        self.price = price
+        self.period = period
+    }
+
+    init?(packageType: PackageType) {
+        switch packageType {
+        case .lifetime:
+            self = PreviewProductType(type: "lifetime",
+                                      price: 199.99,
+                                      period: nil)
+        case .annual:
+            self = PreviewProductType(type: "yearly",
+                                      price: 59.99,
+                                      period: SubscriptionPeriod(value: 1, unit: .year))
+        case .sixMonth:
+            self = PreviewProductType(type: "6 months",
+                                      price: 30.99,
+                                      period: SubscriptionPeriod(value: 3, unit: .month))
+        case .threeMonth:
+            self = PreviewProductType(type: "3 months",
+                                      price: 15.99,
+                                      period: SubscriptionPeriod(value: 3, unit: .month))
+        case .twoMonth:
+            self = PreviewProductType(type: "monthly",
+                                      price: 11.49,
+                                      period: SubscriptionPeriod(value: 2, unit: .month))
+        case .monthly:
+            self = PreviewProductType(type: "monthly",
+                                      price: 5.99,
+                                      period: SubscriptionPeriod(value: 1, unit: .month))
+        case .weekly:
+            self = PreviewProductType(type: "weekly",
+                                      price: 1.99,
+                                      period: SubscriptionPeriod(value: 1, unit: .week))
+        case .unknown, .custom:
+            return nil
+        }
+    }
 }

@@ -30,7 +30,7 @@ PODS:
     - GTMSessionFetcher/Core (< 4.0, >= 3.3)
   - GTMSessionFetcher/Core (3.5.0)
   - PromisesObjC (2.4.0)
-  - RevenueCat (5.3.4)
+  - RevenueCat (5.46.0)
 
 DEPENDENCIES:
   - ComposeApp (from `../composeApp/shared`)
@@ -61,7 +61,7 @@ SPEC CHECKSUMS:
   GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  RevenueCat: 4ba0e585d42cdfc3fafce631c51ea9088053fae2
+  RevenueCat: 0423a85e1f2ef06f1002b18cae53fe856f60ea53
 
 PODFILE CHECKSUM: 900af0f58e2486429f0f06f7cc2ea842b8270f15
 

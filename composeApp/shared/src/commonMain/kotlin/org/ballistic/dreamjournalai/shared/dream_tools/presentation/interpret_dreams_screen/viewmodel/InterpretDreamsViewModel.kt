@@ -262,7 +262,7 @@ class InterpretDreamsViewModel(
                 interpretation = completion.choices.firstOrNull()?.message?.content ?: "",
                 listOfDreamIDs = interpretDreamsScreenState.value.chosenDreams.map { it.id },
                 date = kotlin.time.Clock.System.now().toEpochMilliseconds(),
-                model = if (modelId == "gpt-4o") "Advanced" else "Standard",
+                model = if (modelId == "gpt-4.1") "Advanced" else "Standard",
                 id = null
             )
             massInterpretationRepository.addInterpretation(
@@ -282,7 +282,7 @@ class InterpretDreamsViewModel(
 
 data class InterpretDreamsScreenState(
     val dreams: List<Dream> = emptyList(),
-    val modelChosen: String = "gpt-4o-mini",
+    val modelChosen: String = "gpt-4.1-mini",
     val authRepository: AuthRepository,
     val massMassInterpretations: List<MassInterpretation> = emptyList(),
     val chosenMassInterpretation: MassInterpretation = MassInterpretation(),
@@ -293,4 +293,3 @@ data class InterpretDreamsScreenState(
     val bottomDeleteCancelSheetState: Boolean = false,
     val dreamTokens: Int = 0
 )
-

@@ -1,7 +1,10 @@
 package org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -40,71 +43,39 @@ fun PasswordField(
     onValueChange: (String) -> Unit,
     forgotPassword: () -> Unit,
     modifier: Modifier = Modifier,
-    isVisible: MutableState<Boolean> = remember { mutableStateOf(false) }
+    isVisible: MutableState<Boolean> = remember { mutableStateOf(false) },
+    animate: Boolean = true,
+    enterDurationMillis: Int = 300,
+    exitWithFade: Boolean = false,
 ) {
     var passwordIsVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
-    AnimatedVisibility(
-        visible = isVisible.value,
-        enter = slideInHorizontally(initialOffsetX = { 1000 })
-    ) {
+    if (!animate) {
         OutlinedTextField(
             value = password,
-            onValueChange = {
-                onValueChange(it)
-            },
-            label = {
-                Text(
-                    text = PASSWORD_LABEL,
-                    color = Color.White
-                )
-            },
-            textStyle = LocalTextStyle.current.copy(
-                color = Color.White,
-                fontSize = 16.sp,
-            ),
+            onValueChange = { onValueChange(it) },
+            label = { Text(text = PASSWORD_LABEL, color = Color.White) },
+            textStyle = LocalTextStyle.current.copy(color = Color.White, fontSize = 16.sp),
             singleLine = true,
-            visualTransformation = if (passwordIsVisible) {
-                VisualTransformation.None
-            } else {
-                PasswordVisualTransformation()
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password
-            ),
+            visualTransformation = if (passwordIsVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             leadingIcon = {
-                val icon = if (passwordIsVisible) {
-                    Icons.Filled.Visibility
-                } else {
-                    Icons.Filled.VisibilityOff
-                }
-                IconButton(
-                    onClick = {
-                        passwordIsVisible = !passwordIsVisible
-                    }
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = Color.White
-                    )
+                val icon = if (passwordIsVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                IconButton(onClick = { passwordIsVisible = !passwordIsVisible }) {
+                    Icon(imageVector = icon, contentDescription = null, tint = Color.White)
                 }
             },
             trailingIcon = {
                 if (isLoginLayout) {
                     TextButton(onClick = { forgotPassword() }) {
-                        Text(text = "Forgot password?",
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
+                        Text(text = "Forgot password?", color = Color.White.copy(alpha = 0.7f))
                     }
                 }
             },
             modifier = modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
-                .onKeyboardDismiss {
-                    focusManager.clearFocus()
-                },
+                .onKeyboardDismiss { focusManager.clearFocus() },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = LightBlack.copy(alpha = 0.7f),
                 unfocusedContainerColor = LightBlack.copy(alpha = 0.7f),
@@ -122,5 +93,86 @@ fun PasswordField(
                 errorLabelColor = Color.Red,
             )
         )
+    } else {
+        AnimatedVisibility(
+            visible = isVisible.value,
+            enter = slideInHorizontally(animationSpec = tween(enterDurationMillis), initialOffsetX = { 1000 }),
+            exit = if (exitWithFade) fadeOut(animationSpec = tween(220)) else slideOutHorizontally(animationSpec = tween(enterDurationMillis), targetOffsetX = { -1000 })
+        ) {
+            OutlinedTextField(
+                value = password,
+                onValueChange = {
+                    onValueChange(it)
+                },
+                label = {
+                    Text(
+                        text = PASSWORD_LABEL,
+                        color = Color.White
+                    )
+                },
+                textStyle = LocalTextStyle.current.copy(
+                    color = Color.White,
+                    fontSize = 16.sp,
+                ),
+                singleLine = true,
+                visualTransformation = if (passwordIsVisible) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password
+                ),
+                leadingIcon = {
+                    val icon = if (passwordIsVisible) {
+                        Icons.Filled.Visibility
+                    } else {
+                        Icons.Filled.VisibilityOff
+                    }
+                    IconButton(
+                        onClick = {
+                            passwordIsVisible = !passwordIsVisible
+                        }
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+                },
+                trailingIcon = {
+                    if (isLoginLayout) {
+                        TextButton(onClick = { forgotPassword() }) {
+                            Text(text = "Forgot password?",
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                },
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+                    .onKeyboardDismiss {
+                        focusManager.clearFocus()
+                    },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = LightBlack.copy(alpha = 0.7f),
+                    unfocusedContainerColor = LightBlack.copy(alpha = 0.7f),
+                    disabledContainerColor = Color.Transparent,
+                    errorContainerColor = Color.Transparent,
+                    cursorColor = Color.White,
+                    errorCursorColor = Color.Red,
+                    focusedBorderColor =  Color.White.copy(alpha = 0.4f),
+                    unfocusedBorderColor = Color.Transparent,
+                    disabledBorderColor = Color.Black,
+                    errorBorderColor = Color.Red,
+                    focusedLabelColor = Color.Black,
+                    unfocusedLabelColor = Color.Black,
+                    disabledLabelColor = Color.Black,
+                    errorLabelColor = Color.Red,
+                )
+            )
+        }
     }
 }

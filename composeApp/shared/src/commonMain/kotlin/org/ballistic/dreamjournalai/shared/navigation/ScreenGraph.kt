@@ -81,8 +81,6 @@ fun ScreenGraph(
                 val dreamJournalListState =
                     dreamJournalListViewModel.dreamJournalListState.collectAsStateWithLifecycle().value
                 DreamJournalListScreen(
-                    mainScreenViewModelState = mainScreenViewModelState,
-                    searchTextFieldState = searchTextFieldState,
                     dreamJournalListState = dreamJournalListState,
                     bottomPaddingValue = bottomPaddingValue,
                     onMainEvent = { onMainEvent(it) },
@@ -95,7 +93,9 @@ fun ScreenGraph(
                                 backgroundID = backgroundID
                             )
                         )
-                    }
+                    },
+                    mainScreenViewModelState = mainScreenViewModelState,
+                    searchTextFieldState = searchTextFieldState
                 )
             }
 

@@ -15,11 +15,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.Serializable
 import org.ballistic.dreamjournalai.shared.core.Constants.USERS
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.Flag
@@ -28,11 +24,13 @@ import org.ballistic.dreamjournalai.shared.core.util.downloadImageBytes
 import org.ballistic.dreamjournalai.shared.core.util.toGitLiveData
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.repository.DreamRepository
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 private val logger = Logger.withTag("DreamRepositoryImpl")
-private val readLogger = Logger.withTag("DJAI/Reads/Dreams")
 
 class DreamRepositoryImpl(
     private val db: FirebaseFirestore
@@ -47,10 +45,6 @@ class DreamRepositoryImpl(
 
     private var currentDreamId: String = ""
 
-    // Rough counters (client-side approximation only)
-    private var dreamsSnapshotEmissions: Int = 0
-    private var singleDocReads: Int = 0
-
     // Add this function to get the current user's UID
     private fun userID(): String? {
         return Firebase.auth.currentUser?.uid
@@ -60,24 +54,9 @@ class DreamRepositoryImpl(
         val collection = getCollectionReferenceForDreams()
             ?: return flowOf(emptyList())
 
+        // Keep mapping only; drop per-emission logging to reduce noise
         return collection
             .snapshots()
-            .onStart {
-                dreamsSnapshotEmissions = 0
-                readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ Subscribing to getDreams() snapshots for uid=${userID()} }" }
-            }
-            .onEach { querySnapshot ->
-                dreamsSnapshotEmissions += 1
-                val count = querySnapshot.documents.size
-                readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ Dreams snapshot #$dreamsSnapshotEmissions received, documents=$count }" }
-            }
-            .onCompletion { cause ->
-                if (cause == null) {
-                    readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ Unsubscribed from getDreams() snapshots cleanly after $dreamsSnapshotEmissions emissions }" }
-                } else {
-                    readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ getDreams() snapshots completed with error: ${cause.message} after $dreamsSnapshotEmissions emissions }" }
-                }
-            }
             .map { querySnapshot ->
                 querySnapshot.documents.mapNotNull { doc ->
                     doc.toDream()
@@ -95,38 +74,31 @@ class DreamRepositoryImpl(
     }
 
     override suspend fun getDream(id: String): Resource<Dream> {
-        readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ getDream(id=$id) – performing single document read }" }
-        singleDocReads += 1
         return try {
-            // 1) Get the doc reference from your "my_dreams" subcollection
             val docRef = getCollectionReferenceForDreams()?.document(id)
                 ?: return Resource.Error("User not logged in or reference is null")
 
-            // 2) Fetch the snapshot (GitLive’s .get() is already a suspend function)
             val snapshot = docRef.get()
 
-            // 3) Check if the document exists, parse the data
             if (snapshot.exists) {
-                readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ getDream(id=$id) – read success (exists=true). Total singleDocReads=$singleDocReads }" }
-
-                val dream = snapshot.getDream()  // see extension below
-
+                // Ensure id/uid are populated on single reads as well
+                val dream = snapshot.getDream()
                 Resource.Success(dream)
             } else {
-                readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ getDream(id=$id) – document not found }" }
                 Resource.Error("Dream not found")
             }
 
         } catch (e: Exception) {
-            readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ getDream(id=$id) – error: ${e.message} }" }
             Resource.Error("Error fetching dream: ${e.message}")
         }
     }
 
-    private fun DocumentSnapshot.getDream(): Dream? {
-        val dream = data<Dream>()
-
-        return dream
+    private fun DocumentSnapshot.getDream(): Dream {
+        val base = data<Dream>()
+        return base.copy(
+            id = this.id,
+            uid = this.reference.parent.parent?.id ?: ""
+        )
     }
 
 
@@ -135,58 +107,56 @@ class DreamRepositoryImpl(
         return Resource.Success(currentDreamId)
     }
 
-    @OptIn(ExperimentalUuidApi::class)
+    @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
     override suspend fun insertDream(dream: Dream): Resource<Unit> {
-        logger.d { "insertDream: Attempting to insert/update dream with ID: ${dream.id}" }
+        logger.d { "insertDream: upsert id=${dream.id} httpImage=${dream.generatedImage.startsWith("http")}" }
         return try {
-            val existingDream = if (!dream.id.isNullOrEmpty()) getDream(dream.id) else null
-            logger.d { "insertDream: Existing dream: $existingDream" }
+            // Ensure a stable ID for document and storage path
+            val ensuredId = dream.id?.takeIf { it.isNotBlank() } ?: Uuid.random().toString()
+            val ensuredUid = userID() ?: ""
 
-            suspend fun uploadImageIfNeeded(dreamToUpdate: Dream, oldImageUrl: String = ""): Dream {
-                if (dreamToUpdate.generatedImage.isNotBlank() &&
-                    !dreamToUpdate.generatedImage.startsWith("https://firebasestorage.googleapis.com/")
-                ) {
-                    logger.d { "uploadImageIfNeeded: Uploading new image for dream" }
+            val existingDream = if (dream.id.isNullOrBlank()) null else getDream(dream.id)
 
-                    return withContext(Dispatchers.IO) {
-                        val randomFileName = "${Uuid.random()}.jpg"
-                        logger.d { "uploadImageIfNeeded: Generated random filename: $randomFileName" }
+            @OptIn(ExperimentalEncodingApi::class)
+            suspend fun uploadImageIfNeeded(d: Dream): Dream {
+                if (d.generatedImage.isBlank()) return d
+                // If it's already a Firebase Storage URL, keep it
+                val alreadyStorageUrl = d.generatedImage.startsWith("https://firebasestorage.googleapis.com/")
+                if (alreadyStorageUrl) return d
 
-                        val storageRef = Firebase.storage
-                            .reference(location = "${userID()}/images/$randomFileName")
+                return withContext(Dispatchers.IO) {
+                    // Overwrite in-place at a stable location derived from dream ID
+                    val targetPath = "$ensuredUid/images/$ensuredId.jpg"
+                    val storageRef = Firebase.storage.reference(location = targetPath)
 
-                        val imageBytes = downloadImageBytes(dreamToUpdate.generatedImage)
-                        logger.d { "uploadImageIfNeeded: Downloaded image bytes (${imageBytes.size} bytes)" }
-
-                        val gitLiveData: Data = imageBytes.toGitLiveData()
-                        storageRef.putData(gitLiveData)
-                        logger.d { "uploadImageIfNeeded: Uploaded new image to Firebase Storage" }
-
-                        val downloadUrl = storageRef.getDownloadUrl()
-                        logger.d { "uploadImageIfNeeded: New image download URL: $downloadUrl" }
-
-                        // Parse the relative path from the oldImageUrl
-                        if (oldImageUrl.isNotBlank()) {
-                            val relativePath = parseFirebaseStoragePath(oldImageUrl)
-                            logger.d { "uploadImageIfNeeded: Deleting old image at relative path: $relativePath" }
-
-                            val oldRef = Firebase.storage.reference(relativePath)
-                            oldRef.delete()
-                        }
-
-                        dreamToUpdate.copy(generatedImage = downloadUrl.toString())
+                    val isDataUrl = d.generatedImage.startsWith("data:")
+                    val imageBytes = if (isDataUrl) {
+                        val commaIdx = d.generatedImage.indexOf(',')
+                        val b64 = if (commaIdx >= 0) d.generatedImage.substring(commaIdx + 1) else ""
+                        if (b64.isBlank()) ByteArray(0) else Base64.decode(b64)
+                    } else {
+                        downloadImageBytes(d.generatedImage)
                     }
+
+                    val gitLiveData: Data = imageBytes.toGitLiveData()
+                    storageRef.putData(gitLiveData)
+                    val downloadUrl = storageRef.getDownloadUrl().toString()
+                    val sep = if (downloadUrl.contains('?')) '&' else '?'
+                    val version = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                    val finalUrl = "$downloadUrl${sep}v=$version"
+
+                    // No need to delete the old image; overwrite happened in-place
+                    d.copy(generatedImage = finalUrl)
                 }
-                return dreamToUpdate
             }
 
             if (existingDream is Resource.Success && existingDream.data != null) {
-                logger.d { "insertDream: Dream exists, updating" }
-
-                val updatedDream = existingDream.data.copy(
+                val base = existingDream.data
+                val updated = base.copy(
                     title = dream.title,
                     content = dream.content,
-                    timestamp = dream.timestamp,
+                    // Preserve original timestamp to keep list order stable
+                    timestamp = base.timestamp,
                     date = dream.date,
                     sleepTime = dream.sleepTime,
                     wakeTime = dream.wakeTime,
@@ -208,29 +178,18 @@ class DreamRepositoryImpl(
                     dreamAIStory = dream.dreamAIStory,
                     dreamAIAdvice = dream.dreamAIAdvice,
                     dreamAIMood = dream.dreamAIMood,
-                    id = existingDream.data.id,
-                    uid = existingDream.data.uid
+                    id = ensuredId,
+                    uid = ensuredUid
                 )
-                logger.d { "insertDream: Updated dream details: $updatedDream" }
-
-                val updatedWithImage = uploadImageIfNeeded(updatedDream, existingDream.data.generatedImage)
-                logger.d { "insertDream: Updated dream with new image details: $updatedWithImage" }
-
-                val docRef = getCollectionReferenceForDreams()?.document(updatedWithImage.id ?: "")
-                logger.d { "insertDream: Firestore reference for update: ${docRef?.path}" }
-                docRef?.set(updatedWithImage)
+                val updatedWithImage = uploadImageIfNeeded(updated)
+                getCollectionReferenceForDreams()?.document(ensuredId)?.set(updatedWithImage)
             } else {
-                logger.d { "insertDream: Creating new dream" }
-
-                val newDreamWithImage = uploadImageIfNeeded(dream)
-                logger.d { "insertDream: New dream with image: $newDreamWithImage" }
-
-                val docRef = getCollectionReferenceForDreams()?.document(dream.id ?: "")
-                logger.d { "insertDream: Firestore reference for new dream: ${docRef?.path}" }
-                docRef?.set(newDreamWithImage)
+                val newDream = dream.copy(id = ensuredId, uid = ensuredUid)
+                val newWithImage = uploadImageIfNeeded(newDream)
+                getCollectionReferenceForDreams()?.document(ensuredId)?.set(newWithImage)
             }
 
-            logger.d { "insertDream: Dream successfully inserted/updated" }
+            logger.d { "insertDream: success id=$ensuredId" }
             Resource.Success(Unit)
         } catch (e: Exception) {
             logger.e(e) { "insertDream: Error inserting dream" }
@@ -247,40 +206,27 @@ class DreamRepositoryImpl(
 
 
     override suspend fun deleteDream(id: String): Resource<Unit> {
-        readLogger.d { "Log.d(\"DJAI/Reads/Dreams\"){ deleteDream(id=$id) – will fetch dream first to remove image (additional read) }" }
         return try {
-            // 1) Fetch the dream first
+            // 1) Fetch the dream first (to remove image if present)
             val dreamResult = getDream(id)
             if (dreamResult is Resource.Success && dreamResult.data != null) {
                 val dreamData = dreamResult.data
 
                 // 2) If dream has a generated image, remove it from Firebase Storage
                 if (dreamData.generatedImage.isNotBlank()) {
-                    // Example URL:
-                    // "https://firebasestorage.googleapis.com/v0/b/<bucket>/o/users%2Fuid%2Fimages%2Ffilename.jpg?alt=media..."
                     val imageUrl = dreamData.generatedImage
 
-                    // 2a) Parse with Ktor's Url (works in KMM)
                     val ktorUrl = Url(imageUrl)
-                    // e.g. ktorUrl.encodedPath might be: "/v0/b/<bucket>/o/users%2Fuid%2Fimages%2Ffilename.jpg"
                     val pathPortion = ktorUrl.encodedPath.substringAfter("/o/").substringBefore("?")
-                    // e.g. "users%2Fuid%2Fimages%2Ffilename.jpg"
-
-                    // 2b) Decode the path. Ktor has decodeURLPart(...) for URL-encoded strings
                     val decodedPath = decodeUrlPart(pathPortion)
-                    // e.g. "users/uid/images/filename.jpg"
-
-                    // 3) Build a reference in GitLive
                     val imageRef = Firebase.storage.reference(decodedPath)
-
-                    // 4) Delete the file (suspend call in GitLive)
                     imageRef.delete()
                 }
             }
 
             // 5) Remove the dream doc from Firestore
             dreamsCollection?.document(id)?.delete()
-
+            logger.d { "deleteDream: success id=$id" }
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error("Error deleting dream: ${e.message}")

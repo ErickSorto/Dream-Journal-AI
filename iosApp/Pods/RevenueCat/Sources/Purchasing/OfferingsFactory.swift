@@ -21,7 +21,9 @@ class OfferingsFactory {
         let offerings: [String: Offering] = data
             .offerings
             .compactMap { offeringData in
-                createOffering(from: storeProductsByID, offering: offeringData)
+                createOffering(from: storeProductsByID,
+                               offering: offeringData,
+                               uiConfig: data.uiConfig)
             }
             .dictionaryAllowingDuplicateKeys { $0.identifier }
 
@@ -38,31 +40,50 @@ class OfferingsFactory {
 
     func createOffering(
         from storeProductsByID: [String: StoreProduct],
-        offering: OfferingsResponse.Offering
+        offering: OfferingsResponse.Offering,
+        uiConfig: UIConfig?
     ) -> Offering? {
         let availablePackages: [Package] = offering.packages.compactMap { package in
             createPackage(with: package, productsByID: storeProductsByID, offeringIdentifier: offering.identifier)
         }
 
         guard !availablePackages.isEmpty else {
+            #if ENABLE_CUSTOM_ENTITLEMENT_COMPUTATION && !DEBUG
+            Logger.debug(Strings.offering.offering_empty(offeringIdentifier: offering.identifier))
+            #else
             Logger.warn(Strings.offering.offering_empty(offeringIdentifier: offering.identifier))
+            #endif
             return nil
         }
 
-        #if PAYWALL_COMPONENTS
+        let paywallComponents: Offering.PaywallComponents? = {
+            if let uiConfig, let paywallComponents = offering.paywallComponents {
+                return .init(
+                    uiConfig: uiConfig,
+                    data: paywallComponents
+                )
+            }
+            return nil
+        }()
+
+        let paywallDraftComponents: Offering.PaywallComponents? = {
+            if let uiConfig, let paywallDraftComponents = offering.draftPaywallComponents {
+                return .init(
+                    uiConfig: uiConfig,
+                    data: paywallDraftComponents
+                )
+            }
+            return nil
+        }()
+
         return Offering(identifier: offering.identifier,
                         serverDescription: offering.description,
                         metadata: offering.metadata.mapValues(\.asAny),
                         paywall: offering.paywall,
-                        paywallComponentsData: offering.paywallComponents,
-                        availablePackages: availablePackages)
-        #else
-        return Offering(identifier: offering.identifier,
-                        serverDescription: offering.description,
-                        metadata: offering.metadata.mapValues(\.asAny),
-                        paywall: offering.paywall,
-                        availablePackages: availablePackages)
-        #endif
+                        paywallComponents: paywallComponents,
+                        draftPaywallComponents: paywallDraftComponents,
+                        availablePackages: availablePackages,
+                        webCheckoutUrl: offering.webCheckoutUrl)
     }
 
     func createPackage(
@@ -76,7 +97,8 @@ class OfferingsFactory {
 
         return .init(package: data,
                      product: product,
-                     offeringIdentifier: offeringIdentifier)
+                     offeringIdentifier: offeringIdentifier,
+                     webCheckoutUrl: data.webCheckoutUrl)
     }
 
     func createPlacement(
@@ -102,12 +124,14 @@ private extension Package {
     convenience init(
         package: OfferingsResponse.Offering.Package,
         product: StoreProduct,
-        offeringIdentifier: String
+        offeringIdentifier: String,
+        webCheckoutUrl: URL?
     ) {
         self.init(identifier: package.identifier,
                   packageType: Package.packageType(from: package.identifier),
                   storeProduct: product,
-                  offeringIdentifier: offeringIdentifier)
+                  offeringIdentifier: offeringIdentifier,
+                  webCheckoutUrl: webCheckoutUrl)
     }
 
 }

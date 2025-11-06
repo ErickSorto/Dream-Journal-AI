@@ -3,13 +3,11 @@ package org.ballistic.dreamjournalai.shared.dream_account
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.dream_authentication.GoogleAuthProvider
 import org.ballistic.dreamjournalai.shared.dream_authentication.Account
-import androidx.compose.ui.unit.dp
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.SignInGoogleButton
 import co.touchlab.kermit.Logger
 import android.widget.Toast
@@ -24,7 +22,7 @@ actual fun MyGoogleSignInButton(
     val scope = rememberCoroutineScope()
 
     SignInGoogleButton(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth(),
         isVisible = true,
         isEnabled = !isLoading,
         onClick = {

@@ -26,6 +26,10 @@ enum BackendError: Error, Equatable {
     case missingCachedCustomerInfo(Source)
     case invalidAppleSubscriptionKey(Source)
     case unexpectedBackendResponse(UnexpectedBackendResponseError, extraContext: String?, Source)
+    case invalidWebRedemptionToken
+    case purchaseBelongsToOtherUser
+    case expiredWebRedemptionToken(obfuscatedEmail: String)
+    case unsupportedInUIPreviewMode(Source)
 
 }
 
@@ -70,6 +74,12 @@ extension BackendError {
         return .unexpectedBackendResponse(error,
                                           extraContext: extraContext,
                                           .init(file: file, function: function, line: line))
+    }
+
+    static func unsupportedInUIPreviewMode(
+        file: String = #fileID, function: String = #function, line: UInt = #line
+    ) -> Self {
+        return .unsupportedInUIPreviewMode(.init(file: file, function: function, line: line))
     }
 
 }
@@ -124,6 +134,26 @@ extension BackendError: PurchasesErrorConvertible {
                 functionName: source.function,
                 line: source.line
             )
+        case .invalidWebRedemptionToken:
+            let code = BackendErrorCode.invalidWebRedemptionToken
+            return ErrorUtils.backendError(withBackendCode: code,
+                                           originalBackendErrorCode: code.rawValue)
+        case .purchaseBelongsToOtherUser:
+            let code = BackendErrorCode.purchaseBelongsToOtherUser
+            return ErrorUtils.backendError(withBackendCode: code,
+                                           originalBackendErrorCode: code.rawValue)
+        case let .expiredWebRedemptionToken(obfuscatedEmail):
+            let code = BackendErrorCode.expiredWebRedemptionToken
+            return ErrorUtils.backendError(withBackendCode: code,
+                                           originalBackendErrorCode: code.rawValue,
+                                           extraUserInfo: [
+                                            .obfuscatedEmail: obfuscatedEmail
+                                           ])
+        case let .unsupportedInUIPreviewMode(source):
+            return ErrorUtils.unsupportedInUIPreviewModeError(fileName: source.file,
+                                                              functionName: source.function,
+                                                              line: source.line)
+
         }
     }
 
@@ -160,7 +190,11 @@ extension BackendError {
              .invalidAppleSubscriptionKey,
              .missingTransactionProductIdentifier,
              .missingCachedCustomerInfo,
-             .unexpectedBackendResponse:
+             .unexpectedBackendResponse,
+             .invalidWebRedemptionToken,
+             .purchaseBelongsToOtherUser,
+             .expiredWebRedemptionToken,
+             .unsupportedInUIPreviewMode:
             return nil
         }
     }
@@ -179,7 +213,11 @@ extension BackendError {
                 .missingReceiptFile,
                 .invalidAppleSubscriptionKey,
                 .missingTransactionProductIdentifier,
-                .missingCachedCustomerInfo:
+                .missingCachedCustomerInfo,
+                .invalidWebRedemptionToken,
+                .purchaseBelongsToOtherUser,
+                .expiredWebRedemptionToken,
+                .unsupportedInUIPreviewMode:
             return nil
 
         case let .unexpectedBackendResponse(error, _, _):

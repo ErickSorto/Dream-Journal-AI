@@ -18,6 +18,17 @@ import com.aallam.openai.api.image.ImageCreation
 import com.aallam.openai.api.image.ImageSize
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.HttpRequestTimeoutException
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.request.headers
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.client.plugins.timeout
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -30,6 +41,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.DictionaryRepository
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
@@ -64,6 +79,26 @@ class AddEditDreamViewModel(
     private val vibratorUtil: VibratorUtil,
 ) : ViewModel() {
 
+     // Lightweight Ktor client for direct OpenAI calls (multiplatform)
+     private val httpClient by lazy {
+        HttpClient {
+            install(HttpTimeout) {
+                requestTimeoutMillis = 70_000
+                connectTimeoutMillis = 30_000
+                socketTimeoutMillis = 70_000
+            }
+            install(HttpRequestRetry) {
+                maxRetries = 1
+                retryIf { _, response -> response.status.value in 500..599 }
+                retryOnExceptionIf { _, cause ->
+                    // Retry once on request timeouts
+                    cause is HttpRequestTimeoutException
+                }
+                exponentialDelay()
+            }
+        }
+     }
+
     private val _addEditDreamState = MutableStateFlow(
         AddEditDreamState(
             authRepository = authRepository
@@ -79,6 +114,9 @@ class AddEditDreamViewModel(
 
     val flow = Unit
 
+    // Runtime flag: if GPT Image model calls are failing for this session, skip them and use DALL·E fallback immediately
+    private var gptImageTemporarilyDisabled: Boolean = false
+
     override fun onCleared() {
         super.onCleared()
         onEvent(AddEditDreamEvent.OnCleared)
@@ -86,7 +124,6 @@ class AddEditDreamViewModel(
 
     init {
         savedStateHandle.get<String>("dreamID")?.let { dreamId ->
-            Logger.d("AddEditDreamViewModel") { "Dream ID: $dreamId" }
             if (dreamId.isNotEmpty()) {
                 viewModelScope.launch {
                     _addEditDreamState.value = addEditDreamState.value.copy(isLoading = true)
@@ -152,7 +189,8 @@ class AddEditDreamViewModel(
                         }
 
                         is Resource.Error<*> -> {
-                            Logger.e("AddEditDreamViewModel") { resource.message.toString() }
+                            // single-line error
+                            logger.e { "init: load dream failed: ${resource.message}" }
 
                             viewModelScope.launch{
                                 _addEditDreamState.value.snackBarHostState.value.showSnackbar(
@@ -369,7 +407,6 @@ class AddEditDreamViewModel(
                         dreamLucidity = event.lucidity
                     )
                 )
-                Logger.d("AddEditViewModel") { "Lucidity updated to ${event.lucidity}" }
             }
 
             is AddEditDreamEvent.ChangeVividness -> {
@@ -546,7 +583,7 @@ class AddEditDreamViewModel(
             }
 
             is AddEditDreamEvent.ContentHasChanged -> {
-                Logger.d("AddEditDreamViewModel") { "Content updated succesfully)" }
+                // reduce log noise
                 _addEditDreamState.update {
                     it.copy(dreamContentChanged = true, dreamHasChanged = true)
                 }
@@ -678,6 +715,15 @@ class AddEditDreamViewModel(
                     }
 
                     try {
+                        val preImage = addEditDreamState.value.dreamAIImage.response
+                        val preKind = when {
+                            preImage.startsWith("data:") -> "data"
+                            preImage.startsWith("http") -> "http"
+                            preImage.isBlank() -> "empty"
+                            else -> "other"
+                        }
+                        logger.d { "save: start kind=$preKind" }
+
                         val dreamToSave = Dream(
                             id = addEditDreamState.value.dreamInfo.dreamId,
                             uid = addEditDreamState.value.dreamInfo.dreamUID,
@@ -706,8 +752,45 @@ class AddEditDreamViewModel(
                             dreamAIAdvice = addEditDreamState.value.dreamAIAdvice.response,
                             dreamAIMood = addEditDreamState.value.dreamAIMoodAnalyser.response
                         )
-                        logger.d { "Saving Dream: $dreamToSave" }
+                        // no full object dump
                         dreamUseCases.addDream(dreamToSave)
+                        logger.d { "save: write initiated" }
+
+                        // Re-fetch saved dream to get canonical Storage URL and push to UI
+                        val savedId = addEditDreamState.value.dreamInfo.dreamId
+                        if (!savedId.isNullOrBlank()) {
+                            val expectedPathPiece = "/images/$savedId.jpg"
+                            val expectedEncodedPiece = "%2Fimages%2F$savedId.jpg"
+                            var applied = false
+                            repeat(12) attempt@{ _ ->
+                                 when (val refreshed = dreamUseCases.getDream(savedId)) {
+                                     is Resource.Success<*> -> {
+                                         val latest = refreshed.data as Dream
+                                         val url = latest.generatedImage
+                                         val isFinalFirebase = url.contains("firebasestorage.googleapis.com")
+                                         val looksVersioned = url.contains("&v=") || url.contains("?v=")
+                                         val matchesTarget = url.contains(expectedPathPiece) || url.contains(expectedEncodedPiece)
+                                         if (isFinalFirebase && (matchesTarget || looksVersioned)) {
+                                             _addEditDreamState.update { state ->
+                                                 state.copy(
+                                                     dreamAIImage = state.dreamAIImage.copy(response = url),
+                                                     dreamGeneratedDetails = state.dreamGeneratedDetails.copy(response = latest.generatedDetails)
+                                                 )
+                                             }
+                                             applied = true
+                                             return@attempt
+                                         }
+                                     }
+                                     is Resource.Error<*> -> Unit
+                                     else -> Unit
+                                 }
+                                 // small delay between attempts
+                                kotlinx.coroutines.delay(250)
+                             }
+                            logger.d { if (applied) "save: applied refreshed storage url" else "save: no refreshed url observed" }
+                         } else {
+                             // no-op
+                         }
 
                         _addEditDreamState.update {
                             it.copy(
@@ -936,13 +1019,12 @@ class AddEditDreamViewModel(
         updateResponseState: (String) -> Unit
     ) {
         try {
-
             val apiKey = OpenAIApiKeyUtil.getOpenAISecretKey()
-            Logger.d("AddEditDreamViewModel") { "API Key: $apiKey" }
             val openAI = OpenAI(apiKey)
             val currentLocale = Locale.current.language
 
-            val modelId = if (cost <= 0) "gpt-4o-mini" else "gpt-4o"
+            // Use cost-aware models: mini for budget, full for higher quality
+            val modelId = if (cost <= 0) "gpt-4.1-mini" else "gpt-4.1"
             val chatCompletionRequest = ChatCompletionRequest(
                 model = ModelId(modelId), messages = listOf(
                     ChatMessage(
@@ -958,7 +1040,7 @@ class AddEditDreamViewModel(
 
             if (cost > 0) authRepository.consumeDreamTokens(cost)
         } catch (e: Exception) {
-            Logger.e("AddEditDreamViewModel") { e.message.toString() }
+            logger.e { "AI text gen failed: ${e.message}" }
             updateLoadingState(false)
             _addEditDreamState.value.snackBarHostState.value.showSnackbar(
                 "Error getting AI response", "Dismiss"
@@ -977,22 +1059,35 @@ class AddEditDreamViewModel(
         )
 
         val randomStyle =
-            "A photograph of the scene, 4k, detailed, with vivid colors" + if (eventCost <= 1) {
-                " and a very simple beautiful scene"
+            "A beautiful, imaginative dream scene filled with color, emotion, and flowing light" + if (eventCost <= 1) {
+                ", kept simple and peaceful with a soft, serene atmosphere."
             } else {
-                ""
+                ", vibrant and layered with symbolic meaning, where beauty meets mystery and emotion. 4k photo hyper realistic scene"
             }
 
         val imagePrompt = if (eventCost <= 1) {
-            "You are a dream environment builder: In the following dream, in third person and one short sentence 8 to 20 words build the visual elements, such as characters, scene, objects that stand out, or setting of the dream that follows. Make it short and straightforward: \n\n${
-                contentTextFieldState.value.text
-            } \n\nUse vivid imagery and a palette of rich, beautiful colors to highlight key objects or characters. Keep the description straightforward and focused on visuals only"
+            """
+    You are a Dream Environment Artist. In one short, third-person sentence (8–20 words),
+    describe the heart of the dream below — the setting, mood, and any objects or figures that stand out.
+    
+    ${contentTextFieldState.value.text}
+    
+    Keep it gentle and visually poetic. Use soft colors, glowing light, and a calm sense of wonder.
+    Focus on what can be seen or felt in a peaceful, beautiful way.
+    """.trimIndent()
         } else {
-            "You are a dream environment builder: In the following dream, in third person and one short sentence build the visual elements, such as characters, scene, objects that stand out, or setting of the dream that follows. Make it short and straightforward: \n\n${
-                contentTextFieldState.value.text
-            } \n\nUse vivid imagery and a palette of rich, beautiful colors to highlight key objects or characters."
+            """
+    You are a Dream Environment Artist. In one vivid, third-person sentence (8–20 words),
+    portray the dream below as a scene full of atmosphere, hidden meaning, and emotional symbolism.
+    
+    ${contentTextFieldState.value.text}
+    
+    Focus on recurring dream symbols — light, water, doors, skies, reflections, mirrors, or shifting landscapes —
+    weaving them naturally into the visual. The mood should feel intentional and emotionally charged,
+    where every element seems to represent something deeper. Use color and light to guide emotion,
+    blending surreal imagery with symbolic beauty.
+    """.trimIndent()
         }
-
 
         val creativity = if (eventCost <= 1) {
             .4
@@ -1004,8 +1099,10 @@ class AddEditDreamViewModel(
             val apiKey = OpenAIApiKeyUtil.getOpenAISecretKey()
             val openAI = OpenAI(apiKey)
 
+            // Use mini for budget prompts, full for higher-quality prompt shaping
+            val promptModel = if (eventCost <= 1) "gpt-4.1-mini" else "gpt-4.1"
             val chatCompletionRequest = ChatCompletionRequest(
-                model = ModelId("gpt-4o"),
+                model = ModelId(promptModel),
                 messages = listOf(
                     ChatMessage(
                         role = ChatRole.User,
@@ -1027,7 +1124,7 @@ class AddEditDreamViewModel(
                     )
                 )
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Handle error state
             _addEditDreamState.value = addEditDreamState.value.copy(
                 dreamGeneratedDetails = addEditDreamState.value.dreamGeneratedDetails.copy(
@@ -1042,7 +1139,8 @@ class AddEditDreamViewModel(
     private fun getOpenAIImageResponse(
         cost: Int
     ): Deferred<Unit> = viewModelScope.async {
-        logger.d { "getOpenAIImageResponse: Starting image generation with cost: $cost" }
+        // summary log only: start
+        logger.d { "imageGen: start cost=$cost" }
 
         // Indicate loading state
         _addEditDreamState.value = addEditDreamState.value.copy(
@@ -1051,55 +1149,127 @@ class AddEditDreamViewModel(
             )
         )
 
-        try {
+        suspend fun tryGenerate(modelId: String, size: ImageSize, gptSizeString: String): String {
             val apiKey = OpenAIApiKeyUtil.getOpenAISecretKey()
-            logger.d { "getOpenAIImageResponse: Retrieved OpenAI API Key successfully" }
-
             val openAI = OpenAI(apiKey)
+            val prompt = addEditDreamState.value.dreamGeneratedDetails.response
+                .ifBlank { contentTextFieldState.value.text.toString().ifBlank { "A beautiful, peaceful dream scene" } }
+
+            logger.d { "getOpenAIImageResponse: Attempting model=$modelId size=$size (gptEffSize=$gptSizeString)" }
+            val normalizedModel = modelId.lowercase()
+            // Route GPT-Image models through Ktor to avoid library's unsupported params and use valid sizes
+            if (normalizedModel.startsWith("gpt-image-1")) {
+                return generateImageWithKtor(apiKey = apiKey, model = normalizedModel, prompt = prompt, sizeString = gptSizeString)
+            }
+            // Otherwise use the SDK (DALL·E works fine here)
             val imageCreation = ImageCreation(
-                prompt = addEditDreamState.value.dreamGeneratedDetails.response,
-                model = ModelId(if (cost <= 1) "dall-e-2" else "dall-e-3"),
+                prompt = prompt,
+                model = ModelId(normalizedModel),
                 n = 1,
-                size = if (cost <= 1) ImageSize.is512x512 else ImageSize.is1024x1024
+                size = size
             )
-            logger.d { "getOpenAIImageResponse: Image creation request: $imageCreation" }
-
             val images = openAI.imageURL(imageCreation)
-            logger.d { "getOpenAIImageResponse: Received images: $images" }
+            val url = images.firstOrNull()?.url.orEmpty()
+            if (url.isBlank()) error("Empty image URL returned by API")
+            return url
+        }
 
-            val imageUrl = images.firstOrNull()?.url.orEmpty()
-            logger.d { "getOpenAIImageResponse: Selected image URL: $imageUrl" }
+        val primaryModel = if (cost <= 1) "gpt-image-1-mini" else "gpt-image-1"
+        val fallbackModel = if (cost <= 1) "dall-e-2" else "dall-e-3"
+        // Keep 512 for DALL·E mini budget to control cost; GPT-Image requires >= 1024
+        val sdkSize = if (cost <= 1) ImageSize.is512x512 else ImageSize.is1024x1024
+        val gptImageSizeString = "1024x1024"
+
+        try {
+            if (gptImageTemporarilyDisabled) {
+                logger.d { "getOpenAIImageResponse: GPT-Image disabled for this session; using fallback=$fallbackModel" }
+                throw IllegalStateException("skip-primary-and-use-fallback")
+            }
+            // 1) Try GPT Image first
+            val imageUrl = tryGenerate(primaryModel, sdkSize, gptImageSizeString)
+            logger.d { "imageGen: ok model=$primaryModel kind=${if (imageUrl.startsWith("data:")) "data" else "http"}" }
 
             _addEditDreamState.value = addEditDreamState.value.copy(
                 dreamAIImage = addEditDreamState.value.dreamAIImage.copy(
                     response = imageUrl, isLoading = false
                 )
             )
+            if (cost > 0) authRepository.consumeDreamTokens(cost)
+            _addEditDreamState.value = addEditDreamState.value.copy(isDreamExitOff = false)
+        } catch (primary: Exception) {
+            logger.e { "imageGen: fail primary: ${primary.message}" }
+            // Always attempt fallback to DALL·E on primary failure
+            try {
+                val fallbackUrl = tryGenerate(fallbackModel, sdkSize, gptImageSizeString)
+                logger.d { "imageGen: ok model=$fallbackModel kind=${if (fallbackUrl.startsWith("data:")) "data" else "http"} (fallback)" }
 
-            authRepository.consumeDreamTokens(cost)
-            logger.d { "getOpenAIImageResponse: Tokens consumed for cost: $cost" }
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamAIImage = addEditDreamState.value.dreamAIImage.copy(
+                        response = fallbackUrl, isLoading = false
+                    )
+                )
+                if (cost > 0) authRepository.consumeDreamTokens(cost)
+                _addEditDreamState.value = addEditDreamState.value.copy(isDreamExitOff = false)
+            } catch (fallback: Exception) {
+                logger.e { "imageGen: fail primary+fallback: ${fallback.message ?: primary.message}" }
+                addEditDreamState.value.snackBarHostState.value.showSnackbar(
+                    "Error getting AI image: ${fallback.message ?: "unknown error"}",
+                    duration = SnackbarDuration.Short,
+                    actionLabel = "Dismiss"
+                )
+                _addEditDreamState.value = addEditDreamState.value.copy(
+                    dreamAIImage = addEditDreamState.value.dreamAIImage.copy(isLoading = false),
+                    isDreamExitOff = false
+                )
+            }
+         }
+     }
 
-            _addEditDreamState.value = addEditDreamState.value.copy(
-                isDreamExitOff = false
-            )
-        } catch (e: Exception) {
-            logger.e(e) { "getOpenAIImageResponse: Error getting AI image response" }
-
-            addEditDreamState.value.snackBarHostState.value.showSnackbar(
-                "Error getting AI image response",
-                duration = SnackbarDuration.Short,
-                actionLabel = "Dismiss"
-            )
-
-            _addEditDreamState.value = addEditDreamState.value.copy(
-                dreamAIImage = addEditDreamState.value.dreamAIImage.copy(
-                    isLoading = false
-                ),
-                isDreamExitOff = false
-            )
-        }
-    }
-
+    private suspend fun generateImageWithKtor(
+         apiKey: String,
+         model: String,
+         prompt: String,
+         sizeString: String,
+     ): String {
+         val bodyJson = """
+             {
+                "model": "$model",
+                "prompt": ${Json.encodeToString(prompt)},
+                "size": "$sizeString",
+                "n": 1
+              }
+         """.trimIndent()
+         val httpResponse = httpClient.post("https://api.openai.com/v1/images/generations") {
+             contentType(ContentType.Application.Json)
+             headers { append("Authorization", "Bearer $apiKey") }
+             setBody(bodyJson)
+             timeout {
+                 requestTimeoutMillis = 70_000
+                 connectTimeoutMillis = 30_000
+                 socketTimeoutMillis = 70_000
+             }
+          }
+         val text = httpResponse.bodyAsText()
+         val root = Json.parseToJsonElement(text).jsonObject
+         val dataNode = root["data"]
+         if (dataNode == null) {
+             // Surface OpenAI error if present to improve diagnostics and fallback behavior
+             val errorNode = root["error"]?.jsonObject
+             val errMsg = errorNode?.get("message")?.jsonPrimitive?.content
+             val errType = errorNode?.get("type")?.jsonPrimitive?.content
+             val errMsgStr = errMsg ?: "unknown"
+             val errTypeSuffix = errType?.let { " ($it)" } ?: ""
+             error("OpenAI error: $errMsgStr$errTypeSuffix")
+         }
+         val data = dataNode as? JsonArray ?: error("Malformed response: data is not an array")
+         val first = data.firstOrNull()?.jsonObject ?: error("Empty data array in response")
+         // Prefer URL if present (DALL·E compat), else use b64_json (gpt-image-1 default)
+         val url = first["url"]?.jsonPrimitive?.content
+         if (!url.isNullOrBlank()) return url
+         val b64 = first["b64_json"]?.jsonPrimitive?.content
+         if (!b64.isNullOrBlank()) return "data:image/png;base64,$b64"
+         error("No url or b64_json in image response")
+     }
 
     private fun loadWords() {
         viewModelScope.launch(Dispatchers.IO) {

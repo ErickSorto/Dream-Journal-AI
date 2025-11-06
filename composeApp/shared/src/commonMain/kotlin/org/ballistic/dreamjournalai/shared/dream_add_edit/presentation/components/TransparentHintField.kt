@@ -19,8 +19,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreInterceptKeyBeforeSoftKeyboard
 import androidx.compose.ui.text.TextStyle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
@@ -39,7 +37,6 @@ fun TransparentHintTextField(
     textFieldState: TextFieldState
 ) {
     val scope = rememberCoroutineScope()
-    Logger.d("TransparentHintTextField") { "TransparentHintTextField check" }
     Box(modifier = modifier)
     {
         BasicTextField(
@@ -52,10 +49,7 @@ fun TransparentHintTextField(
             modifier = modifier2
                 .fillMaxWidth(),
             inputTransformation = EventTriggeringTransformation { event ->
-                Logger.d("TransparentHintTextField") { "EventTriggeringTransformation is actually called" }
-                scope.launch {
-                    onEvent(event)
-                }
+                scope.launch { onEvent(event) }
             },
             cursorBrush = Brush.verticalGradient(
                 colors = listOf(
@@ -69,7 +63,8 @@ fun TransparentHintTextField(
             Text(text = hint, style = textStyle, color = White)
         }
     }
-}/**
+}
+/**
  * Provides a callback when a text field has focus and the back button is pressed.
  *
  * This is currently useful to work around this bug: https://issuetracker.google.com/issues/312895384
@@ -89,7 +84,6 @@ class EventTriggeringTransformation(
     private val onEvent: (AddEditDreamEvent) -> Unit
 ) : InputTransformation {
     override fun TextFieldBuffer.transformInput() {
-        Logger.d("EventTriggeringTransformation") { "transformInput" }
         onEvent(AddEditDreamEvent.ContentHasChanged)
     }
 }

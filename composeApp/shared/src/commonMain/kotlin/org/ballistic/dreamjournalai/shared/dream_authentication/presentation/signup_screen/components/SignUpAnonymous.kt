@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
@@ -27,7 +28,8 @@ fun AnonymousButton(
     modifier: Modifier,
     isVisible: Boolean,
     onClick: () -> Unit,
-    isEnabled : Boolean
+    isEnabled : Boolean,
+    enterDurationMillis: Int = 300,
 ) {
     Row(
         modifier = modifier
@@ -36,11 +38,11 @@ fun AnonymousButton(
     ) {
         AnimatedVisibility(
             visible = isVisible,
-            enter = slideInHorizontally(initialOffsetX = { 1000 }),
-            exit = slideOutHorizontally { -1000 }
+            enter = slideInHorizontally(animationSpec = tween(enterDurationMillis), initialOffsetX = { 1000 }),
+            exit = slideOutHorizontally(animationSpec = tween(enterDurationMillis)) { -1000 }
         ) {
             Button(
-                modifier = Modifier.padding().fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = DarkBlue
                 ),

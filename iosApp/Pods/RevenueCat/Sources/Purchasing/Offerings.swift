@@ -158,7 +158,8 @@ private extension Offering {
             return Package(identifier: pkg.identifier,
                            packageType: pkg.packageType,
                            storeProduct: pkg.storeProduct,
-                           presentedOfferingContext: newContext
+                           presentedOfferingContext: newContext,
+                           webCheckoutUrl: pkg.webCheckoutUrl
             )
         }
 
@@ -166,7 +167,9 @@ private extension Offering {
                         serverDescription: self.serverDescription,
                         metadata: self.metadata,
                         paywall: self.paywall,
-                        availablePackages: updatedPackages
+                        paywallComponents: self.paywallComponents,
+                        availablePackages: updatedPackages,
+                        webCheckoutUrl: self.webCheckoutUrl
         )
     }
 }

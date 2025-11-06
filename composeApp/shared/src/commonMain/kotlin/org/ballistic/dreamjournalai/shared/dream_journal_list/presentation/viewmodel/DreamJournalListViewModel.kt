@@ -4,6 +4,7 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.SnackbarAction
 import org.ballistic.dreamjournalai.shared.SnackbarController
@@ -39,6 +41,9 @@ class DreamJournalListViewModel(
     val dreamJournalListState: StateFlow<DreamJournalListState> = _dreamJournalListState.asStateFlow()
     private val _searchTextFieldState = MutableStateFlow(TextFieldState())
     val searchTextFieldState: StateFlow<TextFieldState> = _searchTextFieldState.asStateFlow()
+
+    // Backing flow for current order type used to drive the single subscription
+    private val orderTypeFlow: MutableStateFlow<OrderType> = MutableStateFlow(OrderType.Date)
 
     private var recentlyDeletedDream: Dream? = null
 
@@ -89,11 +94,12 @@ class DreamJournalListViewModel(
                 // For example, check conditions before prompting
                 val dreamCount = dreamJournalListState.value.dreams.size
                 if (dreamCount >= 2) {
-//                    viewModelScope.launch {
-//                        reviewComponent.requestInAppReview().collect { resultCode ->
-//                           //TODO: Handle result code
-//                        }
-//                    }
+                    // reserved for future in-app review prompt
+                    // viewModelScope.launch {
+                    //     reviewComponent.requestInAppReview().collect { resultCode ->
+                    //         // TODO: Handle result code
+                    //     }
+                    // }
                 }
             }
             is DreamListEvent.TriggerVibration -> {
@@ -148,6 +154,9 @@ class DreamJournalListViewModel(
             }
             is DreamListEvent.FetchDreams -> {
                 // Build a single subscription that reacts to order changes and search text
+                getDreamJob?.cancel()
+                _dreamJournalListState.value = _dreamJournalListState.value.copy(isLoading = true)
+                orderTypeFlow.value = dreamJournalListState.value.orderType
                 orderTypeFlow
                     .flatMapLatest { orderType ->
                         dreamUseCases.getDreams(orderType)
@@ -158,35 +167,22 @@ class DreamJournalListViewModel(
                         if (searchText.isBlank()) dreams
                         else dreams.filter { it.doesMatchSearchQuery(searchText.toString()) }
                     }
+                    .combine(filteredOutIds) { dreams, filteredIds ->
+                        dreams.filter { it.id == null || it.id !in filteredIds }
+                    }
+                    .onStart {
+                        _dreamJournalListState.value = _dreamJournalListState.value.copy(isLoading = true)
+                    }
                     .onEach { filteredDreams ->
                         _dreamJournalListState.value = _dreamJournalListState.value.copy(
                             dreams = filteredDreams,
                             orderType = orderTypeFlow.value,
+                            isLoading = false,
                         )
                     }
                     .launchIn(viewModelScope)
             }
         }
-    }
-
-    private fun getDreams(orderType: OrderType) {
-        getDreamJob?.cancel()
-        getDreamJob = dreamUseCases.getDreams(orderType)
-            .combine(
-                snapshotFlow { searchTextFieldState.value.text }
-            ) { dreams, searchText ->
-                if (searchText.isBlank()) dreams else dreams.filter { it.doesMatchSearchQuery(searchText.toString()) }
-            }
-            .combine(filteredOutIds) { dreams, filteredIds ->
-                dreams.filter { it.id == null || it.id !in filteredIds }
-            }
-            .onEach { visibleDreams ->
-                _dreamJournalListState.value = dreamJournalListState.value.copy(
-                    dreams = visibleDreams,
-                    orderType = orderType,
-                )
-            }
-            .launchIn(viewModelScope)
     }
 }
 

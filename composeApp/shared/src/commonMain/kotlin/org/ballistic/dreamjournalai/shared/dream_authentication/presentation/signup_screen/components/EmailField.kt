@@ -1,8 +1,10 @@
 package org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -28,39 +30,24 @@ fun EmailField(
     email: String,
     modifier: Modifier = Modifier,
     onValueChange: (String) -> Unit,
-    isVisible: MutableState<Boolean> = mutableStateOf(false)
+    isVisible: MutableState<Boolean> = mutableStateOf(false),
+    animate: Boolean = true,
+    enterDurationMillis: Int = 300,
+    exitWithFade: Boolean = false,
 ) {
     val focusManager = LocalFocusManager.current
-    AnimatedVisibility(
-        visible = isVisible.value,
-        enter = slideInHorizontally(initialOffsetX = { 1000 }),
-        exit = slideOutHorizontally(targetOffsetX = { -1000 })
-    ) {
+    if (!animate) {
         OutlinedTextField(
             value = email,
-            onValueChange = { newValue ->
-                onValueChange(newValue)
-            },
-            label = {
-                Text(
-                    text = EMAIL_LABEL,
-                    color = Color.White
-                )
-            },
-            textStyle = LocalTextStyle.current.copy(
-                color = Color.White,
-                fontSize = 16.sp,
-            ),
+            onValueChange = { newValue -> onValueChange(newValue) },
+            label = { Text(text = EMAIL_LABEL, color = Color.White) },
+            textStyle = LocalTextStyle.current.copy(color = Color.White, fontSize = 16.sp),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email
-            ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
-                .onKeyboardDismiss {
-                    focusManager.clearFocus()
-                },
+                .onKeyboardDismiss { focusManager.clearFocus() },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = LightBlack.copy(alpha = 0.7f),
                 unfocusedContainerColor = LightBlack.copy(alpha = 0.7f),
@@ -78,5 +65,54 @@ fun EmailField(
                 errorLabelColor = Color.Red,
             )
         )
+    } else {
+        AnimatedVisibility(
+            visible = isVisible.value,
+            enter = slideInHorizontally(animationSpec = tween(enterDurationMillis), initialOffsetX = { 1000 }),
+            exit = if (exitWithFade) fadeOut(animationSpec = tween(220)) else slideOutHorizontally(animationSpec = tween(enterDurationMillis), targetOffsetX = { -1000 })
+        ) {
+            OutlinedTextField(
+                value = email,
+                onValueChange = { newValue ->
+                    onValueChange(newValue)
+                },
+                label = {
+                    Text(
+                        text = EMAIL_LABEL,
+                        color = Color.White
+                    )
+                },
+                textStyle = LocalTextStyle.current.copy(
+                    color = Color.White,
+                    fontSize = 16.sp,
+                ),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email
+                ),
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+                    .onKeyboardDismiss {
+                        focusManager.clearFocus()
+                    },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = LightBlack.copy(alpha = 0.7f),
+                    unfocusedContainerColor = LightBlack.copy(alpha = 0.7f),
+                    disabledContainerColor = Color.Transparent,
+                    errorContainerColor = Color.Transparent,
+                    cursorColor = Color.White,
+                    errorCursorColor = Color.Red,
+                    focusedBorderColor = Color.White.copy(alpha = 0.4f),
+                    unfocusedBorderColor = Color.Transparent,
+                    disabledBorderColor = Color.Black,
+                    errorBorderColor = Color.Red,
+                    focusedLabelColor = Color.Black,
+                    unfocusedLabelColor = Color.Black,
+                    disabledLabelColor = Color.Black,
+                    errorLabelColor = Color.Red,
+                )
+            )
+        }
     }
 }

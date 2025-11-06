@@ -27,6 +27,17 @@ public protocol PurchasesType: AnyObject {
     var appUserID: String { get }
 
     /**
+     * The three-letter code representing the country or region
+     * associated with the App Store storefront.
+     * - Note: This property uses the ISO 3166-1 Alpha-3 country code representation.
+     * 
+     * #### Related articles
+     * - ``Purchases/getStorefront(completion:)``
+     * - ``Purchases/getStorefront()``
+     */
+    var storeFrontCountryCode: String? { get }
+
+    /**
      * The ``appUserID`` used by ``Purchases``.
      * If not passed on initialization this will be generated and cached by ``Purchases``.
      */
@@ -48,6 +59,28 @@ public protocol PurchasesType: AnyObject {
     var delegate: PurchasesDelegate? { get set }
 
     #if !ENABLE_CUSTOM_ENTITLEMENT_COMPUTATION
+
+    /**
+     * Obtain the storefront currently used by the Apple account. This will use StoreKit 2 first,
+     * and if not possible, fallback to StoreKit 1. It will be `nil` if we can't obtain Apple's storefront.
+     *
+     * The `completion` block will be called with the latest Apple account storefront
+     *
+     * #### Related Articles
+     * - ``Purchases/storeFrontCountryCode``
+     * - ``Purchases/getStorefront()``
+     */
+    func getStorefront(completion: @escaping GetStorefrontBlock)
+
+    /**
+     * Obtain the storefront currently used by the Apple account. This will use StoreKit 2 first,
+     * and if not possible, fallback to StoreKit 1. It will be `nil` if we can't obtain Apple's storefront.
+     *
+     * #### Related Articles
+     * - ``Purchases/storeFrontCountryCode``
+     * - ``Purchases/getStorefront(completion:)``
+     */
+    func getStorefront() async -> Storefront?
 
     /**
      * This function will log in the current user with an ``appUserID``.
@@ -352,6 +385,50 @@ public protocol PurchasesType: AnyObject {
     func purchase(package: Package) async throws -> PurchaseResultData
 
     #if !ENABLE_CUSTOM_ENTITLEMENT_COMPUTATION
+
+    /**
+     * Initiates a purchase.
+     *
+     * - Important: Call this method when a user has decided to purchase a product.
+     * Only call this in direct response to user input.
+     *
+     * From here ``Purchases`` will handle the purchase with `StoreKit` and call the ``PurchaseCompletedBlock``.
+     *
+     * - Note: You do not need to finish the transaction yourself in the completion callback, Purchases will
+     * handle this for you.
+     *
+     * - Parameter params: The ``PurchaseParams`` instance with the configuration options for this purchase.
+     * Check the ``PurchaseParams`` documentation for more information.
+     *
+     * If the purchase was successful there will be a ``StoreTransaction`` and a ``CustomerInfo``.
+     *
+     * If the purchase was not successful, there will be an `NSError`.
+     *
+     * If the user cancelled, `userCancelled` will be `true`.
+     */
+    @objc(purchaseWithParams:completion:)
+    func purchase(_ params: PurchaseParams, completion: @escaping PurchaseCompletedBlock)
+
+    /**
+     * Initiates a purchase.
+     *
+     * - Important: Call this method when a user has decided to purchase a product.
+     * Only call this in direct response to user input.
+     *
+     * From here ``Purchases`` will handle the purchase with `StoreKit` and return ``PurchaseResultData``.
+     *
+     * - Note: You do not need to finish the transaction yourself after this, ``Purchases`` will
+     * handle this for you.
+     *
+     * - Parameter params: The ``PurchaseParams`` instance with extra configuration options for this purchase.
+     * Check the ``PurchaseParams`` documentation for more information.
+     *
+     * - Throws: An error of type ``ErrorCode`` is thrown if a failure occurs while purchasing
+     *
+     * - Returns: A tuple with ``StoreTransaction`` and a ``CustomerInfo`` if the purchase was successful.
+     * If the user cancelled the purchase, `userCancelled` will be `true`.
+     */
+    func purchase(_ params: PurchaseParams) async throws -> PurchaseResultData
 
     /**
      * Invalidates the cache for customer information.
@@ -675,6 +752,34 @@ public protocol PurchasesType: AnyObject {
     /// - ``StoreProduct/discounts``
     func eligiblePromotionalOffers(forProduct product: StoreProduct) async -> [PromotionalOffer]
 
+    /**
+     * Returns the win-back offers that the subscriber is eligible for on the provided product.
+     *
+     * - Parameter product: The product to check for eligible win-back offers.
+     * - Parameter completion: A completion block that is called with the eligible win-back
+     * offers for the provided product.
+     * - Important: Win-back offers are only supported when the SDK is running with StoreKit 2 enabled.
+     */
+    @available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, visionOS 2.0, *)
+    func eligibleWinBackOffers(
+        forProduct product: StoreProduct,
+        completion: @escaping @Sendable ([WinBackOffer]?, PublicError?) -> Void
+    )
+
+    /**
+     * Returns the win-back offers that the subscriber is eligible for on the provided package.
+     *
+     * - Parameter package: The package to check for eligible win-back offers.
+     * - Parameter completion: A completion block that is called with the eligible win-back
+     * offers for the provided product.
+     * - Important: Win-back offers are only supported when the SDK is running with StoreKit 2 enabled.
+     */
+    @available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, visionOS 2.0, *)
+    func eligibleWinBackOffers(
+        forPackage package: Package,
+        completion: @escaping @Sendable ([WinBackOffer]?, PublicError?) -> Void
+    )
+
     #endif
 
     #if os(iOS) || VISION_OS
@@ -859,6 +964,56 @@ public protocol PurchasesType: AnyObject {
     @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
     func syncAttributesAndOfferingsIfNeeded() async throws -> Offerings?
 
+    /**
+     * Redeems a web purchase previously parsed from a deep link with ``Purchases/parseAsWebPurchaseRedemption(_:)``.
+     *
+     * - Parameter webPurchaseRedemption: WebPurchaseRedemption object previously parsed from
+     * a URL using ``Purchases/parseAsWebPurchaseRedemption(_:)``
+     * - Parameter completion: The completion block to be called with the updated CustomerInfo
+     * on a successful redemption, or the error if not.
+     * - Seealso: ``Purchases/redeemWebPurchase(_:)``
+     */
+    @objc func redeemWebPurchase(
+        webPurchaseRedemption: WebPurchaseRedemption,
+        completion: @escaping (CustomerInfo?, PublicError?) -> Void
+    )
+
+    /**
+     * Fetches the virtual currencies for the current subscriber.
+     *
+     * - Parameter completion: The callback that is called when the request is complete with a ``VirtualCurrencies``
+     * object containing the subscriber's virtual currencies.
+     *
+     * #### Related Articles
+     * -  [Virtual Currencies](https://www.revenuecat.com/docs/offerings/virtual-currency)
+     */
+    @objc
+    func getVirtualCurrencies(
+        completion: @escaping @Sendable (VirtualCurrencies?, PublicError?) -> Void
+    )
+
+    /**
+     * The currently cached ``VirtualCurrencies`` if one is available.
+     * This is synchronous, and therefore useful for contexts where an app needs a `VirtualCurrencies`
+     * right away without waiting for a callback, like a SwiftUI view.
+     *
+     * This allows initializing state to ensure that UI can be loaded from the very first frame.
+     */
+    var cachedVirtualCurrencies: VirtualCurrencies? { get }
+
+    /**
+     * Invalidates the cache for virtual currencies.
+     *
+     * This is useful for cases where a virtual currency's balance might have been updated
+     * outside of the app, like if you decreased a user's balance from the user spending a virtual currency,
+     * or if you increased the balance from your backend using the server APIs.
+     *
+     * #### Related Articles
+     * -  [Virtual Currencies](https://www.revenuecat.com/docs/offerings/virtual-currency)
+     */
+    @objc
+    func invalidateVirtualCurrenciesCache()
+
     // MARK: - Deprecated
 
     // swiftlint:disable missing_docs
@@ -907,6 +1062,9 @@ public protocol PurchasesType: AnyObject {
     func setFirebaseAppInstanceID(_ firebaseAppInstanceID: String?)
     @available(*, deprecated)
     func collectDeviceIdentifiers()
+    @available(*, deprecated)
+    @objc(params:withCompletion:)
+    func purchaseWithParams(_ params: PurchaseParams, completion: @escaping PurchaseCompletedBlock)
 
     // swiftlint:enable missing_docs
 
@@ -1077,6 +1235,51 @@ public protocol PurchasesSwiftType: AnyObject {
         _ purchaseResult: StoreKit.Product.PurchaseResult
     ) async throws -> StoreTransaction?
 
+    /**
+     * Redeems a web purchase previously parsed from a deep link with ``Purchases/parseAsWebPurchaseRedemption(_:)``
+     *
+     * - Parameter webPurchaseRedemption: Deep link previously parsed from a
+     * URL using ``Purchases/parseAsWebPurchaseRedemption(_:)``
+     */
+    func redeemWebPurchase(
+        _ webPurchaseRedemption: WebPurchaseRedemption
+    ) async -> WebPurchaseRedemptionResult
+
+    #if !ENABLE_CUSTOM_ENTITLEMENT_COMPUTATION
+    /**
+     * Returns the win-back offers that the subscriber is eligible for on the provided product.
+     *
+     * - Parameter product: The product to check for eligible win-back offers.
+     * - Returns: The win-back offers on the given product that a subscriber is eligible for.
+     * - Important: Win-back offers are only supported when the SDK is running with StoreKit 2 enabled.
+     */
+    @available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, visionOS 2.0, *)
+    func eligibleWinBackOffers(
+        forProduct product: StoreProduct
+    ) async throws -> [WinBackOffer]
+
+    /**
+     * Returns the win-back offers that the subscriber is eligible for on the provided package.
+     *
+     * - Parameter package: The package to check for eligible win-back offers.
+     * - Returns: The win-back offers on the given product that a subscriber is eligible for.
+     * - Important: Win-back offers are only supported when the SDK is running with StoreKit 2 enabled.
+     */
+    @available(iOS 18.0, macOS 15.0, tvOS 18.0, watchOS 11.0, visionOS 2.0, *)
+    func eligibleWinBackOffers(
+        forPackage package: Package
+    ) async throws -> [WinBackOffer]
+
+    /**
+     * Fetches the virtual currencies for the current subscriber.
+     *
+     * - Returns: The ``VirtualCurrencies`` object containing the virtual currencies for the subscriber.
+     *
+     * #### Related Articles
+     * -  [Virtual Currencies](https://www.revenuecat.com/docs/offerings/virtual-currency)
+     */
+    func virtualCurrencies() async throws -> VirtualCurrencies
+    #endif
 }
 
 // MARK: -
@@ -1087,6 +1290,13 @@ internal protocol InternalPurchasesType: AnyObject {
     /// Performs an unauthenticated request to the API to verify connectivity.
     /// - Throws: `PublicError` if request failed.
     func healthRequest(signatureVerification: Bool) async throws
+
+    #if DEBUG
+    /// Requests an in-depth report of the SDK's configuration from the server.
+    /// - Throws: A `BackendError` if the request fails due to an invalid API key or connectivity issues.
+    /// - Returns: A health report containing all checks performed on the server and their status.
+    func healthReport() async -> PurchasesDiagnostics.SDKHealthReport
+    #endif
 
     func offerings(fetchPolicy: OfferingsManager.FetchPolicy) async throws -> Offerings
 

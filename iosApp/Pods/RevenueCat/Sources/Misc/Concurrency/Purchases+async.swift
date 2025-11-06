@@ -22,6 +22,14 @@ extension Purchases {
 
     #if !ENABLE_CUSTOM_ENTITLEMENT_COMPUTATION
 
+    func getStorefrontAsync() async -> Storefront? {
+        return await withUnsafeContinuation { continuation in
+            getStorefront { storefrontCountryCode in
+                continuation.resume(returning: storefrontCountryCode)
+            }
+        }
+    }
+
     func logInAsync(_ appUserID: String) async throws -> (customerInfo: CustomerInfo, created: Bool) {
         return try await withUnsafeThrowingContinuation { continuation in
             logIn(appUserID) { customerInfo, created, error in
@@ -91,13 +99,13 @@ extension Purchases {
         }
     }
 
-    #if !ENABLE_CUSTOM_ENTITLEMENT_COMPUTATION
-
-    func syncPurchasesAsync() async throws -> CustomerInfo {
+    func purchaseAsync(_ params: PurchaseParams) async throws -> PurchaseResultData {
         return try await withUnsafeThrowingContinuation { continuation in
-            syncPurchases { customerInfo, error in
-                continuation.resume(with: Result(customerInfo, error))
-            }
+            purchase(params,
+                     completion: { transaction, customerInfo, error, userCancelled in
+                continuation.resume(with: Result(customerInfo, error)
+                                        .map { PurchaseResultData(transaction, $0, userCancelled) })
+            })
         }
     }
 
@@ -117,32 +125,6 @@ extension Purchases {
                      promotionalOffer: promotionalOffer) { transaction, customerInfo, error, userCancelled in
                 continuation.resume(with: Result(customerInfo, error)
                                         .map { PurchaseResultData(transaction, $0, userCancelled) })
-            }
-        }
-    }
-
-    func customerInfoAsync(fetchPolicy: CacheFetchPolicy) async throws -> CustomerInfo {
-        return try await withUnsafeThrowingContinuation { continuation in
-            getCustomerInfo(fetchPolicy: fetchPolicy) { customerInfo, error in
-                continuation.resume(with: Result(customerInfo, error))
-            }
-        }
-    }
-
-    func checkTrialOrIntroductoryDiscountEligibilityAsync(_ product: StoreProduct) async
-    -> IntroEligibilityStatus {
-        return await withUnsafeContinuation { continuation in
-            checkTrialOrIntroDiscountEligibility(product: product) { status in
-                continuation.resume(returning: status)
-            }
-        }
-    }
-
-    func checkTrialOrIntroductoryDiscountEligibilityAsync(_ productIdentifiers: [String]) async
-    -> [String: IntroEligibility] {
-        return await withUnsafeContinuation { continuation in
-            checkTrialOrIntroDiscountEligibility(productIdentifiers: productIdentifiers) { result in
-                continuation.resume(returning: result)
             }
         }
     }
@@ -193,7 +175,43 @@ extension Purchases {
         }
     }
 
+    #if !ENABLE_CUSTOM_ENTITLEMENT_COMPUTATION
+
+    func syncPurchasesAsync() async throws -> CustomerInfo {
+        return try await withUnsafeThrowingContinuation { continuation in
+            syncPurchases { customerInfo, error in
+                continuation.resume(with: Result(customerInfo, error))
+            }
+        }
+    }
+
+    func customerInfoAsync(fetchPolicy: CacheFetchPolicy) async throws -> CustomerInfo {
+        return try await withUnsafeThrowingContinuation { continuation in
+            getCustomerInfo(fetchPolicy: fetchPolicy) { customerInfo, error in
+                continuation.resume(with: Result(customerInfo, error))
+            }
+        }
+    }
+
     #endif
+
+    func checkTrialOrIntroductoryDiscountEligibilityAsync(_ product: StoreProduct) async
+    -> IntroEligibilityStatus {
+        return await withUnsafeContinuation { continuation in
+            checkTrialOrIntroDiscountEligibility(product: product) { status in
+                continuation.resume(returning: status)
+            }
+        }
+    }
+
+    func checkTrialOrIntroductoryDiscountEligibilityAsync(_ productIdentifiers: [String]) async
+    -> [String: IntroEligibility] {
+        return await withUnsafeContinuation { continuation in
+            checkTrialOrIntroDiscountEligibility(productIdentifiers: productIdentifiers) { result in
+                continuation.resume(returning: result)
+            }
+        }
+    }
 
 #if os(iOS) || os(macOS) || VISION_OS
 

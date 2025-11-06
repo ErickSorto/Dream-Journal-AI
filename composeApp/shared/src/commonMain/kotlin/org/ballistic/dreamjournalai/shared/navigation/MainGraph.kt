@@ -35,10 +35,10 @@ fun MainGraph(
     NavHost(
         navController = navController,
         startDestination = Route.OnboardingScreen,
-        enterTransition = { fadeIn(animationSpec = tween(500)) },
-        exitTransition = { fadeOut(animationSpec = tween(500)) },
-        popEnterTransition = { fadeIn(animationSpec = tween(500)) },
-        popExitTransition = { fadeOut(animationSpec = tween(500)) },
+        enterTransition = { fadeIn(animationSpec = tween(1000)) },
+        exitTransition = { fadeOut(animationSpec = tween(1000)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(1000)) },
+        popExitTransition = { fadeOut(animationSpec = tween(1000)) },
         modifier = Modifier.fillMaxSize()
     ) {
         composable<Route.OnboardingScreen> {

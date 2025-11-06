@@ -88,7 +88,8 @@ extension PackageType: Codable {
 
 extension PackageType {
 
-    var description: String? {
+    // swiftlint:disable:next missing_docs
+    @_spi(Internal) public var description: String? {
         switch self {
         case .unknown: return nil
         case .custom: return nil
@@ -102,9 +103,11 @@ extension PackageType {
         }
     }
 
+    // swiftlint:disable force_unwrapping
     static let typesByDescription: [String: PackageType] = PackageType
         .allCases
         .filter { $0.description != nil }
         .dictionaryWithKeys { $0.description! }
+    // swiftlint:enable force_unwrapping
 
 }

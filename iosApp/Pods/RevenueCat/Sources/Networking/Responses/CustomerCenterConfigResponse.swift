@@ -29,6 +29,7 @@ struct CustomerCenterConfigResponse {
         let screens: [String: Screen]
         let localization: Localization
         let support: Support
+        let changePlans: [ChangePlan]
 
     }
 
@@ -44,8 +45,12 @@ struct CustomerCenterConfigResponse {
         let id: String
         let title: String
         let type: PathType
+        let url: String?
+        let openMethod: OpenMethod?
         let promotionalOffer: PromotionalOffer?
         let feedbackSurvey: FeedbackSurvey?
+        let refundWindow: String?
+        let actionIdentifier: String?
 
         enum PathType: String {
 
@@ -53,6 +58,16 @@ struct CustomerCenterConfigResponse {
             case refundRequest = "REFUND_REQUEST"
             case changePlans = "CHANGE_PLANS"
             case cancel = "CANCEL"
+            case customUrl = "CUSTOM_URL"
+            case customAction = "CUSTOM_ACTION"
+            case unknown
+
+        }
+
+        enum OpenMethod: String {
+
+            case inApp = "IN_APP"
+            case external = "EXTERNAL"
             case unknown
 
         }
@@ -63,6 +78,13 @@ struct CustomerCenterConfigResponse {
             let eligible: Bool
             let title: String
             let subtitle: String
+            let productMapping: [String: String]
+            let crossProductPromotions: [String: CrossProductPromotion]?
+
+            struct CrossProductPromotion {
+                let storeOfferIdentifier: String
+                let targetProductId: String
+            }
 
         }
 
@@ -106,6 +128,7 @@ struct CustomerCenterConfigResponse {
         let type: ScreenType
         let subtitle: String?
         let paths: [HelpPath]
+        let offering: ScreenOffering?
 
         enum ScreenType: String {
 
@@ -117,10 +140,31 @@ struct CustomerCenterConfigResponse {
 
     }
 
+    struct ScreenOffering {
+        let type: String
+        let offeringId: String?
+        let buttonText: String?
+    }
+
     struct Support {
 
         let email: String
+        let shouldWarnCustomerToUpdate: Bool?
+        let displayPurchaseHistoryLink: Bool?
+        let displayUserDetailsSection: Bool?
+        let displayVirtualCurrencies: Bool?
+        let shouldWarnCustomersAboutMultipleSubscriptions: Bool?
+    }
 
+    struct ChangePlan {
+        let groupId: String
+        let groupName: String
+        let products: [ChangePlanProduct]
+    }
+
+    struct ChangePlanProduct {
+        let productId: String
+        let selected: Bool
     }
 
 }
@@ -129,14 +173,53 @@ extension CustomerCenterConfigResponse: Codable, Equatable {}
 extension CustomerCenterConfigResponse.CustomerCenter: Codable, Equatable {}
 extension CustomerCenterConfigResponse.Localization: Codable, Equatable {}
 extension CustomerCenterConfigResponse.HelpPath: Codable, Equatable {}
-extension CustomerCenterConfigResponse.HelpPath.PathType: Codable, Equatable {}
+extension CustomerCenterConfigResponse.HelpPath.PathType: Equatable {}
+extension CustomerCenterConfigResponse.HelpPath.OpenMethod: Equatable {}
 extension CustomerCenterConfigResponse.HelpPath.PromotionalOffer: Codable, Equatable {}
+extension CustomerCenterConfigResponse.HelpPath.PromotionalOffer.CrossProductPromotion: Codable, Equatable {}
 extension CustomerCenterConfigResponse.HelpPath.FeedbackSurvey: Codable, Equatable {}
 extension CustomerCenterConfigResponse.HelpPath.FeedbackSurvey.Option: Codable, Equatable {}
 extension CustomerCenterConfigResponse.Appearance: Codable, Equatable {}
 extension CustomerCenterConfigResponse.Appearance.AppearanceCustomColors: Codable, Equatable {}
 extension CustomerCenterConfigResponse.Screen: Codable, Equatable {}
-extension CustomerCenterConfigResponse.Screen.ScreenType: Codable, Equatable {}
+extension CustomerCenterConfigResponse.ScreenOffering: Codable, Equatable {}
+extension CustomerCenterConfigResponse.Screen.ScreenType: Equatable {}
 extension CustomerCenterConfigResponse.Support: Codable, Equatable {}
+extension CustomerCenterConfigResponse.ChangePlan: Codable, Equatable {}
+extension CustomerCenterConfigResponse.ChangePlanProduct: Codable, Equatable {}
+
+protocol CodableEnumWithUnknownCase: Codable {
+
+    static var unknownCase: Self { get }
+
+}
+
+extension CodableEnumWithUnknownCase where Self: RawRepresentable, Self.RawValue == String {
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let value = try container.decode(String.self)
+        self = Self(rawValue: value) ?? Self.unknownCase
+    }
+
+}
+
+extension CustomerCenterConfigResponse.Screen.ScreenType: CodableEnumWithUnknownCase {
+
+    static var unknownCase: Self { .unknown }
+
+}
+
+extension CustomerCenterConfigResponse.HelpPath.PathType: CodableEnumWithUnknownCase {
+
+    static var unknownCase: Self { .unknown }
+
+}
+
+extension CustomerCenterConfigResponse.HelpPath.OpenMethod: CodableEnumWithUnknownCase {
+
+    static var unknownCase: Self { .unknown }
+
+}
 
 extension CustomerCenterConfigResponse: HTTPResponseBody {}

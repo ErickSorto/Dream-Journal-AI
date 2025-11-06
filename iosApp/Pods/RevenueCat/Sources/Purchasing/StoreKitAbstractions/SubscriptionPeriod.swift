@@ -68,6 +68,24 @@ public final class SubscriptionPeriod: NSObject {
             .normalized()
     }
 
+    static func from(iso8601: String) -> SubscriptionPeriod? {
+        guard let isoDuration = ISODurationFormatter.parse(from: iso8601) else {
+            return nil
+        }
+        // Look for the smaller Unit > 0
+        if isoDuration.days > 0 {
+            return SubscriptionPeriod(value: isoDuration.days, unit: .day)
+        } else if isoDuration.weeks > 0 {
+            return SubscriptionPeriod(value: isoDuration.weeks, unit: .week)
+        } else if isoDuration.months > 0 {
+            return SubscriptionPeriod(value: isoDuration.months, unit: .month)
+        } else if isoDuration.years > 0 {
+            return SubscriptionPeriod(value: isoDuration.years, unit: .year)
+        } else {
+            return nil
+        }
+    }
+
     public override func isEqual(_ object: Any?) -> Bool {
         guard let other = object as? SubscriptionPeriod else { return false }
 
@@ -101,7 +119,29 @@ public extension SubscriptionPeriod {
 extension SubscriptionPeriod.Unit: Sendable {}
 extension SubscriptionPeriod: Sendable {}
 
+public extension SubscriptionPeriod {
+
+    /// The length of the period convert to another unit
+    func numberOfUnitsAs(unit: Unit) -> Decimal {
+        switch unit {
+        case .day:
+            return Decimal(self.value) * self.unitsPerDay
+        case .week:
+            return Decimal(self.value) * self.unitsPerWeek
+        case .month:
+            return Decimal(self.value) * self.unitsPerMonth
+        case .year:
+            return Decimal(self.value) * self.unitsPerYear
+        }
+    }
+
+}
+
 extension SubscriptionPeriod {
+
+    func pricePerDay(withTotalPrice price: Decimal) -> Decimal {
+        return self.pricePerPeriod(for: self.unitsPerDay, totalPrice: price)
+    }
 
     func pricePerWeek(withTotalPrice price: Decimal) -> Decimal {
         return self.pricePerPeriod(for: self.unitsPerWeek, totalPrice: price)
@@ -113,6 +153,15 @@ extension SubscriptionPeriod {
 
     func pricePerYear(withTotalPrice price: Decimal) -> Decimal {
         return self.pricePerPeriod(for: self.unitsPerYear, totalPrice: price)
+    }
+
+    private var unitsPerDay: Decimal {
+        switch self.unit {
+        case .day: return 1
+        case .week: return Constants.daysPerWeek
+        case .month: return Constants.daysPerMonth
+        case .year: return Constants.daysPerYear
+        }
     }
 
     private var unitsPerWeek: Decimal {

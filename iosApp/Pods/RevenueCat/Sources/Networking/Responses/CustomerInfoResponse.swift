@@ -49,7 +49,7 @@ extension CustomerInfoResponse {
 
         @IgnoreDecodeErrors<PeriodType>
         var periodType: PeriodType
-        var purchaseDate: Date?
+        var purchaseDate: Date
         var originalPurchaseDate: Date?
         var expiresDate: Date?
         @IgnoreDecodeErrors<Store>
@@ -61,19 +61,37 @@ extension CustomerInfoResponse {
         @IgnoreDecodeErrors<PurchaseOwnershipType>
         var ownershipType: PurchaseOwnershipType
         var productPlanIdentifier: String?
+        var metadata: [String: String]?
+        var gracePeriodExpiresDate: Date?
+        var refundedAt: Date?
+        var storeTransactionId: String?
 
+        var displayName: String?
+
+        /// Price paid for the subscription
+        var price: PurchasePaidPrice?
+
+        /// Management URL for the purchase
+        var managementUrl: URL?
+    }
+
+    struct PurchasePaidPrice {
+        let currency: String
+        let amount: Double
     }
 
     struct Transaction {
 
-        var purchaseDate: Date?
+        var purchaseDate: Date
         var originalPurchaseDate: Date?
         var transactionIdentifier: String?
         var storeTransactionIdentifier: String?
         @IgnoreDecodeErrors<Store>
         var store: Store
         var isSandbox: Bool
-
+        var displayName: String?
+        /// Price paid for the subscription
+        var price: PurchasePaidPrice?
     }
 
     struct Entitlement {
@@ -93,6 +111,7 @@ extension CustomerInfoResponse {
 
 extension CustomerInfoResponse.Subscriber: Codable, Hashable {}
 extension CustomerInfoResponse.Subscription: Codable, Hashable {}
+extension CustomerInfoResponse.PurchasePaidPrice: Codable, Hashable {}
 
 extension CustomerInfoResponse.Entitlement: Hashable {}
 extension CustomerInfoResponse.Entitlement: Encodable {}
@@ -122,7 +141,8 @@ extension CustomerInfoResponse.Transaction: Codable, Hashable {
         case storeTransactionIdentifier = "storeTransactionId"
         case store
         case isSandbox
-
+        case displayName
+        case price
     }
 
 }
@@ -173,7 +193,7 @@ extension CustomerInfoResponse.Subscriber {
 extension CustomerInfoResponse.Transaction {
 
     init(
-        purchaseDate: Date?,
+        purchaseDate: Date,
         originalPurchaseDate: Date?,
         transactionIdentifier: String?,
         storeTransactionIdentifier: String?,
@@ -201,14 +221,15 @@ extension CustomerInfoResponse.Subscription {
 
     init(
         periodType: PeriodType = .defaultValue,
-        purchaseDate: Date? = nil,
+        purchaseDate: Date,
         originalPurchaseDate: Date? = nil,
         expiresDate: Date? = nil,
         store: Store = .defaultValue,
         isSandbox: Bool,
         unsubscribeDetectedAt: Date? = nil,
         billingIssuesDetectedAt: Date? = nil,
-        ownershipType: PurchaseOwnershipType = .defaultValue
+        ownershipType: PurchaseOwnershipType = .defaultValue,
+        storeTransactionId: String? = nil
     ) {
         self.periodType = periodType
         self.purchaseDate = purchaseDate
@@ -219,6 +240,7 @@ extension CustomerInfoResponse.Subscription {
         self.unsubscribeDetectedAt = unsubscribeDetectedAt
         self.billingIssuesDetectedAt = billingIssuesDetectedAt
         self.ownershipType = ownershipType
+        self.storeTransactionId = storeTransactionId
     }
 
     var asTransaction: CustomerInfoResponse.Transaction {

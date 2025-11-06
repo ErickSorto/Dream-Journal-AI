@@ -78,6 +78,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.draw.alpha
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.key
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -155,6 +156,7 @@ fun DreamItem(
                 modifier = Modifier
                     .padding(12.dp, 12.dp, 4.dp, 12.dp)
                     .size(116.dp)
+                    .clip(RoundedCornerShape(8.dp))
                     .background(Color.Transparent)
                     .shadow(4.dp, RoundedCornerShape(8.dp), true)
 
@@ -168,38 +170,41 @@ fun DreamItem(
                 val chosenBackground = imageResId
 
                 if (generatedImage != null) {
-                    SubcomposeAsyncImage(
-                        model = generatedImage,
-                        contentDescription = "Dream Image",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                        loading = {
-                            // Fallback + shimmer while loading/empty
-                            Image(
-                                painter = painterResource(chosenBackground),
-                                contentDescription = "Dream Image Placeholder",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .shimmerEffect()
-                            )
-                        },
-                        error = {
-                            // Fallback on error
-                            Image(
-                                painter = painterResource(chosenBackground),
-                                contentDescription = "Dream Image Fallback",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        },
-                        success = {
-                            SubcomposeAsyncImageContent()
-                        }
-                    )
+                    // Force a fresh subcomposition when the image string changes
+                    key(generatedImage) {
+                        SubcomposeAsyncImage(
+                            model = generatedImage,
+                            contentDescription = "Dream Image",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                            loading = {
+                                // Fallback + shimmer while loading/empty
+                                Image(
+                                    painter = painterResource(chosenBackground),
+                                    contentDescription = "Dream Image Placeholder",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .shimmerEffect()
+                                )
+                            },
+                            error = {
+                                // Fallback on error
+                                Image(
+                                    painter = painterResource(chosenBackground),
+                                    contentDescription = "Dream Image Fallback",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            },
+                            success = {
+                                SubcomposeAsyncImageContent()
+                            }
+                        )
+                    }
                 } else {
                      Image(
                          painter = painterResource(chosenBackground),

@@ -15,6 +15,7 @@ import Foundation
 
 extension HTTPRequest.DiagnosticsPath: HTTPRequestPath {
 
+    // swiftlint:disable:next force_unwrapping
     static let serverHostURL = URL(string: "https://api-diagnostics.revenuecat.com")!
 
     var authenticated: Bool {
@@ -45,10 +46,10 @@ extension HTTPRequest.DiagnosticsPath: HTTPRequestPath {
         }
     }
 
-    var pathComponent: String {
+    var relativePath: String {
         switch self {
         case .postDiagnostics:
-            return "diagnostics"
+            return "/v1/diagnostics"
         }
     }
 

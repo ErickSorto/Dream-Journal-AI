@@ -46,3 +46,4 @@ composeApp/shared/build/bin/**/pod*Framework/**
 
 # Xcode derived data
 **/DerivedData/
+iosApp/Pods

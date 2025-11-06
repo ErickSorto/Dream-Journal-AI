@@ -15,6 +15,7 @@ import Foundation
 enum Strings {
 
     static let attribution = AttributionStrings.self
+    static let analytics = AnalyticsStrings.self
     static let codable = CodableStrings.self
     static let configure = ConfigureStrings.self
     static let backendError = BackendErrorStrings.self
@@ -22,15 +23,18 @@ enum Strings {
     static let diagnostics = DiagnosticsStrings.self
     static let eligibility = EligibilityStrings.self
     static let etag = ETagStrings.self
+    static let fileRepository = FileRepositoryStrings.self
     static let identity = IdentityStrings.self
     static let network = NetworkStrings.self
     static let offering = OfferingStrings.self
     static let offlineEntitlements = OfflineEntitlementsStrings.self
     static let paywalls = PaywallsStrings.self
     static let purchase = PurchaseStrings.self
+    static let webRedemption = WebRedemptionStrings.self
     static let receipt = ReceiptStrings.self
     static let signing = SigningStrings.self
     static let storeKit = StoreKitStrings.self
+    static let virtualCurrencies = VirtualCurrencyStrings.self
 
 }
 

@@ -20,6 +20,7 @@ class SubscriberAttributesManager {
     private let operationDispatcher: OperationDispatcher
     private let attributionFetcher: AttributionFetcher
     private let attributionDataMigrator: AttributionDataMigrator
+    private let automaticDeviceIdentifierCollectionEnabled: Bool
     private let lock = Lock()
 
     weak var delegate: SubscriberAttributesManagerDelegate?
@@ -28,12 +29,14 @@ class SubscriberAttributesManager {
          deviceCache: DeviceCache,
          operationDispatcher: OperationDispatcher,
          attributionFetcher: AttributionFetcher,
-         attributionDataMigrator: AttributionDataMigrator) {
+         attributionDataMigrator: AttributionDataMigrator,
+         automaticDeviceIdentifierCollectionEnabled: Bool = true) {
         self.backend = backend
         self.deviceCache = deviceCache
         self.operationDispatcher = operationDispatcher
         self.attributionFetcher = attributionFetcher
         self.attributionDataMigrator = attributionDataMigrator
+        self.automaticDeviceIdentifierCollectionEnabled = automaticDeviceIdentifierCollectionEnabled
     }
 
     func setAttributes(_ attributes: [String: String], appUserID: String) {
@@ -96,12 +99,36 @@ class SubscriberAttributesManager {
         setReservedAttribute(.cleverTapID, value: cleverTapID, appUserID: appUserID)
     }
 
+    func setAirbridgeDeviceID(_ airbridgeDeviceID: String?, appUserID: String) {
+        setAttributionID(airbridgeDeviceID, forNetworkID: .airbridgeDeviceID, appUserID: appUserID)
+    }
+
+    func setKochavaDeviceID(_ kochavaDeviceID: String?, appUserID: String) {
+        setAttributionID(kochavaDeviceID, forNetworkID: .kochavaDeviceID, appUserID: appUserID)
+    }
+
     func setMixpanelDistinctID(_ mixpanelDistinctID: String?, appUserID: String) {
         setReservedAttribute(.mixpanelDistinctID, value: mixpanelDistinctID, appUserID: appUserID)
     }
 
     func setFirebaseAppInstanceID(_ firebaseAppInstanceID: String?, appUserID: String) {
         setReservedAttribute(.firebaseAppInstanceID, value: firebaseAppInstanceID, appUserID: appUserID)
+    }
+
+    func setTenjinAnalyticsInstallationID(_ tenjinAnalyticsInstallationID: String?, appUserID: String) {
+        setReservedAttribute(.tenjinAnalyticsInstallationID, value: tenjinAnalyticsInstallationID, appUserID: appUserID)
+    }
+
+    func setPostHogUserID(_ postHogUserID: String?, appUserID: String) {
+        setReservedAttribute(.postHogUserID, value: postHogUserID, appUserID: appUserID)
+    }
+
+    func setAmplitudeUserID(_ amplitudeUserID: String?, appUserID: String) {
+        setReservedAttribute(.amplitudeUserID, value: amplitudeUserID, appUserID: appUserID)
+    }
+
+    func setAmplitudeDeviceID(_ amplitudeDeviceID: String?, appUserID: String) {
+        setReservedAttribute(.amplitudeDeviceID, value: amplitudeDeviceID, appUserID: appUserID)
     }
 
     func setMediaSource(_ mediaSource: String?, appUserID: String) {
@@ -136,6 +163,7 @@ class SubscriberAttributesManager {
         setReservedAttribute(.idfa, value: identifierForAdvertisers, appUserID: appUserID)
         setReservedAttribute(.idfv, value: identifierForVendor, appUserID: appUserID)
         setReservedAttribute(.ip, value: "true", appUserID: appUserID)
+        setReservedAttribute(.deviceVersion, value: "true", appUserID: appUserID)
     }
 
     /// - Parameter syncedAttribute: will be called for every attribute that is updated
@@ -292,7 +320,9 @@ private extension SubscriberAttributesManager {
     func setAttributionID(_ attributionID: String?,
                           forNetworkID networkID: ReservedSubscriberAttribute,
                           appUserID: String) {
-        collectDeviceIdentifiers(forAppUserID: appUserID)
+        if automaticDeviceIdentifierCollectionEnabled {
+            collectDeviceIdentifiers(forAppUserID: appUserID)
+        }
         setReservedAttribute(networkID, value: attributionID, appUserID: appUserID)
     }
 

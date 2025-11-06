@@ -36,6 +36,12 @@ extension StoreKitError: PurchasesErrorConvertible {
             return ErrorUtils.storeProblemError(error: self)
 #endif
 
+        #if compiler(>=6.1)
+        // StoreKitError.unsupported was introduced in iOS 18.4, which shipped with Xcode 16.3 beta 1 / Swift 6.1
+        case .unsupported:
+            return ErrorUtils.purchaseInvalidError(error: self)
+        #endif
+
         case .unknown:
             /// See also https://github.com/RevenueCat/purchases-ios/issues/392
             /// `StoreKitError` doesn't conform to `CustomNSError` as of `iOS 15.2`
@@ -44,6 +50,32 @@ extension StoreKitError: PurchasesErrorConvertible {
 
         @unknown default:
             return ErrorUtils.unknownError(error: self)
+        }
+    }
+
+    var trackingDescription: String {
+        switch self {
+        case .unknown:
+            return "unknown"
+        case .userCancelled:
+            return "user_cancelled"
+        case .networkError(let urlError):
+            return "network_error_\(urlError.code.rawValue)"
+        case .systemError(let error):
+            return "system_error_\(String(describing: error))"
+        case .notAvailableInStorefront:
+            return "not_available_in_storefront"
+        case .notEntitled:
+            return "not_entitled"
+
+        #if compiler(>=6.1)
+        // StoreKitError.unsupported was introduced in iOS 18.4, which shipped with Xcode 16.3 beta 1 / Swift 6.1
+        case .unsupported:
+            return "unsupported"
+        #endif
+
+        @unknown default:
+            return "unknown_store_kit_error"
         }
     }
 
@@ -75,6 +107,29 @@ extension Product.PurchaseError: PurchasesErrorConvertible {
 
         @unknown default:
             return ErrorUtils.unknownError(error: self)
+        }
+    }
+
+    var trackingDescription: String {
+        switch self {
+        case .invalidQuantity:
+            return "invalid_quantity"
+        case .productUnavailable:
+            return "product_unavailable"
+        case .purchaseNotAllowed:
+            return "purchase_not_allowed"
+        case .ineligibleForOffer:
+            return "ineligible_for_offer"
+        case .invalidOfferIdentifier:
+            return "invalid_offer_identifier"
+        case .invalidOfferPrice:
+            return "invalid_offer_price"
+        case .invalidOfferSignature:
+            return "invalid_offer_signature"
+        case .missingOfferParameters:
+            return "missing_offer_parameters"
+        @unknown default:
+            return "unknown_store_kit_error"
         }
     }
 
