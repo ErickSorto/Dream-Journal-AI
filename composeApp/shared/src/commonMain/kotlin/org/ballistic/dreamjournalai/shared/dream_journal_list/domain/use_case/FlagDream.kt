@@ -9,7 +9,7 @@ class FlagDream(
     private val repository: DreamRepository
 ) {
     @OptIn(ExperimentalUuidApi::class)
-    suspend operator fun invoke(dreamID: String?, imagePath: String): Resource<Unit> {
+    suspend operator fun invoke(dreamID: String?, imagePath: String?): Resource<Unit> {
         var newDreamID = dreamID
         if (newDreamID.isNullOrBlank()) {
             newDreamID = Uuid.random().toString()

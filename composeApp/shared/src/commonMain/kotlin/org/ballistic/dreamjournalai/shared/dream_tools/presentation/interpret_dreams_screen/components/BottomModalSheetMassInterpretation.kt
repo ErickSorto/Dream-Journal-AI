@@ -42,7 +42,7 @@ fun BottomModalSheetMassInterpretation(
     dreamTokens: Int,
     interpretDreamsScreenState: InterpretDreamsScreenState,
     onEvent: (InterpretDreamsToolEvent) -> Unit,
-    onAdClick: (amount: Int) -> Unit,
+    onAdClick: () -> Unit,
     onDreamTokenClick: (amount: Int) -> Unit,
     onClickOutside: () -> Unit,
     modifier: Modifier = Modifier
@@ -115,11 +115,11 @@ fun BottomModalSheetMassInterpretation(
                 }
                 AdTokenLayout(
                     isAdButtonVisible = amount <= 3,
-                    onAdClick = { amount ->
-                        onAdClick(amount) // Use the lambda correctly
+                    onAdClick = {
+                        onAdClick()
                     },
                     onDreamTokenClick = { amount ->
-                        onDreamTokenClick(amount) // Use the lambda correctly
+                        onDreamTokenClick(amount)
                     },
                     amount = amount
                 )

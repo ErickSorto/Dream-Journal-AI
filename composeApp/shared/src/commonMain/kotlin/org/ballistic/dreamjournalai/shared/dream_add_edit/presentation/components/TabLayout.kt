@@ -169,7 +169,7 @@ fun SharedTransitionScope.TabLayout(
 
     HorizontalPager(
         state = pagerState,
-        beyondViewportPageCount = 1,
+        beyondViewportPageCount = 2,
     ) { page ->
         when (page) {
             0 -> {

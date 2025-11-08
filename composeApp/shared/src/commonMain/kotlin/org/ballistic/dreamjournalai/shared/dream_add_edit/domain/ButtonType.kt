@@ -20,6 +20,7 @@ import dreamjournalai.composeapp.shared.generated.resources.get_advice
 import dreamjournalai.composeapp.shared.generated.resources.interpret_dream
 import dreamjournalai.composeapp.shared.generated.resources.interpret_vector
 import dreamjournalai.composeapp.shared.generated.resources.paint_dream
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIPage
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Green
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LighterYellow
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Purple
@@ -37,7 +38,7 @@ enum class ButtonType(
     val pageIndex: Int,
     val baseColorId: Color,
     val longTextColorId: Color,
-    val eventCreator: (Boolean) -> AddEditDreamEvent
+    val aiPage: AIPage
 ) {
     PAINT(
         Res.string.paint_dream,  // Key for localization lookup
@@ -46,9 +47,7 @@ enum class ButtonType(
         0,
         White,
         SkyBlue,
-        {
-            AddEditDreamEvent.ToggleDreamImageGenerationPopUpState(it)
-        }
+        AIPage.IMAGE
     ),
     INTERPRET(
         Res.string.interpret_dream,
@@ -57,9 +56,7 @@ enum class ButtonType(
         1,
         White,
         Purple,
-        {
-            AddEditDreamEvent.ToggleDreamInterpretationPopUpState(it)
-        }
+        AIPage.INTERPRETATION
     ),
     ADVICE(
         Res.string.get_advice,
@@ -68,9 +65,7 @@ enum class ButtonType(
         2,
         White,
         Yellow,
-        {
-            AddEditDreamEvent.ToggleDreamAdvicePopUpState(it)
-        }
+        AIPage.ADVICE
     ),
     QUESTION(
         Res.string.ask_a_question_title,
@@ -79,9 +74,7 @@ enum class ButtonType(
         3,
         White,
         RedOrange,
-        {
-            AddEditDreamEvent.ToggleDreamQuestionPopUpState(it)
-        }
+        AIPage.QUESTION
     ),
     STORY(
         Res.string.create_story_title,
@@ -90,9 +83,7 @@ enum class ButtonType(
         4,
         White,
         LighterYellow,
-        {
-            AddEditDreamEvent.ToggleDreamStoryPopUpState(it)
-        }
+        AIPage.STORY
     ),
     MOOD(
         Res.string.analyze_mood_title,
@@ -101,8 +92,6 @@ enum class ButtonType(
         5,
         White,
         Green,
-        {
-            AddEditDreamEvent.ToggleDreamMoodPopUpState(it)
-        }
+        AIPage.MOOD
     );
 }

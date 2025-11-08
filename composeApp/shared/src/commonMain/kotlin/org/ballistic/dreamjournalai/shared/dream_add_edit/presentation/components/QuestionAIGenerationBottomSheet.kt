@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIType
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
@@ -42,7 +43,7 @@ fun QuestionAIGenerationBottomSheet(
     addEditDreamState: AddEditDreamState,
     onAddEditDreamEvent: (AddEditDreamEvent) -> Unit,
     onDreamTokenClick: (amount: Int) -> Unit,
-    onAdClick: (amount: Int) -> Unit,
+    onAdClick: () -> Unit,
     onClickOutside: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -76,7 +77,7 @@ fun QuestionAIGenerationBottomSheet(
                     )
                 }
                 OutlinedTextField(
-                    value = addEditDreamState.dreamAIQuestionAnswer.question,
+                    value = addEditDreamState.aiStates[AIType.QUESTION_ANSWER]?.question ?: "",
                     onValueChange = {
                         onAddEditDreamEvent(AddEditDreamEvent.ChangeQuestionOfDream(it))
                     },
@@ -92,11 +93,7 @@ fun QuestionAIGenerationBottomSheet(
                     textStyle = MaterialTheme.typography.bodyLarge,
                     singleLine = false,
                     maxLines = 3,
-                    // Define the colors for the text field
-                    colors = // Define the colors as per your theme
-                    OutlinedTextFieldDefaults.colors(
-
-                    )
+                    colors = OutlinedTextFieldDefaults.colors()
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -133,15 +130,10 @@ fun QuestionAIGenerationBottomSheet(
                         modifier = Modifier.padding(end = 8.dp)
                     )
                 }
-                // AdTokenLayout for managing Ads and Tokens
                 AdTokenLayout(
                     isAdButtonVisible = amount == 1,
-                    onAdClick = { amount ->
-                        onAdClick(amount)
-                    },
-                    onDreamTokenClick = { amount ->
-                        onDreamTokenClick(amount)
-                    },
+                    onAdClick = { onAdClick() },
+                    onDreamTokenClick = { onDreamTokenClick(it) },
                     amount = amount
                 )
             }

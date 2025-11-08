@@ -146,7 +146,7 @@ fun UniversalButton(
                     scope.launch {
                         animateToPage(buttonType.pageIndex)
                     }
-                    onAddEditEvent(buttonType.eventCreator(true))
+                    onAddEditEvent(AddEditDreamEvent.SetAIPage(buttonType.aiPage))
                 } else {
                     snackBarState()
                 }
@@ -186,7 +186,7 @@ fun UniversalButton(
 
 @Composable
 fun AdTokenLayout(
-    onAdClick: (amount: Int) -> Unit = {},
+    onAdClick: () -> Unit = {},
     onDreamTokenClick: (amount: Int) -> Unit = {},
     isAdButtonVisible: Boolean = true,
     amount: Int
@@ -202,7 +202,7 @@ fun AdTokenLayout(
         DreamTokenGenerateButton(onClick = { onDreamTokenClick(amount) }, amount = amount)
         if (isAdButtonVisible) {
             Spacer(modifier = Modifier.height(16.dp))
-            WatchAdButton(onClick = { onAdClick(amount) })
+            WatchAdButton(onClick = { onAdClick() })
         }
     }
 }

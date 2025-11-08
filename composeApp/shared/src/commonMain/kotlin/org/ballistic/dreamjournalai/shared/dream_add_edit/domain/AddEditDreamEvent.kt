@@ -2,6 +2,7 @@ package org.ballistic.dreamjournalai.shared.dream_add_edit.domain
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIPage
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.DictionaryWord
 
 sealed class AddEditDreamEvent {
@@ -17,37 +18,37 @@ sealed class AddEditDreamEvent {
     data class ChangeFavorite(val boolean: Boolean) : AddEditDreamEvent()
 
     data class ClickGenerateAIResponse(
-        val value: String,
+        val content: String,
         val cost: Int
     ) : AddEditDreamEvent()
     data class AdAIResponseToggle(val value: Boolean) : AddEditDreamEvent()
 
     data class ClickGenerateAIImage(
-        val value: String,
+        val content: String,
         val cost: Int
     ) : AddEditDreamEvent()
     data class AdAIImageToggle(val value: Boolean) : AddEditDreamEvent()
 
     data class ClickGenerateAIAdvice(
-        val value: String,
+        val content: String,
         val cost: Int
     ) : AddEditDreamEvent()
     data class AdAIAdviceToggle(val value: Boolean) : AddEditDreamEvent()
 
     data class ClickGenerateFromQuestion(
-        val value: String,
+        val content: String,
         val cost: Int
     ) : AddEditDreamEvent()
     data class AdQuestionToggle(val value: Boolean) : AddEditDreamEvent()
 
     data class ClickGenerateMood(
-        val value: String,
+        val content: String,
         val cost: Int
     ) : AddEditDreamEvent()
     data class AdMoodToggle(val value: Boolean) : AddEditDreamEvent()
 
     data class ClickGenerateStory(
-        val value: String,
+        val content: String,
         val cost: Int
     ) : AddEditDreamEvent()
     data class AdStoryToggle(val value: Boolean) : AddEditDreamEvent()
@@ -74,16 +75,7 @@ sealed class AddEditDreamEvent {
     data class ClickBuyWord(val dictionaryWord: DictionaryWord, val isAd: Boolean) :
         AddEditDreamEvent()
 
-    data class ToggleDreamImageGenerationPopUpState(val value: Boolean) : AddEditDreamEvent()
-    data class ToggleDreamInterpretationPopUpState(val value: Boolean) : AddEditDreamEvent()
-    data class ToggleDreamAdvicePopUpState(val value: Boolean) : AddEditDreamEvent()
-
-    data class ToggleDreamQuestionPopUpState(val value: Boolean) : AddEditDreamEvent()
-
-    data class ToggleDreamStoryPopUpState(val value: Boolean) : AddEditDreamEvent()
-
-    data class ToggleDreamMoodPopUpState(val value: Boolean) : AddEditDreamEvent()
-
+    data class SetAIPage(val page: AIPage?) : AddEditDreamEvent()
     data class ToggleDialogState(val value: Boolean) : AddEditDreamEvent()
 
     data class ToggleBottomSheetState(val value: Boolean) : AddEditDreamEvent()

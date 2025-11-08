@@ -40,7 +40,8 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AIPageType
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ArcRotationAnimation
-import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIData
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIState
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIType
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.components.singleClick
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
@@ -87,7 +88,7 @@ fun SharedTransitionScope.UniversalAIPage(
                 onImageClick = singleClick(
                     lastClickTimeState = lastClickTime,
                     onClick = {
-                        onImageClick(addEditDreamState.dreamAIImage.response)
+                        onImageClick(addEditDreamState.aiStates[AIType.IMAGE]?.response ?: "")
                     }
                 )
             )
@@ -109,7 +110,7 @@ fun SharedTransitionScope.UniversalAIPage(
 
 @Composable
 fun StandardAIPageLayout(
-    aiContent: AIData,
+    aiContent: AIState,
     title: String,
     contentType: AIPageType,
     textFieldState: TextFieldState,
@@ -137,6 +138,7 @@ fun StandardAIPageLayout(
             horizontalAlignment = Alignment.Start,
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
         ) {
             Text(
                 text = title,
@@ -191,7 +193,7 @@ fun SharedTransitionScope.AIPainterPage(
     animatedVisibilityScope: AnimatedVisibilityScope,
     onImageClick: () -> Unit
 ) {
-    val imageState = addEditDreamState.dreamAIImage
+    val imageState = addEditDreamState.aiStates[AIType.IMAGE]!!
     val painter = rememberAsyncImagePainter(
         model = imageState.response,
         filterQuality = FilterQuality.Low
@@ -247,7 +249,7 @@ fun SharedTransitionScope.AIPainterPage(
                         rememberSharedContentState(key = "image/${imageState.response}"),
                         animatedVisibilityScope = animatedVisibilityScope,
                         boundsTransform = { _, _ ->
-                            tween(250)
+                            tween(500)
                         }
                     ),
                 contentScale = ContentScale.Crop
@@ -286,7 +288,7 @@ fun AIQuestionPage(
     snackBarState: () -> Unit,
     infiniteTransition: InfiniteTransition,
 ) {
-    val questionState = addEditDreamState.dreamAIQuestionAnswer
+    val questionState = addEditDreamState.aiStates[AIType.QUESTION_ANSWER]!!
 
     // Loading animation while AI is generating response
     if (questionState.isLoading) {
