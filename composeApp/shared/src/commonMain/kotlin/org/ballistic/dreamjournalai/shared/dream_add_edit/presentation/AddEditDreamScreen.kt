@@ -102,11 +102,8 @@ fun SharedTransitionScope.AddEditDreamScreen(
     val scope = rememberCoroutineScope()
 
     BackHandler(true, onBack = {
-        if (!addEditDreamState.isDreamExitOff && !addEditDreamState.dreamIsSavingLoading
-            && !addEditDreamState.dreamAIImage.isLoading && !addEditDreamState.dreamAIExplanation.isLoading
-            && !addEditDreamState.dreamAIAdvice.isLoading && !addEditDreamState.dreamAIStory.isLoading &&
-            !addEditDreamState.dreamAIMoodAnalyser.isLoading && !addEditDreamState.dreamAIQuestionAnswer.isLoading
-        ) {
+        val isLoading = addEditDreamState.aiStates.any { it.value.isLoading }
+        if (!addEditDreamState.isDreamExitOff && !addEditDreamState.dreamIsSavingLoading && !isLoading) {
             if (addEditDreamState.dreamHasChanged) {
                 onAddEditDreamEvent(AddEditDreamEvent.TriggerVibration)
                 onAddEditDreamEvent(AddEditDreamEvent.ToggleDialogState(true))

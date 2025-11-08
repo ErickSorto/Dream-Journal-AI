@@ -40,7 +40,7 @@ import org.jetbrains.compose.resources.stringResource
 fun DreamInterpretationPopUp(
     title: String,
     dreamTokens: Int,
-    onAdClick: (amount: Int) -> Unit,
+    onAdClick: () -> Unit,
     onDreamTokenClick: (amount: Int) -> Unit,
     onClickOutside: () -> Unit,
     modifier: Modifier = Modifier,
@@ -111,10 +111,10 @@ fun DreamInterpretationPopUp(
                     }
                     AdTokenLayout(
                         isAdButtonVisible = amount <= 1 && amount != 0,
-                        onAdClick = { amount ->
-                            onAdClick(amount) // Use the lambda correctly
+                        onAdClick = {
+                            onAdClick() // Use the lambda correctly
                         },
-                        onDreamTokenClick = { amount ->
+                        onDreamTokenClick = {
                             onDreamTokenClick(amount) // Use the lambda correctly
                         },
                         amount = amount
@@ -124,4 +124,3 @@ fun DreamInterpretationPopUp(
         containerColor = LightBlack
     )
 }
-

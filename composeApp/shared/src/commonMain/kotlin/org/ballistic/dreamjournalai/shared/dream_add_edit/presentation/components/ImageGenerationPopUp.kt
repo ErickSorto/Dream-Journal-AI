@@ -38,7 +38,7 @@ import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
 fun ImageGenerationPopUp(
     addEditDreamState: AddEditDreamState,
     onDreamTokenClick: (amount: Int) -> Unit,
-    onAdClick: (amount: Int) -> Unit,
+    onAdClick: () -> Unit,
     onClickOutside: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -113,10 +113,10 @@ fun ImageGenerationPopUp(
                 }
                 AdTokenLayout(
                     isAdButtonVisible = amount <= 1,
-                    onAdClick = { amount ->
-                        onAdClick(amount)
+                    onAdClick = {
+                        onAdClick()
                     },
-                    onDreamTokenClick = { amount ->
+                    onDreamTokenClick = {
                         onDreamTokenClick(amount)
                     },
                     amount = amount

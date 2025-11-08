@@ -70,6 +70,7 @@ import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.component
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ImageGenerationPopUp
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.QuestionAIGenerationBottomSheet
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.AIPage.AISubPages.UniversalAIPage
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Green
@@ -98,68 +99,10 @@ fun SharedTransitionScope.AIPage(
 ) {
 
     val dreamTokens = addEditDreamState.dreamTokens
-    val responseState = addEditDreamState.dreamAIExplanation
-    val imageState = addEditDreamState.dreamAIImage
-    val questionState = addEditDreamState.dreamAIQuestionAnswer
-    val adviceState = addEditDreamState.dreamAIAdvice
-    val contentState = textFieldState.text.toString()
-    val storyState = addEditDreamState.dreamAIStory
-    val moodState = addEditDreamState.dreamAIMoodAnalyser
-    val detailState = addEditDreamState.dreamGeneratedDetails.response
     val flagContentBottomSheetState = remember { mutableStateOf(false) }
     val infiniteTransition = rememberInfiniteTransition(label = "")
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
-
-    LaunchedEffect(key1 = responseState) {
-        if (responseState.isLoading) {
-            scope.launch {
-                pagerState2.animateScrollToPage(
-                    1,
-                )
-            }
-        }
-    }
-
-    LaunchedEffect(key1 = imageState) {
-        if (imageState.isLoading) {
-            scope.launch {
-                pagerState2.animateScrollToPage(0)
-            }
-        }
-    }
-
-    LaunchedEffect(key1 = questionState) {
-        if (questionState.isLoading) {
-            scope.launch {
-                pagerState2.animateScrollToPage(3)
-            }
-        }
-    }
-
-    LaunchedEffect(key1 = adviceState) {
-        if (adviceState.isLoading) {
-            scope.launch {
-                pagerState2.animateScrollToPage(2)
-            }
-        }
-    }
-
-    LaunchedEffect(key1 = storyState) {
-        if (storyState.isLoading) {
-            scope.launch {
-                pagerState2.animateScrollToPage(4)
-            }
-        }
-    }
-
-    LaunchedEffect(key1 = moodState) {
-        if (moodState.isLoading) {
-            scope.launch {
-                pagerState2.animateScrollToPage(5)
-            }
-        }
-    }
 
     if (flagContentBottomSheetState.value) {
         ActionBottomSheet(
@@ -176,45 +119,254 @@ fun SharedTransitionScope.AIPage(
         )
     }
 
-    if (addEditDreamState.dreamImageGenerationPopUpState) {
-        ImageGenerationPopUp(
-            addEditDreamState = addEditDreamState,
-            onDreamTokenClick = { amount ->
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamImageGenerationPopUpState(false))
-                if (dreamTokens < amount) {
-                    scope.launch {
-                        addEditDreamState.snackBarHostState.value.showSnackbar(
-                            message = "Not enough dream tokens",
-                            actionLabel = "Dismiss",
-                            duration = SnackbarDuration.Short
-                        )
+    when (addEditDreamState.aiPage) {
+        AIPage.IMAGE -> {
+            ImageGenerationPopUp(
+                addEditDreamState = addEditDreamState,
+                onDreamTokenClick = { amount ->
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                    if (dreamTokens < amount) {
+                        scope.launch {
+                            addEditDreamState.snackBarHostState.value.showSnackbar(
+                                message = "Not enough dream tokens",
+                                actionLabel = "Dismiss",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                    } else {
+                        scope.launch {
+                            onAddEditDreamEvent(
+                                AddEditDreamEvent.ClickGenerateAIImage(
+                                    content = textFieldState.text.toString(),
+                                    cost = amount
+                                )
+                            )
+                        }
                     }
-                } else {
+                },
+                onAdClick = {
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
                     scope.launch {
                         onAddEditDreamEvent(
-                            AddEditDreamEvent.ClickGenerateAIImage(
-                                detailState,
-                                amount
+                            AddEditDreamEvent.AdAIImageToggle(
+                                true
                             )
                         )
                     }
-                }
-            },
-            onAdClick = {
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamImageGenerationPopUpState(false))
-                scope.launch {
-                    onAddEditDreamEvent(
-                        AddEditDreamEvent.AdAIImageToggle(
-                            true
+                },
+                onClickOutside = {
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                },
+            )
+        }
+        AIPage.INTERPRETATION -> {
+            DreamInterpretationPopUp(
+                title = "Dream Interpreter",
+                dreamTokens = dreamTokens,
+                onAdClick = {
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                    scope.launch {
+                        onAddEditDreamEvent(
+                            AddEditDreamEvent.AdAIResponseToggle(
+                                true
+                            )
                         )
-                    )
-                }
-            },
-            onClickOutside = {
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamImageGenerationPopUpState(false))
-            },
-        )
+                    }
+                },
+                onDreamTokenClick = { amount ->
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                    if (dreamTokens < amount) {
+                        scope.launch {
+                            addEditDreamState.snackBarHostState.value.showSnackbar(
+                                message = "Not enough dream tokens",
+                                actionLabel = "Dismiss",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                    } else {
+                        scope.launch {
+                            onAddEditDreamEvent(
+                                AddEditDreamEvent.ClickGenerateAIResponse(
+                                    content = textFieldState.text.toString(),
+                                    cost = amount
+                                )
+                            )
+                        }
+                    }
+
+                },
+                onClickOutside = {
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                },
+            )
+        }
+        AIPage.ADVICE -> {
+            DreamInterpretationPopUp(
+                title = "Dream Advice",
+                dreamTokens = dreamTokens,
+                onAdClick = {
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                    scope.launch {
+                        onAddEditDreamEvent(
+                            AddEditDreamEvent.AdAIAdviceToggle(
+                                true
+                            )
+                        )
+                    }
+                },
+                onDreamTokenClick = { amount ->
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                    if (dreamTokens < amount) {
+                        scope.launch {
+                            addEditDreamState.snackBarHostState.value.showSnackbar(
+                                message = "Not enough dream tokens",
+                                actionLabel = "Dismiss",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                    } else {
+                        scope.launch {
+                            onAddEditDreamEvent(
+                                AddEditDreamEvent.ClickGenerateAIAdvice(
+                                    content = textFieldState.text.toString(),
+                                    cost = amount
+                                )
+                            )
+                        }
+                    }
+
+                },
+                onClickOutside = {
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                },
+            )
+        }
+        AIPage.QUESTION -> {
+            QuestionAIGenerationBottomSheet(
+                addEditDreamState = addEditDreamState,
+                onAddEditDreamEvent = onAddEditDreamEvent,
+                onDreamTokenClick = { amount ->
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                    if (dreamTokens < amount) {
+                        scope.launch {
+                            addEditDreamState.snackBarHostState.value.showSnackbar(
+                                message = "Not enough dream tokens",
+                                actionLabel = "Dismiss",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                    } else {
+                        scope.launch {
+                            onAddEditDreamEvent(
+                                AddEditDreamEvent.ClickGenerateFromQuestion(
+                                    content = textFieldState.text.toString(),
+                                    cost = amount
+                                )
+                            )
+                        }
+                    }
+                },
+                onAdClick = {
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                    scope.launch {
+                        onAddEditDreamEvent(
+                            AddEditDreamEvent.AdQuestionToggle(
+                                true
+                            )
+                        )
+                    }
+                },
+                onClickOutside = {
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                },
+            )
+        }
+        AIPage.STORY -> {
+            DreamInterpretationPopUp(
+                title = "Dream Story",
+                dreamTokens = dreamTokens,
+                onDreamTokenClick = { amount ->
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                    if (dreamTokens < amount) {
+                        scope.launch {
+                            addEditDreamState.snackBarHostState.value.showSnackbar(
+                                message = "Not enough dream tokens",
+                                actionLabel = "Dismiss",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                    } else {
+                        scope.launch {
+                            onAddEditDreamEvent(
+                                AddEditDreamEvent.ClickGenerateStory(
+                                    content = textFieldState.text.toString(),
+                                    cost = amount
+                                )
+                            )
+                        }
+                    }
+                },
+                onAdClick = {
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                    scope.launch {
+                        onAddEditDreamEvent(
+                            AddEditDreamEvent.AdStoryToggle(
+                                true
+                            )
+                        )
+                    }
+                },
+                onClickOutside = {
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                },
+            )
+        }
+        AIPage.MOOD -> {
+            DreamInterpretationPopUp(
+                title = "Dream Mood",
+                dreamTokens = dreamTokens,
+                onAdClick = {
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                    scope.launch {
+                        onAddEditDreamEvent(
+                            AddEditDreamEvent.AdMoodToggle(
+                                true
+                            )
+                        )
+                    }
+                },
+                onDreamTokenClick = { amount ->
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                    if (dreamTokens < amount) {
+                        scope.launch {
+                            addEditDreamState.snackBarHostState.value.showSnackbar(
+                                message = "Not enough dream tokens",
+                                actionLabel = "Dismiss",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                    } else {
+                        scope.launch {
+                            onAddEditDreamEvent(
+                                AddEditDreamEvent.ClickGenerateMood(
+                                    content = textFieldState.text.toString(),
+                                    cost = amount
+                                )
+                            )
+                        }
+                    }
+
+                },
+                onClickOutside = {
+                    onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
+                },
+            )
+        }
+        null -> {
+            // Do nothing
+        }
     }
+
     if (addEditDreamState.isAdImage) {
         RewardedAd(
             activity = LocalPlatformContext.current,
@@ -222,8 +374,8 @@ fun SharedTransitionScope.AIPage(
             onRewardEarned = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateAIImage(
-                        detailState,
-                        0
+                        content = textFieldState.text.toString(),
+                        cost = 0
                     )
                 )
                 onAddEditDreamEvent(AddEditDreamEvent.AdAIImageToggle(false))
@@ -231,48 +383,6 @@ fun SharedTransitionScope.AIPage(
             onDismissed = {
                 onAddEditDreamEvent(AddEditDreamEvent.AdAIImageToggle(false))
             }
-        )
-    }
-
-    if (addEditDreamState.dreamInterpretationPopUpState) {
-        DreamInterpretationPopUp(
-            title = "Dream Interpreter",
-            dreamTokens = dreamTokens,
-            onAdClick = { amount ->
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamInterpretationPopUpState(false))
-                scope.launch {
-                    onAddEditDreamEvent(
-                        AddEditDreamEvent.AdAIResponseToggle(
-                            true
-                        )
-                    )
-                }
-            },
-            onDreamTokenClick = { amount ->
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamInterpretationPopUpState(false))
-                if (dreamTokens < amount) {
-                    scope.launch {
-                        addEditDreamState.snackBarHostState.value.showSnackbar(
-                            message = "Not enough dream tokens",
-                            actionLabel = "Dismiss",
-                            duration = SnackbarDuration.Short
-                        )
-                    }
-                } else {
-                    scope.launch {
-                        onAddEditDreamEvent(
-                            AddEditDreamEvent.ClickGenerateAIResponse(
-                                contentState,
-                                amount
-                            )
-                        )
-                    }
-                }
-
-            },
-            onClickOutside = {
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamInterpretationPopUpState(false))
-            },
         )
     }
 
@@ -283,8 +393,8 @@ fun SharedTransitionScope.AIPage(
             onRewardEarned = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateAIResponse(
-                        contentState,
-                        0
+                        content = textFieldState.text.toString(),
+                        cost = 0
                     )
                 )
                 onAddEditDreamEvent(AddEditDreamEvent.AdAIResponseToggle(false))
@@ -295,49 +405,6 @@ fun SharedTransitionScope.AIPage(
         )
     }
 
-
-
-    if (addEditDreamState.dreamAdvicePopUpState) {
-        DreamInterpretationPopUp(
-            title = "Dream Advice",
-            dreamTokens = dreamTokens,
-            onAdClick = { amount ->
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamAdvicePopUpState(false))
-                scope.launch {
-                    onAddEditDreamEvent(
-                        AddEditDreamEvent.AdAIAdviceToggle(
-                            true
-                        )
-                    )
-                }
-            },
-            onDreamTokenClick = { amount ->
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamAdvicePopUpState(false))
-                if (dreamTokens < amount) {
-                    scope.launch {
-                        addEditDreamState.snackBarHostState.value.showSnackbar(
-                            message = "Not enough dream tokens",
-                            actionLabel = "Dismiss",
-                            duration = SnackbarDuration.Short
-                        )
-                    }
-                } else {
-                    scope.launch {
-                        onAddEditDreamEvent(
-                            AddEditDreamEvent.ClickGenerateAIAdvice(
-                                contentState,
-                                amount
-                            )
-                        )
-                    }
-                }
-
-            },
-            onClickOutside = {
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamAdvicePopUpState(false))
-            },
-        )
-    }
     if (addEditDreamState.isAdAdvice) {
         RewardedAd(
             activity = LocalPlatformContext.current,
@@ -345,8 +412,8 @@ fun SharedTransitionScope.AIPage(
             onRewardEarned = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateAIAdvice(
-                        contentState,
-                        0
+                        content = textFieldState.text.toString(),
+                        cost = 0
                     )
                 )
                 onAddEditDreamEvent(AddEditDreamEvent.AdAIAdviceToggle(false))
@@ -357,47 +424,6 @@ fun SharedTransitionScope.AIPage(
         )
     }
 
-
-    if (addEditDreamState.dreamQuestionPopUpState) {
-        QuestionAIGenerationBottomSheet(
-            addEditDreamState = addEditDreamState,
-            onAddEditDreamEvent = onAddEditDreamEvent,
-            onDreamTokenClick = { amount ->
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamQuestionPopUpState(false))
-                if (dreamTokens < amount) {
-                    scope.launch {
-                        addEditDreamState.snackBarHostState.value.showSnackbar(
-                            message = "Not enough dream tokens",
-                            actionLabel = "Dismiss",
-                            duration = SnackbarDuration.Short
-                        )
-                    }
-                } else {
-                    scope.launch {
-                        onAddEditDreamEvent(
-                            AddEditDreamEvent.ClickGenerateFromQuestion(
-                                contentState,
-                                amount
-                            )
-                        )
-                    }
-                }
-            },
-            onAdClick = { amount ->
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamQuestionPopUpState(false))
-                scope.launch {
-                    onAddEditDreamEvent(
-                        AddEditDreamEvent.AdQuestionToggle(
-                            true
-                        )
-                    )
-                }
-            },
-            onClickOutside = {
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamQuestionPopUpState(false))
-            },
-        )
-    }
     if (addEditDreamState.isAdQuestion) {
         RewardedAd(
             activity = LocalPlatformContext.current,
@@ -405,8 +431,8 @@ fun SharedTransitionScope.AIPage(
             onRewardEarned = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateFromQuestion(
-                        contentState,
-                        0
+                        content = textFieldState.text.toString(),
+                        cost = 0
                     )
                 )
                 onAddEditDreamEvent(AddEditDreamEvent.AdQuestionToggle(false))
@@ -417,46 +443,6 @@ fun SharedTransitionScope.AIPage(
         )
     }
 
-    if (addEditDreamState.dreamStoryPopupState) {
-        DreamInterpretationPopUp(
-            title = "Dream Story",
-            dreamTokens = dreamTokens,
-            onDreamTokenClick = { amount ->
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamStoryPopUpState(false))
-                if (dreamTokens < amount) {
-                    scope.launch {
-                        addEditDreamState.snackBarHostState.value.showSnackbar(
-                            message = "Not enough dream tokens",
-                            actionLabel = "Dismiss",
-                            duration = SnackbarDuration.Short
-                        )
-                    }
-                } else {
-                    scope.launch {
-                        onAddEditDreamEvent(
-                            AddEditDreamEvent.ClickGenerateStory(
-                                contentState,
-                                amount
-                            )
-                        )
-                    }
-                }
-            },
-            onAdClick = { amount ->
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamStoryPopUpState(false))
-                scope.launch {
-                    onAddEditDreamEvent(
-                        AddEditDreamEvent.AdStoryToggle(
-                            true
-                        )
-                    )
-                }
-            },
-            onClickOutside = {
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamStoryPopUpState(false))
-            },
-        )
-    }
     if (addEditDreamState.isAdStory) {
         RewardedAd(
             activity = LocalPlatformContext.current,
@@ -464,8 +450,8 @@ fun SharedTransitionScope.AIPage(
             onRewardEarned = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateStory(
-                        contentState,
-                        0
+                        content = textFieldState.text.toString(),
+                        cost = 0
                     )
                 )
                 onAddEditDreamEvent(AddEditDreamEvent.AdStoryToggle(false))
@@ -476,47 +462,6 @@ fun SharedTransitionScope.AIPage(
         )
     }
 
-    if (addEditDreamState.dreamMoodPopupState) {
-        DreamInterpretationPopUp(
-            title = "Dream Mood",
-            dreamTokens = dreamTokens,
-            onAdClick = { amount ->
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamMoodPopUpState(false))
-                scope.launch {
-                    onAddEditDreamEvent(
-                        AddEditDreamEvent.ClickGenerateMood(
-                            contentState,
-                            amount
-                        )
-                    )
-                }
-            },
-            onDreamTokenClick = { amount ->
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamMoodPopUpState(false))
-                if (dreamTokens < amount) {
-                    scope.launch {
-                        addEditDreamState.snackBarHostState.value.showSnackbar(
-                            message = "Not enough dream tokens",
-                            actionLabel = "Dismiss",
-                            duration = SnackbarDuration.Short
-                        )
-                    }
-                } else {
-                    scope.launch {
-                        onAddEditDreamEvent(
-                            AddEditDreamEvent.AdMoodToggle(
-                                true
-                            )
-                        )
-                    }
-                }
-
-            },
-            onClickOutside = {
-                onAddEditDreamEvent(AddEditDreamEvent.ToggleDreamMoodPopUpState(false))
-            },
-        )
-    }
     if (addEditDreamState.isAdMood) {
         RewardedAd(
             activity = LocalPlatformContext.current,
@@ -524,8 +469,8 @@ fun SharedTransitionScope.AIPage(
             onRewardEarned = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateMood(
-                        contentState,
-                        0
+                        content = textFieldState.text.toString(),
+                        cost = 0
                     )
                 )
                 onAddEditDreamEvent(AddEditDreamEvent.AdMoodToggle(false))
@@ -661,7 +606,6 @@ fun SharedTransitionScope.AIPage(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
                 .background(LightBlack.copy(alpha = 0.7f))
-                .verticalScroll(scrollState, true)
                 .weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -751,157 +695,29 @@ fun SharedTransitionScope.AIPage(
             }
         }
 
-        when (pagerState2.currentPage) {
-            0 -> {
-                AIButton(
-                    text = "Generate Painting",
-                    color = SkyBlue,
-                    onClick = {
-                        if (textFieldState.text.length >= 20) {
-                            onAddEditDreamEvent(
-                                AddEditDreamEvent.ToggleDreamImageGenerationPopUpState(
-                                    true
-                                )
-                            )
-                        } else {
-                            scope.launch {
-                                addEditDreamState.snackBarHostState.value.showSnackbar(
-                                    message = "Dream is too short",
-                                    actionLabel = "Dismiss",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        }
-                    },
-                    onAddEditDreamEvent = onAddEditDreamEvent
-                )
-            }
-
-            1 -> {
-                AIButton(
-                    text = "Generate Interpretation",
-                    color = Purple,
-                    onClick = {
-                        if (textFieldState.text.length >= 20) {
-                            onAddEditDreamEvent(
-                                AddEditDreamEvent.ToggleDreamInterpretationPopUpState(
-                                    true
-                                )
-                            )
-                        } else {
-                            scope.launch {
-                                addEditDreamState.snackBarHostState.value.showSnackbar(
-                                    message = "Dream is too short",
-                                    actionLabel = "Dismiss",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        }
-                    },
-                    onAddEditDreamEvent = onAddEditDreamEvent
-                )
-            }
-
-            2 -> {
-                AIButton(
-                    text = "Generate Advice",
-                    color = Yellow,
-                    onClick = {
-                        if (textFieldState.text.length >= 20) {
-                            onAddEditDreamEvent(
-                                AddEditDreamEvent.ToggleDreamAdvicePopUpState(
-                                    true
-                                )
-                            )
-                        } else {
-                            scope.launch {
-                                addEditDreamState.snackBarHostState.value.showSnackbar(
-                                    message = "Dream is too short",
-                                    actionLabel = "Dismiss",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        }
-                    },
-                    onAddEditDreamEvent = onAddEditDreamEvent
-                )
-            }
-
-            3 -> {
-                AIButton(
-                    text = "Ask a Question",
-                    color = RedOrange,
-                    onClick = {
-                        if (textFieldState.text.length >= 20) {
-                            onAddEditDreamEvent(
-                                AddEditDreamEvent.ToggleDreamQuestionPopUpState(
-                                    true
-                                )
-                            )
-                        } else {
-                            scope.launch {
-                                addEditDreamState.snackBarHostState.value.showSnackbar(
-                                    message = "Dream is too short",
-                                    actionLabel = "Dismiss",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        }
-                    },
-                    onAddEditDreamEvent = onAddEditDreamEvent
-                )
-            }
-
-            4 -> {
-                AIButton(
-                    text = "Generate Story",
-                    color = LighterYellow,
-                    onClick = {
-                        if (textFieldState.text.length >= 20) {
-                            onAddEditDreamEvent(
-                                AddEditDreamEvent.ToggleDreamStoryPopUpState(
-                                    true
-                                )
-                            )
-                        } else {
-                            scope.launch {
-                                addEditDreamState.snackBarHostState.value.showSnackbar(
-                                    message = "Dream is too short",
-                                    actionLabel = "Dismiss",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        }
-                    },
-                    onAddEditDreamEvent = onAddEditDreamEvent
-                )
-            }
-
-            5 -> {
-                AIButton(
-                    text = "Generate Mood Analysis",
-                    color = Green,
-                    onClick = {
-                        if (textFieldState.text.length >= 20) {
-                            onAddEditDreamEvent(
-                                AddEditDreamEvent.ToggleDreamMoodPopUpState(
-                                    true
-                                )
-                            )
-                        } else {
-                            scope.launch {
-                                addEditDreamState.snackBarHostState.value.showSnackbar(
-                                    message = "Dream is too short",
-                                    actionLabel = "Dismiss",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        }
-                    },
-                    onAddEditDreamEvent = onAddEditDreamEvent
-                )
-            }
-        }
+        AIButton(
+            text = "Generate " + AIPage.values()[pagerState2.currentPage].name.lowercase()
+                .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+            color = AITool.entries[pagerState2.currentPage].color,
+            onClick = {
+                if (textFieldState.text.length >= 20) {
+                    onAddEditDreamEvent(
+                        AddEditDreamEvent.SetAIPage(
+                            AIPage.values()[pagerState2.currentPage]
+                        )
+                    )
+                } else {
+                    scope.launch {
+                        addEditDreamState.snackBarHostState.value.showSnackbar(
+                            message = "Dream is too short",
+                            actionLabel = "Dismiss",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                }
+            },
+            onAddEditDreamEvent = onAddEditDreamEvent
+        )
     }
 }
 

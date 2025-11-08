@@ -64,10 +64,10 @@ fun BuySymbolBottomSheet(
                     )
                 }
                 AdTokenLayout(
-                    onAdClick = { _ ->
+                    onAdClick = {
                         onAdClick()
                     },
-                    onDreamTokenClick = { _ ->
+                    onDreamTokenClick = {
                         onDreamTokenClick()
                     },
                     amount = amount

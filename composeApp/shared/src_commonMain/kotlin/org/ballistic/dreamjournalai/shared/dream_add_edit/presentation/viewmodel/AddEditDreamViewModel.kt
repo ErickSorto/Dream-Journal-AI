@@ -56,15 +56,6 @@ enum class AIType {
     MOOD
 }
 
-enum class AIPage {
-    IMAGE,
-    INTERPRETATION,
-    ADVICE,
-    QUESTION,
-    STORY,
-    MOOD
-}
-
 class AddEditDreamViewModel(
     savedStateHandle: SavedStateHandle,
     private val dreamUseCases: DreamUseCases,
@@ -348,7 +339,12 @@ class AddEditDreamViewModel(
                 }
             }
             is AddEditDreamEvent.ClickBuyWord -> { _addEditDreamState.update { it.copy(isDreamExitOff = true) }; handleUnlockWord(event) }
-            is AddEditDreamEvent.SetAIPage -> _addEditDreamState.update { it.copy(aiPage = event.page) }
+            is AddEditDreamEvent.ToggleDreamImageGenerationPopUpState -> _addEditDreamState.update { it.copy(dreamImageGenerationPopUpState = event.value) }
+            is AddEditDreamEvent.ToggleDreamInterpretationPopUpState -> _addEditDreamState.update { it.copy(dreamInterpretationPopUpState = event.value) }
+            is AddEditDreamEvent.ToggleDreamAdvicePopUpState -> _addEditDreamState.update { it.copy(dreamAdvicePopUpState = event.value) }
+            is AddEditDreamEvent.ToggleDreamQuestionPopUpState -> _addEditDreamState.update { it.copy(dreamQuestionPopUpState = event.value) }
+            is AddEditDreamEvent.ToggleDreamStoryPopUpState -> _addEditDreamState.update { it.copy(dreamStoryPopupState = event.value) }
+            is AddEditDreamEvent.ToggleDreamMoodPopUpState -> _addEditDreamState.update { it.copy(dreamMoodPopupState = event.value) }
             is AddEditDreamEvent.ToggleDialogState -> _addEditDreamState.update { it.copy(dialogState = event.value) }
             is AddEditDreamEvent.ToggleBottomSheetState -> _addEditDreamState.update { it.copy(bottomSheetState = event.value) }
             is AddEditDreamEvent.SaveDream -> {
@@ -419,7 +415,7 @@ class AddEditDreamViewModel(
         }
 
         viewModelScope.launch {
-            if (isBlocking && content.length < 20) {
+            if (isBlocking && content.length <= 20) {
                 _addEditDreamState.update { it.copy(isDreamExitOff = false) }
                 logger.d { "Snackbar shown: Dream content is too short. Content: '$content'" }
                 showSnack(if (content.isEmpty()) "Dream content is empty" else "Dream content is too short")
@@ -504,7 +500,12 @@ data class AddEditDreamState(
     val calendarDialogState: Boolean = false,
     val sleepTimePickerDialogState: Boolean = false,
     val wakeTimePickerDialogState: Boolean = false,
-    val aiPage: AIPage? = null,
+    val dreamImageGenerationPopUpState: Boolean = false,
+    val dreamInterpretationPopUpState: Boolean = false,
+    val dreamAdvicePopUpState: Boolean = false,
+    val dreamQuestionPopUpState: Boolean = false,
+    val dreamStoryPopupState: Boolean = false,
+    val dreamMoodPopupState: Boolean = false,
     val isDreamExitOff: Boolean = false,
     val snackBarHostState: MutableState<SnackbarHostState> = mutableStateOf(SnackbarHostState()),
     val dictionaryWordMutableList: MutableList<DictionaryWord> = mutableListOf(),

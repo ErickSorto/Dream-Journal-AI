@@ -102,7 +102,7 @@ fun MassInterpretationResultPage(
                     onEvent(
                         InterpretDreamsToolEvent.InterpretDreams(
                             isAd = true,
-                            cost = it,
+                            cost = 0,
                             isFinishedEvent = {
                                 onMainScreenEvent(MainScreenEvent.SetDrawerState(true))
                                 onMainScreenEvent(MainScreenEvent.SetBottomBarEnabledState(true))
