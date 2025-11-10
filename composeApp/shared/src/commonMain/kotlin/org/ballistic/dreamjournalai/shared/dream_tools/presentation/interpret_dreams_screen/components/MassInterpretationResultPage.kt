@@ -1,7 +1,6 @@
 package org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.components
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -39,14 +38,14 @@ import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.mass_dream_interpretation_icon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ArcRotationAnimation
-import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.viewmodel.InterpretDreamsScreenState
-import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.InterpretDreamsToolEvent
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
+import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.InterpretDreamsToolEvent
+import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.viewmodel.InterpretDreamsScreenState
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
@@ -58,7 +57,6 @@ fun MassInterpretationResultPage(
     pagerState: PagerState,
     onEvent: (InterpretDreamsToolEvent) -> Unit,
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "loading icon rotation")
     val dreamTokens = interpretDreamsScreenState.dreamTokens
 
     if (interpretDreamsScreenState.bottomMassInterpretationSheetState) {
@@ -163,7 +161,6 @@ fun MassInterpretationResultPage(
         ) {
             if (interpretDreamsScreenState.isLoading) {
                 ArcRotationAnimation(
-                    infiniteTransition = infiniteTransition,
                 )
             } else if (interpretDreamsScreenState.chosenMassInterpretation.interpretation.isNotEmpty()) {
                 TypewriterText(

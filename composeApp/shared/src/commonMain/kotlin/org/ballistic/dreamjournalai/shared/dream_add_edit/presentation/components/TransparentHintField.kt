@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -37,6 +38,9 @@ fun TransparentHintTextField(
     textFieldState: TextFieldState
 ) {
     val scope = rememberCoroutineScope()
+    val transformation = remember { EventTriggeringTransformation() }
+    transformation.onEvent = { event -> scope.launch { onEvent(event) } }
+
     Box(modifier = modifier)
     {
         BasicTextField(
@@ -48,9 +52,7 @@ fun TransparentHintTextField(
             onKeyboardAction = keyboardActions,
             modifier = modifier2
                 .fillMaxWidth(),
-            inputTransformation = EventTriggeringTransformation { event ->
-                scope.launch { onEvent(event) }
-            },
+            inputTransformation = transformation,
             cursorBrush = Brush.verticalGradient(
                 colors = listOf(
                     White,
@@ -80,10 +82,20 @@ fun Modifier.onKeyboardDismiss(handleOnBackPressed: () -> Unit): Modifier =
         true
     }
 
-class EventTriggeringTransformation(
-    private val onEvent: (AddEditDreamEvent) -> Unit
-) : InputTransformation {
+class EventTriggeringTransformation : InputTransformation {
+    private var previousText: String? = null
+    private var isInitialized = false
+    var onEvent: (AddEditDreamEvent) -> Unit = {}
+
     override fun TextFieldBuffer.transformInput() {
-        onEvent(AddEditDreamEvent.ContentHasChanged)
+        if (!isInitialized) {
+            previousText = toString()
+            isInitialized = true
+            return
+        }
+        if (toString() != previousText) {
+            onEvent(AddEditDreamEvent.ContentHasChanged)
+            previousText = toString()
+        }
     }
 }

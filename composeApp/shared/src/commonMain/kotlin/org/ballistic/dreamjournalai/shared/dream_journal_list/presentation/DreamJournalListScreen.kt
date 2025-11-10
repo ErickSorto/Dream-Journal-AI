@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +55,7 @@ import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.compo
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.viewmodel.DreamJournalListState
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
+import org.ballistic.dreamjournalai.shared.utils.singleClick
 import org.jetbrains.compose.resources.painterResource
 
 
@@ -127,7 +129,7 @@ fun DreamJournalListScreen(
         }
     ) { innerPadding ->
         val topPadding = innerPadding.calculateTopPadding()
-
+        val lastClickTime = remember { mutableLongStateOf(0L) }
         // Wrap list in a Box so we can overlay the empty-state prompt above bottom nav
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
@@ -169,8 +171,9 @@ fun DreamJournalListScreen(
                              modifier = Modifier
                                  .fillMaxWidth()
                                  .padding(bottom = 10.dp)
-                                 .padding(horizontal = 20.dp),
-                             onClick = {
+                                 .padding(horizontal = 20.dp)
+                             ,
+                             onClick = singleClick(lastClickTime) {
                                  onDreamListEvent(DreamListEvent.TriggerVibration)
                                  onNavigateToDream(dream.id, dream.backgroundImage)
                              },

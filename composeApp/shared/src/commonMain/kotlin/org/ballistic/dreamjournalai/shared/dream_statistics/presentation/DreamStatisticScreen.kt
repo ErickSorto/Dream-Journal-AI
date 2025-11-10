@@ -61,7 +61,7 @@ fun DreamStatisticScreen(
                     .dynamicBottomNavigationPadding()
                     .fillMaxSize()
             ){
-                ArcRotationAnimation(infiniteTransition)
+                ArcRotationAnimation()
             }
         } else {
             Column(

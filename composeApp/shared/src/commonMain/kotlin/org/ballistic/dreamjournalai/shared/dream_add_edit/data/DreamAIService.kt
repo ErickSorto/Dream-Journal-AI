@@ -1,7 +1,7 @@
 package org.ballistic.dreamjournalai.shared.dream_add_edit.data
 
+
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.intl.PlatformLocale
 import co.touchlab.kermit.Logger
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
@@ -12,8 +12,8 @@ import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.HttpRequestTimeoutException
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
@@ -90,7 +90,7 @@ class DefaultDreamAIService(
     }
 
     override suspend fun generateText(type: AITextType, dreamContent: String, cost: Int, extra: String?): AIResult<String> {
-        val locale = Locale.current.platformLocale
+        val locale = Locale.current
         val model = if (cost <= 0) "gpt-4.1-mini" else "gpt-4.1"
         val prompt = when (type) {
             AITextType.TITLE -> "Please generate a title for this dream with only 1 to 4 words, no quotes, and don't include the word dream: $dreamContent"

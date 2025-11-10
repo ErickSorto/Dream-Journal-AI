@@ -66,8 +66,6 @@ sealed class AddEditDreamEvent {
 
     data object GetUnlockedWords : AddEditDreamEvent()
 
-    data object LoadWords : AddEditDreamEvent()
-
     data object ContentHasChanged : AddEditDreamEvent()
 
     data object FilterDreamWordInDictionary : AddEditDreamEvent()

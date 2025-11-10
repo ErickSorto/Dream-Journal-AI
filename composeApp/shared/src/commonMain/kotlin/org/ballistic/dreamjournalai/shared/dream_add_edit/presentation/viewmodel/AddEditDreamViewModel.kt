@@ -1,28 +1,37 @@
 package org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel
 
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.DictionaryRepository
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.core.util.formatLocalDate
 import org.ballistic.dreamjournalai.shared.core.util.formatLocalTime
+import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AIResult
+import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AITextType
+import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DreamAIService
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
@@ -32,9 +41,6 @@ import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AIResult
-import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AITextType
-import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DreamAIService
 
 // Get current date
 @OptIn(ExperimentalTime::class)
@@ -86,13 +92,16 @@ class AddEditDreamViewModel(
     // Small helper to show snackbars succinctly
     private suspend fun showSnack(
         message: String,
-        actionLabel: String = "Dismiss",
-        duration: SnackbarDuration = SnackbarDuration.Short
+        actionLabel: String = "Dismiss"
     ) {
-        _addEditDreamState.value.snackBarHostState.value.showSnackbar(
-            message = message,
-            actionLabel = actionLabel,
-            duration = duration
+        SnackbarController.sendEvent(
+            SnackbarEvent(
+                message = message,
+                action = SnackbarAction(
+                    name = actionLabel,
+                    action = {}
+                )
+            )
         )
     }
 
@@ -125,7 +134,7 @@ class AddEditDreamViewModel(
                 dreamVividness = dream.vividnessRating,
                 dreamEmotion = dream.moodRating
             ),
-            aiStates = aiStates
+            aiStates = aiStates.toImmutableMap()
         )
     }
 
@@ -148,8 +157,8 @@ class AddEditDreamViewModel(
                             }
                             onEvent(AddEditDreamEvent.ToggleDreamHasChanged(false))
                             onEvent(AddEditDreamEvent.GetUnlockedWords)
-                            onEvent(AddEditDreamEvent.LoadWords)
                             onEvent(AddEditDreamEvent.GetDreamTokens)
+                            onEvent(AddEditDreamEvent.FilterDreamWordInDictionary)
                         }
                         is Resource.Error<*> -> {
                             logger.e { "init: load dream failed: ${resource.message}" }
@@ -160,7 +169,6 @@ class AddEditDreamViewModel(
                 }
             } else {
                 onEvent(AddEditDreamEvent.GetUnlockedWords)
-                onEvent(AddEditDreamEvent.LoadWords)
                 onEvent(AddEditDreamEvent.GetDreamTokens)
             }
         }
@@ -181,7 +189,7 @@ class AddEditDreamViewModel(
         _addEditDreamState.update { state ->
             val newStates = state.aiStates.toMutableMap()
             newStates[type] = newStates[type]!!.transform()
-            state.copy(aiStates = newStates)
+            state.copy(aiStates = newStates.toImmutableMap())
         }
     }
 
@@ -256,11 +264,7 @@ class AddEditDreamViewModel(
             onSaveSuccess()
         } catch (e: InvalidDreamException) {
             _addEditDreamState.update { it.copy(dreamIsSavingLoading = false) }
-            addEditDreamState.value.snackBarHostState.value.showSnackbar(
-                e.message ?: "Couldn't save dream :(",
-                actionLabel = "Dismiss",
-                duration = SnackbarDuration.Long
-            )
+            showSnack(e.message ?: "Couldn't save dream :(")
         }
     }
 
@@ -274,12 +278,17 @@ class AddEditDreamViewModel(
         }
     }
 
-    // Load dictionary words from CSV
-    private fun loadWords() {
-        viewModelScope.launch(Dispatchers.Default) {
-            val words = dictionaryRepository.loadDictionaryWordsFromCsv("dream_dictionary.csv")
-            _addEditDreamState.update { state -> state.copy(dictionaryWordMutableList = words.toMutableList()) }
+    private suspend fun loadWordsIfNeeded(): ImmutableList<DictionaryWord> {
+        if (_addEditDreamState.value.dictionaryWords.isNotEmpty()) {
+            return _addEditDreamState.value.dictionaryWords
         }
+
+        val words = withContext(Dispatchers.Default) {
+            dictionaryRepository.loadDictionaryWordsFromCsv("dream_dictionary.csv")
+        }.toImmutableList()
+
+        _addEditDreamState.update { it.copy(dictionaryWords = words) }
+        return words
     }
 
     @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
@@ -321,26 +330,36 @@ class AddEditDreamViewModel(
             is AddEditDreamEvent.ChangeQuestionOfDream -> { markChanged(); updateAIState(AIType.QUESTION_ANSWER) { copy(question = event.value) } }
             is AddEditDreamEvent.ClickWord -> _addEditDreamState.update { it.copy(bottomSheetState = true, isClickedWordUnlocked = event.word.cost == 0, clickedWord = event.word) }
             is AddEditDreamEvent.FilterDreamWordInDictionary -> {
-                viewModelScope.launch(Dispatchers.Default) {
+                viewModelScope.launch {
+                    val dictionaryList = loadWordsIfNeeded()
                     val content = contentTextFieldState.value.text.toString()
-                    val dictionaryList = addEditDreamState.value.dictionaryWordMutableList
-                    val filteredWords = dictionaryRepository.dictionaryWordsInDreamFilterList(
-                        dreamContent = content,
-                        dictionaryWordList = dictionaryList
-                    )
-                    _addEditDreamState.update { it.copy(dreamFilteredDictionaryWords = filteredWords, dreamContentChanged = false) }
+
+                    val filteredWords = withContext(Dispatchers.Default) {
+                        dictionaryRepository.dictionaryWordsInDreamFilterList(
+                            dreamContent = content,
+                            dictionaryWordList = dictionaryList
+                        )
+                    }
+                    _addEditDreamState.update {
+                        it.copy(
+                            dreamFilteredDictionaryWords = filteredWords.toImmutableList(),
+                            dreamContentChanged = false
+                        )
+                    }
                 }
             }
-            is AddEditDreamEvent.LoadWords -> viewModelScope.launch { loadWords() }
-            is AddEditDreamEvent.ContentHasChanged -> _addEditDreamState.update { it.copy(dreamContentChanged = true, dreamHasChanged = true) }
+            is AddEditDreamEvent.ContentHasChanged -> {
+                _addEditDreamState.update { it.copy(dreamContentChanged = true, dreamHasChanged = true) }
+                onEvent(AddEditDreamEvent.FilterDreamWordInDictionary)
+            }
             is AddEditDreamEvent.GetUnlockedWords -> {
                 viewModelScope.launch {
                     authRepository.getUnlockedWords().collect { result ->
                         when (result) {
-                            is Resource.Success -> _addEditDreamState.update { it.copy(unlockedWords = result.data?.toMutableList() ?: mutableListOf()) }
+                            is Resource.Success -> _addEditDreamState.update { it.copy(unlockedWords = result.data?.toImmutableList() ?: persistentListOf()) }
                             is Resource.Error -> {
                                 Logger.e("AddEditDreamViewModel") { result.message.toString() }
-                                _addEditDreamState.value.snackBarHostState.value.showSnackbar("Couldn't get unlocked words :(", actionLabel = "Dismiss")
+                                showSnack("Couldn't get unlocked words :(")
                             }
                             else -> Unit
                         }
@@ -402,12 +421,13 @@ class AddEditDreamViewModel(
 
     private fun updateScreenStateForUnlockedWord(dictionaryWord: DictionaryWord) {
         _addEditDreamState.update { state ->
+            val newUnlockedWords = state.unlockedWords.toMutableList()
+            newUnlockedWords.add(dictionaryWord.word)
             state.copy(
                 isClickedWordUnlocked = true,
                 clickedWord = dictionaryWord,
-                unlockedWords = state.unlockedWords.apply {
-                    add(dictionaryWord.word)
-                })
+                unlockedWords = newUnlockedWords.toImmutableList()
+            )
         }
     }
 
@@ -479,6 +499,7 @@ class AddEditDreamViewModel(
     }
 }
 
+@Stable
 data class AddEditDreamState(
     val dreamInfo: DreamInfo = DreamInfo(
         dreamId = "",
@@ -497,7 +518,7 @@ data class AddEditDreamState(
         dreamVividness = 0,
         dreamEmotion = 0
     ),
-    val aiStates: Map<AIType, AIState> = AIType.entries.associateWith { AIState() },
+    val aiStates: ImmutableMap<AIType, AIState> = AIType.entries.associateWith { AIState() }.toImmutableMap(),
     val dreamContentChanged: Boolean = true,
     val dreamIsSavingLoading: Boolean = false,
     val dialogState: Boolean = false,
@@ -506,10 +527,9 @@ data class AddEditDreamState(
     val wakeTimePickerDialogState: Boolean = false,
     val aiPage: AIPage? = null,
     val isDreamExitOff: Boolean = false,
-    val snackBarHostState: MutableState<SnackbarHostState> = mutableStateOf(SnackbarHostState()),
-    val dictionaryWordMutableList: MutableList<DictionaryWord> = mutableListOf(),
-    val dreamFilteredDictionaryWords: List<DictionaryWord> = mutableListOf(),
-    val unlockedWords: MutableList<String> = mutableListOf(),
+    val dictionaryWords: ImmutableList<DictionaryWord> = persistentListOf(),
+    val dreamFilteredDictionaryWords: ImmutableList<DictionaryWord> = persistentListOf(),
+    val unlockedWords: ImmutableList<String> = persistentListOf(),
     val bottomSheetState: Boolean = false,
     val clickedWord: DictionaryWord = DictionaryWord("", "", false, 0),
     val isClickedWordUnlocked: Boolean = false,
@@ -524,6 +544,7 @@ data class AddEditDreamState(
     val isAdImage: Boolean = false
 )
 
+@Stable
 data class AIState(
     val response: String = "",
     val isLoading: Boolean = false,
@@ -532,6 +553,7 @@ data class AIState(
     val question: String = ""
 )
 
+@Stable
 data class DreamInfo(
     val dreamId: String?,
     val dreamUID: String?,
