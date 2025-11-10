@@ -61,7 +61,6 @@ fun SharedTransitionScope.UniversalAIPage(
     onAddEditEvent: (AddEditDreamEvent) -> Unit,
     snackBarState: () -> Unit,
     onImageClick: (String) -> Unit,
-    infiniteTransition: InfiniteTransition
 ) {
     val aiContent = contentType.getState(addEditDreamState)
     val lastClickTime = remember { mutableLongStateOf(0L) }
@@ -73,7 +72,6 @@ fun SharedTransitionScope.UniversalAIPage(
                 textFieldState = textFieldState,
                 onAddEditEvent = onAddEditEvent,
                 snackBarState = snackBarState,
-                infiniteTransition = infiniteTransition,
             )
         }
 
@@ -83,7 +81,6 @@ fun SharedTransitionScope.UniversalAIPage(
                 textFieldState = textFieldState,
                 onAddEditEvent = onAddEditEvent,
                 snackBarState = snackBarState,
-                infiniteTransition = infiniteTransition,
                 animatedVisibilityScope = animatedVisibilityScope,
                 onImageClick = singleClick(
                     lastClickTimeState = lastClickTime,
@@ -101,8 +98,7 @@ fun SharedTransitionScope.UniversalAIPage(
                 contentType = contentType,
                 textFieldState = textFieldState,
                 onAddEditEvent = onAddEditEvent,
-                snackBarState = snackBarState,
-                infiniteTransition = infiniteTransition
+                snackBarState = snackBarState
             )
         }
     }
@@ -116,7 +112,6 @@ fun StandardAIPageLayout(
     textFieldState: TextFieldState,
     onAddEditEvent: (AddEditDreamEvent) -> Unit,
     snackBarState: () -> Unit,
-    infiniteTransition: InfiniteTransition
 ) {
 
     if (aiContent.isLoading) {
@@ -128,9 +123,7 @@ fun StandardAIPageLayout(
                 .clip(RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center
         ) {
-            ArcRotationAnimation(
-                infiniteTransition = infiniteTransition,
-            )
+            ArcRotationAnimation()
         }
     }
     if (aiContent.response.isNotEmpty() && !aiContent.isLoading) {
@@ -189,7 +182,6 @@ fun SharedTransitionScope.AIPainterPage(
     textFieldState: TextFieldState,
     onAddEditEvent: (AddEditDreamEvent) -> Unit,
     snackBarState: () -> Unit,
-    infiniteTransition: InfiniteTransition,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onImageClick: () -> Unit
 ) {
@@ -211,9 +203,7 @@ fun SharedTransitionScope.AIPainterPage(
                 .clip(RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center
         ) {
-            ArcRotationAnimation(
-                infiniteTransition = infiniteTransition,
-            )
+            ArcRotationAnimation()
         }
     }
 
@@ -227,9 +217,7 @@ fun SharedTransitionScope.AIPainterPage(
             contentAlignment = Alignment.Center
         ) {
             if (painterState is AsyncImagePainter.State.Loading) {
-               ArcRotationAnimation(
-                   infiniteTransition = infiniteTransition,
-               )
+               ArcRotationAnimation()
             }
             AsyncImage(
                 model =  ImageRequest.Builder(cont)
@@ -286,7 +274,6 @@ fun AIQuestionPage(
     textFieldState: TextFieldState,
     onAddEditEvent: (AddEditDreamEvent) -> Unit,
     snackBarState: () -> Unit,
-    infiniteTransition: InfiniteTransition,
 ) {
     val questionState = addEditDreamState.aiStates[AIType.QUESTION_ANSWER]!!
 
@@ -300,9 +287,7 @@ fun AIQuestionPage(
                 .clip(RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center
         ) {
-            ArcRotationAnimation(
-                infiniteTransition = infiniteTransition,
-            )
+            ArcRotationAnimation()
         }
     }
 

@@ -8,8 +8,8 @@ import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.storage.storage
 import org.ballistic.dreamjournalai.shared.core.data.DictionaryRepositoryImpl
 import org.ballistic.dreamjournalai.shared.core.domain.DictionaryRepository
-import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DreamAIService
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DefaultDreamAIService
+import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DreamAIService
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamViewModel
 import org.ballistic.dreamjournalai.shared.dream_authentication.data.repository.AuthRepositoryImpl
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
@@ -41,7 +41,6 @@ import org.ballistic.dreamjournalai.shared.dream_tools.presentation.dream_tools_
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.viewmodel.InterpretDreamsViewModel
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.random_dream_screen.RandomDreamToolScreenViewModel
 import org.koin.core.module.Module
-import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
@@ -82,7 +81,16 @@ val billingModule = module {
 }
 
 val viewModelModule = module {
-    viewModelOf(::AddEditDreamViewModel)
+    viewModel {
+        AddEditDreamViewModel(
+            savedStateHandle = get(),
+            dreamUseCases = get(),
+            authRepository = get(),
+            dictionaryRepository = get(),
+            vibratorUtil = get(),
+            aiService = get()
+        )
+    }
     viewModelOf(::DreamFavoriteScreenViewModel)
     viewModelOf(::DreamJournalListViewModel)
     viewModelOf(::DreamNightmareScreenViewModel)

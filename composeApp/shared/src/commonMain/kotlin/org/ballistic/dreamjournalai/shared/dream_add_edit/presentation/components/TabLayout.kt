@@ -23,7 +23,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults.PrimaryIndicator
 import androidx.compose.material3.Text
@@ -38,11 +37,16 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AITool
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditPages
-import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.AIPage.AIPage
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.aipage.AIPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.DreamPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.InfoPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.dictionary_page.WordPage
@@ -67,7 +71,7 @@ fun SharedTransitionScope.TabLayout(
 ) {
     val pages = AddEditPages.entries.map { it }
     val pagerState = rememberPagerState(pageCount = { pages.size })
-    val pages2 = AITool.entries.map { it.title }
+    val pages2 = AITool.entries.map { it.title }.toImmutableList()
     val pagerState2 = rememberPagerState(pageCount = { pages2.size })
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -178,10 +182,14 @@ fun SharedTransitionScope.TabLayout(
                     contentTextFieldState = dreamContentState,
                     snackBarState = {
                         scope.launch {
-                            addEditDreamState.snackBarHostState.value.showSnackbar(
-                                message = "Dream is too short",
-                                actionLabel = "Dismiss",
-                                duration = SnackbarDuration.Short
+                            SnackbarController.sendEvent(
+                                SnackbarEvent(
+                                    message = "Dream is too short",
+                                    action = SnackbarAction(
+                                        name = "Dismiss",
+                                        action = {}
+                                    )
+                                )
                             )
                         }
                     },

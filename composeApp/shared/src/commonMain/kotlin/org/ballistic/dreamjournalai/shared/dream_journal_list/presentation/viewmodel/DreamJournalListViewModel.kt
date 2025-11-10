@@ -4,6 +4,9 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -175,7 +178,7 @@ class DreamJournalListViewModel(
                     }
                     .onEach { filteredDreams ->
                         _dreamJournalListState.value = _dreamJournalListState.value.copy(
-                            dreams = filteredDreams,
+                            dreams = filteredDreams.toImmutableList(),
                             orderType = orderTypeFlow.value,
                             isLoading = false,
                         )
@@ -188,7 +191,7 @@ class DreamJournalListViewModel(
 
 
 data class DreamJournalListState(
-    val dreams: List<Dream> = emptyList(),
+    val dreams: ImmutableList<Dream> = persistentListOf(),
     val bottomDeleteCancelSheetState: Boolean = false,
     val chosenDreamToDelete: Dream? = null,
     val orderType: OrderType = OrderType.Date,

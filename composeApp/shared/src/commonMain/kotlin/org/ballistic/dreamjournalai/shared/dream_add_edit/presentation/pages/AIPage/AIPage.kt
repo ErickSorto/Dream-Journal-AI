@@ -1,4 +1,4 @@
-package org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.AIPage
+package org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.aipage
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -27,7 +27,6 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,7 +34,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.SecondaryTabRow
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
@@ -60,7 +58,11 @@ import app.lexilabs.basic.ads.composable.RewardedAd
 import coil3.compose.LocalPlatformContext
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.baseline_report_24
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AIPageType
@@ -73,14 +75,8 @@ import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.AIP
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Green
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LighterYellow
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Purple
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Yellow
 import org.jetbrains.compose.resources.painterResource
 
 @OptIn(
@@ -89,7 +85,7 @@ import org.jetbrains.compose.resources.painterResource
 )
 @Composable
 fun SharedTransitionScope.AIPage(
-    pages: List<String>,
+    pages: ImmutableList<String>,
     pagerState2: PagerState,
     addEditDreamState: AddEditDreamState,
     textFieldState: TextFieldState,
@@ -101,7 +97,6 @@ fun SharedTransitionScope.AIPage(
     val dreamTokens = addEditDreamState.dreamTokens
     val flagContentBottomSheetState = remember { mutableStateOf(false) }
     val infiniteTransition = rememberInfiniteTransition(label = "")
-    val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
 
     if (flagContentBottomSheetState.value) {
@@ -127,10 +122,14 @@ fun SharedTransitionScope.AIPage(
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
                     if (dreamTokens < amount) {
                         scope.launch {
-                            addEditDreamState.snackBarHostState.value.showSnackbar(
-                                message = "Not enough dream tokens",
-                                actionLabel = "Dismiss",
-                                duration = SnackbarDuration.Short
+                            SnackbarController.sendEvent(
+                                SnackbarEvent(
+                                    message = "Not enough dream tokens",
+                                    action = SnackbarAction(
+                                        name = "Dismiss",
+                                        action = {}
+                                    )
+                                )
                             )
                         }
                     } else {
@@ -159,6 +158,7 @@ fun SharedTransitionScope.AIPage(
                 },
             )
         }
+
         AIPage.INTERPRETATION -> {
             DreamInterpretationPopUp(
                 title = "Dream Interpreter",
@@ -177,10 +177,14 @@ fun SharedTransitionScope.AIPage(
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
                     if (dreamTokens < amount) {
                         scope.launch {
-                            addEditDreamState.snackBarHostState.value.showSnackbar(
-                                message = "Not enough dream tokens",
-                                actionLabel = "Dismiss",
-                                duration = SnackbarDuration.Short
+                            SnackbarController.sendEvent(
+                                SnackbarEvent(
+                                    message = "Not enough dream tokens",
+                                    action = SnackbarAction(
+                                        name = "Dismiss",
+                                        action = {}
+                                    )
+                                )
                             )
                         }
                     } else {
@@ -200,6 +204,7 @@ fun SharedTransitionScope.AIPage(
                 },
             )
         }
+
         AIPage.ADVICE -> {
             DreamInterpretationPopUp(
                 title = "Dream Advice",
@@ -218,10 +223,14 @@ fun SharedTransitionScope.AIPage(
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
                     if (dreamTokens < amount) {
                         scope.launch {
-                            addEditDreamState.snackBarHostState.value.showSnackbar(
-                                message = "Not enough dream tokens",
-                                actionLabel = "Dismiss",
-                                duration = SnackbarDuration.Short
+                            SnackbarController.sendEvent(
+                                SnackbarEvent(
+                                    message = "Not enough dream tokens",
+                                    action = SnackbarAction(
+                                        name = "Dismiss",
+                                        action = {}
+                                    )
+                                )
                             )
                         }
                     } else {
@@ -241,6 +250,7 @@ fun SharedTransitionScope.AIPage(
                 },
             )
         }
+
         AIPage.QUESTION -> {
             QuestionAIGenerationBottomSheet(
                 addEditDreamState = addEditDreamState,
@@ -249,10 +259,14 @@ fun SharedTransitionScope.AIPage(
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
                     if (dreamTokens < amount) {
                         scope.launch {
-                            addEditDreamState.snackBarHostState.value.showSnackbar(
-                                message = "Not enough dream tokens",
-                                actionLabel = "Dismiss",
-                                duration = SnackbarDuration.Short
+                            SnackbarController.sendEvent(
+                                SnackbarEvent(
+                                    message = "Not enough dream tokens",
+                                    action = SnackbarAction(
+                                        name = "Dismiss",
+                                        action = {}
+                                    )
+                                )
                             )
                         }
                     } else {
@@ -281,6 +295,7 @@ fun SharedTransitionScope.AIPage(
                 },
             )
         }
+
         AIPage.STORY -> {
             DreamInterpretationPopUp(
                 title = "Dream Story",
@@ -289,10 +304,14 @@ fun SharedTransitionScope.AIPage(
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
                     if (dreamTokens < amount) {
                         scope.launch {
-                            addEditDreamState.snackBarHostState.value.showSnackbar(
-                                message = "Not enough dream tokens",
-                                actionLabel = "Dismiss",
-                                duration = SnackbarDuration.Short
+                            SnackbarController.sendEvent(
+                                SnackbarEvent(
+                                    message = "Not enough dream tokens",
+                                    action = SnackbarAction(
+                                        name = "Dismiss",
+                                        action = {}
+                                    )
+                                )
                             )
                         }
                     } else {
@@ -321,6 +340,7 @@ fun SharedTransitionScope.AIPage(
                 },
             )
         }
+
         AIPage.MOOD -> {
             DreamInterpretationPopUp(
                 title = "Dream Mood",
@@ -339,10 +359,14 @@ fun SharedTransitionScope.AIPage(
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
                     if (dreamTokens < amount) {
                         scope.launch {
-                            addEditDreamState.snackBarHostState.value.showSnackbar(
-                                message = "Not enough dream tokens",
-                                actionLabel = "Dismiss",
-                                duration = SnackbarDuration.Short
+                            SnackbarController.sendEvent(
+                                SnackbarEvent(
+                                    message = "Not enough dream tokens",
+                                    action = SnackbarAction(
+                                        name = "Dismiss",
+                                        action = {}
+                                    )
+                                )
                             )
                         }
                     } else {
@@ -362,6 +386,7 @@ fun SharedTransitionScope.AIPage(
                 },
             )
         }
+
         null -> {
             // Do nothing
         }
@@ -634,21 +659,23 @@ fun SharedTransitionScope.AIPage(
                     onAddEditEvent = onAddEditDreamEvent,
                     snackBarState = {
                         scope.launch {
-                            addEditDreamState.snackBarHostState.value.showSnackbar(
-                                message = "Dream is too short",
-                                actionLabel = "Dismiss",
-                                duration = SnackbarDuration.Short
+                            SnackbarController.sendEvent(
+                                SnackbarEvent(
+                                    message = "Dream is too short",
+                                    action = SnackbarAction(
+                                        name = "Dismiss",
+                                        action = {}
+                                    )
+                                )
                             )
                         }
                     },
-                    infiniteTransition = infiniteTransition,
                     animatedVisibilityScope = animatedVisibilityScope,
                     onImageClick = {
                         onImageClick(it)
                     }
                 )
             }
-
             Spacer(modifier = Modifier.weight(1f))
         }
 
@@ -696,22 +723,26 @@ fun SharedTransitionScope.AIPage(
         }
 
         AIButton(
-            text = "Generate " + AIPage.values()[pagerState2.currentPage].name.lowercase()
+            text = "Generate " + AIPage.entries[pagerState2.currentPage].name.lowercase()
                 .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
             color = AITool.entries[pagerState2.currentPage].color,
             onClick = {
                 if (textFieldState.text.length >= 20) {
                     onAddEditDreamEvent(
                         AddEditDreamEvent.SetAIPage(
-                            AIPage.values()[pagerState2.currentPage]
+                            AIPage.entries[pagerState2.currentPage]
                         )
                     )
                 } else {
                     scope.launch {
-                        addEditDreamState.snackBarHostState.value.showSnackbar(
-                            message = "Dream is too short",
-                            actionLabel = "Dismiss",
-                            duration = SnackbarDuration.Short
+                        SnackbarController.sendEvent(
+                            SnackbarEvent(
+                                message = "Dream is too short",
+                                action = SnackbarAction(
+                                    name = "Dismiss",
+                                    action = {}
+                                )
+                            )
                         )
                     }
                 }
@@ -720,6 +751,7 @@ fun SharedTransitionScope.AIPage(
         )
     }
 }
+
 
 @Composable
 fun AIButton(

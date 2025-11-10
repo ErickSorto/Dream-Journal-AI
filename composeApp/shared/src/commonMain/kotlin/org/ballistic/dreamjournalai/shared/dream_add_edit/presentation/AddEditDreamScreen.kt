@@ -13,14 +13,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowRightAlt
@@ -31,32 +27,29 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import co.touchlab.kermit.Logger
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.save_dream
 import kotlinx.coroutines.flow.filter
@@ -64,17 +57,17 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.ballistic.dreamjournalai.shared.core.util.BackHandler
-import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
-import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.AlertSave
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.TabLayout
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
+import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
+import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
+import org.ballistic.dreamjournalai.shared.platform.isIos
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.ballistic.dreamjournalai.shared.platform.isIos
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -92,6 +85,13 @@ fun SharedTransitionScope.AddEditDreamScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
 
+    LaunchedEffect(addEditDreamState.dialogState) {
+        if (addEditDreamState.dialogState) {
+            focusManager.clearFocus()
+            keyboardController?.hide()
+        }
+    }
+
     listOf(
         MainScreenEvent.SetBottomBarVisibilityState(false),
         MainScreenEvent.SetFloatingActionButtonState(false),
@@ -101,9 +101,11 @@ fun SharedTransitionScope.AddEditDreamScreen(
 
     val scope = rememberCoroutineScope()
 
-    BackHandler(true, onBack = {
+    BackHandler(true) {
         val isLoading = addEditDreamState.aiStates.any { it.value.isLoading }
         if (!addEditDreamState.isDreamExitOff && !addEditDreamState.dreamIsSavingLoading && !isLoading) {
+            focusManager.clearFocus()
+            keyboardController?.hide()
             if (addEditDreamState.dreamHasChanged) {
                 onAddEditDreamEvent(AddEditDreamEvent.TriggerVibration)
                 onAddEditDreamEvent(AddEditDreamEvent.ToggleDialogState(true))
@@ -114,7 +116,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
         } else {
             //TODO: Show a snackbar that the dream is saving
         }
-    })
+    }
 
     val dreamBackgroundImage = remember {
         val initialIndex = when {
@@ -151,8 +153,6 @@ fun SharedTransitionScope.AddEditDreamScreen(
     }
 
     if (addEditDreamState.dialogState) {
-        focusManager.clearFocus()
-        keyboardController?.hide()
         AlertSave(
             onDismiss = {
                 onAddEditDreamEvent(AddEditDreamEvent.TriggerVibration)
@@ -227,8 +227,8 @@ fun SharedTransitionScope.AddEditDreamScreen(
                             Box(modifier = Modifier.height(topBarHeight)) {
                                 Text(
                                     text = "Dream Journal AI",
-                                    color = White,
-                                    style = typography.titleMedium,
+                                     color = White,
+                                     style = typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.align(Alignment.Center),
                                 )
@@ -237,6 +237,8 @@ fun SharedTransitionScope.AddEditDreamScreen(
                         navigationIcon = {
                             IconButton(
                                 onClick = {
+                                    focusManager.clearFocus()
+                                    keyboardController?.hide()
                                     if (addEditDreamState.dreamHasChanged) {
                                         onAddEditDreamEvent(AddEditDreamEvent.ToggleDialogState(true))
                                     } else {
@@ -257,10 +259,11 @@ fun SharedTransitionScope.AddEditDreamScreen(
                         actions = {
                             IconButton(
                                 onClick = {
+                                    focusManager.clearFocus()
+                                    keyboardController?.hide()
                                     onMainEvent(MainScreenEvent.SetDreamRecentlySaved(true))
                                     onAddEditDreamEvent(AddEditDreamEvent.TriggerVibration)
                                     onAddEditDreamEvent(AddEditDreamEvent.SaveDream(onSaveSuccess = {
-                                        keyboardController?.hide()
                                         onMainEvent(MainScreenEvent.ShowSnackBar("Dream Saved Successfully :)") )
                                         onNavigateToDreamJournalScreen()
                                     }))
@@ -280,16 +283,6 @@ fun SharedTransitionScope.AddEditDreamScreen(
                             titleContentColor = Color.Black,
                             actionIconContentColor = Color.Black
                         ),
-                    )
-                },
-                snackbarHost = {
-                    SnackbarHost(
-                        addEditDreamState.snackBarHostState.value, modifier = Modifier
-                            .consumeWindowInsets(
-                                WindowInsets.navigationBars
-                            )
-                            .imePadding()
-                            .padding(16.dp)
                     )
                 },
                 containerColor = Color.Transparent,

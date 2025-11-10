@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.hint_description
@@ -27,7 +26,6 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.GenerateButtonsLayout
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.TransparentHintTextField
-import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.onKeyboardDismiss
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -38,8 +36,6 @@ fun DreamPage(
     animateToPage: (Int) -> Unit,
     snackBarState: () -> Unit
 ) {
-    val focusManager = LocalFocusManager.current
-
     Column(
         modifier = Modifier
             .background(color = Color.Transparent)
@@ -56,10 +52,7 @@ fun DreamPage(
                 .background(
                     LightBlack.copy(.7f)
                 )
-                .padding(16.dp)
-                .onKeyboardDismiss {
-                    focusManager.clearFocus()
-                },
+                .padding(16.dp),
             textFieldState = titleTextFieldState,
             onEvent = {
                 onAddEditDreamEvent(it)
@@ -88,10 +81,7 @@ fun DreamPage(
                     .weight(1f)
                     .background(
                         Color.Transparent
-                    )
-                    .onKeyboardDismiss {
-                        focusManager.clearFocus()
-                    },
+                    ),
                 modifier2 = Modifier.fillMaxSize(),
                 textFieldState = contentTextFieldState,
                 onEvent = {
