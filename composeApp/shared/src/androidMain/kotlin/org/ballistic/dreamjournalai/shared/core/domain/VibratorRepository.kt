@@ -9,6 +9,8 @@ import androidx.annotation.RequiresPermission
 actual interface VibratorUtil {
     @RequiresPermission(android.Manifest.permission.VIBRATE)
     actual fun triggerVibration()
+    @RequiresPermission(android.Manifest.permission.VIBRATE)
+    actual fun triggerVibrationSuccess()
     actual fun cancelVibration()
 }
 
@@ -27,6 +29,20 @@ class VibratorUtilImpl(
         } else {
             @Suppress("DEPRECATION")
             vibrator.vibrate(100L)
+        }
+    }
+
+    @RequiresPermission(android.Manifest.permission.VIBRATE)
+    override fun triggerVibrationSuccess() {
+        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator ?: return
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            vibrator.vibrate(
+                VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(longArrayOf(0, 200, 100, 300), -1)
         }
     }
 

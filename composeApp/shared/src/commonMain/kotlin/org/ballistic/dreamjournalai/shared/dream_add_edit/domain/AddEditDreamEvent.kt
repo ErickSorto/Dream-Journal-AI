@@ -24,10 +24,11 @@ sealed class AddEditDreamEvent {
     data class AdAIResponseToggle(val value: Boolean) : AddEditDreamEvent()
 
     data class ClickGenerateAIImage(
-        val content: String,
+        val style: String,
         val cost: Int
     ) : AddEditDreamEvent()
     data class AdAIImageToggle(val value: Boolean) : AddEditDreamEvent()
+    data class OnImageStyleChanged(val style: ImageStyle) : AddEditDreamEvent()
 
     data class ClickGenerateAIAdvice(
         val content: String,
@@ -90,4 +91,7 @@ sealed class AddEditDreamEvent {
     data object OnCleared : AddEditDreamEvent()
 
     data object TriggerVibration : AddEditDreamEvent()
+    data object TriggerVibrationSuccess : AddEditDreamEvent()
+    data object ResetNewImageGeneratedFlag : AddEditDreamEvent()
+    data class SetStartAnimation(val value: Boolean) : AddEditDreamEvent()
 }

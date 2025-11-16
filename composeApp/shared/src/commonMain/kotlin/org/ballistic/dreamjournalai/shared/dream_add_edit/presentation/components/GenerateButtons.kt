@@ -194,14 +194,13 @@ fun AdTokenLayout(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
         DreamTokenGenerateButton(onClick = { onDreamTokenClick(amount) }, amount = amount)
         if (isAdButtonVisible) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             WatchAdButton(onClick = { onAdClick() })
         }
     }
@@ -209,34 +208,35 @@ fun AdTokenLayout(
 
 @Composable
 fun WatchAdButton(
-    onClick: () -> Unit = {}
+    onClick: () -> Unit,
 ) {
     val lastClickTime = remember { mutableLongStateOf(0L) }
     Button(
-        onClick = singleClick(lastClickTime) {onClick()},
+        onClick = singleClick(lastClickTime) { onClick() },
         modifier = Modifier
-            .fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(containerColor = RedOrange),
+            .fillMaxWidth()
+            .height(50.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = RedOrange.copy(alpha = 0.8f)),
     ) {
-
-        Icon(
-            painter = painterResource(Res.drawable.baseline_smart_display_24),
-            contentDescription = stringResource(Res.string.watch_ad),
-            modifier = Modifier
-                .size(36.dp),
-            tint = White,
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        Text(
-            text = stringResource(Res.string.watch_ad),
-            modifier = Modifier
-                .padding(4.dp),
-            color = Color.White,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        Spacer(modifier = Modifier.size(36.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.baseline_smart_display_24),
+                contentDescription = stringResource(Res.string.watch_ad),
+                modifier = Modifier.size(24.dp),
+                tint = White,
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(
+                text = stringResource(Res.string.watch_ad),
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
@@ -245,50 +245,31 @@ fun DreamTokenGenerateButton(
     onClick: () -> Unit,
     amount: Int
 ) {
-    val amountText = if (amount == 0) "" else amount.toString()
+    val amountText = if (amount == 0) "Free" else "$amount"
     Button(
         onClick = onClick,
         modifier = Modifier
-            .fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(containerColor = SkyBlue),
+            .fillMaxWidth()
+            .height(50.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = SkyBlue.copy(alpha = 0.8f)),
     ) {
-        Image(
-            painter = painterResource(Res.drawable.dream_token),
-            contentDescription = "DreamToken",
-            modifier = Modifier
-                .size(40.dp)
-        )
-
-        Text(
-            text = amountText,
-            modifier = Modifier
-                .padding(4.dp),
-            color = Color.White,
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        Text(
-            text = if (amount == 0) "Free" else "DreamToken",
-            modifier = Modifier
-                .padding(4.dp),
-            color = Color.White,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        Icon(
-            painter = painterResource(Res.drawable.dream_token),
-            contentDescription = "DreamToken",
-            modifier = Modifier
-                .size(40.dp),
-            tint = Color.Transparent
-        )
-        Text(
-            text = amountText,
-            modifier = Modifier
-                .padding(4.dp),
-            color = Color.Transparent,
-            style = MaterialTheme.typography.titleMedium,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Image(
+                painter = painterResource(Res.drawable.dream_token),
+                contentDescription = "DreamToken",
+                modifier = Modifier.size(30.dp)
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(
+                text = "Use $amountText Dream Tokens",
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }

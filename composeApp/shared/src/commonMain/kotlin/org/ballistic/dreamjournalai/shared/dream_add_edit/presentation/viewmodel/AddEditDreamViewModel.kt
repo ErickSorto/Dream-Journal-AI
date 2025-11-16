@@ -33,6 +33,7 @@ import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AIResult
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AITextType
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DreamAIService
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
+import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.ImageStyle
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.InvalidDreamException
@@ -307,8 +308,9 @@ class AddEditDreamViewModel(
             is AddEditDreamEvent.AdStoryToggle -> _addEditDreamState.update { it.copy(isAdStory = event.value) }
             is AddEditDreamEvent.ClickGenerateFromQuestion -> { markChanged(); requestAIText(AIType.QUESTION_ANSWER, event.content, event.cost) }
             is AddEditDreamEvent.AdQuestionToggle -> _addEditDreamState.update { it.copy(isAdQuestion = event.value) }
-            is AddEditDreamEvent.ClickGenerateAIImage -> { markChanged(); requestImage(event.content, event.cost) }
+            is AddEditDreamEvent.ClickGenerateAIImage -> { markChanged(); requestImage(event.style, event.cost) }
             is AddEditDreamEvent.AdAIImageToggle -> _addEditDreamState.update { it.copy(isAdImage = event.value) }
+            is AddEditDreamEvent.OnImageStyleChanged -> _addEditDreamState.update { it.copy(imageStyle = event.style) }
             is AddEditDreamEvent.ChangeLucidity -> { markChanged(); updateDreamInfo { copy(dreamLucidity = event.lucidity) } }
             is AddEditDreamEvent.ChangeVividness -> { markChanged(); updateDreamInfo { copy(dreamVividness = event.vividness) } }
             is AddEditDreamEvent.ChangeMood -> { markChanged(); updateDreamInfo { copy(dreamEmotion = event.mood) } }
@@ -403,6 +405,9 @@ class AddEditDreamViewModel(
             is AddEditDreamEvent.ToggleWakeTimePickerDialog -> _addEditDreamState.update { it.copy(wakeTimePickerDialogState = event.show) }
             is AddEditDreamEvent.ToggleCalendarDialog -> _addEditDreamState.update { it.copy(calendarDialogState = event.show) }
             is AddEditDreamEvent.TriggerVibration -> viewModelScope.launch { vibratorUtil.triggerVibration() }
+            is AddEditDreamEvent.TriggerVibrationSuccess -> viewModelScope.launch { vibratorUtil.triggerVibrationSuccess() }
+            is AddEditDreamEvent.ResetNewImageGeneratedFlag -> _addEditDreamState.update { it.copy(isNewImageGenerated = false) }
+            is AddEditDreamEvent.SetStartAnimation -> _addEditDreamState.update { it.copy(startAnimation = event.value) }
         }
     }
 
@@ -472,9 +477,9 @@ class AddEditDreamViewModel(
         }
     }
 
-    private fun requestImage(content: String, cost: Int) = viewModelScope.launch {
+    private fun requestImage(style: String, cost: Int) = viewModelScope.launch {
         _addEditDreamState.update { it.copy(isDreamExitOff = true) }
-        // First generate details
+        updateAIState(AIType.IMAGE) { copy(isLoading = true) }
         updateAIState(AIType.DETAILS) { copy(isLoading = true) }
         val dreamContent = _contentTextFieldState.value.text.toString()
         val details = when (val d = aiService.generateDetails(dreamContent, cost)) {
@@ -487,11 +492,13 @@ class AddEditDreamViewModel(
             }
         }
         updateAIState(AIType.DETAILS) { copy(response = details, isLoading = false) }
-        // Then generate image
-        updateAIState(AIType.IMAGE) { copy(isLoading = true) }
-        when (val img = aiService.generateImageFromDetails(details, cost)) {
-            is AIResult.Success -> updateAIState(AIType.IMAGE) { copy(response = img.data) }
-            is AIResult.Error -> showSnack("Error getting AI image: ${'$'}{img.message}")
+
+        when (val img = aiService.generateImageFromDetails(details, cost, style)) {
+            is AIResult.Success -> {
+                updateAIState(AIType.IMAGE) { copy(response = img.data) }
+                _addEditDreamState.update { it.copy(isNewImageGenerated = true) }
+            }
+            is AIResult.Error -> showSnack("Error getting AI image: ${img.message}")
         }
         updateAIState(AIType.IMAGE) { copy(isLoading = false) }
         if (cost > 0) authRepository.consumeDreamTokens(cost)
@@ -541,7 +548,10 @@ data class AddEditDreamState(
     val isAdQuestion: Boolean = false,
     val isAdStory: Boolean = false,
     val isAdMood: Boolean = false,
-    val isAdImage: Boolean = false
+    val isAdImage: Boolean = false,
+    val imageStyle: ImageStyle = ImageStyle.VIBRANT,
+    val isNewImageGenerated: Boolean = false,
+    val startAnimation: Boolean = false
 )
 
 @Stable

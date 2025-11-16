@@ -41,7 +41,7 @@ import kotlin.uuid.Uuid
 interface DreamAIService {
     suspend fun generateText(type: AITextType, dreamContent: String, cost: Int, extra: String? = null): AIResult<String>
     suspend fun generateDetails(dreamContent: String, cost: Int): AIResult<String>
-    suspend fun generateImageFromDetails(details: String, cost: Int): AIResult<String>
+    suspend fun generateImageFromDetails(details: String, cost: Int, style: String): AIResult<String>
 }
 
 sealed class AIResult<out T> {
@@ -123,27 +123,19 @@ Respond in language: $locale""".trimIndent()
         val model = if (cost <= 1) "gpt-4.1-mini" else "gpt-4.1"
         val creativity = if (cost <= 1) .4 else 1.1
         val basePrompt = if (cost <= 1) {
-            """You are a Dream Environment Artist. In one short, third-person sentence (8–20 words), describe the heart of the dream below — the setting, mood, and any objects or figures that stand out.
+            """In one concise, third-person sentence (8-20 words), describe the dream's setting, mood, and any standout objects or figures. Focus on creating a clear, neutral visual foundation.
 
-$dreamContent
-
-Keep it gentle and visually poetic. Use soft colors, glowing light, and a calm sense of wonder. Focus on what can be seen or felt in a peaceful, beautiful way.""".trimIndent()
+$dreamContent""".trimIndent()
         } else {
-            """You are a Dream Environment Artist. In one vivid, third-person sentence (8–20 words), portray the dream below as a scene full of atmosphere, hidden meaning, and emotional symbolism.
+            """In a single, vivid third-person sentence (8–20 words), portray the dream below as a detailed scene. Describe the atmosphere, significant visual elements, and the overall mood without imposing a specific artistic style.
 
-$dreamContent
-
-Focus on recurring dream symbols — light, water, doors, skies, reflections, mirrors, or shifting landscapes — weaving them naturally into the visual. The mood should feel intentional and emotionally charged.""".trimIndent()
+$dreamContent""".trimIndent()
         }
-        val styleSuffix = if (cost <= 1) ", kept simple and peaceful with a soft, serene atmosphere." else ", vibrant and layered with symbolic meaning, where beauty meets mystery and emotion. 4k photo hyper realistic scene"
-        return when (val result = chat(model, basePrompt, maxTokens = 175, temperature = creativity)) {
-            is AIResult.Success -> AIResult.Success(result.data + " " + styleSuffix)
-            is AIResult.Error -> result
-        }
+        return chat(model, basePrompt, maxTokens = 175, temperature = creativity)
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun generateImageFromDetails(details: String, cost: Int): AIResult<String> {
+    override suspend fun generateImageFromDetails(details: String, cost: Int, style: String): AIResult<String> {
         val apiKey = OpenAIApiKeyUtil.getOpenAISecretKey()
         val primaryModel = if (cost <= 1) "gpt-image-1-mini" else "dall-e-3"
         val fallbackModel = if (cost <= 1) "dall-e-2" else "gpt-image-1" // DALL-E 3 can fall back to gpt-image-1
@@ -197,13 +189,14 @@ Focus on recurring dream symbols — light, water, doors, skies, reflections, mi
         }
 
         val prompt = details.ifBlank { "A beautiful, peaceful dream scene" }
+        val finalPrompt = "$prompt, $style"
 
         suspend fun generate(model: String): AIResult<String> {
             val normalizedModel = model.lowercase()
             return if (normalizedModel.startsWith("gpt-image-1")) {
-                generateWithKtor(normalizedModel, prompt)
+                generateWithKtor(normalizedModel, finalPrompt)
             } else {
-                generateWithSdk(normalizedModel, prompt, sdkSize)
+                generateWithSdk(normalizedModel, finalPrompt, sdkSize)
             }
         }
 
