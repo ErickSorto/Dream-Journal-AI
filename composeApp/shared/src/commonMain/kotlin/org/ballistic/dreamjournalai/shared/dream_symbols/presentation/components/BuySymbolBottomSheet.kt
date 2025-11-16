@@ -70,6 +70,7 @@ fun BuySymbolBottomSheet(
                     onDreamTokenClick = {
                         onDreamTokenClick()
                     },
+
                     amount = amount
                 )
             }

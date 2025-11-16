@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Button
@@ -118,7 +117,7 @@ fun SharedTransitionScope.AIPage(
         AIPage.IMAGE -> {
             ImageGenerationPopUp(
                 addEditDreamState = addEditDreamState,
-                onDreamTokenClick = { amount ->
+                onDreamTokenClick = { amount, style ->
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
                     if (dreamTokens < amount) {
                         scope.launch {
@@ -136,7 +135,7 @@ fun SharedTransitionScope.AIPage(
                         scope.launch {
                             onAddEditDreamEvent(
                                 AddEditDreamEvent.ClickGenerateAIImage(
-                                    content = textFieldState.text.toString(),
+                                    style = style,
                                     cost = amount
                                 )
                             )
@@ -156,6 +155,9 @@ fun SharedTransitionScope.AIPage(
                 onClickOutside = {
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
                 },
+                onImageStyleChange = {
+                    onAddEditDreamEvent(AddEditDreamEvent.OnImageStyleChanged(it))
+                }
             )
         }
 
@@ -399,7 +401,7 @@ fun SharedTransitionScope.AIPage(
             onRewardEarned = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateAIImage(
-                        content = textFieldState.text.toString(),
+                        style = addEditDreamState.imageStyle.promptAffix,
                         cost = 0
                     )
                 )
@@ -627,19 +629,20 @@ fun SharedTransitionScope.AIPage(
                 )
             }
         }
-        Column(
+        // Replace scrolling Column with a Box that fills remaining space
+        Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
                 .background(LightBlack.copy(alpha = 0.7f))
-                .weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .weight(1f)
+                .fillMaxWidth(),
         ) {
 
             HorizontalPager(
                 state = pagerState2,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.CenterHorizontally)
+                    .fillMaxSize()
+                    .align(Alignment.Center)
                     .background(
                         color = LightBlack.copy(alpha = 0.0f)
                     ),
@@ -676,7 +679,6 @@ fun SharedTransitionScope.AIPage(
                     }
                 )
             }
-            Spacer(modifier = Modifier.weight(1f))
         }
 
         Box(

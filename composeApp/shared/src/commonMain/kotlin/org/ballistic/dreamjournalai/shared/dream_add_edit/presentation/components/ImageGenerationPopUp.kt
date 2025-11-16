@@ -1,53 +1,84 @@
 package org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
+import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.ImageStyle
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
-import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
+import kotlin.math.absoluteValue
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalFoundationApi::class,
+    ExperimentalMaterial3Api::class
+)
 @Composable
 fun ImageGenerationPopUp(
     addEditDreamState: AddEditDreamState,
-    onDreamTokenClick: (amount: Int) -> Unit,
+    onDreamTokenClick: (amount: Int, style: String) -> Unit,
     onAdClick: () -> Unit,
     onClickOutside: () -> Unit,
+    onImageStyleChange: (ImageStyle) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var state by remember { mutableStateOf(true) }
-    var amount by remember { mutableIntStateOf(2) }
+    var selectedIndex by remember { mutableIntStateOf(0) }
+    val options = listOf("High Quality", "Low Quality")
+    val amount = if (selectedIndex == 0) 2 else 1
+
+    val imageStyles = ImageStyle.entries
+    val pagerState = rememberPagerState(
+        initialPage = addEditDreamState.imageStyle.ordinal,
+        pageCount = { imageStyles.size }
+    )
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    LaunchedEffect(pagerState.currentPage) {
+        onImageStyleChange(imageStyles[pagerState.currentPage])
+    }
+
+    val scrimBrush = Brush.verticalGradient(
+        colorStops = arrayOf(
+            0.6f to Color.Transparent,
+            1.0f to Color.Black.copy(alpha = .95f)
+        )
+    )
 
     ModalBottomSheet(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
         onDismissRequest = {
             onClickOutside()
         },
@@ -55,74 +86,164 @@ fun ImageGenerationPopUp(
             Column(
                 modifier = modifier
                     .fillMaxWidth()
-                    .background(Color.Transparent)
+                    .background(
+                        LightBlack
+                    )
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp)
                     .animateContentSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
                 ) {
+                    Spacer(modifier = Modifier.weight(1f))
                     Text(
                         text = "Dream Painter",
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineSmall,
                         color = White,
-                        modifier = Modifier.padding(8.dp)
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
                     DreamTokenLayout(
                         totalDreamTokens = addEditDreamState.dreamTokens
                     )
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.selectableGroup()
-                ) {
-                    RadioButton(
-                        selected = state,
-                        onClick = {
-                            state = true
-                            amount = 2
-                        },
-                        modifier = Modifier.semantics {
-                            contentDescription = "Localized Description"
-                        }
-                    )
-                    Text(
-                        text = "High Quality",
-                        color = White,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-
                     Spacer(modifier = Modifier.weight(1f))
+                }
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    RadioButton(
-                        selected = !state,
-                        onClick = {
-                            state = false
-                            amount = 1
-                        },
-                        modifier = Modifier.semantics {
-                            contentDescription = "Localized Description"
-                        }
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                ) {
+                    options.forEachIndexed { index, label ->
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = options.size
+                            ),
+                            onClick = { selectedIndex = index },
+                            selected = index == selectedIndex,
+                            label = { Text(label, style = MaterialTheme.typography.labelMedium) },
+                            colors = SegmentedButtonDefaults.colors(
+                                activeContainerColor = OriginalXmlColors.SkyBlue.copy(alpha = 0.8f),
+                                activeContentColor = White,
+                                inactiveContainerColor = Color.DarkGray.copy(alpha = 0.5f),
+                                inactiveContentColor = White.copy(alpha = 0.7f),
+                                activeBorderColor = OriginalXmlColors.SkyBlue
+                            )
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Choose Image Style",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = White.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxWidth(),
+                     contentPadding = PaddingValues(horizontal = 26.dp),
+                     pageSpacing = (-12).dp
+                ) { page ->
+                    val infiniteTransition = rememberInfiniteTransition()
+                    val scale by infiniteTransition.animateFloat(
+                        initialValue = 1f,
+                        targetValue = 1.2f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(durationMillis = 10000, easing = LinearEasing),
+                            repeatMode = RepeatMode.Reverse
+                        )
                     )
 
-                    Text(text = "Low Quality", color = White)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .graphicsLayer {
+                                val pageOffset =
+                                    ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction).absoluteValue
+
+                                val horizontalScale = lerp(
+                                    start = 0.85f,
+                                    stop = 1f,
+                                    fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                                )
+                                scaleX = horizontalScale
+                                scaleY = horizontalScale
+
+                                alpha = lerp(
+                                    start = 0.5f,
+                                    stop = 1f,
+                                    fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                                )
+                            }
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f)
+                                .border(
+                                    width = 2.dp,
+                                    color = Color.White.copy(alpha = 0.5f),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .clip(RoundedCornerShape(16.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = imageStyles[page].image,
+                                contentDescription = imageStyles[page].displayName,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .graphicsLayer {
+                                        scaleX = scale
+                                        scaleY = scale
+                                    }
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(scrimBrush)
+                            )
+                            Text(
+                                text = imageStyles[page].displayName,
+                                color = White,
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(16.dp)
+                            )
+                        }
+                    }
                 }
+                Spacer(modifier = Modifier.height(24.dp))
+
                 AdTokenLayout(
                     isAdButtonVisible = amount <= 1,
                     onAdClick = {
                         onAdClick()
                     },
                     onDreamTokenClick = {
-                        onDreamTokenClick(amount)
+                        onDreamTokenClick(amount, addEditDreamState.imageStyle.promptAffix)
                     },
                     amount = amount
                 )
+                Spacer(modifier = Modifier.height(16.dp))
             }
         },
         containerColor = LightBlack
     )
+}
+
+fun lerp(start: Float, stop: Float, fraction: Float): Float {
+    return (1 - fraction) * start + fraction * stop
 }
