@@ -131,8 +131,11 @@ kotlin {
             implementation(libs.datastorePreferences)
             implementation(libs.koalaplot.core)
             implementation(libs.ktor.client.core)
+            implementation(libs.vico.multiplatform)
+            implementation(libs.vico.multiplatform.m3)
 
             implementation("co.touchlab:kermit:2.0.8")
+            implementation("network.chaintech:cmpcharts:2.0.6")
         }
 
         commonTest {
@@ -152,10 +155,6 @@ kotlin {
 
             implementation(libs.coreSplashscreen)
             implementation(libs.kmpnotifier)
-            implementation(libs.vicoCore)
-            implementation(libs.vicoCompose)
-            implementation(libs.vicoComposeM3)
-            implementation(libs.ychartsDreamjournalai)
 
 
             implementation(libs.ktor.client.okhttp)

@@ -58,7 +58,7 @@ parceler = "1.1.13"
 coil = "2.7.0"
 landscapist = "2.6.1"
 billingClient = "8.0.0"
-vico = "2.0.0-alpha.19"
+vico = "2.3.6"
 ycharts = "2.1.0"
 serialization = "1.9.0"
 jetbrainsKotlinMultiplatform = "2.2.21"
@@ -182,9 +182,8 @@ landscapistTransformation = { module = "com.github.skydoves:landscapist-transfor
 billingClient = { module = "com.android.billingclient:billing", version.ref = "billingClient" }
 
 # Chart Libraries
-vicoCompose = { module = "com.patrykandpatrick.vico:compose", version.ref = "vico" }
-vicoComposeM3 = { module = "com.patrykandpatrick.vico:compose-m3", version.ref = "vico" }
-vicoCore = { module = "com.patrykandpatrick.vico:core", version.ref = "vico" }
+vico-multiplatform = { group = "com.patrykandpatrick.vico", name = "multiplatform", version.ref = "vico" }
+vico-multiplatform-m3 = { group = "com.patrykandpatrick.vico", name = "multiplatform-m3", version.ref = "vico" }
 ychartsDreamjournalai = { module = "co.yml:ycharts", version.ref = "ycharts" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlinStdlib" }
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlinTest" }
