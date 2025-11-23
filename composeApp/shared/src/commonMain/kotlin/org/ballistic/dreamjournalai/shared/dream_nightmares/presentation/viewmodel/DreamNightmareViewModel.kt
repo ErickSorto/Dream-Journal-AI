@@ -10,13 +10,15 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.dream_nightmares.domain.NightmareEvent
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.util.OrderType
 
 class DreamNightmareScreenViewModel(
-    private val dreamUseCases: DreamUseCases
+    private val dreamUseCases: DreamUseCases,
+    private val vibratorUtil: VibratorUtil
 ) : ViewModel() {
 
     private val _dreamNightmareScreenState = MutableStateFlow(DreamNightmareScreenState())
@@ -60,6 +62,9 @@ class DreamNightmareScreenViewModel(
                         bottomDeleteCancelSheetState = event.bottomDeleteCancelSheetState
                     )
                 }
+            }
+            is NightmareEvent.TriggerVibration -> {
+                vibratorUtil.triggerVibration()
             }
         }
     }

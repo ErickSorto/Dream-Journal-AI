@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.DictionaryRepository
+import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.DreamUseCases
@@ -28,6 +29,7 @@ class DreamStatisticScreenViewModel(
     private val dreamUseCases: DreamUseCases,
     private val dictionaryRepository: DictionaryRepository,
     private val authRepository: AuthRepository,
+    private val vibratorUtil: VibratorUtil
 ) : ViewModel() {
 
     private val _dreamStatisticScreen = MutableStateFlow(DreamStatisticScreenState())
@@ -73,6 +75,9 @@ class DreamStatisticScreenViewModel(
                 viewModelScope.launch {
                     collectDreamTokens()
                 }
+            }
+            is StatisticEvent.TriggerVibration -> {
+                vibratorUtil.triggerVibration()
             }
         }
     }

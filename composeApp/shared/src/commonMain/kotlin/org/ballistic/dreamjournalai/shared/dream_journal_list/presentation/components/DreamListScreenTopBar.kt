@@ -41,17 +41,14 @@ import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigati
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.TransparentHintTextField
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.DreamListEvent
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.viewmodel.DreamJournalListState
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DreamListScreenTopBar(
     dreamJournalListState: DreamJournalListState,
-    mainScreenViewModelState: MainScreenViewModelState,
     searchTextFieldState: TextFieldState,
-    onDreamListEvent: (DreamListEvent) -> Unit = {},
-    onOpenDrawer: () -> Unit = {}
+    onDreamListEvent: (DreamListEvent) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -64,7 +61,7 @@ fun DreamListScreenTopBar(
             ) {
                 if (!dreamJournalListState.isSearching) {
                     Text(
-                        text = "Dream Journal AI",
+                        text = "Dream Journal",
                         color = White,
                         modifier = Modifier
                             .align(Alignment.Center)

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Dream Journal AI</string>
+    <string name="app_name">DreamNorth</string>
     <string name="hint_title">Enter title..</string>
     <string name="hint_description">Type dream..</string>
     <string name="web_client_id">433518106186-fas918qt78ffo3t0rl2eg86ta05sic89.apps.googleusercontent.com</string>

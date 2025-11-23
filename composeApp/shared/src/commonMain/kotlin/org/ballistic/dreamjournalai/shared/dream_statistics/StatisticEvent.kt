@@ -5,4 +5,5 @@ sealed class StatisticEvent {
     data object LoadDictionary : StatisticEvent()
     data object LoadStatistics : StatisticEvent()
     data object GetDreamTokens : StatisticEvent()
+    data object TriggerVibration : StatisticEvent()
 }

@@ -226,7 +226,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
                         title = {
                             Box(modifier = Modifier.height(topBarHeight)) {
                                 Text(
-                                    text = "Dream Journal AI",
+                                    text = "DreamNorth",
                                      color = White,
                                      style = typography.titleMedium,
                                     fontWeight = FontWeight.Bold,

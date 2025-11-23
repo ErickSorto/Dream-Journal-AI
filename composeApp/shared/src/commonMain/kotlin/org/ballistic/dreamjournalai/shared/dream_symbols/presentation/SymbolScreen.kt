@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
@@ -42,7 +41,6 @@ import coil3.compose.LocalPlatformContext
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.shared.dream_symbols.domain.SymbolEvent
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components.BuySymbolBottomSheet
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components.DictionaryWordDrawer
@@ -55,7 +53,6 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 @Composable
 fun SymbolScreen(
     symbolScreenState: SymbolScreenState,
-    mainScreenViewModelState: MainScreenViewModelState,
     bottomPaddingValue: Dp,
     searchTextFieldState: TextFieldState,
     onEvent: (SymbolEvent) -> Unit = {},
@@ -82,11 +79,9 @@ fun SymbolScreen(
         },
         topBar = {
             SymbolScreenTopBar(
-                mainScreenViewModelState = mainScreenViewModelState,
                 symbolScreenState = symbolScreenState,
                 searchedTextFieldState = searchTextFieldState,
-                onDictionaryEvent = onEvent,
-                onOpenDrawer = { onMainEvent(MainScreenEvent.ToggleDrawerState(DrawerValue.Open)) }
+                onDictionaryEvent = onEvent
             )
         },
         containerColor = Color.Transparent,

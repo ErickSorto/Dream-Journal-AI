@@ -37,18 +37,15 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.TransparentHintTextField
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.shared.dream_symbols.domain.SymbolEvent
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.SymbolScreenState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SymbolScreenTopBar(
-    mainScreenViewModelState: MainScreenViewModelState,
     symbolScreenState: SymbolScreenState,
     searchedTextFieldState: TextFieldState,
-    onDictionaryEvent: (SymbolEvent) -> Unit = {},
-    onOpenDrawer: () -> Unit = {}
+    onDictionaryEvent: (SymbolEvent) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     CenterAlignedTopAppBar(
@@ -105,6 +102,7 @@ fun SymbolScreenTopBar(
         },
         navigationIcon = {
             IconButton(onClick = {
+                onDictionaryEvent(SymbolEvent.TriggerVibration)
                 scope.launch {
                     Logger.d("TopBar") { "Symbols: Menu icon clicked -> request open drawer" }
                     DrawerController.send(DrawerCommand.Open)
@@ -121,6 +119,7 @@ fun SymbolScreenTopBar(
             if (!symbolScreenState.isSearching) {
                 IconButton(
                     onClick = {
+                        onDictionaryEvent(SymbolEvent.TriggerVibration)
                         onDictionaryEvent(SymbolEvent.ListenForSearchChange)
                         onDictionaryEvent(SymbolEvent.SetSearchingState(true))
                     },
@@ -135,6 +134,7 @@ fun SymbolScreenTopBar(
             } else {
                 IconButton(
                     onClick = {
+                        onDictionaryEvent(SymbolEvent.TriggerVibration)
                         onDictionaryEvent(SymbolEvent.SetSearchingState(false))
                     },
                     content = {

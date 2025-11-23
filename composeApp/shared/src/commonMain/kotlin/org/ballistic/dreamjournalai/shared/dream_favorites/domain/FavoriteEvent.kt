@@ -8,4 +8,5 @@ sealed class FavoriteEvent {
     data class DreamToDelete(val dream: Dream) : FavoriteEvent()
     data class ToggleBottomDeleteCancelSheetState(val bottomDeleteCancelSheetState: Boolean) : FavoriteEvent()
     data object RestoreDream : FavoriteEvent()
+    data object TriggerVibration : FavoriteEvent()
 }

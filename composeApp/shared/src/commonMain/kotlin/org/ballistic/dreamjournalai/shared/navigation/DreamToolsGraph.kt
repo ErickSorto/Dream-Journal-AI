@@ -14,7 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
+import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.ToolsEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.dream_tools_screen.DreamToolsScreen
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.InterpretDreamsDetailScreen
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.MassInterpretDreamToolScreen
@@ -27,12 +27,12 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun DreamToolsGraph(
-    navController: NavHostController = rememberNavController(),
-    mainScreenViewModelState: MainScreenViewModelState,
     bottomPaddingValue: Dp,
     onNavigate: (dreamID: String?, backgroundID: Int) -> Unit,
-    onMainEvent: (MainScreenEvent) -> Unit
+    onMainEvent: (MainScreenEvent) -> Unit,
+    onToolsEvent: (ToolsEvent) -> Unit
 ) {
+    val navController = rememberNavController()
     SharedTransitionLayout {
         NavHost(
             navController = navController,
@@ -44,11 +44,11 @@ fun DreamToolsGraph(
         ) {
             composable<Route.Tools> {
                 DreamToolsScreen(
-                    mainScreenViewModelState = mainScreenViewModelState,
                     animatedVisibilityScope = this,
                     onNavigate = { route ->
                         navController.navigate(route)
                     },
+                    onEvent = onToolsEvent
                 )
             }
             composable<ToolRoute.RandomDreamPicker> {

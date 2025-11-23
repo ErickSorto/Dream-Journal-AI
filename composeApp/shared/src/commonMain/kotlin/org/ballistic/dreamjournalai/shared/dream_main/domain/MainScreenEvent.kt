@@ -2,6 +2,8 @@ package org.ballistic.dreamjournalai.shared.dream_main.domain
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.DrawerValue
+import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
+import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.util.OrderType
 
 sealed class MainScreenEvent {
     data class SetBottomBarVisibilityState(val state: Boolean) : MainScreenEvent()
@@ -20,4 +22,5 @@ sealed class MainScreenEvent {
     data object GetAuthState : MainScreenEvent()
     data object TriggerVibration : MainScreenEvent()
     data object OpenStoreLink : MainScreenEvent()
+    data class GetAllDreamsForExport(val orderType: OrderType, val onDreamsExported: (List<Dream>) -> Unit) : MainScreenEvent()
 }

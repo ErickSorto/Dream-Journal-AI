@@ -161,7 +161,6 @@ kotlin {
             implementation(libs.ktor.client.android)
             implementation(libs.ktor.serialization.kotlinx.json)
 
-            implementation("io.coil-kt.coil3:coil-network-ktor2:3.3.0")
             implementation("io.coil-kt.coil3:coil-network-ktor3:3.3.0")
 
 
@@ -204,8 +203,8 @@ android {
         applicationId = "org.ballistic.dreamjournalai"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 71
-        versionName = "1.2.8"
+        versionCode = 74
+        versionName = "1.2.9"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -218,8 +217,8 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -239,5 +238,11 @@ android {
     buildFeatures.compose = true
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.compose.toString()
+    }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }

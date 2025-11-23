@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,8 +16,6 @@ import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.dream_token
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ArcRotationAnimation
-import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.shared.dream_statistics.StatisticEvent
 import org.ballistic.dreamjournalai.shared.dream_statistics.presentation.components.AiStatistics
 import org.ballistic.dreamjournalai.shared.dream_statistics.presentation.components.DreamChartBarChart
@@ -31,10 +28,8 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun DreamStatisticScreen(
     dreamStatisticScreenState: DreamStatisticScreenState,
-    mainScreenViewModelState: MainScreenViewModelState,
     bottomPaddingValue: Dp,
-    onEvent: (StatisticEvent) -> Unit,
-    onMainEvent: (MainScreenEvent) -> Unit = {}
+    onEvent: (StatisticEvent) -> Unit
 ) {
     LaunchedEffect(key1 = Unit) {
         onEvent(StatisticEvent.LoadDreams)
@@ -44,8 +39,7 @@ fun DreamStatisticScreen(
     Scaffold(
         topBar = {
             DreamStatisticScreenTopBar(
-                mainScreenViewModelState = mainScreenViewModelState,
-                onOpenDrawer = { onMainEvent(MainScreenEvent.ToggleDrawerState(DrawerValue.Open)) }
+                onEvent = onEvent
             )
         },
         containerColor = Color.Transparent,

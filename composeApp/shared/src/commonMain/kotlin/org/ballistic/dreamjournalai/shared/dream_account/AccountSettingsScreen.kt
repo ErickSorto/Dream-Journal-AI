@@ -84,38 +84,16 @@ fun AccountSettingsScreen(
         prevLoggedInAndVerified = loggedInAndVerified
     }
 
-    // Local SnackbarHostState owned by the composable
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-    // Observe global snackbar events and show them here
-    ObserveAsEvents(
-        flow = SnackbarController.events,
-        key1 = snackbarHostState
-    ) { event ->
-        // show snackbar on UI scope
-        scope.launch {
-            snackbarHostState.currentSnackbarData?.dismiss()
-            val result = snackbarHostState.showSnackbar(
-                message = event.message
-            )
-            if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
-                event.action?.action?.invoke()
-            }
-        }
-    }
-
     Scaffold(
         topBar = {
             DreamAccountSettingsScreenTopBar(
             )
         },
         snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
         },
         containerColor = Color.Transparent,
         modifier = Modifier
             .navigationBarsPadding()
-            .padding(bottom = 64.dp)
     ) {
         if (loginViewModelState.isEmailVerified &&
             loginViewModelState.isLoggedIn &&
@@ -182,7 +160,7 @@ fun AccountSettingsScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(start = 16.dp, end = 16.dp, top = 32.dp, bottom = 16.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         MyGoogleSignInButton(
@@ -235,7 +213,3 @@ fun AccountSettingsScreen(
         }
     }
 }
-
-
-// `MyGoogleSignInButton` is implemented per-platform in androidMain/iosMain (see `GoogleSignInCompose.*`).
-// Keep the SignInGoogleButton UI helper here — platform actuals call it.

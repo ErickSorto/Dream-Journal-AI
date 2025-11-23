@@ -82,6 +82,7 @@ fun DreamFavoriteScreen(
     Scaffold(
         topBar = {
             DreamFavoriteScreenTopBar(
+                onEvent = onEvent
             )
         },
         containerColor = Color.Transparent
@@ -152,7 +153,7 @@ fun DreamFavoriteScreen(
             // 2) For each date group, display a sticky header + items
             sortedGroupedDreams.forEach { (date, dreams) ->
                 stickyHeader {
-                    DateHeader(dateString = formatCustomDate(date))
+                    DateHeader(dateString = formatCustomDate(date), paddingStart = 20)
                 }
 
                 items(dreams) { (_, dream) ->
@@ -161,11 +162,13 @@ fun DreamFavoriteScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 10.dp)
-                            .padding(horizontal = 12.dp),
+                            .padding(horizontal = 20.dp),
                         onClick = {
+                            onEvent(FavoriteEvent.TriggerVibration)
                             onNavigateToDream(dream.id, dream.backgroundImage)
                         },
                         onDeleteClick = {
+                            onEvent(FavoriteEvent.TriggerVibration)
                             onEvent(FavoriteEvent.DreamToDelete(dream))
                             onEvent(FavoriteEvent.ToggleBottomDeleteCancelSheetState(true))
                         }

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.core.domain.DictionaryRepository
+import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.ToolsEvent
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.DreamUseCases
@@ -23,6 +24,7 @@ import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.
 class DreamToolsScreenViewModel(
     private val dreamUseCases: DreamUseCases,
     private val dictionaryRepository: DictionaryRepository,
+    private val vibratorUtil: VibratorUtil
 ) : ViewModel() {
 
     private val _dreamToolsScreen = MutableStateFlow(DreamToolsScreenState())
@@ -70,6 +72,9 @@ class DreamToolsScreenViewModel(
                     }
                 }
             }
+            is ToolsEvent.TriggerVibration -> {
+                vibratorUtil.triggerVibration()
+            }
         }
     }
 
@@ -114,7 +119,7 @@ class DreamToolsScreenViewModel(
                 )
                 onEvent(ToolsEvent.LoadStatistics)
             }
-            .catch { exception ->
+            .catch { _ ->
                 // Handle the exception
             }
             .launchIn(viewModelScope)

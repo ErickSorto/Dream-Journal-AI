@@ -21,14 +21,15 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
+import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
+import org.ballistic.dreamjournalai.shared.dream_nightmares.domain.NightmareEvent
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
-import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DreamNightmareScreenTopBar(
+    onEvent: (NightmareEvent) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
 
@@ -50,8 +51,9 @@ fun DreamNightmareScreenTopBar(
         },
         navigationIcon = {
             IconButton(onClick = {
+                onEvent(NightmareEvent.TriggerVibration)
                 scope.launch {
-                    Logger.d("TopBar") { "Nightmares: Menu icon clicked -> request open drawer" }
+                    Logger.d("TopBar") { "Nightmare: Menu icon clicked -> request open drawer" }
                     DrawerController.send(DrawerCommand.Open)
                 }
             }) {

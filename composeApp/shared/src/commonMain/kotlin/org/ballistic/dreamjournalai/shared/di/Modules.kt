@@ -100,7 +100,14 @@ val viewModelModule = module {
     viewModelOf(::RandomDreamToolScreenViewModel)
     viewModelOf(::DreamToolsScreenViewModel)
     viewModelOf(::InterpretDreamsViewModel)
-    viewModelOf(::MainScreenViewModel)
+    viewModel {
+        MainScreenViewModel(
+            repo = get(),
+            vibratorUtil = get(),
+            storeLinkOpener = get(),
+            dreamUseCases = get()
+        )
+    }
     viewModelOf(::LoginViewModel)
     viewModelOf(::SignupViewModel)
     viewModelOf(::DreamStatisticScreenViewModel)

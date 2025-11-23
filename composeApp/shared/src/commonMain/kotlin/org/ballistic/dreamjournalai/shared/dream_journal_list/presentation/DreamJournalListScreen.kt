@@ -3,14 +3,16 @@ package org.ballistic.dreamjournalai.shared.dream_journal_list.presentation
 // Animation
 // Resources
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -122,7 +124,6 @@ fun DreamJournalListScreen(
         topBar = {
             DreamListScreenTopBar(
                 dreamJournalListState = dreamJournalListState,
-                mainScreenViewModelState = mainScreenViewModelState,
                 searchTextFieldState = searchTextFieldState,
                 onDreamListEvent = onDreamListEvent,
             )
@@ -193,12 +194,17 @@ fun DreamJournalListScreen(
              }
 
              // Empty state prompt: floaty hint above FAB/bottom nav (single instance)
-             AnimatedVisibility(
-                 visible = showEmptyPrompt,
-                 enter = EnterTransition.None,
-                 exit = ExitTransition.None,
-                 modifier = Modifier.fillMaxSize()
-             ) {
+            AnimatedVisibility(
+                visible = showEmptyPrompt,
+                enter = scaleIn(
+                    animationSpec = spring(
+                        dampingRatio = 0.6f,
+                        stiffness = 40f
+                    )
+                ) + fadeIn(),
+                exit = ExitTransition.None,
+                modifier = Modifier.fillMaxSize()
+            ) {
                  // Use a Box scope so .align works correctly inside AnimatedVisibility
                  Box(modifier = Modifier.fillMaxSize()) {
                      val infiniteTransition = rememberInfiniteTransition(label = "float_prompt")
@@ -227,4 +233,4 @@ fun DreamJournalListScreen(
              }
          }
      }
- }
+}
