@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -46,12 +47,12 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,8 +64,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
 import dev.icerock.moko.permissions.DeniedAlwaysException
 import dev.icerock.moko.permissions.DeniedException
@@ -79,11 +80,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.shared.ObserveAsEvents
-import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.DrawerCommand
+import org.ballistic.dreamjournalai.shared.DrawerController
+import org.ballistic.dreamjournalai.shared.ObserveAsEvents
+import org.ballistic.dreamjournalai.shared.SnackbarAction
 import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
+import org.ballistic.dreamjournalai.shared.core.components.ExportDreamsBottomSheet
 import org.ballistic.dreamjournalai.shared.core.platform.getPlatformName
+import org.ballistic.dreamjournalai.shared.core.platform.rememberDreamExporter
+import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
+import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.util.OrderType
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_main.presentation.components.BottomNavigation
 import org.ballistic.dreamjournalai.shared.dream_main.presentation.components.DrawerGroupHeading
@@ -96,7 +103,7 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun MainScreenView(
     mainScreenViewModelState: MainScreenViewModelState,
-    onMainEvent: (MainScreenEvent) -> Unit = {},
+    onMainEvent: (MainScreenEvent) -> Unit,
     onNavigateToOnboardingScreen: () -> Unit = {},
     onDataLoaded: () -> Unit
 ) {
@@ -133,6 +140,52 @@ fun MainScreenView(
         onMainEvent(MainScreenEvent.UserInteracted)
     }
 
+    var showExportSheet by remember { mutableStateOf(false) }
+    val dreamExporter = rememberDreamExporter()
+    var dreamsToExport by remember { mutableStateOf<List<Dream>>(emptyList()) }
+
+    if (showExportSheet) {
+        LaunchedEffect(Unit) {
+            onMainEvent(MainScreenEvent.GetAllDreamsForExport(OrderType.Descending) { dreams ->
+                dreamsToExport = dreams
+            })
+        }
+        ExportDreamsBottomSheet(
+            onPdfClick = {
+                showExportSheet = false
+                dreamExporter.exportToPdf(dreamsToExport, "DreamNorth Dreams.pdf") { success ->
+                    val message = if (success) "Dream exported successfully" else "Export failed"
+                    coroutineScope.launch {
+                        SnackbarController.sendEvent(
+                            SnackbarEvent(
+                                message = message,
+                                action = SnackbarAction("Dismiss") {}
+                            )
+                        )
+                    }
+                }
+            },
+            onTxtClick = {
+                showExportSheet = false
+                val formattedDreams = formatDreams(dreamsToExport)
+                dreamExporter.exportToTxt(formattedDreams, "dreams.txt") { success ->
+                    val message = if (success) "Dream exported successfully" else "Export failed"
+                    coroutineScope.launch {
+                        SnackbarController.sendEvent(
+                            SnackbarEvent(
+                                message = message,
+                                action = SnackbarAction("Dismiss") {}
+                            )
+                        )
+                    }
+                }
+            },
+            onClickOutside = {
+                showExportSheet = false
+            }
+        )
+    }
+
     val navController = rememberNavController()
     val drawerGroups = listOf(
         DrawerGroup(
@@ -158,6 +211,7 @@ fun MainScreenView(
         DrawerGroup(
             title = "Others",
             items = listOf(
+                DrawerNavigation.ExportDreams,
                 DrawerNavigation.RateMyApp,
                 //  Screens.AboutMe
             )
@@ -165,7 +219,7 @@ fun MainScreenView(
     )
     val selectedItem = remember { mutableStateOf(drawerGroups.first().items.first()) }
 
-    DisposableEffect(navController) {
+    androidx.compose.runtime.DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
             val route = destination.route ?: return@OnDestinationChangedListener
             val matchedScreen = drawerGroups.flatMap { it.items }.firstOrNull {
@@ -251,24 +305,33 @@ fun MainScreenView(
                                     label = { Text(item.title ?: "") },
                                     selected = item == selectedItem.value,
                                     onClick = {
-                                         onMainEvent(MainScreenEvent.TriggerVibration)
-                                         coroutineScope.launch {
-                                             drawerState.close()
-                                         }
-                                     selectedItem.value = item
+                                        onMainEvent(MainScreenEvent.TriggerVibration)
+                                        coroutineScope.launch {
+                                            drawerState.close()
+                                        }
 
-                                        if (item == DrawerNavigation.RateMyApp) {
-                                             onMainEvent(MainScreenEvent.OpenStoreLink)
-                                         } else {
-                                             navController.navigate(item.route) {
-                                                 popUpTo(Route.DreamJournalScreen) {
-                                                     saveState = true
-                                                 }
-                                                 launchSingleTop = true
-                                                 restoreState = true
-                                             }
-                                         }
-                                     },
+                                        if (item != DrawerNavigation.ExportDreams) {
+                                            selectedItem.value = item
+                                        }
+
+                                        when (item) {
+                                            DrawerNavigation.RateMyApp -> {
+                                                onMainEvent(MainScreenEvent.OpenStoreLink)
+                                            }
+                                            DrawerNavigation.ExportDreams -> {
+                                                showExportSheet = true
+                                            }
+                                            else -> {
+                                                navController.navigate(item.route) {
+                                                    popUpTo(Route.DreamJournalScreen) {
+                                                        saveState = true
+                                                    }
+                                                    launchSingleTop = true
+                                                    restoreState = true
+                                                }
+                                            }
+                                        }
+                                    },
                                     modifier = Modifier
                                         .padding(NavigationDrawerItemDefaults.ItemPadding)
                                         .fillMaxWidth()
@@ -295,6 +358,7 @@ fun MainScreenView(
             // Observe events from the centralized controller and show them on the local host.
             ObserveAsEvents(SnackbarController.events) { event ->
                 coroutineScope.launch {
+                    Logger.d("MainScreen") { "SnackbarEvent 1: $event" }
                     snackbarHostState.currentSnackbarData?.dismiss()
                     val result = snackbarHostState.showSnackbar(
                         message = event.message,
@@ -309,7 +373,10 @@ fun MainScreenView(
 
             Scaffold(
                 snackbarHost = {
-                    SnackbarHost(snackbarHostState)
+                    SnackbarHost(
+                        snackbarHostState,
+                        modifier = Modifier.imePadding()
+                    )
                 },
                 bottomBar = {
                     AnimatedVisibility(
@@ -426,18 +493,30 @@ fun MainScreenView(
                 onMainEvent(MainScreenEvent.UpdatePaddingValues(innerPadding))
 
 
-                    ScreenGraph(
-                        navControllerProvider = { navController },
-                        mainScreenViewModelState = mainScreenViewModelState,
-                        bottomPaddingValue = mainScreenViewModelState.paddingValues.calculateBottomPadding(),
-                        onMainEvent = { onMainEvent(it) },
-                        onNavigateToOnboardingScreen = { onNavigateToOnboardingScreen() }
-                    )
+                ScreenGraph(
+                    navControllerProvider = { navController },
+                    mainScreenViewModelState = mainScreenViewModelState,
+                    bottomPaddingValue = mainScreenViewModelState.paddingValues.calculateBottomPadding(),
+                    onMainEvent = { onMainEvent(it) },
+                    onNavigateToOnboardingScreen = { onNavigateToOnboardingScreen() }
+                )
 
-             }
-         }
-     )
+            }
+        }
+    )
 }
+
+fun formatDreams(dreams: List<Dream>): String {
+    val builder = StringBuilder()
+    dreams.forEach { dream ->
+        builder.append("Title: ${dream.title}\n")
+        builder.append("Date: ${dream.date}\n\n")
+        builder.append(dream.content)
+        builder.append("\n\n--------------------------------------------------\n\n")
+    }
+    return builder.toString()
+}
+
 
 data class DrawerGroup(
     val title: String,

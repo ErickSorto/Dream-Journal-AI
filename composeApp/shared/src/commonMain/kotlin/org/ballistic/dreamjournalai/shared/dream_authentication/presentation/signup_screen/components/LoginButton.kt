@@ -6,15 +6,17 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.LoginViewModelState
@@ -35,7 +37,9 @@ fun LoginButton(
     if (!animate) {
         Button(
             modifier = modifier
-                .fillMaxWidth(.5f),
+                .fillMaxWidth(.5f)
+                .height(40.dp),
+            shape = RoundedCornerShape(12.dp),
             onClick = {
                 keyboard?.hide()
                 onLoginEvent(
@@ -47,6 +51,10 @@ fun LoginButton(
             },
             colors = ButtonDefaults.buttonColors(
                 containerColor = LighterYellow
+            ),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 4.dp,
+                pressedElevation = 2.dp
             )
         ) {
             Text(
@@ -63,7 +71,9 @@ fun LoginButton(
         ) {
             Button(
                 modifier = modifier
-                    .fillMaxWidth(.5f),
+                    .fillMaxWidth(.5f)
+                    .height(40.dp),
+                shape = RoundedCornerShape(12.dp),
                 onClick = {
                     keyboard?.hide()
                     onLoginEvent(
@@ -75,6 +85,10 @@ fun LoginButton(
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = LighterYellow
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 4.dp,
+                    pressedElevation = 2.dp
                 )
             ) {
                 Text(

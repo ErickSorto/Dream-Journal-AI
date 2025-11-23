@@ -12,6 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -22,6 +23,7 @@ import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.core.util.StoreLinkOpener
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
+import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.jetbrains.compose.resources.DrawableResource
 import kotlin.time.ExperimentalTime
@@ -29,7 +31,8 @@ import kotlin.time.ExperimentalTime
 class MainScreenViewModel(
     private val repo: AuthRepository,
     private val vibratorUtil: VibratorUtil,
-    private val storeLinkOpener: StoreLinkOpener
+    private val storeLinkOpener: StoreLinkOpener,
+    val dreamUseCases: DreamUseCases
 ) : ViewModel() {
     private val _mainScreenViewModelState = MutableStateFlow(MainScreenViewModelState())
     val mainScreenViewModelState: StateFlow<MainScreenViewModelState> = _mainScreenViewModelState.asStateFlow()
@@ -69,6 +72,11 @@ class MainScreenViewModel(
 
     fun onEvent (event: MainScreenEvent) = viewModelScope.launch {
          when (event) {
+             is MainScreenEvent.GetAllDreamsForExport -> {
+                 dreamUseCases.getDreams(event.orderType).collectLatest { dreams ->
+                     event.onDreamsExported(dreams)
+                 }
+             }
             is MainScreenEvent.SetBottomBarVisibilityState -> {
                 viewModelScope.launch {
                     _mainScreenViewModelState.value = _mainScreenViewModelState.value.copy(

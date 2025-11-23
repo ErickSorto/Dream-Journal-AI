@@ -5,4 +5,5 @@ sealed class ToolsEvent {
         data object LoadStatistics : ToolsEvent()
         data object LoadDictionary : ToolsEvent()
         data object ChooseRandomDream : ToolsEvent()
+        data object TriggerVibration : ToolsEvent()
 }

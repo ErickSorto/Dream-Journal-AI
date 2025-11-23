@@ -18,7 +18,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.erick_image
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
@@ -74,13 +73,13 @@ fun AboutMeScreen(
                             onMainScreenEvent(MainScreenEvent.OpenStoreLink)
                         }
                 ) {
-                    Image(
-                        painter = painterResource(Res.drawable.erick_image),
-                        contentDescription = "Erick",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxSize()
-                    )
+//                    Image(
+//                        painter = painterResource(Res.drawable.erick_image),
+//                        contentDescription = "Erick",
+//                        contentScale = ContentScale.Crop,
+//                        modifier = Modifier
+//                            .fillMaxSize()
+//                    )
                 }
 
                 Spacer(Modifier.width(16.dp))

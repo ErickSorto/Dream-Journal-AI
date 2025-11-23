@@ -3,6 +3,7 @@ package org.ballistic.dreamjournalai.shared.firebase
 import android.content.Context
 import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.initialize
 
 actual fun initFirebaseIfRequired(context: Any?) {
@@ -13,6 +14,14 @@ actual fun initFirebaseIfRequired(context: Any?) {
     }
 
     try {
+        //check if user exists\
+        val user = Firebase.auth.currentUser
+        if (user != null) {
+            Logger.d { "[DJAI/FirebaseInit] User already exists - skipping" }
+        } else {
+            Logger.d { "[DJAI/FirebaseInit] User does not exist - initializing" }
+        }
+
         Firebase.initialize(ctx)
         Logger.d { "[DJAI/FirebaseInit] Firebase.initialize(context) called on Android" }
     } catch (e: Exception) {

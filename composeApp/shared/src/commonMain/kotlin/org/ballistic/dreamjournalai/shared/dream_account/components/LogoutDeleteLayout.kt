@@ -1,9 +1,23 @@
 package org.ballistic.dreamjournalai.shared.dream_account.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +34,7 @@ import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.sig
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 
 @Composable
 fun LogoutDeleteLayout(
@@ -42,44 +57,85 @@ fun LogoutDeleteLayout(
             .background(Color.Transparent)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
 
+            // Logout Button - Strong SkyBlue
             Button(
                 onClick = {
                     onLogoutClick()
                     onLoginEvent(LoginEvent.SignOut)
                 },
-                modifier = Modifier.fillMaxWidth(.5f),
-                colors = ButtonDefaults.buttonColors(containerColor = SkyBlue)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SkyBlue,
+                    contentColor = White
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 6.dp,
+                    pressedElevation = 2.dp
+                )
             ) {
-                Text(text = "Logout", fontSize = 15.sp, color = Color.Black)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = "Logout",
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Logout",
+                    fontSize = 16.sp
+                )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
+            // Delete Button - Strong RedOrange
             Button(
                 onClick = {
                     Logger.withTag("LogoutDelete").d { "Delete button clicked, opening confirm dialog" }
                     showDialog.value = true
                 },
-                modifier = Modifier.fillMaxWidth(.5f),
-                colors = ButtonDefaults.buttonColors(containerColor = RedOrange)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = RedOrange,
+                    contentColor = White
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 6.dp,
+                    pressedElevation = 2.dp
+                )
             ) {
-                Text(text = "Delete Account", fontSize = 15.sp, color = Color.White)
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = "Delete Account",
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Delete Account",
+                    fontSize = 16.sp
+                )
             }
 
             if (requiresPassword()) {
+                Spacer(modifier = Modifier.height(32.dp))
                 PasswordField(
                     isLoginLayout = false,
                     password = userPassword.value,
                     onValueChange = { userPassword.value = it },
                     forgotPassword = {},
                 )
-
-                Spacer(modifier = Modifier.height(20.dp))
             }
         }
 

@@ -24,10 +24,12 @@ import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
+import org.ballistic.dreamjournalai.shared.dream_favorites.domain.FavoriteEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DreamFavoriteScreenTopBar(
+    onEvent: (FavoriteEvent) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
 
@@ -49,6 +51,7 @@ fun DreamFavoriteScreenTopBar(
         },
         navigationIcon = {
             IconButton(onClick = {
+                onEvent(FavoriteEvent.TriggerVibration)
                 scope.launch {
                     Logger.d("TopBar") { "Favorites: Menu icon clicked -> request open drawer" }
                     DrawerController.send(DrawerCommand.Open)

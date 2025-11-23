@@ -331,20 +331,20 @@ async function sendVerificationEmail(userEmail: string, verificationLink: string
     } as nodemailer.TransportOptions);
 
     await transporter.sendMail({
-        from: `"Dream Journal AI" <${appEmail}>`, // Added app name for clarity
+        from: `"DreamNorth" <${appEmail}>`, // Added app name for clarity
         to: userEmail,
-        subject: "Complete Your Registration with Dream Journal AI",
-        text: `Welcome to Dream Journal AI!\n\nThanks for signing up. Please verify your email by clicking on this link:
-        ${verificationLink}\n\nIf you did not sign up for a Dream Journal AI account, you can safely
-        ignore this email.\n\nBest,\nDream Journal AI Team`,
+        subject: "Complete Your Registration with DreamNorth",
+        text: `Welcome to DreamNorth!\n\nThanks for signing up. Please verify your email by clicking on this link:
+        ${verificationLink}\n\nIf you did not sign up for a DreamNorth account, you can safely
+        ignore this email.\n\nBest,\nDreamNorth Team`,
         html: `
         <div style="font-family: Arial, sans-serif; padding: 20px;">
-            <h2>Welcome to Dream Journal AI!</h2>
+            <h2>Welcome to DreamNorth!</h2>
             <p>Thanks for signing up. Please click the button below to verify your email address and complete your registration.</p>
             <a href="${verificationLink}" style="background-color: #4CAF50; color: white;
              padding: 14px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px;">Verify Email</a>
-            <p>If you did not sign up for a Dream Journal AI account, you can safely ignore this email.</p>
-            <p>Best,<br>Dream Journal AI Team</p>
+            <p>If you did not sign up for a DreamNorth account, you can safely ignore this email.</p>
+            <p>Best,<br>DreamNorth Team</p>
             <hr>
             <p style="font-size: 0.8em;">If the button above doesn't work, copy and paste this link into your browser:
              <a href="${verificationLink}">${verificationLink}</a></p>

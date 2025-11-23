@@ -70,6 +70,7 @@ fun DreamNightmareScreen(
     Scaffold(
         topBar = {
             DreamNightmareScreenTopBar(
+                onEvent = onEvent
             )
         },
         containerColor = Color.Transparent,
@@ -135,7 +136,7 @@ fun DreamNightmareScreen(
             // 2) For each date group, show a sticky header, then items
             sortedGroupedNightmares.forEach { (date, dreams) ->
                 stickyHeader {
-                    DateHeader(dateString = formatCustomDate(date))
+                    DateHeader(dateString = formatCustomDate(date), paddingStart = 20)
                 }
                 items(dreams) { (_, dream) ->
                     DreamItem(
@@ -143,11 +144,13 @@ fun DreamNightmareScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 10.dp)
-                            .padding(horizontal = 12.dp),
+                            .padding(horizontal = 20.dp),
                         onClick = {
+                            onEvent(NightmareEvent.TriggerVibration)
                             onNavigateToDream(dream.id, dream.backgroundImage)
                         },
                         onDeleteClick = {
+                            onEvent(NightmareEvent.TriggerVibration)
                             onEvent(NightmareEvent.DreamToDelete(dream))
                             onEvent(NightmareEvent.ToggleBottomDeleteCancelSheetState(true))
                         }

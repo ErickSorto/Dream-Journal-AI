@@ -8,4 +8,5 @@ sealed class NightmareEvent {
     data class DreamToDelete(val dream: Dream) : NightmareEvent()
     data class ToggleBottomDeleteCancelSheetState(val bottomDeleteCancelSheetState: Boolean) : NightmareEvent()
     data object RestoreDream : NightmareEvent()
+    data object TriggerVibration : NightmareEvent()
 }

@@ -17,20 +17,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
+import org.ballistic.dreamjournalai.shared.dream_statistics.StatisticEvent
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
-import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DreamStatisticScreenTopBar(
-    mainScreenViewModelState: MainScreenViewModelState,
-    onOpenDrawer: () -> Unit = {}
+    onEvent: (StatisticEvent) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
 
@@ -52,6 +50,7 @@ fun DreamStatisticScreenTopBar(
         },
         navigationIcon = {
             IconButton(onClick = {
+                onEvent(StatisticEvent.TriggerVibration)
                 scope.launch {
                     Logger.d("TopBar") { "Statistics: Menu icon clicked -> request open drawer" }
                     DrawerController.send(DrawerCommand.Open)
@@ -79,6 +78,5 @@ fun DreamStatisticScreenTopBar(
             titleContentColor = Color.Black,
             actionIconContentColor = Color.Black
         ),
-        modifier = Modifier.dynamicBottomNavigationPadding()
     )
 }

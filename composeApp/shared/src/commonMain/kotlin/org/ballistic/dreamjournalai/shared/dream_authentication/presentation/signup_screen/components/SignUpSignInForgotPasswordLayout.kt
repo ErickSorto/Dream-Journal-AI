@@ -4,10 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -16,8 +19,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,8 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LighterYellow
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LighterYellow
 import org.ballistic.dreamjournalai.shared.core.ComposableData
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.SignupEvent
@@ -85,29 +86,48 @@ fun ForgotPasswordLayout(
                 mutableStateOf(true)
             }
         )
+        
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
                 authEvent(LoginEvent.SendPasswordResetEmail(loginViewModelState.forgotPasswordEmail))
             },
-            modifier = Modifier.fillMaxWidth(.5f),
+            modifier = Modifier
+                .fillMaxWidth(.5f)
+                .height(40.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = buttonColors(
                 containerColor = LighterYellow
+            ),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 4.dp,
+                pressedElevation = 2.dp
             )
         ) {
             Text(
                 text = "Reset Password",
-                fontSize = 15.sp
+                fontSize = 15.sp,
+                color = Color.Black
             )
         }
+        
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
                 authEvent(LoginEvent.ShowLoginLayout)
             },
-            modifier = Modifier.fillMaxWidth(.5f),
+            modifier = Modifier
+                .fillMaxWidth(.5f)
+                .height(40.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = buttonColors(
                 containerColor = SkyBlue
+            ),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 4.dp,
+                pressedElevation = 2.dp
             )
         ) {
             Text(
@@ -165,9 +185,13 @@ fun SignupLayout(
                 mutableStateOf(true)
             },
         )
+        
+        Spacer(modifier = Modifier.height(8.dp))
 
         Button(
-            modifier = Modifier.fillMaxWidth(.5f),
+            modifier = Modifier
+                .fillMaxWidth(.5f)
+                .height(40.dp),
             onClick = {
                 keyboard?.hide()
                 onSignupEvent(
@@ -177,9 +201,14 @@ fun SignupLayout(
                     )
                 )
             },
+            shape = RoundedCornerShape(12.dp),
             colors = buttonColors(
                 containerColor = SkyBlue
             ),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 4.dp,
+                pressedElevation = 2.dp
+            )
         ) {
             Text(
                 text = "Sign Up",
@@ -272,6 +301,8 @@ fun LoginLayout(
             enterDurationMillis = enterDuration,
             exitWithFade = preferFadeExit,
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         LoginButton(
             modifier = Modifier.fillMaxWidth(.5f),

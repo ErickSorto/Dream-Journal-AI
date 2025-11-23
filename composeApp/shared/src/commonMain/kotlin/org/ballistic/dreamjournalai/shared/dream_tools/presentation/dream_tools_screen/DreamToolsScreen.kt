@@ -5,31 +5,27 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import org.ballistic.dreamjournalai.shared.navigation.ToolRoute
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
-import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
+import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.ToolsEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolsGrid
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolsScreenTopBar
+import org.ballistic.dreamjournalai.shared.navigation.ToolRoute
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun SharedTransitionScope.DreamToolsScreen(
     animatedVisibilityScope: AnimatedVisibilityScope,
     onNavigate: (ToolRoute) -> Unit,
-    mainScreenViewModelState: MainScreenViewModelState,
-    onMainEvent: (MainScreenEvent) -> Unit = {}
+    onEvent: (ToolsEvent) -> Unit
 ) {
     Scaffold(
         topBar = {
             DreamToolsScreenTopBar(
-                mainScreenViewModelState = mainScreenViewModelState,
-                onOpenDrawer = { onMainEvent(MainScreenEvent.ToggleDrawerState(DrawerValue.Open)) }
+                onEvent = onEvent
             )
         },
         containerColor = Color.Transparent,

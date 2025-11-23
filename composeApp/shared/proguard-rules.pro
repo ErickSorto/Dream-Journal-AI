@@ -26,3 +26,7 @@
   *;
 }
 -dontobfuscate
+
+# Fix for missing class kotlinx.datetime.Instant$Companion referenced from RevenueCat
+-keep class kotlinx.datetime.** { *; }
+-dontwarn kotlinx.datetime.**

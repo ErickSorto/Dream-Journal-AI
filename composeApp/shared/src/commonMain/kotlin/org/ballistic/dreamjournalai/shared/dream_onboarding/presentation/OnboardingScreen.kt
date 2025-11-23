@@ -589,7 +589,7 @@ fun OnboardingScreen(
                 .zIndex(0f),
             contentScale = ContentScale.Crop,
             alignment = VerticalBiasAlignment(cameraBiasY.value),
-            contentDescription = "Dream Journal AI",
+            contentDescription = "DreamNorth",
         )
 
         // Compute pan progress from camera bias (-1..1 -> 0..1)
@@ -663,7 +663,7 @@ fun OnboardingScreen(
                                     modifier = Modifier.padding(16.dp)
                                 )
                                 TypewriterText(
-                                    text = if (visible.value) titleText.value else "Dream Journal AI",
+                                    text = if (visible.value) titleText.value else "DreamNorth",
                                     modifier = Modifier.padding(16.dp),
                                     style = TextStyle(
                                         color = titleColor,

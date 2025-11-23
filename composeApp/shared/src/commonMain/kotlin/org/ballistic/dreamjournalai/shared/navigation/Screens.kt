@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shop
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.ui.graphics.vector.ImageVector
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.dicetool
@@ -78,6 +79,9 @@ sealed class Route{
 
     @Serializable
     data object RateMyApp : Route()
+    
+    @Serializable
+    data object ExportDreams : Route()
 
     @Serializable
     data object AboutMeScreen : Route()
@@ -199,6 +203,7 @@ enum class DrawerNavigation(val title: String?, val icon: ImageVector, val route
     Nightmares("Nightmares", Icons.Default.ErrorOutline, Route.Nightmares),
     Symbol("Symbols", Icons.AutoMirrored.Filled.List, Route.Symbol),
     RateMyApp("Rate this App", Icons.Default.Favorite, Route.RateMyApp),
+    ExportDreams("Export Dreams", Icons.Default.Upload, Route.ExportDreams),
     DreamToolGraphScreen("Tools", Icons.Default.Build, Route.DreamToolGraphScreen),
 }
 

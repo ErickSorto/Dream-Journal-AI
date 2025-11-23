@@ -44,6 +44,7 @@ import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen
 import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.viewmodel.StoreScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.SymbolScreen
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.DictionaryScreenViewModel
+import org.ballistic.dreamjournalai.shared.dream_tools.presentation.dream_tools_screen.viewmodel.DreamToolsScreenViewModel
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -228,10 +229,11 @@ fun ScreenGraph(
              }
 
             composable<Route.DreamToolGraphScreen> {
+                val dreamToolsScreenViewModel = koinViewModel<DreamToolsScreenViewModel>()
                 DreamToolsGraph(
-                    mainScreenViewModelState = mainScreenViewModelState,
                     bottomPaddingValue = bottomPaddingValue,
                     onMainEvent = onMainEvent,
+                    onToolsEvent = { dreamToolsScreenViewModel.onEvent(it) },
                     onNavigate = { dreamID, backgroundID ->
                         currentNavController.popBackStack()
                         currentNavController.navigate(
@@ -253,12 +255,10 @@ fun ScreenGraph(
 
                 DreamStatisticScreen(
                     dreamStatisticScreenState = dreamStatisticScreenState.value,
-                    mainScreenViewModelState = mainScreenViewModelState,
                     bottomPaddingValue = bottomPaddingValue,
                     onEvent = {
                         dreamStatisticScreenViewModel.onEvent(it)
                     },
-                    onMainEvent = onMainEvent
                 )
             }
 
@@ -309,7 +309,6 @@ fun ScreenGraph(
                     .collectAsStateWithLifecycle()
                 SymbolScreen(
                     symbolScreenState = dictionaryScreenState.value,
-                    mainScreenViewModelState = mainScreenViewModelState,
                     searchTextFieldState = searchTextFieldState.value,
                     bottomPaddingValue = bottomPaddingValue,
                     onMainEvent = { onMainEvent(it) },
