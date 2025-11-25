@@ -1,6 +1,5 @@
 package org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.AIPage.AISubPages
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
@@ -31,7 +30,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
@@ -61,6 +59,7 @@ fun SharedTransitionScope.UniversalAIPage(
     onAddEditEvent: (AddEditDreamEvent) -> Unit,
     snackBarState: () -> Unit,
     onImageClick: (String) -> Unit,
+    canGenerateAI: Boolean
 ) {
     val aiContent = contentType.getState(addEditDreamState)
     val lastClickTime = remember { mutableLongStateOf(0L) }
@@ -72,6 +71,7 @@ fun SharedTransitionScope.UniversalAIPage(
                 textFieldState = textFieldState,
                 onAddEditEvent = onAddEditEvent,
                 snackBarState = snackBarState,
+                canGenerateAI = canGenerateAI
             )
         }
 
@@ -87,7 +87,8 @@ fun SharedTransitionScope.UniversalAIPage(
                     onClick = {
                         onImageClick(addEditDreamState.aiStates[AIType.IMAGE]?.response ?: "")
                     }
-                )
+                ),
+                canGenerateAI = canGenerateAI
             )
         }
 
@@ -98,7 +99,8 @@ fun SharedTransitionScope.UniversalAIPage(
                 contentType = contentType,
                 textFieldState = textFieldState,
                 onAddEditEvent = onAddEditEvent,
-                snackBarState = snackBarState
+                snackBarState = snackBarState,
+                canGenerateAI = canGenerateAI
             )
         }
     }
@@ -112,6 +114,7 @@ fun StandardAIPageLayout(
     textFieldState: TextFieldState,
     onAddEditEvent: (AddEditDreamEvent) -> Unit,
     snackBarState: () -> Unit,
+    canGenerateAI: Boolean
 ) {
     val (progress, showLoading, _) = rememberTimedProgress(
         isLoading = aiContent.isLoading,
@@ -176,13 +179,13 @@ fun StandardAIPageLayout(
             // No content and not loading, show Universal Button
             UniversalButton(
                 buttonType = contentType.buttonType,
-                textFieldState = textFieldState,
                 onAddEditEvent = onAddEditEvent,
                 snackBarState = snackBarState,
                 size = 160.dp,  // Adjusted size
                 fontSize = 24.sp,  // Adjusted font size
                 modifier = Modifier.fillMaxSize(),
-                hasText = true
+                hasText = true,
+                canGenerateAI = canGenerateAI
             )
         }
     }
@@ -197,7 +200,8 @@ fun SharedTransitionScope.AIPainterPage(
     onAddEditEvent: (AddEditDreamEvent) -> Unit,
     snackBarState: () -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onImageClick: () -> Unit
+    onImageClick: () -> Unit,
+    canGenerateAI: Boolean
 ) {
     val imageState = addEditDreamState.aiStates[AIType.IMAGE]!!
     val painter = rememberAsyncImagePainter(model = imageState.response)
@@ -298,14 +302,13 @@ fun SharedTransitionScope.AIPainterPage(
             contentAlignment = Alignment.Center
         ) {
             UniversalButton(
-                textFieldState = textFieldState,
                 buttonType = AIPageType.PAINTER.buttonType,
                 size = 160.dp,
                 fontSize = 24.sp,
                 onAddEditEvent = onAddEditEvent,
                 snackBarState = snackBarState,
                 modifier = Modifier.fillMaxSize(),
-                hasText = true
+                canGenerateAI = canGenerateAI
             )
         }
     }
@@ -317,6 +320,7 @@ fun AIQuestionPage(
     textFieldState: TextFieldState,
     onAddEditEvent: (AddEditDreamEvent) -> Unit,
     snackBarState: () -> Unit,
+    canGenerateAI: Boolean
 ) {
     val questionState = addEditDreamState.aiStates[AIType.QUESTION_ANSWER]!!
 
@@ -385,14 +389,14 @@ fun AIQuestionPage(
             contentAlignment = Alignment.Center
         ) {
             UniversalButton(
-                textFieldState = textFieldState,
                 size = 160.dp,
                 fontSize = 24.sp,
                 onAddEditEvent = onAddEditEvent,
                 snackBarState = snackBarState,
                 modifier = Modifier.fillMaxSize(),
                 buttonType = AIPageType.QUESTION.buttonType,
-                hasText = true
+                hasText = true,
+                canGenerateAI = canGenerateAI
             )
         }
     }

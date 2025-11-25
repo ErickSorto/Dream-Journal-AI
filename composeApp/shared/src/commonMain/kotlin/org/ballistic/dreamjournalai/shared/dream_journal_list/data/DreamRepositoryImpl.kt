@@ -21,6 +21,7 @@ import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.Flag
 import org.ballistic.dreamjournalai.shared.core.util.decodeUrlPart
 import org.ballistic.dreamjournalai.shared.core.util.downloadImageBytes
+import org.ballistic.dreamjournalai.shared.core.util.readFileBytes
 import org.ballistic.dreamjournalai.shared.core.util.toGitLiveData
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.repository.DreamRepository
@@ -150,6 +151,33 @@ class DreamRepositoryImpl(
                 }
             }
 
+            suspend fun uploadAudioIfNeeded(d: Dream): Dream {
+                if (d.audioUrl.isBlank()) return d
+                // If it's already a remote URL, assume it's uploaded
+                if (d.audioUrl.startsWith("http")) return d
+
+                return withContext(Dispatchers.IO) {
+                    val targetPath = "$ensuredUid/dream_recordings/$ensuredId.m4a"
+                    val storageRef = Firebase.storage.reference(location = targetPath)
+
+                    // Read local file bytes
+                    val audioBytes = readFileBytes(d.audioUrl)
+                    if (audioBytes.isEmpty()) {
+                        logger.w { "uploadAudioIfNeeded: Audio file empty or not found at ${d.audioUrl}" }
+                        return@withContext d 
+                    }
+
+                    val gitLiveData: Data = audioBytes.toGitLiveData()
+                    storageRef.putData(gitLiveData)
+                    val downloadUrl = storageRef.getDownloadUrl().toString()
+                    val sep = if (downloadUrl.contains('?')) '&' else '?'
+                    val version = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                    val finalUrl = "$downloadUrl${sep}v=$version"
+
+                    d.copy(audioUrl = finalUrl)
+                }
+            }
+
             if (existingDream is Resource.Success && existingDream.data != null) {
                 val base = existingDream.data
                 val updated = base.copy(
@@ -178,15 +206,22 @@ class DreamRepositoryImpl(
                     dreamAIStory = dream.dreamAIStory,
                     dreamAIAdvice = dream.dreamAIAdvice,
                     dreamAIMood = dream.dreamAIMood,
+                    audioUrl = dream.audioUrl,
+                    audioTimestamp = dream.audioTimestamp,
+                    audioDuration = dream.audioDuration,
+                    isAudioPermanent = dream.isAudioPermanent,
+                    audioTranscription = dream.audioTranscription,
                     id = ensuredId,
                     uid = ensuredUid
                 )
                 val updatedWithImage = uploadImageIfNeeded(updated)
-                getCollectionReferenceForDreams()?.document(ensuredId)?.set(updatedWithImage)
+                val updatedWithAudio = uploadAudioIfNeeded(updatedWithImage)
+                getCollectionReferenceForDreams()?.document(ensuredId)?.set(updatedWithAudio)
             } else {
                 val newDream = dream.copy(id = ensuredId, uid = ensuredUid)
                 val newWithImage = uploadImageIfNeeded(newDream)
-                getCollectionReferenceForDreams()?.document(ensuredId)?.set(newWithImage)
+                val newWithAudio = uploadAudioIfNeeded(newWithImage)
+                getCollectionReferenceForDreams()?.document(ensuredId)?.set(newWithAudio)
             }
 
             logger.d { "insertDream: success id=$ensuredId" }
@@ -207,20 +242,37 @@ class DreamRepositoryImpl(
 
     override suspend fun deleteDream(id: String): Resource<Unit> {
         return try {
-            // 1) Fetch the dream first (to remove image if present)
+            // 1) Fetch the dream first (to remove image/audio if present)
             val dreamResult = getDream(id)
             if (dreamResult is Resource.Success && dreamResult.data != null) {
                 val dreamData = dreamResult.data
 
                 // 2) If dream has a generated image, remove it from Firebase Storage
                 if (dreamData.generatedImage.isNotBlank()) {
-                    val imageUrl = dreamData.generatedImage
-
-                    val ktorUrl = Url(imageUrl)
-                    val pathPortion = ktorUrl.encodedPath.substringAfter("/o/").substringBefore("?")
-                    val decodedPath = decodeUrlPart(pathPortion)
-                    val imageRef = Firebase.storage.reference(decodedPath)
-                    imageRef.delete()
+                    try {
+                        val imageUrl = dreamData.generatedImage
+                        val ktorUrl = Url(imageUrl)
+                        val pathPortion = ktorUrl.encodedPath.substringAfter("/o/").substringBefore("?")
+                        val decodedPath = decodeUrlPart(pathPortion)
+                        val imageRef = Firebase.storage.reference(decodedPath)
+                        imageRef.delete()
+                    } catch (e: Exception) {
+                        logger.w(e) { "deleteDream: Failed to delete image for dream $id" }
+                    }
+                }
+                
+                // 3) Delete audio if exists
+                if (dreamData.audioUrl.isNotBlank()) {
+                    try {
+                        val audioUrl = dreamData.audioUrl
+                        val ktorUrl = Url(audioUrl)
+                        val pathPortion = ktorUrl.encodedPath.substringAfter("/o/").substringBefore("?")
+                        val decodedPath = decodeUrlPart(pathPortion)
+                        val audioRef = Firebase.storage.reference(decodedPath)
+                        audioRef.delete()
+                    } catch (e: Exception) {
+                         logger.w(e) { "deleteDream: Failed to delete audio for dream $id" }
+                    }
                 }
             }
 

@@ -233,7 +233,7 @@ fun DreamItem(
                 Spacer(modifier = Modifier.height(3.dp))
 
                 Text(
-                    text = dream.content,
+                    text = if (dream.content.isNotBlank()) dream.content else dream.audioTranscription,
                     style = typography.bodySmall,
                     fontSize = 13.sp,
                     color = White,

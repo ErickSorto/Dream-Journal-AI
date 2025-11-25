@@ -31,13 +31,11 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.UiComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.SnackbarAction
@@ -46,9 +44,9 @@ import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AITool
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditPages
-import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.aipage.AIPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.DreamPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.InfoPage
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.aipage.AIPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.dictionary_page.WordPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
@@ -58,7 +56,6 @@ import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-@UiComposable
 fun SharedTransitionScope.TabLayout(
     dreamBackgroundImage: MutableState<Int>,
     dreamTitleState: TextFieldState,
@@ -67,7 +64,7 @@ fun SharedTransitionScope.TabLayout(
     onAddEditDreamEvent: (AddEditDreamEvent) -> Unit,
     keyboardController: SoftwareKeyboardController?,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onImageClick: (String) -> Unit
+    onImageClick: (String) -> Unit,
 ) {
     val pages = AddEditPages.entries.map { it }
     val pagerState = rememberPagerState(pageCount = { pages.size })
@@ -180,11 +177,18 @@ fun SharedTransitionScope.TabLayout(
                 DreamPage(
                     titleTextFieldState = dreamTitleState,
                     contentTextFieldState = dreamContentState,
+                    audioUrl = addEditDreamState.dreamInfo.dreamAudioUrl,
+                    audioDuration = addEditDreamState.dreamInfo.dreamAudioDuration,
+                    audioTimestamp = addEditDreamState.dreamInfo.dreamAudioTimestamp,
+                    isAudioPermanent = addEditDreamState.dreamInfo.dreamIsAudioPermanent,
+                    isTranscribing = addEditDreamState.isTranscribing,
+                    isUserAnonymous = addEditDreamState.isUserAnonymous,
+                    audioTranscription = addEditDreamState.dreamInfo.dreamAudioTranscription,
                     snackBarState = {
                         scope.launch {
                             SnackbarController.sendEvent(
                                 SnackbarEvent(
-                                    message = "Dream is too short",
+                                    message = "Dream content is too short",
                                     action = SnackbarAction(
                                         name = "Dismiss",
                                         action = {}
@@ -204,6 +208,7 @@ fun SharedTransitionScope.TabLayout(
             }
 
             1 -> {
+                val canGenerateAI = (dreamContentState.text.length + addEditDreamState.dreamInfo.dreamAudioTranscription.length) >= 20
                 AIPage(
                     pages = pages2,
                     pagerState2 = pagerState2,
@@ -211,7 +216,8 @@ fun SharedTransitionScope.TabLayout(
                     onAddEditDreamEvent = onAddEditDreamEvent,
                     textFieldState = dreamContentState,
                     animatedVisibilityScope = animatedVisibilityScope,
-                    onImageClick = onImageClick
+                    onImageClick = onImageClick,
+                    canGenerateAI = canGenerateAI
                 )
             }
 

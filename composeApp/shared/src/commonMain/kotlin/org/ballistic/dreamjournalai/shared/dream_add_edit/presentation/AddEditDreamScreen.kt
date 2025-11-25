@@ -56,10 +56,15 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.ballistic.dreamjournalai.shared.core.util.BackHandler
+import org.ballistic.dreamjournalai.shared.core.util.formatLocalDate
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.AlertSave
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.TabLayout
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.TranscriptionBottomSheet
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
@@ -68,8 +73,11 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
+    ExperimentalTime::class
+)
 @Composable
 fun SharedTransitionScope.AddEditDreamScreen(
     dreamImage: Int,
@@ -173,6 +181,28 @@ fun SharedTransitionScope.AddEditDreamScreen(
             },
             onClickOutside = {
                 onAddEditDreamEvent(AddEditDreamEvent.ToggleDialogState(false))
+            }
+        )
+    }
+    
+    if (addEditDreamState.transcriptionBottomSheetState) {
+        val timestamp = addEditDreamState.dreamInfo.dreamAudioTimestamp
+        val formattedDate = remember(timestamp) {
+            if (timestamp > 0) {
+                val instant = Instant.fromEpochMilliseconds(timestamp)
+                val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+                formatLocalDate(localDateTime.date)
+            } else {
+                addEditDreamState.dreamInfo.dreamDate
+            }
+        }
+
+        TranscriptionBottomSheet(
+            transcription = addEditDreamState.dreamInfo.dreamAudioTranscription,
+            date = formattedDate,
+            duration = addEditDreamState.dreamInfo.dreamAudioDuration,
+            onDismissRequest = {
+                onAddEditDreamEvent(AddEditDreamEvent.ToggleTranscriptionBottomSheet(false))
             }
         )
     }
@@ -303,7 +333,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
                         onAddEditDreamEvent = onAddEditDreamEvent,
                         keyboardController = keyboardController,
                         animatedVisibilityScope = animateVisibilityScope,
-                        onImageClick = onImageClick
+                        onImageClick = onImageClick,
                     )
                 }
             }

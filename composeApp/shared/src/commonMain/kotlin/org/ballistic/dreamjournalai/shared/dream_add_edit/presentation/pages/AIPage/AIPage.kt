@@ -91,6 +91,7 @@ fun SharedTransitionScope.AIPage(
     animatedVisibilityScope: AnimatedVisibilityScope,
     onAddEditDreamEvent: (AddEditDreamEvent) -> Unit,
     onImageClick: (String) -> Unit = {},
+    canGenerateAI: Boolean
 ) {
 
     val dreamTokens = addEditDreamState.dreamTokens
@@ -560,7 +561,7 @@ fun SharedTransitionScope.AIPage(
 
                 val iconColor by animateColorAsState(
                     targetValue = if (isSelected) {
-                        if (textFieldState.text.length >= 20) {
+                        if (canGenerateAI) {
                             AITool.entries[index].color
                         } else White
                     } else Color.LightGray.copy(alpha = 0.6f),
@@ -676,7 +677,8 @@ fun SharedTransitionScope.AIPage(
                     animatedVisibilityScope = animatedVisibilityScope,
                     onImageClick = {
                         onImageClick(it)
-                    }
+                    },
+                    canGenerateAI = canGenerateAI
                 )
             }
         }
@@ -729,7 +731,7 @@ fun SharedTransitionScope.AIPage(
                 .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
             color = AITool.entries[pagerState2.currentPage].color,
             onClick = {
-                if (textFieldState.text.length >= 20) {
+                if (canGenerateAI) {
                     onAddEditDreamEvent(
                         AddEditDreamEvent.SetAIPage(
                             AIPage.entries[pagerState2.currentPage]
