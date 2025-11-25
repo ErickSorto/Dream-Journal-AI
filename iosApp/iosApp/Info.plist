@@ -270,5 +270,7 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Dream Journal AI needs access to your microphone to record your dreams.</string>
 </dict>
 </plist>

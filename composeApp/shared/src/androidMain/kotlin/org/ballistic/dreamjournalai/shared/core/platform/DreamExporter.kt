@@ -82,8 +82,17 @@ private fun sharePdf(
             canvas.drawText(dream.date, 40f, y, datePaint)
             y += datePaint.fontSpacing * 2f
 
+            val fullContent = buildString {
+                append(dream.content)
+                if (dream.audioTranscription.isNotBlank()) {
+                    if (isNotEmpty()) append("\n\n")
+                    append("Transcript:\n")
+                    append(dream.audioTranscription)
+                }
+            }
+
             val contentLayout = StaticLayout.Builder.obtain(
-                dream.content, 0, dream.content.length, contentPaint, contentWidth
+                fullContent, 0, fullContent.length, contentPaint, contentWidth
             ).build()
             canvas.save()
             canvas.translate(40f, y)

@@ -94,4 +94,10 @@ sealed class AddEditDreamEvent {
     data object TriggerVibrationSuccess : AddEditDreamEvent()
     data object ResetNewImageGeneratedFlag : AddEditDreamEvent()
     data class SetStartAnimation(val value: Boolean) : AddEditDreamEvent()
+
+    data class OnVoiceRecordingSaved(val path: String, val duration: Long) : AddEditDreamEvent()
+    data object DeleteVoiceRecording : AddEditDreamEvent()
+    
+    data class MakeAudioPermanent(val cost: Int) : AddEditDreamEvent()
+    data class ToggleTranscriptionBottomSheet(val value: Boolean) : AddEditDreamEvent()
 }

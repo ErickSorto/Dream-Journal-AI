@@ -512,6 +512,12 @@ fun formatDreams(dreams: List<Dream>): String {
         builder.append("Title: ${dream.title}\n")
         builder.append("Date: ${dream.date}\n\n")
         builder.append(dream.content)
+
+        if (dream.audioTranscription.isNotBlank()) {
+            builder.append("\n\nTranscript:\n")
+            builder.append(dream.audioTranscription)
+        }
+
         builder.append("\n\n--------------------------------------------------\n\n")
     }
     return builder.toString()

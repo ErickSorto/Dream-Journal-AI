@@ -56,6 +56,12 @@ data class Dream @OptIn(ExperimentalTime::class) constructor(
     val dreamAIQuestionAnswer: String = "",
     val dreamAIStory: String = "",
     val dreamAIMood: String = "",
+    
+    val audioUrl: String = "",
+    val audioTimestamp: Long = 0,
+    val audioDuration: Long = 0,
+    val isAudioPermanent: Boolean = false,
+    val audioTranscription: String = "",
 
     val id: String? = null,
     val uid: String? = null
@@ -110,6 +116,11 @@ data class Dream @OptIn(ExperimentalTime::class) constructor(
         "",
         "",
         "",
+        "",
+        "",
+        0,
+        0,
+        false,
         "",
         null,
         null

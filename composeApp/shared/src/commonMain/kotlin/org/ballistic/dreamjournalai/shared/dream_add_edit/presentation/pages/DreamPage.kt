@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.hint_description
@@ -32,10 +34,21 @@ import org.jetbrains.compose.resources.stringResource
 fun DreamPage(
     titleTextFieldState: TextFieldState,
     contentTextFieldState: TextFieldState,
+    audioUrl: String,
+    audioDuration: Long,
+    audioTimestamp: Long,
+    isAudioPermanent: Boolean,
+    isTranscribing: Boolean,
+    isUserAnonymous: Boolean,
+    audioTranscription: String,
     onAddEditDreamEvent: (AddEditDreamEvent) -> Unit,
     animateToPage: (Int) -> Unit,
     snackBarState: () -> Unit
 ) {
+    val isKeyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val fullContentLength = contentTextFieldState.text.length + audioTranscription.length
+    val canGenerateAI = fullContentLength >= 20
+
     Column(
         modifier = Modifier
             .background(color = Color.Transparent)
@@ -91,13 +104,20 @@ fun DreamPage(
 
             GenerateButtonsLayout(
                 onAddEditEvent = onAddEditDreamEvent,
-                textFieldState = contentTextFieldState,
                 snackBarState = {
                     snackBarState()
                 },
                 animateToPage = { index ->
                     animateToPage(index)
-                }
+                },
+                audioUrl = audioUrl,
+                audioDuration = audioDuration,
+                audioTimestamp = audioTimestamp,
+                isAudioPermanent = isAudioPermanent,
+                isTranscribing = isTranscribing,
+                isKeyboardOpen = isKeyboardOpen,
+                isUserAnonymous = isUserAnonymous,
+                canGenerateAI = canGenerateAI
             )
         }
 

@@ -148,6 +148,7 @@ private fun formatDreamsAsHtml(dreams: List<Dream>): String {
     builder.append("h1 { font-size: 18pt; color: #333; margin-top: 0; padding-top: 0; }")
     builder.append(".date { font-size: 10pt; color: #666; margin-bottom: 10px; }")
     builder.append(".content { margin-bottom: 30px; line-height: 1.5; }")
+    builder.append(".transcript { margin-top: 20px; font-style: italic; color: #555; border-top: 1px solid #eee; padding-top: 10px; }")
     builder.append("</style></head><body>")
 
     dreams.forEachIndexed { index, dream ->
@@ -167,6 +168,16 @@ private fun formatDreamsAsHtml(dreams: List<Dream>): String {
             .replace("\n", "<br/>")
             
         builder.append("<div class='content'>$safeContent</div>")
+
+        if (dream.audioTranscription.isNotBlank()) {
+             val safeTranscript = dream.audioTranscription
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\n", "<br/>")
+             builder.append("<div class='transcript'><strong>Transcript:</strong><br/>$safeTranscript</div>")
+        }
+
         builder.append("</div>")
     }
 

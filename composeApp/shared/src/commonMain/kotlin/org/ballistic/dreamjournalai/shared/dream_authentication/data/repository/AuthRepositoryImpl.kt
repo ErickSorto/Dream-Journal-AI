@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
@@ -62,6 +63,20 @@ class AuthRepositoryImpl (
 
     private val _isUserAnonymous = MutableStateFlow(false)
     override val isUserAnonymous: StateFlow<Boolean> = _isUserAnonymous
+
+    init {
+        // Initialize with current state
+        val currentUser = auth.currentUser
+        _isUserAnonymous.value = currentUser?.isAnonymous == true
+        
+        // Listen for auth changes to keep isUserAnonymous updated
+        CoroutineScope(Dispatchers.Main).launch {
+            auth.authStateChanged.collect { user ->
+                _isUserAnonymous.value = user?.isAnonymous == true
+                validateUser() // Re-validate other flags
+            }
+        }
+    }
 
     @OptIn(ExperimentalTime::class)
     override suspend fun firebaseSignInWithGoogle(

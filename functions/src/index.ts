@@ -1,66 +1,110 @@
 /* eslint-disable eol-last */
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import express from "express";  // Default import
+import express from "express";
 import cors from "cors";
 import * as nodemailer from "nodemailer";
 import { google } from "googleapis";
-import { SecretManagerServiceClient } from '@google-cloud/secret-manager';  // Ensure you import the client
+import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+import axios from "axios";
 
 admin.initializeApp();
 
 const firestore = admin.firestore();
-// Create an instance of Express
 const app = express();
-
-// Automatically allow cross-origin requests
 app.use(cors({ origin: true }));
-
-// Parse JSON bodies
 app.use(express.json());
 
-// The time (in minutes) after which unverified users should be deleted
 const DELETE_UNVERIFIED_USERS_AFTER = 60;
-
 const client = new SecretManagerServiceClient();
+
+async function getSecret(name: string): Promise<string> {
+    const secretName = `projects/${process.env.GCLOUD_PROJECT}/secrets/${name}/versions/latest`;
+    const [version] = await client.accessSecretVersion({ name: secretName });
+    if (!version.payload || !version.payload.data) {
+        throw new Error(`Secret ${name} payload is null or undefined.`);
+    }
+    return version.payload.data.toString();
+}
 
 exports.getOpenAISecretKey = functions.https.onCall(async (data, context) => {
     try {
-        console.log("Starting function execution...");
-
-        // Secret Manager client instantiation
-        const secretName = `projects/${process.env.GCLOUD_PROJECT}/secrets/OPENAI_SECRET_KEY/versions/latest`;
-        console.log(`Accessing secret: ${secretName}`);
-
-        const [version] = await client.accessSecretVersion({ name: secretName });
-        console.log("Secret version accessed successfully");
-
-        if (!version.payload || !version.payload.data) {
-            console.error('Error: Secret payload is null or undefined.');
-            throw new functions.https.HttpsError('internal', 'Secret payload is null or undefined.');
-        }
-
-        // Ensure the payload data is a Uint8Array
-        const payloadData = version.payload.data as Uint8Array;
-        console.log(`Payload data length: ${payloadData.length}`);
-
-        const secretKey = Buffer.from(payloadData).toString('utf-8');
-        console.log(`Secret key retrieved: ${secretKey}`);
-
-        if (!secretKey) {
-            console.error('Configuration error: Secret key is not configured.');
-            throw new functions.https.HttpsError('failed-precondition', 'The API key is not configured.');
-        }
-
+        const secretKey = await getSecret("OPENAI_SECRET_KEY");
         return { apiKey: secretKey };
     } catch (error) {
         if (error instanceof Error) {
             console.error('Error retrieving API key:', error.message);
             throw new functions.https.HttpsError('internal', 'Unable to retrieve API key', error.message);
         } else {
-            console.error('Unexpected error type:', error);
-            throw new functions.https.HttpsError('internal', 'Unable to retrieve API key', 'An unknown error occurred');
+            throw new functions.https.HttpsError('internal', 'Unable to retrieve API key');
         }
+    }
+});
+
+exports.getGeminiApiKey = functions.https.onCall(async (data, context) => {
+    try {
+        const secretKey = await getSecret("GEMENI_SECRET_KEY");
+        return { apiKey: secretKey };
+    } catch (error) {
+        throw new functions.https.HttpsError('internal', 'Unable to retrieve API key');
+    }
+});
+
+exports.transcribeAudio = functions.runWith({
+    timeoutSeconds: 300,
+    memory: '1GB'
+}).https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+
+    const storagePath = data.storagePath;
+    if (!storagePath) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with a storagePath.');
+    }
+
+    try {
+        const bucket = admin.storage().bucket();
+        const file = bucket.file(storagePath);
+        const [exists] = await file.exists();
+        if (!exists) {
+            throw new functions.https.HttpsError('not-found', 'Audio file not found.');
+        }
+        const [buffer] = await file.download();
+        const base64Audio = buffer.toString('base64');
+
+        const apiKey = await getSecret("GEMENI_SECRET_KEY");
+        const model = "gemini-2.5-flash";
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+        const response = await axios.post(url, {
+            contents: [{
+                parts: [
+                    { text: "Generate a transcript of the speech." },
+                    {
+                        inline_data: {
+                            mime_type: "audio/mp4",
+                            data: base64Audio
+                        }
+                    }
+                ]
+            }]
+        });
+
+        const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!text) {
+            throw new Error("Empty response from Gemini");
+        }
+
+        return { text: text };
+
+    } catch (error) {
+        console.error("Transcription error:", error);
+        if (axios.isAxiosError(error)) {
+             console.error("Axios error details:", error.response?.data);
+        }
+        throw new functions.https.HttpsError('internal', 'Transcription failed', error);
     }
 });
 
@@ -80,12 +124,10 @@ export const deleteUnverifiedUsers =
       const uid = doc.id;
       const userRecord = await admin.auth().getUser(uid);
 
-      // Skip if it's an anonymous account
       if (userRecord.providerData.length === 0) {
         return;
       }
 
-      // Only delete if it's not an anonymous account and the email is not verified
       if (!userRecord.emailVerified) {
         await admin.auth().deleteUser(uid);
         await doc.ref.delete();
@@ -94,13 +136,11 @@ export const deleteUnverifiedUsers =
     });
 
     await Promise.all(deletePromises);
-
     functions.logger.info(`Processed ${usersSnapshot.size} users.`);
   });
 
 export const deleteAnonymousInactiveUsers = functions.pubsub.schedule("every 24 hours").onRun(async () => {
     const currentTime = admin.firestore.Timestamp.now();
-    // 30 days in milliseconds: 30 days * 24 hours/day * 60 minutes/hour * 60 seconds/minute * 1000 ms/second
     const cutoffTime = currentTime.toMillis() - (30 * 24 * 60 * 60 * 1000);
     const cutoffTimestamp = admin.firestore.Timestamp.fromMillis(cutoffTime);
 
@@ -113,7 +153,6 @@ export const deleteAnonymousInactiveUsers = functions.pubsub.schedule("every 24 
         const uid = doc.id;
         const userRecord = await admin.auth().getUser(uid);
 
-        // Only delete if it's an anonymous account and if the user hasn't interacted in the last 30 days
         if (userRecord.providerData.length === 0) {
             await admin.auth().deleteUser(uid);
             await doc.ref.delete();
@@ -122,45 +161,76 @@ export const deleteAnonymousInactiveUsers = functions.pubsub.schedule("every 24 
     });
 
     await Promise.all(deletePromises);
-
     functions.logger.info(`Processed ${usersSnapshot.size} users.`);
+});
+
+export const deleteExpiredAudio = functions.pubsub.schedule("every 24 hours").onRun(async () => {
+    const currentTime = Date.now();
+    const cutoffTime = currentTime - (30 * 24 * 60 * 60 * 1000);
+
+    const dreamsSnapshot = await firestore
+        .collectionGroup("my_dreams")
+        .where("audioUrl", "!=", "")
+        .where("isAudioPermanent", "==", false)
+        .get();
+
+    const deletePromises = dreamsSnapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        if (data.audioTimestamp && data.audioTimestamp <= cutoffTime) {
+            const bucket = admin.storage().bucket();
+            try {
+                const dreamId = doc.id;
+                const userId = doc.ref.parent.parent?.id;
+                
+                if (userId) {
+                    const filePath = `${userId}/dream_recordings/${dreamId}.m4a`;
+                    const file = bucket.file(filePath);
+                    
+                    const [exists] = await file.exists();
+                    if (exists) {
+                        await file.delete();
+                        functions.logger.info(`Deleted expired audio for dream ${dreamId} of user ${userId}`);
+                    }
+                }
+
+                await doc.ref.update({
+                    audioUrl: "",
+                    audioDuration: 0,
+                    audioTimestamp: 0
+                });
+            } catch (error) {
+                functions.logger.error(`Error deleting audio for dream ${doc.id}:`, error);
+            }
+        }
+    });
+
+    await Promise.all(deletePromises);
+    functions.logger.info(`Processed ${dreamsSnapshot.size} potentially expired audio recordings.`);
 });
 
 
 exports.handleAccountLinking = functions.https.onCall(async (data, context) => {
-    // Destructure and validate UIDs
     const {permanentUid, anonymousUid} = data;
-
 
     if (typeof permanentUid !== "string" || permanentUid.trim() === "" ||
         typeof anonymousUid !== "string" || anonymousUid.trim() === "") {
-        functions.logger.error("One or both UIDs are invalid.");
         throw new functions.https.HttpsError("invalid-argument", "The function requires valid UIDs.");
     }
 
-    // Log starting of account linking process
-    functions.logger.info(`Starting account linking. Anon UID: ${anonymousUid}, Perm UID: ${permanentUid}`);
-
-    // Ensure that the function is called by an authenticated user
     if (!context.auth || !context.auth.uid) {
-        functions.logger.error("No context.auth or context.auth.uid found. The function must be called while authenticated.");
         throw new functions.https.HttpsError("unauthenticated", "The function must be called while authenticated.");
     }
 
-    // Ensure that the provided UIDs are valid
     if (!anonymousUid || !permanentUid || context.auth.uid !== permanentUid) {
-        functions.logger.error("Invalid UIDs or insufficient permissions.");
         throw new functions.https.HttpsError("invalid-argument", "Invalid UIDs or insufficient permissions.");
     }
 
     try {
-        functions.logger.info(`Anon UID: ${anonymousUid}, Perm UID: ${permanentUid}`);
         const anonymousDreamsRef = firestore.collection("users").doc(anonymousUid).collection("my_dreams");
         const permanentDreamsRef = firestore.collection("users").doc(permanentUid).collection("my_dreams");
         let lastSnapshot = null;
 
         do {
-            // Fetch anonymous user's dreams and prepare for transfer
             const anonymousDreamsSnapshot: any = await (lastSnapshot ? anonymousDreamsRef.startAfter(lastSnapshot.docs[lastSnapshot.docs.length - 1]).limit(500).get() : anonymousDreamsRef.limit(500).get());
             const batch = firestore.batch();
 
@@ -169,32 +239,22 @@ exports.handleAccountLinking = functions.https.onCall(async (data, context) => {
                 batch.set(newDreamRef, doc.data());
             });
 
-            // Commit the batch transfer of dreams
             await batch.commit();
             lastSnapshot = anonymousDreamsSnapshot;
         } while (lastSnapshot && lastSnapshot.size === 500);
 
-        // Optional: Delete the anonymous user account if needed
-        // await admin.auth().deleteUser(anonymousUid);
-
-        functions.logger.info("Account linking and dream transfer successful.");
         return {success: true, message: "All dreams transferred successfully."};
     } catch (error) {
-        functions.logger.error(`Error during account linking: ${(error as Error).message}`);
         throw new functions.https.HttpsError("internal", "Error during account linking process.");
     }
 });
 
 
 export const handleUserCreate = functions.auth.user().onCreate(async (user) => {
-    // Check if it's an anonymous account
     const isAnonymous = user.providerData.length === 0;
-
-    // Check if the user signed in with Google
     const isGoogleSignIn = user.providerData
         .some((provider) => provider.providerId === "google.com");
 
-    // Prepare the new user document
     const newUser = {
         uid: user.uid,
         displayName: user.displayName || "Anonymous",
@@ -202,18 +262,10 @@ export const handleUserCreate = functions.auth.user().onCreate(async (user) => {
         emailVerified: isGoogleSignIn || user.emailVerified || false,
         registrationTimestamp: admin.firestore.FieldValue.serverTimestamp(),
         lastActiveTimestamp: admin.firestore.FieldValue.serverTimestamp(),
-        dreamTokens: isAnonymous ? 0 : 25, // No dreamTokens for anonymous users
+        dreamTokens: isAnonymous ? 0 : 25, 
     };
 
-    // Write the user document to Firestore
     await firestore.collection("users").doc(user.uid).set(newUser);
-
-    // Log the creation
-    if (isAnonymous) {
-        functions.logger.info(`Created new anonymous user with UID: ${user.uid}.`);
-    } else {
-        functions.logger.info(`Created new user with UID: ${user.uid} using ${isGoogleSignIn ? "Google Sign In" : "email and password"}.`);
-    }
 });
 
 const purchaseVerificationApp = express();
@@ -225,12 +277,9 @@ purchaseVerificationApp.post('/', async (req, res) => {
     const userId = data.userId;
     const dreamTokens = data.dreamTokens;
 
-    console.log("handlePurchaseVerification - userId:" + userId + ", dreamTokens:" + dreamTokens);
-
-    const isPurchaseValid = true; // This should be the result of your purchase verification process
+    const isPurchaseValid = true; 
 
     if (isPurchaseValid) {
-      // Update the user's dreamTokens in Firestore
       const userRef = firestore.collection("users").doc(userId);
       await userRef.update({
         dreamTokens: admin.firestore.FieldValue.increment(dreamTokens),
@@ -244,49 +293,31 @@ purchaseVerificationApp.post('/', async (req, res) => {
 
 exports.handlePurchaseVerification = functions.https.onRequest(purchaseVerificationApp);
 
-type FirebaseAuthError = {
-    code: string;
-    message: string;
-};
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isFirebaseAuthError(error: any): error is FirebaseAuthError {
-    return typeof error.code === "string" && typeof error.message === "string";
-}
-
 exports.createAccountAndSendEmailVerification = functions.https.onCall(async (data, context) => {
-    functions.logger.info("Starting createAccount function", { structuredData: true });
-
     const userEmail = data.email;
     const userPassword = data.password;
-    functions.logger.info("Processing for Email: ${userEmail}", { userEmail: userEmail });
 
     try {
         const existingUser = await admin.auth().getUserByEmail(userEmail);
         if (existingUser.emailVerified) {
-            functions.logger.info("Account exists and is verified", { userEmail: userEmail });
             return { message: "Account exists already" };
         } else {
-            functions.logger.info("Account exists but is not verified, sending verification email", { userEmail: userEmail });
             const verificationLink = await admin.auth().generateEmailVerificationLink(userEmail);
             await sendVerificationEmail(userEmail, verificationLink);
             return { message: "Verification email sent!" };
         }
     } catch (error) {
         if ((error as any).code === "auth/user-not-found") {
-            // User does not exist, create the user
-            const userRecord = await admin.auth().createUser({
+            await admin.auth().createUser({
                 email: userEmail,
                 password: userPassword,
                 emailVerified: false
             });
-            functions.logger.info("User created with UID: ${userRecord.uid}", { uid: userRecord.uid, userEmail: userEmail });
 
             const verificationLink = await admin.auth().generateEmailVerificationLink(userEmail);
-            await sendVerificationEmail(userEmail, verificationLink); // Use the extracted email sending logic
+            await sendVerificationEmail(userEmail, verificationLink);
             return { message: "Verification email sent and account created! Please verify email to log in." };
         } else {
-            functions.logger.error("An error occurred while creating account or sending verification email", { error: error, userEmail: userEmail });
             throw new functions.https.HttpsError("internal", "Unable to create account or send verification email");
         }
     }
@@ -331,7 +362,7 @@ async function sendVerificationEmail(userEmail: string, verificationLink: string
     } as nodemailer.TransportOptions);
 
     await transporter.sendMail({
-        from: `"DreamNorth" <${appEmail}>`, // Added app name for clarity
+        from: `"DreamNorth" <${appEmail}>`,
         to: userEmail,
         subject: "Complete Your Registration with DreamNorth",
         text: `Welcome to DreamNorth!\n\nThanks for signing up. Please verify your email by clicking on this link:

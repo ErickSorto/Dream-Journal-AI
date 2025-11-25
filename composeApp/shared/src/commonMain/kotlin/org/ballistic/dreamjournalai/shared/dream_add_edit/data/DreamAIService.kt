@@ -10,6 +10,8 @@ import com.aallam.openai.api.image.ImageCreation
 import com.aallam.openai.api.image.ImageSize
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.functions.functions
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpRequestTimeoutException
@@ -21,6 +23,8 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -42,6 +46,7 @@ interface DreamAIService {
     suspend fun generateText(type: AITextType, dreamContent: String, cost: Int, extra: String? = null): AIResult<String>
     suspend fun generateDetails(dreamContent: String, cost: Int): AIResult<String>
     suspend fun generateImageFromDetails(details: String, cost: Int, style: String): AIResult<String>
+    suspend fun transcribeAudio(storagePath: String): AIResult<String>
 }
 
 sealed class AIResult<out T> {
@@ -50,6 +55,42 @@ sealed class AIResult<out T> {
 }
 
 enum class AITextType { TITLE, INTERPRETATION, ADVICE, MOOD, STORY, QUESTION_ANSWER }
+
+@Serializable
+data class GeminiContent(
+    val role: String = "user",
+    val parts: List<GeminiPart>
+)
+
+@Serializable
+data class GeminiPart(
+    val text: String? = null,
+    @SerialName("inline_data") val inlineData: GeminiInlineData? = null
+)
+
+@Serializable
+data class GeminiInlineData(
+    @SerialName("mime_type") val mimeType: String,
+    val data: String
+)
+
+@Serializable
+data class GeminiRequest(
+    val contents: List<GeminiContent>
+)
+
+@Serializable
+data class GeminiResponse(
+    val candidates: List<GeminiCandidate>? = null
+)
+
+@Serializable
+data class GeminiCandidate(
+    val content: GeminiContent? = null
+)
+
+@Serializable
+data class TranscriptionResponse(val text: String)
 
 class DefaultDreamAIService(
     private val dreamRepository: DreamRepository
@@ -221,6 +262,27 @@ $dreamContent""".trimIndent()
                 logger.w { "Primary model ($primaryModel) failed with error: ${primaryResult.message}. Trying fallback ($fallbackModel)." }
                 generate(fallbackModel)
             }
+        }
+    }
+
+    override suspend fun transcribeAudio(storagePath: String): AIResult<String> {
+        return try {
+            val functions = Firebase.functions
+            val result = functions
+                .httpsCallable("transcribeAudio")
+                .invoke(mapOf("storagePath" to storagePath))
+            
+            val response = result.data<TranscriptionResponse>()
+            val text = response.text
+            
+            if (text.isNotBlank()) {
+                AIResult.Success(text)
+            } else {
+                AIResult.Error("Empty response from Gemini")
+            }
+        } catch (e: Exception) {
+            logger.e { "transcription error: ${e.message}" }
+            AIResult.Error(e.message ?: "Unknown transcription error")
         }
     }
 }
