@@ -7,8 +7,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import org.ballistic.dreamjournalai.shared.BottomNavigationController
+import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.ToolsEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolsGrid
@@ -22,6 +25,10 @@ fun SharedTransitionScope.DreamToolsScreen(
     onNavigate: (ToolRoute) -> Unit,
     onEvent: (ToolsEvent) -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        BottomNavigationController.sendEvent(BottomNavigationEvent.SetVisibility(true))
+    }
+
     Scaffold(
         topBar = {
             DreamToolsScreenTopBar(

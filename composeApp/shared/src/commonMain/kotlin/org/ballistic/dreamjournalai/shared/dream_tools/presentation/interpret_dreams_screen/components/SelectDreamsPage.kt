@@ -35,12 +35,13 @@ fun SelectDreamsPage(
     scope: CoroutineScope,
     chosenDreams: List<Dream>,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(bottom = 16.dp),
     onEvent: (InterpretDreamsToolEvent) -> Unit
 ) {
 
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(bottom = 16.dp),
+        contentPadding = contentPadding,
     ) {
         // Step 1: Parse and Sort Dreams
         val sortedGroupedDreams = interpretDreamsScreenState.dreams
@@ -63,7 +64,7 @@ fun SelectDreamsPage(
 
             // Sticky Header for the Date
             stickyHeader {
-                DateHeader(dateString = formatCustomDate(date))
+                DateHeader(dateString = formatCustomDate(date), paddingStart = 20)
             }
 
 
@@ -75,7 +76,7 @@ fun SelectDreamsPage(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 10.dp)
-                        .padding(horizontal = 12.dp),
+                        .padding(horizontal = 20.dp),
                     onClick = {
                         onEvent(InterpretDreamsToolEvent.TriggerVibration)
                         val chosenDreamSizeLimit = 15

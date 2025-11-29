@@ -35,10 +35,13 @@ import org.ballistic.dreamjournalai.shared.dream_store.data.repository.RevenueCa
 import org.ballistic.dreamjournalai.shared.dream_store.domain.repository.BillingRepository
 import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.viewmodel.StoreScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.DictionaryScreenViewModel
+import org.ballistic.dreamjournalai.shared.dream_tools.data.DreamWorldPaintingRepositoryImpl
 import org.ballistic.dreamjournalai.shared.dream_tools.data.MassInterpretationRepositoryImpl
+import org.ballistic.dreamjournalai.shared.dream_tools.domain.DreamWorldPaintingRepository
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.MassInterpretationRepository
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.dream_tools_screen.viewmodel.DreamToolsScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.viewmodel.InterpretDreamsViewModel
+import org.ballistic.dreamjournalai.shared.dream_tools.presentation.paint_dreams_screen.viewmodel.PaintDreamWorldViewModel
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.random_dream_screen.RandomDreamToolScreenViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
@@ -56,6 +59,7 @@ val appModule = module {
 
     single<MassInterpretationRepository> { MassInterpretationRepositoryImpl(get()) }
     single<DreamRepository> { DreamRepositoryImpl(get()) }
+    single<DreamWorldPaintingRepository> { DreamWorldPaintingRepositoryImpl(get()) }
 
     single {
         DreamUseCases(
@@ -100,6 +104,7 @@ val viewModelModule = module {
     viewModelOf(::RandomDreamToolScreenViewModel)
     viewModelOf(::DreamToolsScreenViewModel)
     viewModelOf(::InterpretDreamsViewModel)
+    viewModelOf(::PaintDreamWorldViewModel)
     viewModel {
         MainScreenViewModel(
             repo = get(),

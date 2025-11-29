@@ -73,7 +73,9 @@ class DreamToolsScreenViewModel(
                 }
             }
             is ToolsEvent.TriggerVibration -> {
-                vibratorUtil.triggerVibration()
+                viewModelScope.launch {
+                    vibratorUtil.triggerVibration()
+                }
             }
         }
     }

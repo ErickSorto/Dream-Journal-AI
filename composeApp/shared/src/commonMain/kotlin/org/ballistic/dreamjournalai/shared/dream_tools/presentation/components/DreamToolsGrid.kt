@@ -23,7 +23,7 @@ import org.ballistic.dreamjournalai.shared.navigation.toDrawableResource
 fun SharedTransitionScope.DreamToolsGrid(
     animatedVisibilityScope: AnimatedVisibilityScope,
     onNavigate: (ToolRoute) -> Unit,
-    modifier: Modifier
+    modifier: Modifier,
 ) {
     val lastClickTime = remember { mutableLongStateOf(0L) }
     val dreamToolsList = DreamTools.entries // the enum’s values
@@ -43,7 +43,9 @@ fun SharedTransitionScope.DreamToolsGrid(
                 enabled = tool.enabled,
                 onClick = singleClick(
                     lastClickTimeState = lastClickTime,
-                    onClick = { onNavigate(tool.route) }
+                    onClick = {
+                        onNavigate(tool.route)
+                    }
                 ),
                 modifier = Modifier.sharedElement(
                     rememberSharedContentState(key = "image/${tool.route.image}"),

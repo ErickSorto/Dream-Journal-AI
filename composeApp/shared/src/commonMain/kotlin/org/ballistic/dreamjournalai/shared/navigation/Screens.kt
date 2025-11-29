@@ -12,13 +12,13 @@ import androidx.compose.material.icons.filled.Shop
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.ui.graphics.vector.ImageVector
+import dreamjournalai.composeapp.shared.generated.resources.DreamIntellegentRealityChecker
+import dreamjournalai.composeapp.shared.generated.resources.DreamInterpreterMassTool
+import dreamjournalai.composeapp.shared.generated.resources.DreamPredictorTool
+import dreamjournalai.composeapp.shared.generated.resources.DreamRandomPicker
+import dreamjournalai.composeapp.shared.generated.resources.DreamStatisticalAnalysis
+import dreamjournalai.composeapp.shared.generated.resources.DreamWorldTool
 import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.dicetool
-import dreamjournalai.composeapp.shared.generated.resources.dream_journal_reminder_tool
-import dreamjournalai.composeapp.shared.generated.resources.dream_statistic_analyzer_tool
-import dreamjournalai.composeapp.shared.generated.resources.dream_world_painter_tool
-import dreamjournalai.composeapp.shared.generated.resources.mass_interpretation_tool
-import dreamjournalai.composeapp.shared.generated.resources.reality_check_reminder_tool
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.DrawableResource
 
@@ -125,6 +125,11 @@ sealed class ToolRoute(
     data class Statistics(
         val imageID: String
     ) : ToolRoute(imageID)
+    
+    @Serializable
+    data class FullScreenImage(
+        val imageURL: String
+    ) : ToolRoute(imageURL)
 }
 
 enum class DreamTools(
@@ -134,10 +139,18 @@ enum class DreamTools(
     val enabled: Boolean
 ) {
     AnalyzeDreams(
-        title = "Interpret Multiple Dreams",
+        title = "Mass Dream Interpreter",
         description = "Interpret multiple dreams at once using AI",
         route = ToolRoute.AnalyzeMultipleDreamsDetails(
             imageID = DreamDrawable.MASS_INTERPRETATION_TOOL.name
+        ),
+        enabled = true
+    ),
+    DREAM_WORLD(
+        title = "Dream World Painter",
+        description = "Dream World Painter",
+        route = ToolRoute.PaintDreamWorld(
+            imageID = DreamDrawable.DREAM_WORLD_PAINTER_TOOL.name
         ),
         enabled = true
     ),
@@ -173,14 +186,7 @@ enum class DreamTools(
         ),
         enabled = false
     ),
-    DREAM_WORLD(
-        title = "Dream World",
-        description = "Dream World Painter",
-        route = ToolRoute.PaintDreamWorld(
-            imageID = DreamDrawable.DREAM_WORLD_PAINTER_TOOL.name
-        ),
-        enabled = false
-    );
+   ;
 }
 
 @Serializable
@@ -215,11 +221,11 @@ enum class BottomNavigationRoutes(val title: String?, val icon: ImageVector, val
 
 fun DreamDrawable.toDrawableResource(): DrawableResource {
     return when (this) {
-        DreamDrawable.MASS_INTERPRETATION_TOOL -> Res.drawable.mass_interpretation_tool
-        DreamDrawable.DICE_TOOL                -> Res.drawable.dicetool
-        DreamDrawable.DREAM_STATISTIC_ANALYZER_TOOL -> Res.drawable.dream_statistic_analyzer_tool
-        DreamDrawable.REALITY_CHECK_REMINDER_TOOL    -> Res.drawable.reality_check_reminder_tool
-        DreamDrawable.DREAM_JOURNAL_REMINDER_TOOL    -> Res.drawable.dream_journal_reminder_tool
-        DreamDrawable.DREAM_WORLD_PAINTER_TOOL       -> Res.drawable.dream_world_painter_tool
+        DreamDrawable.MASS_INTERPRETATION_TOOL -> Res.drawable.DreamInterpreterMassTool
+        DreamDrawable.DICE_TOOL                -> Res.drawable.DreamRandomPicker
+        DreamDrawable.DREAM_STATISTIC_ANALYZER_TOOL -> Res.drawable.DreamStatisticalAnalysis
+        DreamDrawable.REALITY_CHECK_REMINDER_TOOL    -> Res.drawable.DreamIntellegentRealityChecker
+        DreamDrawable.DREAM_JOURNAL_REMINDER_TOOL    -> Res.drawable.DreamPredictorTool
+        DreamDrawable.DREAM_WORLD_PAINTER_TOOL       -> Res.drawable.DreamWorldTool
     }
 }

@@ -3,13 +3,6 @@ package org.ballistic.dreamjournalai.shared.dream_add_edit.data
 
 import androidx.compose.ui.text.intl.Locale
 import co.touchlab.kermit.Logger
-import com.aallam.openai.api.chat.ChatCompletionRequest
-import com.aallam.openai.api.chat.ChatMessage
-import com.aallam.openai.api.chat.ChatRole
-import com.aallam.openai.api.image.ImageCreation
-import com.aallam.openai.api.image.ImageSize
-import com.aallam.openai.api.model.ModelId
-import com.aallam.openai.client.OpenAI
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.functions.functions
 import io.ktor.client.HttpClient
@@ -23,7 +16,6 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -31,12 +23,9 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
-import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.util.OpenAIApiKeyUtil
-import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.repository.DreamRepository
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 /**
  * High-level AI operations for dream processing (text + image).
@@ -45,7 +34,7 @@ import kotlin.uuid.Uuid
 interface DreamAIService {
     suspend fun generateText(type: AITextType, dreamContent: String, cost: Int, extra: String? = null): AIResult<String>
     suspend fun generateDetails(dreamContent: String, cost: Int): AIResult<String>
-    suspend fun generateImageFromDetails(details: String, cost: Int, style: String): AIResult<String>
+    suspend fun generateImageFromDetails(details: String, cost: Int, style: String, model: String? = null): AIResult<String>
     suspend fun transcribeAudio(storagePath: String): AIResult<String>
 }
 
@@ -54,40 +43,7 @@ sealed class AIResult<out T> {
     data class Error(val message: String): AIResult<Nothing>()
 }
 
-enum class AITextType { TITLE, INTERPRETATION, ADVICE, MOOD, STORY, QUESTION_ANSWER }
-
-@Serializable
-data class GeminiContent(
-    val role: String = "user",
-    val parts: List<GeminiPart>
-)
-
-@Serializable
-data class GeminiPart(
-    val text: String? = null,
-    @SerialName("inline_data") val inlineData: GeminiInlineData? = null
-)
-
-@Serializable
-data class GeminiInlineData(
-    @SerialName("mime_type") val mimeType: String,
-    val data: String
-)
-
-@Serializable
-data class GeminiRequest(
-    val contents: List<GeminiContent>
-)
-
-@Serializable
-data class GeminiResponse(
-    val candidates: List<GeminiCandidate>? = null
-)
-
-@Serializable
-data class GeminiCandidate(
-    val content: GeminiContent? = null
-)
+enum class AITextType { TITLE, INTERPRETATION, ADVICE, MOOD, STORY, QUESTION_ANSWER, DREAM_WORLD_SUMMARY, MASS_INTERPRETATION }
 
 @Serializable
 data class TranscriptionResponse(val text: String)
@@ -114,41 +70,112 @@ class DefaultDreamAIService(
         }
     }
 
-    private suspend fun chat(model: String, prompt: String, maxTokens: Int = 750, temperature: Double? = null): AIResult<String> = try {
-        val apiKey = OpenAIApiKeyUtil.getOpenAISecretKey()
-        val openAI = OpenAI(apiKey)
-        val request = ChatCompletionRequest(
-            model = ModelId(model),
-            messages = listOf(ChatMessage(role = ChatRole.User, content = prompt)),
-            maxTokens = maxTokens,
-            temperature = temperature
-        )
-        val completion = openAI.chatCompletion(request)
-        AIResult.Success(completion.choices.firstOrNull()?.message?.content.orEmpty())
-    } catch (e: Exception) {
-        logger.e { "chat error: ${e.message}" }
-        AIResult.Error(e.message ?: "Unknown error")
+    private suspend fun chat(
+        prompt: String, 
+        maxTokens: Int = 1500, 
+        reasoningEffort: String = "low",
+        verbosity: String = "low",
+        model: String = "gpt-5.1"
+    ): AIResult<String> {
+        try {
+            logger.d { "Sending chat request to $model. MaxTokens: $maxTokens, Reasoning: $reasoningEffort, Verbosity: $verbosity" }
+            logger.v { "Prompt: $prompt" }
+
+            val apiKey = OpenAIApiKeyUtil.getOpenAISecretKey()
+            
+            val bodyJson = buildJsonObject {
+                put("model", model)
+                put("messages", JsonArray(listOf(buildJsonObject {
+                    put("role", "user")
+                    put("content", prompt)
+                })))
+                put("max_completion_tokens", maxTokens)
+                
+                // Use top-level reasoning_effort for newer models instead of the reasoning object
+                // The API spec can vary between reasoning_effort (top-level) and reasoning: { effort: ... }
+                // Based on recent API updates for reasoning models (like o1), reasoning_effort is often standard.
+                // However, if the error persists, it means the model does not support reasoning at all or the field name is incorrect.
+                // Given the error "Unknown parameter: 'reasoning'", it likely expects `reasoning_effort` or nothing if not supported.
+                if (model == "gpt-5.1") {
+                   put("reasoning_effort", reasoningEffort)
+                }
+            }.toString()
+
+            val response = httpClient.post("https://api.openai.com/v1/chat/completions") {
+                contentType(ContentType.Application.Json)
+                headers { append("Authorization", "Bearer $apiKey") }
+                setBody(bodyJson)
+                timeout { requestTimeoutMillis = 70_000; connectTimeoutMillis = 30_000; socketTimeoutMillis = 70_000 }
+            }.bodyAsText()
+
+            val root = Json.parseToJsonElement(response).jsonObject
+            val choices = root["choices"] as? JsonArray
+            val content = choices?.firstOrNull()?.jsonObject
+                ?.get("message")?.jsonObject
+                ?.get("content")?.jsonPrimitive?.content.orEmpty()
+
+            if (content.isBlank()) {
+                 val error = root["error"]?.jsonObject?.get("message")?.jsonPrimitive?.content 
+                 if (error != null) {
+                     logger.e { "Chat API Error: $error" }
+                     return AIResult.Error(error)
+                 }
+            }
+
+            logger.d { "Chat completion received. Length: ${content.length}" }
+            logger.v { "Content: $content" }
+            return AIResult.Success(content)
+        } catch (e: Exception) {
+            logger.e { "chat error: ${e.message}" }
+            return AIResult.Error(e.message ?: "Unknown error")
+        }
     }
 
     override suspend fun generateText(type: AITextType, dreamContent: String, cost: Int, extra: String?): AIResult<String> {
+        logger.d { "generateText called. Type: $type, Cost: $cost" }
         val locale = Locale.current
-        val model = if (cost <= 0) "gpt-4.1-mini" else "gpt-4.1"
+        
+        // Default settings
+        var reasoningEffort = if (cost <= 0) "low" else "high"
+        var verbosity = if (cost <= 0) "low" else "medium"
+        var model = "gpt-5.1"
+        var maxTokens = 1500 
+
+        if (type == AITextType.TITLE) {
+            model = "gpt-5-nano"
+            // reasoningEffort and verbosity are ignored for nano in chat()
+        } else if (type == AITextType.DREAM_WORLD_SUMMARY) {
+            reasoningEffort = "high"
+            verbosity = "medium"
+            maxTokens = 5000
+        } else if (type == AITextType.MASS_INTERPRETATION) {
+            // For mass interpretation, we likely want more tokens to handle multiple dreams
+            maxTokens = 3000
+            // reasoningEffort/verbosity already set by cost above
+        }
+
         val prompt = when (type) {
-            AITextType.TITLE -> "Please generate a title for this dream with only 1 to 4 words, no quotes, and don't include the word dream: $dreamContent"
-            AITextType.INTERPRETATION -> """Please interpret the following dream:
+            AITextType.TITLE -> "Please generate a very short title (max 5 words) for this dream. Optimize for concise length. No quotes. Do not include the word 'dream'. Dream content: $dreamContent"
+            AITextType.INTERPRETATION -> {
+                """Please provide a strict, concise, and objective interpretation of the following dream.
+- Do NOT include conversational filler, greetings, or closing questions.
+- Do NOT ask the user for follow-up or feedback.
+- Focus strictly on the psychological and symbolic meaning.
 
 $dreamContent
 
 Markdown is supported. Use the following style guidelines:
-- Begin with an introductory paragraph to provide context.
-- Use bullet points (`-`) for key elements.
-- Start each bullet point with a **bolded title** (e.g., `**Title**:`).
-- The title and body text should touch (no blank line between them).
-- Ensure the body text is concise and directly follows the title.
-- Titles should use the same size as the body text but be bold for emphasis.
+- Begin with a brief introductory paragraph providing context.
+- Format key interpretation points using this structure:
+**Bold Title**:
+
+- The explanation text as a bullet point.
+- Ensure there is a blank line between the bold title and the bullet point.
 - Use short paragraphs to maintain readability on mobile devices.
-- Avoid excessive formatting or long paragraphs for better readability.
+- Avoid excessive formatting or long paragraphs.
+- The final paragraph should be a standalone summary and NOT a bullet point.
 Respond in language: $locale""".trimIndent()
+            }
             AITextType.ADVICE -> "Please give advice that can be obtained for this dream: $dreamContent. Respond in language: $locale"
             AITextType.MOOD -> "Please describe the mood of this dream: $dreamContent. Respond in language: $locale"
             AITextType.STORY -> "Please generate a very short story (concise) based on this dream: $dreamContent. Respond in language: $locale"
@@ -156,41 +183,86 @@ Respond in language: $locale""".trimIndent()
                 val q = extra ?: ""
                 "Please answer the following question: $q as it relates to this dream: $dreamContent. Respond in language: $locale"
             }
+            AITextType.DREAM_WORLD_SUMMARY -> {
+                """Analyze the recurring themes and objects in the following dream entries. Your goal is to create a single, surreal, yet beautiful and coherent image prompt.
+
+1.  **Identify 4-5 key visual symbols** from the dreams.
+2.  **Choose ONE or TWO dominant, unifying scenes** from the dreams (e.g., a serene lake, a dense forest, a grand room).
+3.  **Compose one vivid sentence** that describes a blended scene. Place the key symbols logically within this combined environment. For example, if blending a 'forest' and a 'library', the result could be 'towering bookshelves grow like ancient trees in a sun-dappled forest clearing'. The goal is a creative and beautiful fusion, not a simple list.
+
+**Crucially, ensure the final sentence is safe for image generation.** Avoid sensitive terms (use 'figures' instead of specific ages).
+
+Dream Entries:
+$dreamContent
+
+Respond only with the single, safe, and coherent sentence in the language '$locale'."""
+            }
+            AITextType.MASS_INTERPRETATION -> {
+                """Analyze the following dreams to find common themes, symbols, and deeper meanings. Provide a strict, concise, and objective analysis.
+- Do NOT include conversational filler, greetings, or closing questions.
+- Do NOT ask the user for follow-up or feedback.
+- Focus strictly on the psychological, symbolic, and recurring patterns across these dreams.
+
+Dreams:
+$dreamContent
+
+Markdown is supported. Use the following style guidelines:
+- Begin with a brief introductory paragraph providing context on the collection of dreams.
+- Format key insights and recurring themes using this structure:
+**Bold Theme/Symbol**:
+
+- The explanation text as a bullet point.
+- Ensure there is a blank line between the bold title and the bullet point.
+- Use short paragraphs to maintain readability on mobile devices.
+- Avoid excessive formatting or long paragraphs.
+- The final paragraph should be a standalone summary of the collective meaning and NOT a bullet point.
+Respond in language: $locale""".trimIndent()
+            }
         }
-        return chat(model, prompt, maxTokens = 750, temperature = if (type == AITextType.STORY) 1.0 else null)
+        return chat(prompt, maxTokens = maxTokens, reasoningEffort = reasoningEffort, verbosity = verbosity, model = model)
     }
 
+
     override suspend fun generateDetails(dreamContent: String, cost: Int): AIResult<String> {
-        val model = if (cost <= 1) "gpt-4.1-mini" else "gpt-4.1"
-        val creativity = if (cost <= 1) .4 else 1.1
+        val reasoningEffort = if (cost <= 1) "low" else "high"
+        val verbosity = if (cost <= 1) "low" else "medium"
+        
         val basePrompt = if (cost <= 1) {
-            """In one concise, third-person sentence (8-20 words), describe the dream's setting, mood, and any standout objects or figures. Focus on creating a clear, neutral visual foundation.
+            """In one concise, third-person sentence (12-24 words), describe the dream's setting, mood, and any standout objects or figures. Focus on creating a clear, neutral visual foundation.
 
 $dreamContent""".trimIndent()
         } else {
-            """In a single, vivid third-person sentence (8–20 words), portray the dream below as a detailed scene. Describe the atmosphere, significant visual elements, and the overall mood without imposing a specific artistic style.
+            """Analyze the dream content. Your goal is to create a single, surreal, yet beautiful and coherent image prompt.
 
+1.  **Identify key visual symbols** from the dream.
+2.  **Choose a dominant, unifying scene** (e.g., a serene lake, a dense forest).
+3.  **Compose one vivid sentence (12-24 words)** that describes a blended scene. Place key symbols logically within this environment. The goal is a creative and beautiful fusion.
+
+**Crucially, ensure the final sentence is safe for image generation.** Avoid sensitive terms.
+
+Dream Content:
 $dreamContent""".trimIndent()
         }
-        return chat(model, basePrompt, maxTokens = 175, temperature = creativity)
+        return chat(basePrompt, maxTokens = 2000, reasoningEffort = reasoningEffort, verbosity = verbosity)
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun generateImageFromDetails(details: String, cost: Int, style: String): AIResult<String> {
+    override suspend fun generateImageFromDetails(details: String, cost: Int, style: String, model: String?): AIResult<String> {
+        logger.d { "generateImageFromDetails called. Details length: ${details.length}, Cost: $cost, Style: $style, Model: $model" }
         val apiKey = OpenAIApiKeyUtil.getOpenAISecretKey()
-        val primaryModel = if (cost <= 1) "gpt-image-1-mini" else "dall-e-3"
-        val fallbackModel = if (cost <= 1) "dall-e-2" else "gpt-image-1" // DALL-E 3 can fall back to gpt-image-1
+        val primaryModel = model ?: if (cost <= 1) "gpt-image-1-mini" else "gpt-image-1"
+        val fallbackModel = if (cost <= 1) "dall-e-2" else "gpt-image-1" 
 
         val gptSizeString = "1024x1024"
-        val sdkSize = if (cost <= 1 || primaryModel == "dall-e-2" || fallbackModel == "dall-e-2") ImageSize.is512x512 else ImageSize.is1024x1024
+        val fallbackSizeString = "512x512"
 
-        suspend fun generateWithKtor(model: String, prompt: String): AIResult<String> {
+        suspend fun generateWithKtor(model: String, prompt: String, size: String): AIResult<String> {
+            logger.d { "Generating image with Ktor. Model: $model, Size: $size" }
             return try {
-                // Safely build JSON object and serialize to string
                 val bodyJson = buildJsonObject {
                     put("model", model)
                     put("prompt", prompt)
-                    put("size", gptSizeString)
+                    put("size", size)
                     put("n", 1)
                 }.toString()
                 val response = httpClient.post("https://api.openai.com/v1/images/generations") {
@@ -218,46 +290,19 @@ $dreamContent""".trimIndent()
             }
         }
 
-        suspend fun generateWithSdk(model: String, prompt: String, size: ImageSize): AIResult<String> = try {
-            val openAI = OpenAI(apiKey)
-            val creation = ImageCreation(prompt = prompt, model = ModelId(model), n = 1, size = size, user = "url")
-            val images = openAI.imageURL(creation)
-            val url = images.firstOrNull()?.url.orEmpty()
-            if (url.isBlank()) AIResult.Error("Empty image URL") else AIResult.Success(url)
-        } catch (e: Exception) {
-            logger.e { "image sdk error: ${e.message}" }
-            AIResult.Error(e.message ?: "Unknown SDK error")
-        }
-
         val prompt = details.ifBlank { "A beautiful, peaceful dream scene" }
         val finalPrompt = "$prompt, $style"
 
         suspend fun generate(model: String): AIResult<String> {
             val normalizedModel = model.lowercase()
-            return if (normalizedModel.startsWith("gpt-image-1")) {
-                generateWithKtor(normalizedModel, finalPrompt)
-            } else {
-                generateWithSdk(normalizedModel, finalPrompt, sdkSize)
-            }
+            // Determine size based on model
+            val size = if (normalizedModel.contains("dall-e-2") || cost <= 1) fallbackSizeString else gptSizeString
+            
+            return generateWithKtor(normalizedModel, finalPrompt, size)
         }
 
-        val primaryResult = generate(primaryModel)
-
-        return when (primaryResult) {
-            is AIResult.Success -> {
-                if (primaryResult.data.startsWith("data:image")) {
-                    val dream = Dream(id = Uuid.random().toString(), generatedImage = primaryResult.data, title = "", content = "", timestamp = 0L)
-                    dreamRepository.insertDream(dream)
-                    val uploadedDream = dreamRepository.getDream(dream.id!!)
-                    if (uploadedDream is Resource.Success) {
-                        AIResult.Success(uploadedDream.data!!.generatedImage)
-                    } else {
-                        AIResult.Error("Failed to upload image")
-                    }
-                } else {
-                    primaryResult
-                }
-            }
+        return when (val primaryResult = generate(primaryModel)) {
+            is AIResult.Success -> primaryResult
             is AIResult.Error -> {
                 logger.w { "Primary model ($primaryModel) failed with error: ${primaryResult.message}. Trying fallback ($fallbackModel)." }
                 generate(fallbackModel)

@@ -3,11 +3,6 @@ package org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_d
 import androidx.compose.ui.text.intl.Locale
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aallam.openai.api.chat.ChatCompletionRequest
-import com.aallam.openai.api.chat.ChatMessage
-import com.aallam.openai.api.chat.ChatRole
-import com.aallam.openai.api.model.ModelId
-import com.aallam.openai.client.OpenAI
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,14 +14,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
-import org.ballistic.dreamjournalai.shared.core.util.OpenAIApiKeyUtil.getOpenAISecretKey
-import org.ballistic.dreamjournalai.shared.dream_tools.domain.MassInterpretationRepository
-import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.InterpretDreamsToolEvent
-import org.ballistic.dreamjournalai.shared.dream_tools.domain.model.MassInterpretation
+import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AIResult
+import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AITextType
+import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DreamAIService
+import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.util.OrderType
-import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
+import org.ballistic.dreamjournalai.shared.dream_tools.domain.MassInterpretationRepository
+import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.InterpretDreamsToolEvent
+import org.ballistic.dreamjournalai.shared.dream_tools.domain.model.MassInterpretation
 import kotlin.time.ExperimentalTime
 
 //TODO: Make sure ads work as intended
@@ -35,6 +32,7 @@ class InterpretDreamsViewModel(
     private val authRepository: AuthRepository,
     private val vibratorUtil: VibratorUtil,
     private val massInterpretationRepository: MassInterpretationRepository,
+    private val dreamAIService: DreamAIService
 ) : ViewModel() {
     private val _interpretDreamsScreenState = MutableStateFlow(
         InterpretDreamsScreenState(
@@ -45,6 +43,7 @@ class InterpretDreamsViewModel(
         _interpretDreamsScreenState.asStateFlow()
 
     private var getDreamJob: Job? = null
+    @OptIn(ExperimentalTime::class)
     fun onEvent(event: InterpretDreamsToolEvent) {
         when (event) {
 
@@ -71,30 +70,47 @@ class InterpretDreamsViewModel(
                 // Logging the start of the function
                 // Getting the current list of dreams
                 val currentDreams = interpretDreamsScreenState.value.chosenDreams
+                val dreamContent = currentDreams.joinToString("\n\n") { "Dream Date: ${it.date}\nContent: ${it.content}" }
 
                 viewModelScope.launch {
-                    getAIResponse(
-                        command = "Find common themes, symbols, and meanings in the following dreams:\n" +
-                                currentDreams.joinToString("\n") { it.content },
-                        cost = event.cost,
-                        updateLoadingState = { isLoading ->
+                    _interpretDreamsScreenState.update { it.copy(isLoading = true) }
+                    
+                    val result = dreamAIService.generateText(
+                        type = AITextType.MASS_INTERPRETATION,
+                        dreamContent = dreamContent,
+                        cost = event.cost
+                    )
+
+                    when (result) {
+                        is AIResult.Success -> {
+                            val response = result.data
+                            if (event.cost > 0) authRepository.consumeDreamTokens(event.cost)
+
+                            val massInterpretation = MassInterpretation(
+                                interpretation = response,
+                                listOfDreamIDs = interpretDreamsScreenState.value.chosenDreams.map { it.id },
+                                date = kotlin.time.Clock.System.now().toEpochMilliseconds(),
+                                model = if (event.cost > 0) "Advanced" else "Standard",
+                                id = null
+                            )
+                            massInterpretationRepository.addInterpretation(massInterpretation)
+
                             _interpretDreamsScreenState.update {
-                                it.copy(isLoading = isLoading)
-                            }
-                        },
-                        updateResponseState = { response ->
-                            _interpretDreamsScreenState.update {
-                                it.copy(response = response)
-                            }
-                            event.isFinishedEvent(true)
-                        },
-                        handleError = {
-                            _interpretDreamsScreenState.update {
-                                it.copy(response = it.response)
+                                it.copy(
+                                    response = response,
+                                    chosenMassInterpretation = massInterpretation,
+                                    isLoading = false
+                                )
                             }
                             event.isFinishedEvent(true)
                         }
-                    )
+
+                        is AIResult.Error -> {
+                            _interpretDreamsScreenState.update { it.copy(isLoading = false) }
+                            // Handle error appropriately if needed
+                            event.isFinishedEvent(true)
+                        }
+                    }
                 }
             }
 
@@ -210,79 +226,11 @@ class InterpretDreamsViewModel(
 
         // Logging the event trigger
     }
-
-    private fun getAIResponse(
-        command: String,
-        cost: Int,
-        updateLoadingState: (Boolean) -> Unit,
-        updateResponseState: (String) -> Unit,
-        handleError: (String) -> Unit
-    ) {
-
-        viewModelScope.launch {
-            updateLoadingState(true)
-            makeAIRequest(
-                command, cost, updateLoadingState, updateResponseState,
-                handleError = {
-                    handleError(it)
-                }
-            )
-        }
-    }
-
-    @OptIn(ExperimentalTime::class)
-    private suspend fun makeAIRequest(
-        command: String,
-        cost: Int,
-        updateLoadingState: (Boolean) -> Unit,
-        updateResponseState: (String) -> Unit,
-        handleError: (String) -> Unit
-    ) {
-        try {
-            updateLoadingState(true)
-            val apiKey = getOpenAISecretKey()
-            val openAI = OpenAI(apiKey)
-            val currentLocale = Locale.current.language
-
-            val modelId = interpretDreamsScreenState.value.modelChosen
-            val chatCompletionRequest = ChatCompletionRequest(
-                model = ModelId(modelId), messages = listOf(
-                    ChatMessage(
-                        role = ChatRole.User,
-                        content = "$command.\n Respond in this language: $currentLocale"
-                    )
-                ), maxTokens = 500
-            )
-
-            val completion = openAI.chatCompletion(chatCompletionRequest)
-            updateResponseState(completion.choices.firstOrNull()?.message?.content ?: "")
-
-            if (cost > 0) authRepository.consumeDreamTokens(cost)
-            val massInterpretation = MassInterpretation(
-                interpretation = completion.choices.firstOrNull()?.message?.content ?: "",
-                listOfDreamIDs = interpretDreamsScreenState.value.chosenDreams.map { it.id },
-                date = kotlin.time.Clock.System.now().toEpochMilliseconds(),
-                model = if (modelId == "gpt-4.1") "Advanced" else "Standard",
-                id = null
-            )
-            massInterpretationRepository.addInterpretation(
-                massInterpretation
-            )
-            _interpretDreamsScreenState.value =
-                interpretDreamsScreenState.value.copy(
-                    chosenMassInterpretation = massInterpretation
-                )
-            updateLoadingState(false)
-        } catch (e: Exception) {
-            updateLoadingState(false)
-            handleError(e.message ?: "An error occurred")
-        }
-    }
 }
 
 data class InterpretDreamsScreenState(
     val dreams: List<Dream> = emptyList(),
-    val modelChosen: String = "gpt-4.1-mini",
+    val modelChosen: String = "gpt-5.1",
     val authRepository: AuthRepository,
     val massMassInterpretations: List<MassInterpretation> = emptyList(),
     val chosenMassInterpretation: MassInterpretation = MassInterpretation(),

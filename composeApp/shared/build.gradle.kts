@@ -81,7 +81,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.kotlin.stdlib)
             implementation(libs.datetime)
-            implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13")
+            implementation(libs.richeditor.compose)
 
 
             //Image

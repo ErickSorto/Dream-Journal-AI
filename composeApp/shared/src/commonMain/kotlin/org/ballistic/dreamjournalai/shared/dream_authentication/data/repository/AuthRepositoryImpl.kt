@@ -52,6 +52,9 @@ class AuthRepositoryImpl (
     private val _dreamTokens = MutableStateFlow(0)
     override val dreamTokens: StateFlow<Int> = _dreamTokens
 
+    private val _hasGeneratedDreamWorld = MutableStateFlow(false)
+    override val hasGeneratedDreamWorld: StateFlow<Boolean> = _hasGeneratedDreamWorld
+
     private val _isUserExist = MutableStateFlow(false)
     override val isUserExist: StateFlow<Boolean> = _isUserExist
 
@@ -533,12 +536,31 @@ class AuthRepositoryImpl (
                 val dreamTokens = data
                  _dreamTokens.value = dreamTokens.toInt()
 
+                // Read hasGeneratedDreamWorld, default to false if not present
+                val hasGenerated = try {
+                    snapshot.get<Boolean>("hasGeneratedDreamWorld")
+                } catch (e: Exception) {
+                    // Field might not exist
+                    false
+                }
+                _hasGeneratedDreamWorld.value = hasGenerated
+
                  // 3) Emit a success each time we get new data
                  emit(Resource.Success(dreamTokens))
              }
         }.catch { e ->
             // 4) Catch any exceptions thrown in the flow
             emit(Resource.Error(e.message ?: "Unknown error"))
+        }
+    }
+
+    override suspend fun setHasGeneratedDreamWorld(hasGenerated: Boolean) {
+        val user = Firebase.auth.currentUser ?: return
+        val userDocRef = Firebase.firestore.collection(USERS).document(user.uid)
+        try {
+            userDocRef.update(mapOf("hasGeneratedDreamWorld" to hasGenerated))
+        } catch (e: Exception) {
+            Logger.e("AuthRepo") { "Failed to update hasGeneratedDreamWorld: $e" }
         }
     }
 }
@@ -552,4 +574,5 @@ fun FirebaseUser.toUser(registrationTimestamp: Long) = mapOf(
     // Defaults for a brand new account (only applied on first doc creation)
     "dreamTokens" to 25L,
     "unlockedWords" to emptyList<String>(),
+    "hasGeneratedDreamWorld" to false
  )

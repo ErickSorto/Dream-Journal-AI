@@ -2,7 +2,6 @@ package org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.componen
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -32,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.ImageStyle
-import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
@@ -44,20 +42,25 @@ import kotlin.math.absoluteValue
 )
 @Composable
 fun ImageGenerationPopUp(
-    addEditDreamState: AddEditDreamState,
+    dreamTokens: Int,
+    imageStyle: ImageStyle,
     onDreamTokenClick: (amount: Int, style: String) -> Unit,
     onAdClick: () -> Unit,
     onClickOutside: () -> Unit,
     onImageStyleChange: (ImageStyle) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isWorldPainting: Boolean = false,
+    fixedCost: Int? = null
 ) {
     var selectedIndex by remember { mutableIntStateOf(0) }
     val options = listOf("High Quality", "Low Quality")
-    val amount = if (selectedIndex == 0) 2 else 1
+    
+    // Use fixedCost if provided, else standard calculation logic
+    val amount = fixedCost ?: if (isWorldPainting) 5 else if (selectedIndex == 0) 2 else 1
 
     val imageStyles = ImageStyle.entries
     val pagerState = rememberPagerState(
-        initialPage = addEditDreamState.imageStyle.ordinal,
+        initialPage = imageStyle.ordinal,
         pageCount = { imageStyles.size }
     )
     val sheetState = rememberModalBottomSheetState(
@@ -66,6 +69,13 @@ fun ImageGenerationPopUp(
 
     LaunchedEffect(pagerState.currentPage) {
         onImageStyleChange(imageStyles[pagerState.currentPage])
+    }
+    
+    // Ensure pager stays in sync if external state changes
+    LaunchedEffect(imageStyle) {
+        if (pagerState.currentPage != imageStyle.ordinal) {
+            pagerState.animateScrollToPage(imageStyle.ordinal)
+        }
     }
 
     val scrimBrush = Brush.verticalGradient(
@@ -102,43 +112,46 @@ fun ImageGenerationPopUp(
                 ) {
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        text = "Dream Painter",
+                        text = if (isWorldPainting) "Paint World" else "Dream Painter",
                         style = MaterialTheme.typography.headlineSmall,
                         color = White,
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     DreamTokenLayout(
-                        totalDreamTokens = addEditDreamState.dreamTokens
+                        totalDreamTokens = dreamTokens
                     )
                     Spacer(modifier = Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
-                SingleChoiceSegmentedButtonRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                ) {
-                    options.forEachIndexed { index, label ->
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = options.size
-                            ),
-                            onClick = { selectedIndex = index },
-                            selected = index == selectedIndex,
-                            label = { Text(label, style = MaterialTheme.typography.labelMedium) },
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = OriginalXmlColors.SkyBlue.copy(alpha = 0.8f),
-                                activeContentColor = White,
-                                inactiveContainerColor = Color.DarkGray.copy(alpha = 0.5f),
-                                inactiveContentColor = White.copy(alpha = 0.7f),
-                                activeBorderColor = OriginalXmlColors.SkyBlue
+                if (!isWorldPainting) {
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                    ) {
+                        options.forEachIndexed { index, label ->
+                            SegmentedButton(
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = index,
+                                    count = options.size
+                                ),
+                                onClick = { selectedIndex = index },
+                                selected = index == selectedIndex,
+                                label = { Text(label, style = MaterialTheme.typography.labelMedium) },
+                                colors = SegmentedButtonDefaults.colors(
+                                    activeContainerColor = OriginalXmlColors.SkyBlue.copy(alpha = 0.8f),
+                                    activeContentColor = White,
+                                    inactiveContainerColor = Color.DarkGray.copy(alpha = 0.5f),
+                                    inactiveContentColor = White.copy(alpha = 0.7f),
+                                    activeBorderColor = OriginalXmlColors.SkyBlue
+                                )
                             )
-                        )
+                        }
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                
                 Text(
                     text = "Choose Image Style",
                     style = MaterialTheme.typography.titleMedium,
@@ -196,8 +209,9 @@ fun ImageGenerationPopUp(
                                 .clip(RoundedCornerShape(16.dp)),
                             contentAlignment = Alignment.Center
                         ) {
+                            val imageUrl = if (isWorldPainting) imageStyles[page].worldPaintingImage else imageStyles[page].image
                             AsyncImage(
-                                model = imageStyles[page].image,
+                                model = imageUrl,
                                 contentDescription = imageStyles[page].displayName,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -228,14 +242,16 @@ fun ImageGenerationPopUp(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 AdTokenLayout(
-                    isAdButtonVisible = amount <= 1,
+                    isAdButtonVisible = amount <= 1 && fixedCost != 0, // Don't show ad if free
                     onAdClick = {
                         onAdClick()
                     },
                     onDreamTokenClick = {
-                        onDreamTokenClick(amount, addEditDreamState.imageStyle.promptAffix)
+                        val styleToSend = if (isWorldPainting) imageStyle.worldPromptAffix else imageStyle.promptAffix
+                        onDreamTokenClick(amount, styleToSend)
                     },
-                    amount = amount
+                    amount = amount,
+                    customText = if (fixedCost == 0) "Paint First Dream Free \uD83C\uDF19" else null
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
