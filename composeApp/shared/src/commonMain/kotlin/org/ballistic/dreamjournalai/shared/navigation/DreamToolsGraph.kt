@@ -149,8 +149,7 @@ fun DreamToolsGraph(
                         onEvent = { interpretDreamsViewModel.onEvent(it) },
                         onMainScreenEvent = { onMainEvent(it) },
                         navigateUp = {
-                            navController.popBackStack()
-                            navController.navigate(Route.Tools)
+                            navController.navigateUp()
                         }
                     )
                 }
@@ -169,8 +168,7 @@ fun DreamToolsGraph(
                             navController.navigate(Route.PaintDreamWorld)
                         },
                         navigateUp = {
-                            navController.popBackStack()
-                            navController.navigate(Route.Tools)
+                            navController.navigateUp()
                         },
                         onEvent = { event ->
                             if (event is PaintDreamWorldEvent.TriggerVibration) {
@@ -186,7 +184,6 @@ fun DreamToolsGraph(
 
                     PaintDreamWorldScreen(
                         paintDreamWorldScreenState = state.value,
-                        bottomPaddingValue = bottomPaddingValue,
                         animatedVisibilityScope = this,
                         onEvent = viewModel::onEvent,
                         onImageClick = { imageUrl ->
@@ -194,8 +191,7 @@ fun DreamToolsGraph(
                         },
                         onMainEvent = onMainEvent,
                         navigateUp = {
-                            navController.popBackStack()
-                            navController.navigate(Route.Tools)
+                            navController.navigateUp()
                         }
                     )
                 }
@@ -208,7 +204,7 @@ fun DreamToolsGraph(
                         animatedVisibilityScope = this,
                         onMainEvent = onMainEvent,
                         onBackPress = {
-                            navController.popBackStack()
+                            navController.navigateUp()
                         }
                     )
                 }

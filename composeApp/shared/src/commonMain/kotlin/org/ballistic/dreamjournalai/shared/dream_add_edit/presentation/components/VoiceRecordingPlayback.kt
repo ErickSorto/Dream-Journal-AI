@@ -28,6 +28,7 @@ import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.rounded.HourglassEmpty
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -58,7 +59,8 @@ fun VoiceRecordingPlayback(
     onEvent: (AddEditDreamEvent) -> Unit,
     onFleetingWarningClick: () -> Unit,
     onTranscriptionClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isTranscribing: Boolean = false
 ) {
     val player = rememberAudioPlayer()
     val isPlaying by player.isPlaying.collectAsState()
@@ -99,7 +101,7 @@ fun VoiceRecordingPlayback(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp)
             .height(55.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(Color.White.copy(alpha = 0.1f))
@@ -108,110 +110,118 @@ fun VoiceRecordingPlayback(
                 onLongClick = { onDelete() }
             )
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().align(Alignment.Center).padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Fleeting Warning Icon (if not permanent)
-                if (!isPermanent) {
+        if (isTranscribing) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp).align(Alignment.Center),
+                color = White
+            )
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth().align(Alignment.Center)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Fleeting Warning Icon (if not permanent)
+                    if (!isPermanent) {
+                        Box(
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .size(32.dp) // Slightly bigger
+                                .clip(CircleShape)
+                                .clickable {
+                                    onEvent(AddEditDreamEvent.TriggerVibration)
+                                    onFleetingWarningClick()
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.HourglassEmpty, // Rounded Icon
+                                contentDescription = "Fleeting Audio Warning",
+                                tint = Yellow,
+                                modifier = Modifier
+                                    .size(24.dp) // Slightly bigger
+                                    .rotate(rotation)
+                            )
+                        }
+                    }
+
+                    // Transcription Icon
                     Box(
                         modifier = Modifier
                             .padding(end = 8.dp)
-                            .size(32.dp) // Slightly bigger
+                            .size(32.dp)
                             .clip(CircleShape)
                             .clickable {
                                 onEvent(AddEditDreamEvent.TriggerVibration)
-                                onFleetingWarningClick()
+                                onTranscriptionClick()
                             },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.HourglassEmpty, // Rounded Icon
-                            contentDescription = "Fleeting Audio Warning",
-                            tint = Yellow,
-                            modifier = Modifier
-                                .size(24.dp) // Slightly bigger
-                                .rotate(rotation)
+                            imageVector = Icons.AutoMirrored.Filled.Message,
+                            contentDescription = "View Transcription",
+                            tint = White,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
 
-                // Transcription Icon
+                // Visualizer
+                Column(
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    // Dynamic Visualizer
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        barHeights.forEachIndexed { index, height ->
+                            val barThreshold = (index + 1).toFloat() / barHeights.size
+                            val isFilled = progress >= barThreshold
+
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight(height)
+                                    .padding(horizontal = 1.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(
+                                        if (isFilled) filledBrush else emptyBrush
+                                    )
+                            )
+                        }
+                    }
+                }
+
+                // Play/Pause Button
                 Box(
                     modifier = Modifier
-                        .padding(end = 8.dp)
-                        .size(32.dp)
                         .clip(CircleShape)
+                        .size(40.dp)
+                        .background(White.copy(alpha = 0.2f))
                         .clickable {
-                            onEvent(AddEditDreamEvent.TriggerVibration)
-                            onTranscriptionClick()
+                            if (isPlaying) {
+                                player.pause()
+                            } else {
+                                player.play(audioUrl)
+                            }
                         },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Message,
-                        contentDescription = "View Transcription",
+                        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        contentDescription = if (isPlaying) "Pause" else "Play",
                         tint = White,
                         modifier = Modifier.size(24.dp)
                     )
                 }
-            }
-
-            // Visualizer
-            Column(
-                modifier = Modifier.weight(1f).padding(end = 8.dp),
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.Center
-            ) {
-                // Dynamic Visualizer
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    barHeights.forEachIndexed { index, height ->
-                        val barThreshold = (index + 1).toFloat() / barHeights.size
-                        val isFilled = progress >= barThreshold
-                        
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight(height)
-                                .padding(horizontal = 1.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(
-                                    if (isFilled) filledBrush else emptyBrush
-                                )
-                        )
-                    }
-                }
-            }
-
-            // Play/Pause Button
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .size(40.dp)
-                    .background(White.copy(alpha = 0.2f))
-                    .clickable {
-                        if (isPlaying) {
-                            player.pause()
-                        } else {
-                            player.play(audioUrl)
-                        }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = White,
-                    modifier = Modifier.size(24.dp)
-                )
             }
         }
     }

@@ -48,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -273,10 +274,12 @@ fun MainScreenView(
                 Logger.d("MainScreen") { "Drawer currentValue=$current | anim=${drawerState.isAnimationRunning} | programmatic=${programmaticChangeInProgress.value}" }
             }
     }
+    val isDrawerEnabled by DrawerController.isEnabled.collectAsState()
+
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        gesturesEnabled = mainScreenViewModelState.isDrawerEnabled,
+        gesturesEnabled = isDrawerEnabled,
         drawerContent = {
             ModalDrawerSheet(modifier = Modifier.fillMaxHeight()) {
                 Column(modifier = Modifier.fillMaxHeight()) {

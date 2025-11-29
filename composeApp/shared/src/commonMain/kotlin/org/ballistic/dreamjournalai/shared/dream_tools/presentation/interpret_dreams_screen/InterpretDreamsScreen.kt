@@ -35,6 +35,7 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,7 +46,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.interpret_vector
@@ -53,6 +53,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.BottomNavigationController
 import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
+import org.ballistic.dreamjournalai.shared.DrawerController
+import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.core.util.BackHandler
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.MassInterpretationTabs
@@ -65,7 +67,6 @@ import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dr
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.viewmodel.InterpretDreamsScreenState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
-import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.jetbrains.compose.resources.painterResource
 
 
@@ -80,12 +81,23 @@ fun MassInterpretDreamToolScreen(
     val chosenDreams = interpretDreamsScreenState.chosenDreams
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    
+
     var isGlowVisible by remember { mutableStateOf(false) }
 
-    if(interpretDreamsScreenState.isLoading) {
+    if (interpretDreamsScreenState.isLoading) {
         BackHandler(true) {
             // Do nothing
+        }
+    }
+
+    // Lock the drawer when this screen is active
+    LaunchedEffect(Unit) {
+        DrawerController.disable()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            DrawerController.enable()
         }
     }
 
@@ -105,7 +117,10 @@ fun MassInterpretDreamToolScreen(
         topBar = {
             DreamToolScreenWithNavigateUpTopBar(
                 title = "Interpret Dreams",
-                navigateUp = navigateUp,
+                navigateUp = {
+                    DrawerController.enable()
+                    navigateUp()
+                },
                 onEvent = { onEvent(InterpretDreamsToolEvent.TriggerVibration) }, // Added TriggerVibration
                 enabledBack = !interpretDreamsScreenState.isLoading,
             )
@@ -123,7 +138,7 @@ fun MassInterpretDreamToolScreen(
             modifier = Modifier
                 .padding(
                     top = innerPadding.calculateTopPadding(),
-                    bottom = innerPadding.calculateBottomPadding() // Use bottomPaddingValue here if passed or calculateBottomPadding if not
+                    bottom = innerPadding.calculateBottomPadding()
                 )
                 .dynamicBottomNavigationPadding()
                 .fillMaxSize(),
@@ -146,32 +161,31 @@ fun MassInterpretDreamToolScreen(
                     val transition =
                         updateTransition(targetState = isSelected, label = "TabTransition")
 
-                    // Controlled animations for scale
                     val scale by transition.animateFloat(
                         label = "Scale",
                         transitionSpec = {
                             if (targetState) {
                                 keyframes {
-                                    durationMillis = 2300  // Total duration for the scale animation
-                                    1.25f at 1500 using LinearOutSlowInEasing // Scale up slowly to 1.25 over 1500ms
-                                    1.25f at 2000 using LinearEasing // Hold at 1.25 for 1 second (2000ms total)
-                                    0f at 2300 using FastOutLinearInEasing // Quickly decrease to 0 over 300ms
+                                    durationMillis = 2300
+                                    1.25f at 1500 using LinearOutSlowInEasing
+                                    1.25f at 2000 using LinearEasing
+                                    0f at 2300 using FastOutLinearInEasing
                                 }
                             } else {
                                 tween(
                                     durationMillis = 300,
                                     easing = LinearOutSlowInEasing
-                                ) // Return to original scale quickly when deselected
+                                )
                             }
                         }
                     ) { state ->
-                        if (state) 0f else 1f  // Scale to 0 when selected, back to 1 when not selected
+                        if (state) 0f else 1f
                     }
 
                     val iconColor by transition.animateColor(
                         label = "Color",
                         transitionSpec = {
-                            tween(durationMillis = 500)  // Smooth color transition
+                            tween(durationMillis = 500)
                         }
                     ) { state ->
                         if (state) Color.White else Color.Gray.copy(.6f)
@@ -185,7 +199,6 @@ fun MassInterpretDreamToolScreen(
                         },
 
                         text = {
-                            // Always show icon unless it is transitioning out for the selected tab
                             if (!isSelected || scale > 0) {
                                 Icon(
                                     painter = painterResource(page.icon),
@@ -201,7 +214,6 @@ fun MassInterpretDreamToolScreen(
                             }
 
                             if (isSelected) {
-                                // Show text when selected
                                 AnimatedVisibility(
                                     visible = scale == 0f,
                                     enter = fadeIn(animationSpec = tween(durationMillis = 400)) + expandVertically(
@@ -245,7 +257,7 @@ fun MassInterpretDreamToolScreen(
                                 text = if (chosenDreams.isEmpty()) "Select Dreams" else "Interpret Dreams (${chosenDreams.size}/15)",
                                 icon = Res.drawable.interpret_vector,
                                 onClick = {
-                                    onEvent(InterpretDreamsToolEvent.TriggerVibration) // Added TriggerVibration
+                                    onEvent(InterpretDreamsToolEvent.TriggerVibration)
                                     if (chosenDreams.isEmpty()) {
                                         scope.launch {
                                             snackbarHostState.showSnackbar(

@@ -7,12 +7,6 @@ import dreamjournalai.composeapp.shared.generated.resources.DreamRandomPicker
 import dreamjournalai.composeapp.shared.generated.resources.DreamStatisticalAnalysis
 import dreamjournalai.composeapp.shared.generated.resources.DreamWorldTool
 import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.dicetool
-import dreamjournalai.composeapp.shared.generated.resources.dream_journal_reminder_tool
-import dreamjournalai.composeapp.shared.generated.resources.dream_statistic_analyzer_tool
-import dreamjournalai.composeapp.shared.generated.resources.dream_world_painter_tool
-import dreamjournalai.composeapp.shared.generated.resources.mass_interpretation_tool
-import dreamjournalai.composeapp.shared.generated.resources.reality_check_reminder_tool
 import org.jetbrains.compose.resources.DrawableResource
 
 //dream tools

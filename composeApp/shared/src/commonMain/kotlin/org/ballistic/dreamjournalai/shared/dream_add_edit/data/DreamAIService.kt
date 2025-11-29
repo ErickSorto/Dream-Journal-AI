@@ -167,10 +167,10 @@ $dreamContent
 Markdown is supported. Use the following style guidelines:
 - Begin with a brief introductory paragraph providing context.
 - Format key interpretation points using this structure:
-**Bold Title**:
+#### [A concise title of 1-5 words for the theme]
 
 - The explanation text as a bullet point.
-- Ensure there is a blank line between the bold title and the bullet point.
+- Ensure there is a blank line between the heading and the bullet point.
 - Use short paragraphs to maintain readability on mobile devices.
 - Avoid excessive formatting or long paragraphs.
 - The final paragraph should be a standalone summary and NOT a bullet point.
@@ -209,10 +209,10 @@ $dreamContent
 Markdown is supported. Use the following style guidelines:
 - Begin with a brief introductory paragraph providing context on the collection of dreams.
 - Format key insights and recurring themes using this structure:
-**Bold Theme/Symbol**:
+#### [A concise, 1-5 word title for the common theme]
 
 - The explanation text as a bullet point.
-- Ensure there is a blank line between the bold title and the bullet point.
+- Ensure there is a blank line between the heading and the bullet point.
 - Use short paragraphs to maintain readability on mobile devices.
 - Avoid excessive formatting or long paragraphs.
 - The final paragraph should be a standalone summary of the collective meaning and NOT a bullet point.

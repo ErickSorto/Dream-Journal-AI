@@ -129,7 +129,6 @@ kotlin {
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.datastore)
             implementation(libs.datastorePreferences)
-            implementation(libs.koalaplot.core)
             implementation(libs.ktor.client.core)
             implementation(libs.vico.multiplatform)
             implementation(libs.vico.multiplatform.m3)

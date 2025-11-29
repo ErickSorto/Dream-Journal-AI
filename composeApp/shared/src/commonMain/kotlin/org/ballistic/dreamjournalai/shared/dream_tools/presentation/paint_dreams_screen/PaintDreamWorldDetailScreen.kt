@@ -40,13 +40,13 @@ import dreamjournalai.composeapp.shared.generated.resources.baseline_brush_24
 import kotlinx.coroutines.delay
 import org.ballistic.dreamjournalai.shared.BottomNavigationController
 import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.DreamTools
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.PaintDreamWorldEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolButton
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolScreenWithNavigateUpTopBar
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
@@ -127,7 +127,8 @@ fun SharedTransitionScope.PaintDreamWorldDetailScreen(
                 ) {
                     Text(
                         text = DreamTools.DREAM_WORLD.title,
-                        modifier = Modifier.fillMaxWidth().padding(16.dp, 16.dp, 16.dp, 0.dp),
+                        modifier = Modifier
+                            .fillMaxWidth().padding(16.dp, 16.dp, 16.dp, 0.dp),
                         color = Color.White,
                         textAlign = TextAlign.Start,
                         style = MaterialTheme.typography.headlineSmall,
@@ -163,7 +164,8 @@ fun SharedTransitionScope.PaintDreamWorldDetailScreen(
                                 onNavigate()
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            buttonModifier = Modifier.fillMaxWidth(buttonWidth).padding(horizontal = 16.dp),
+                            buttonModifier = Modifier
+                                .fillMaxWidth(buttonWidth).padding(horizontal = 16.dp),
                             isGlowVisible = isGlowVisible
                         )
                     }

@@ -98,7 +98,7 @@ fun AppTypography(): Typography {
         bodyMedium = TextStyle(
             fontFamily = poppins,
             fontWeight = FontWeight.Normal,
-            fontSize = 14.sp,
+            fontSize = 13.5.sp,
             lineHeight = 20.sp,
             letterSpacing = 0.25.sp
         ),
