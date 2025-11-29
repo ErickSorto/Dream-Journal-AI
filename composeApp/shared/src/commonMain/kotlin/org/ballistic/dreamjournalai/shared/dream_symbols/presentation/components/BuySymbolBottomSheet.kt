@@ -51,11 +51,7 @@ fun BuySymbolBottomSheet(
                 ){
                     Text(
                         text = title,
-                        style = if (title.length > 20) {
-                            MaterialTheme.typography.titleMedium
-                        } else {
-                            MaterialTheme.typography.headlineSmall
-                        },
+                        style = MaterialTheme.typography.headlineSmall,
                         color = White,
                         modifier = Modifier.padding(8.dp, 8.dp, 8.dp, 8.dp)
                     )

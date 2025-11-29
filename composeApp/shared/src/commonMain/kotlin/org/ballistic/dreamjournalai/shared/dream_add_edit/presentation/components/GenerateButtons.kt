@@ -339,7 +339,8 @@ fun AdTokenLayout(
     onAdClick: () -> Unit = {},
     onDreamTokenClick: (amount: Int) -> Unit = {},
     isAdButtonVisible: Boolean = true,
-    amount: Int
+    amount: Int,
+    customText: String? = null
 ) {
     Column(
         modifier = Modifier
@@ -348,7 +349,7 @@ fun AdTokenLayout(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        DreamTokenGenerateButton(onClick = { onDreamTokenClick(amount) }, amount = amount)
+        DreamTokenGenerateButton(onClick = { onDreamTokenClick(amount) }, amount = amount, customText = customText)
         if (isAdButtonVisible) {
             Spacer(modifier = Modifier.height(12.dp))
             WatchAdButton(onClick = { onAdClick() })
@@ -393,7 +394,8 @@ fun WatchAdButton(
 @Composable
 fun DreamTokenGenerateButton(
     onClick: () -> Unit,
-    amount: Int
+    amount: Int,
+    customText: String? = null
 ) {
     val amountText = if (amount == 0) "Free" else "$amount"
     Button(
@@ -408,18 +410,27 @@ fun DreamTokenGenerateButton(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Image(
-                painter = painterResource(Res.drawable.dream_token),
-                contentDescription = "DreamToken",
-                modifier = Modifier.size(30.dp)
-            )
-            Spacer(modifier = Modifier.size(8.dp))
-            Text(
-                text = "Use $amountText Dream Tokens",
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            if (customText != null) {
+                Text(
+                    text = customText,
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            } else {
+                Image(
+                    painter = painterResource(Res.drawable.dream_token),
+                    contentDescription = "DreamToken",
+                    modifier = Modifier.size(30.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = "Use $amountText Dream Tokens",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }

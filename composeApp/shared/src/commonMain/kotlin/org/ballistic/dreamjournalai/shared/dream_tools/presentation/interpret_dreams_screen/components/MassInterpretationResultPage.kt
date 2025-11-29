@@ -168,6 +168,7 @@ fun MassInterpretationResultPage(
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Start,
                     color = Color.White,
+                    useMarkdown = true,
                     modifier = Modifier
                         .padding(16.dp)
                         .align(Alignment.TopStart),

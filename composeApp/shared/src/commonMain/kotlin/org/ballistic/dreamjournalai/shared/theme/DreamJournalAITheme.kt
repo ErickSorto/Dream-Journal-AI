@@ -103,7 +103,7 @@ fun DreamJournalAITheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = MaterialTheme.typography,
+        typography = AppTypography(),
         content = content
     )
 }

@@ -12,20 +12,16 @@ import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.typography
@@ -36,37 +32,40 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.mass_dream_interpretation_icon
+import dreamjournalai.composeapp.shared.generated.resources.interpret_vector
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
-import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
+import org.ballistic.dreamjournalai.shared.BottomNavigationController
+import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
 import org.ballistic.dreamjournalai.shared.core.util.BackHandler
+import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.MassInterpretationTabs
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.InterpretDreamsToolEvent
+import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolButton
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolScreenWithNavigateUpTopBar
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.components.MassInterpretationHistoryPage
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.components.MassInterpretationResultPage
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.components.SelectDreamsPage
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.viewmodel.InterpretDreamsScreenState
-import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.jetbrains.compose.resources.painterResource
 
 
@@ -74,7 +73,6 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun MassInterpretDreamToolScreen(
     interpretDreamsScreenState: InterpretDreamsScreenState,
-    bottomPaddingValue: Dp,
     onEvent: (InterpretDreamsToolEvent) -> Unit,
     onMainScreenEvent: (MainScreenEvent) -> Unit,
     navigateUp: () -> Unit
@@ -82,6 +80,8 @@ fun MassInterpretDreamToolScreen(
     val chosenDreams = interpretDreamsScreenState.chosenDreams
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    var isGlowVisible by remember { mutableStateOf(false) }
 
     if(interpretDreamsScreenState.isLoading) {
         BackHandler(true) {
@@ -90,9 +90,12 @@ fun MassInterpretDreamToolScreen(
     }
 
     LaunchedEffect(Unit) {
+        BottomNavigationController.sendEvent(BottomNavigationEvent.SetVisibility(false))
         onEvent(InterpretDreamsToolEvent.GetDreamTokens)
         onEvent(InterpretDreamsToolEvent.GetDreams)
         onEvent(InterpretDreamsToolEvent.GetMassInterpretations)
+        delay(1000)
+        isGlowVisible = true
     }
 
     val pages = MassInterpretationTabs.entries.map { it }
@@ -103,12 +106,9 @@ fun MassInterpretDreamToolScreen(
             DreamToolScreenWithNavigateUpTopBar(
                 title = "Interpret Dreams",
                 navigateUp = navigateUp,
-                onEvent = { }, //TODO: TRIGGER VIBRATION
+                onEvent = { onEvent(InterpretDreamsToolEvent.TriggerVibration) }, // Added TriggerVibration
                 enabledBack = !interpretDreamsScreenState.isLoading,
             )
-        },
-        bottomBar = {
-            Spacer(modifier = Modifier.height(96.dp))
         },
         containerColor = Color.Transparent,
         snackbarHost = {
@@ -121,7 +121,10 @@ fun MassInterpretDreamToolScreen(
 
         Column(
             modifier = Modifier
-                .padding(top = innerPadding.calculateTopPadding(), bottom = bottomPaddingValue)
+                .padding(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding() // Use bottomPaddingValue here if passed or calculateBottomPadding if not
+                )
                 .dynamicBottomNavigationPadding()
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -226,7 +229,6 @@ fun MassInterpretDreamToolScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(bottom = 16.dp)
                         ) {
                             SelectDreamsPage(
                                 interpretDreamsScreenState = interpretDreamsScreenState,
@@ -234,12 +236,16 @@ fun MassInterpretDreamToolScreen(
                                 scope = scope,
                                 chosenDreams = chosenDreams,
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .weight(1f),
+                                    .weight(1f)
+                                    .fillMaxWidth(),
+                                contentPadding = PaddingValues(bottom = 0.dp),
                                 onEvent = onEvent
                             )
-                            Button(
+                            DreamToolButton(
+                                text = if (chosenDreams.isEmpty()) "Select Dreams" else "Interpret Dreams (${chosenDreams.size}/15)",
+                                icon = Res.drawable.interpret_vector,
                                 onClick = {
+                                    onEvent(InterpretDreamsToolEvent.TriggerVibration) // Added TriggerVibration
                                     if (chosenDreams.isEmpty()) {
                                         scope.launch {
                                             snackbarHostState.showSnackbar(
@@ -267,63 +273,11 @@ fun MassInterpretDreamToolScreen(
                                         }
                                     }
                                 },
-                                modifier = Modifier
-                                    .padding(8.dp, 0.dp, 8.dp, 0.dp)
-                                    .fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = RedOrange.copy(
-                                        alpha = 0.8f
-                                    )
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Image(
-                                    painter = painterResource(Res.drawable.mass_dream_interpretation_icon),
-                                    contentDescription = "Interpret ${chosenDreams.size} dreams",
-                                    modifier = Modifier.size(40.dp),
-                                    colorFilter = ColorFilter.tint(Color.White)
-                                )
-                                Spacer(modifier = Modifier.weight(1f))
-                                if (chosenDreams.isEmpty()) {
-                                    Spacer(modifier = Modifier.width(3.dp))
-                                    Text(
-                                        text = "Select Dreams",
-                                        modifier = Modifier
-                                            .padding(8.dp),
-                                        color = Color.White,
-                                        textAlign = TextAlign.Center,
-                                        style = typography.labelLarge,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    Image(
-                                        painter = painterResource(Res.drawable.mass_dream_interpretation_icon),
-                                        contentDescription = "Interpret ${chosenDreams.size} dreams",
-                                        modifier = Modifier.size(40.dp),
-                                        colorFilter = ColorFilter.tint(Color.Transparent)
-                                    )
-                                } else {
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "Interpret Dreams",
-                                        modifier = Modifier
-                                            .padding(8.dp),
-                                        color = Color.White,
-                                        textAlign = TextAlign.Center,
-                                        style = typography.labelLarge,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(modifier = Modifier.weight(1f))
-
-                                    Text(
-                                        text = "${chosenDreams.size}/15",
-                                        modifier = Modifier
-                                            .padding(8.dp),
-                                        color = Color.White,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                            }
+                                modifier = Modifier.fillMaxWidth(),
+                                buttonModifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                                isGlowVisible = isGlowVisible
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
 

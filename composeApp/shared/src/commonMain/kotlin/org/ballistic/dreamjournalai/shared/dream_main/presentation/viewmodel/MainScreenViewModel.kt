@@ -18,6 +18,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.ballistic.dreamjournalai.shared.BottomNavigationController
+import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
 import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
@@ -42,6 +44,25 @@ class MainScreenViewModel(
         _mainScreenViewModelState.value = _mainScreenViewModelState.value.copy(
             backgroundResource = getBackgroundResource()
         )
+
+        viewModelScope.launch {
+            BottomNavigationController.events.collectLatest { event ->
+                when (event) {
+                    is BottomNavigationEvent.SetVisibility -> {
+                        _mainScreenViewModelState.value = _mainScreenViewModelState.value.copy(
+                            scaffoldState = _mainScreenViewModelState.value.scaffoldState.copy(
+                                bottomBarState = event.visible
+                            )
+                        )
+                    }
+                    is BottomNavigationEvent.SetEnabled -> {
+                        _mainScreenViewModelState.value = _mainScreenViewModelState.value.copy(
+                            isBottomBarEnabledState = event.enabled
+                        )
+                    }
+                }
+            }
+        }
     }
 
     @OptIn(ExperimentalTime::class)

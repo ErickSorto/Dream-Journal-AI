@@ -82,17 +82,16 @@ class MassInterpretationRepositoryImpl(
             }
             .map { querySnapshot ->
                 querySnapshot.documents.mapNotNull { document ->
-                    // 'data' is a Map<String, Any> or null
-                    val data = document.data<Map<String, Any>>() ?: return@mapNotNull null
-
-                    MassInterpretation(
-                        interpretation = data["interpretation"] as? String ?: "",
-                        listOfDreamIDs = (data["listOfDreamIDs"] as? List<String?>) ?: emptyList(),
-                        date = data["date"] as? Long ?: 0L,
-                        model = data["model"] as? String ?: "",
-                        id = document.id // Or if you want to store the Firestore doc ID here
-                    )
-                }
+                    try {
+                        // Use direct deserialization to MassInterpretation since Map<String, Any> is not serializable
+                        val massInterpretation = document.data<MassInterpretation>()
+                        // Ensure the ID is set from the document ID
+                        massInterpretation.copy(id = document.id)
+                    } catch (e: Exception) {
+                        readLogger.e { "Error parsing document ${document.id}: ${e.message}" }
+                        null
+                    }
+                }.sortedByDescending { it.date } // Sort by date descending (latest first)
             }
     }
 

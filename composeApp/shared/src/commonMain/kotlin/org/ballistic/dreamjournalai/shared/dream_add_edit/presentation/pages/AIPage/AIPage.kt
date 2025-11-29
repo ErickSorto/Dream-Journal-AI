@@ -117,7 +117,8 @@ fun SharedTransitionScope.AIPage(
     when (addEditDreamState.aiPage) {
         AIPage.IMAGE -> {
             ImageGenerationPopUp(
-                addEditDreamState = addEditDreamState,
+                dreamTokens = dreamTokens,
+                imageStyle = addEditDreamState.imageStyle,
                 onDreamTokenClick = { amount, style ->
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
                     if (dreamTokens < amount) {

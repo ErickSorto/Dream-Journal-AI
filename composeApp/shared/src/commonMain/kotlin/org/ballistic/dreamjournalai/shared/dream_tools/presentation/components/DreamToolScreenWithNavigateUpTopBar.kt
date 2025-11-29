@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,14 +24,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.filter
@@ -47,7 +45,8 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DreamToolScreenWithNavigateUpTopBar(
-    title: String,
+    title: String? = null,
+    titleComposable: (@Composable () -> Unit)? = null,
     onEvent: () -> Unit,
     enabledBack: Boolean = true,
     navigateUp: () -> Unit,
@@ -118,7 +117,11 @@ fun DreamToolScreenWithNavigateUpTopBar(
 
                 // Title centered: use weight to take remaining space
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    Text(text = title, color = White, style = typography.titleMedium, fontWeight = FontWeight.Bold)
+                    if (titleComposable != null) {
+                        titleComposable()
+                    } else if (title != null) {
+                        Text(text = title, color = White, style = typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
                 }
 
                 IconButton(onClick = { /*TODO*/ }) {

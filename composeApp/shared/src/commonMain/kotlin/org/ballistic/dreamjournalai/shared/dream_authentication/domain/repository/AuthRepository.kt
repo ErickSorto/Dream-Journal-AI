@@ -20,6 +20,7 @@ interface AuthRepository {
     val isLoggedIn: StateFlow<Boolean>
     val isUserAnonymous: StateFlow<Boolean>
     val dreamTokens: StateFlow<Int>
+    val hasGeneratedDreamWorld: StateFlow<Boolean>
 
     suspend fun firebaseSignInWithGoogle(googleCredential: AuthCredential): Flow<Resource<Pair<AuthResult, String?>>>
 
@@ -52,4 +53,6 @@ interface AuthRepository {
     suspend fun getUnlockedWords(): Flow<Resource<List<String>>>
 
     suspend fun recordUserInteraction()
+
+    suspend fun setHasGeneratedDreamWorld(hasGenerated: Boolean)
 }

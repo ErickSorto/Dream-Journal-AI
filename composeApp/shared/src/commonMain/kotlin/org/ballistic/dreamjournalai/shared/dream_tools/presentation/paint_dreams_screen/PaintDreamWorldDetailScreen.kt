@@ -1,12 +1,14 @@
 package org.ballistic.dreamjournalai.shared.dream_tools.presentation.paint_dreams_screen
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -14,31 +16,36 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.baseline_brush_24
+import kotlinx.coroutines.delay
+import org.ballistic.dreamjournalai.shared.BottomNavigationController
+import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.DreamTools
+import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.PaintDreamWorldEvent
+import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolButton
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolScreenWithNavigateUpTopBar
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -46,19 +53,34 @@ import org.jetbrains.compose.resources.painterResource
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun SharedTransitionScope.PaintDreamWorldDetailScreen(
-    imageID: Int,
+    imageID: DrawableResource,
+    imagePath: String,
     animatedVisibilityScope: AnimatedVisibilityScope,
     bottomPadding: Dp,
     onNavigate: () -> Unit,
+    onEvent: (PaintDreamWorldEvent) -> Unit,
     navigateUp: () -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        BottomNavigationController.sendEvent(BottomNavigationEvent.SetVisibility(true))
+    }
+
+    var isAnimationFinished by remember { mutableStateOf(false) }
+    var isGlowVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isAnimationFinished) {
+        if (isAnimationFinished) {
+            delay(1000) // Wait for button expansion
+            isGlowVisible = true
+        }
+    }
 
     Scaffold(
         topBar = {
             DreamToolScreenWithNavigateUpTopBar(
                 title = "Visualize Dream World",
                 navigateUp = navigateUp,
-                onEvent = { /* Handle top bar events */ } //TODO: TRIGGER VIBRATION
+                onEvent = { onEvent(PaintDreamWorldEvent.TriggerVibration) }
             )
         },
         containerColor = Color.Transparent,
@@ -70,119 +92,83 @@ fun SharedTransitionScope.PaintDreamWorldDetailScreen(
                     top = innerPadding.calculateTopPadding(),
                     bottom = bottomPadding
                 )
-                .padding(16.dp)
                 .fillMaxHeight(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Dream Visualization Section
             Column(
-                modifier = Modifier
-                    .background(
-                        color = LightBlack.copy(alpha = 0.85f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .padding(16.dp)
+                modifier = Modifier.padding(16.dp)
             ) {
-//                Image(
-//                    painter = painterResource(imageID),
-//                    contentDescription = "Dream Visualization Tool",
-//                    modifier = Modifier
-//                        .aspectRatio(16 / 9f)
-//                        .fillMaxWidth()
-//                        .sharedElement(
-//                            rememberSharedContentState(key = "image/$imageID"),
-//                            animatedVisibilityScope = animatedVisibilityScope,
-//                            boundsTransform = { _, _ ->
-//                                tween(500)
-//                            }
-//                        )
-//                        .clip(RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp)),
-//                    contentScale = ContentScale.Crop,
-//                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = DreamTools.DREAM_WORLD.title,
+                Image(
+                    painter = painterResource(imageID),
+                    contentDescription = "Dream Visualization Tool",
                     modifier = Modifier
-                        .padding(horizontal = 16.dp),
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.headlineSmall,
+                        .aspectRatio(16 / 9f)
+                        .fillMaxWidth()
+                        .sharedElement(
+                            rememberSharedContentState(key = "image/$imagePath"),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            boundsTransform = { _, _ ->
+                                tween(500)
+                            }
+                        )
+                        .clip(RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp)),
+                    contentScale = ContentScale.Crop,
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                TypewriterText(
-                    text = "Visualize your dream worlds to gain deeper insights. " +
-                            "Select and compile multiple dreams to create a comprehensive visual map. " +
-                            "Identify and understand recurring themes, patterns, and symbols within your dreamscape.",
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .fillMaxWidth(),
-                    color = Color.White,
-                    textAlign = TextAlign.Start,
-                    style = MaterialTheme.typography.bodyMedium,
-                    delay = 500,
-                )
-                Spacer(modifier = Modifier.height(16.dp))
 
-                // Optional: Add a visualization preview or interactive component
-                // For example, a placeholder for a dream map or chart
-                // Replace with actual visualization components as needed
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp)
                         .background(
-                            color = LightBlack.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(8.dp)
-                        ),
-                    contentAlignment = Alignment.Center
+                            color = LightBlack.copy(alpha = 0.9f),
+                            shape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
+                        )
+                        .animateContentSize()
                 ) {
                     Text(
-                        text = "Dream Map Preview",
-                        color = Color.White.copy(alpha = 0.7f),
-                        style = MaterialTheme.typography.bodySmall
+                        text = DreamTools.DREAM_WORLD.title,
+                        modifier = Modifier.fillMaxWidth().padding(16.dp, 16.dp, 16.dp, 0.dp),
+                        color = Color.White,
+                        textAlign = TextAlign.Start,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    TypewriterText(
+                        text = "Harness the power of AI to weave your recent dreams into a single, cohesive masterpiece. " +
+                                "This visual synthesis reveals hidden connections, recurring themes, and the overall atmosphere of your subconscious mind, offering a unique perspective on your dream journey.",
+                        modifier = Modifier
+                            .fillMaxWidth().padding(16.dp, 0.dp, 16.dp, 0.dp),
+                        color = Color.White.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Start,
+                        style = MaterialTheme.typography.bodyMedium,
+                        delay = 500,
+                        onAnimationComplete = { isAnimationFinished = true }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    val buttonWidth by animateFloatAsState(
+                        targetValue = if (isAnimationFinished) 1f else 0f,
+                        animationSpec = tween(1000)
+                    )
+
+                    if (isAnimationFinished) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        DreamToolButton(
+                            text = "Paint Dream World",
+                            icon = Res.drawable.baseline_brush_24,
+                            onClick = {
+                                onEvent(PaintDreamWorldEvent.TriggerVibration)
+                                onNavigate()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            buttonModifier = Modifier.fillMaxWidth(buttonWidth).padding(horizontal = 16.dp),
+                            isGlowVisible = isGlowVisible
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Action Button Section
-            Button(
-                onClick = {
-                    onNavigate()
-                },
-                modifier = Modifier
-                    .padding(vertical = 8.dp)
-                    .fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = RedOrange.copy(
-                        alpha = 0.9f
-                    )
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.baseline_brush_24),
-                    contentDescription = "Visualize Dreams",
-                    modifier = Modifier.size(36.dp),
-                    colorFilter = ColorFilter.tint(Color.White),
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Create Dream Map",
-                    modifier = Modifier
-                        .weight(1f),
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Image(
-                    painter = painterResource(Res.drawable.baseline_brush_24),
-                    contentDescription = "Visualize Dreams",
-                    modifier = Modifier.size(36.dp),
-                    colorFilter = ColorFilter.tint(Color.Transparent)
-                )
             }
         }
     }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -54,16 +55,14 @@ fun MassInterpretationHistoryPage(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 16.dp)
     ) {
-        item {
-            for (interpretation in interpretDreamsScreenState.massMassInterpretations) {
-                MassInterpretationItem(
-                    interpretDreamsScreenState = interpretDreamsScreenState,
-                    pagerState = pagerState,
-                    massInterpretation = interpretation,
-                    onEvent = { onEvent(it) },
-                    scope = scope
-                )
-            }
+        items(interpretDreamsScreenState.massMassInterpretations) { interpretation ->
+            MassInterpretationItem(
+                interpretDreamsScreenState = interpretDreamsScreenState,
+                pagerState = pagerState,
+                massInterpretation = interpretation,
+                onEvent = { onEvent(it) },
+                scope = scope
+            )
         }
     }
 }
