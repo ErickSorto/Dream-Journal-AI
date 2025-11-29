@@ -344,7 +344,7 @@ fun MainScreenView(
                     }
 
                     Text(
-                        text = "Version: 1.2.8",
+                        text = "Version: 1.3.0",
                         color = if (isSystemInDarkTheme()) Color.White else Color.Black,
                         modifier = Modifier
                             .padding(bottom = 16.dp, top = 8.dp)
