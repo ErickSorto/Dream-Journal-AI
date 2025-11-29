@@ -28,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -49,133 +48,59 @@ import androidx.compose.ui.unit.sp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.ai_tools_selection
 import dreamjournalai.composeapp.shared.generated.resources.baseline_smart_display_24
+import dreamjournalai.composeapp.shared.generated.resources.dream_token
 import dreamjournalai.composeapp.shared.generated.resources.tap
 import dreamjournalai.composeapp.shared.generated.resources.watch_ad
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.SnackbarAction
 import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.SnackbarEvent
-import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.ButtonType
+import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.components.singleClick
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import dreamjournalai.composeapp.shared.generated.resources.dream_token
-import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.components.singleClick
 
 @Composable
 fun GenerateButtonsLayout(
     onAddEditEvent: (AddEditDreamEvent) -> Unit,
     animateToPage: (Int) -> Unit,
     snackBarState: () -> Unit,
-    audioUrl: String = "",
-    audioDuration: Long = 0,
-    audioTimestamp: Long = 0,
-    isAudioPermanent: Boolean = false,
-    isTranscribing: Boolean = false,
-    isKeyboardOpen: Boolean = false,
     isUserAnonymous: Boolean = false,
-    canGenerateAI: Boolean
+    canGenerateAI: Boolean,
+    audioUrl: String,
+    onShowDeleteDialog: () -> Unit,
+    isTranscribing: Boolean
 ) {
     var showVoicePopup by remember { mutableStateOf(false) }
-    var showDeleteAudioDialog by remember { mutableStateOf(false) }
-    var showFleetingDialog by remember { mutableStateOf(false) }
-    var wasTranscribing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-
-    LaunchedEffect(isTranscribing) {
-        if (isTranscribing) {
-            wasTranscribing = true
-            showVoicePopup = true // Ensure popup is open when transcribing
-        } else {
-            // Let the popup handle closing itself after animation finishes
-            if (wasTranscribing) {
-                wasTranscribing = false
-            }
-        }
-    }
 
     if (showVoicePopup) {
         VoiceRecordingPopUp(
             isTranscribing = isTranscribing,
             onDismissRequest = { showVoicePopup = false },
             onRecordingSaved = { path, duration ->
-                // Do not close popup here; let isTranscribing state handle it
                 onAddEditEvent(AddEditDreamEvent.OnVoiceRecordingSaved(path, duration))
             }
         )
     }
 
-    if (showDeleteAudioDialog) {
-        ActionBottomSheet(
-            title = "Delete Audio",
-            message = "Are you sure you want to delete this audio recording?",
-            buttonText = "Delete",
-            onClick = {
-                onAddEditEvent(AddEditDreamEvent.DeleteVoiceRecording)
-                showDeleteAudioDialog = false
-            },
-            onClickOutside = {
-                showDeleteAudioDialog = false
-            }
-        )
-    }
-
-    if (showFleetingDialog) {
-        FleetingAudioDialog(
-            audioTimestamp = audioTimestamp,
-            audioDurationSeconds = audioDuration,
-            onDismiss = { showFleetingDialog = false },
-            onKeepForever = { cost ->
-                onAddEditEvent(AddEditDreamEvent.MakeAudioPermanent(cost))
-                showFleetingDialog = false
-            }
-        )
-    }
-
     Column(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        AnimatedVisibility(
-            visible = !isKeyboardOpen && audioUrl.isNotBlank(),
-            enter = fadeIn(animationSpec = tween(durationMillis = 150)),
-            exit = fadeOut(animationSpec = tween(durationMillis = 150))
-        ) {
-            Column {
-                VoiceRecordingPlayback(
-                    audioUrl = audioUrl,
-                    duration = audioDuration,
-                    isPermanent = isAudioPermanent,
-                    onDelete = {
-                        onAddEditEvent(AddEditDreamEvent.TriggerVibration)
-                        showDeleteAudioDialog = true
-                    },
-                    onEvent = onAddEditEvent,
-                    onFleetingWarningClick = {
-                        showFleetingDialog = true
-                    },
-                    onTranscriptionClick = {
-                        onAddEditEvent(AddEditDreamEvent.ToggleTranscriptionBottomSheet(true))
-                    }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-        }
-
         Text(
             text = stringResource(Res.string.ai_tools_selection),
             style = MaterialTheme.typography.labelMedium,
             color = White,
-            modifier = Modifier.padding(4.dp, 4.dp, 4.dp, 4.dp)
+            modifier = Modifier.padding(vertical = 8.dp)
         )
         Row(
             modifier = Modifier
-                .padding(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 0.dp),
+                .padding(bottom = 0.dp, start = 16.dp, end = 16.dp, top = 0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -231,9 +156,9 @@ fun GenerateButtonsLayout(
                             scope.launch {
                                 SnackbarController.sendEvent(
                                     SnackbarEvent(
-                                        message = "Delete previous audio recording first",
+                                        message = "Delete recording to continue",
                                         action = SnackbarAction("Delete") {
-                                            showDeleteAudioDialog = true
+                                            onShowDeleteDialog()
                                         }
                                     )
                                 )

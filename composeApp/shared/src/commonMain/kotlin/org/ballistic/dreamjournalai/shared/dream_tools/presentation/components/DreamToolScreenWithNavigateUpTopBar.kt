@@ -3,7 +3,9 @@ package org.ballistic.dreamjournalai.shared.dream_tools.presentation.components
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -94,14 +96,14 @@ fun DreamToolScreenWithNavigateUpTopBar(
             .background(DarkBlue.copy(alpha = 0.5f))
             .dynamicBottomNavigationPadding()
         ) {
-            androidx.compose.foundation.layout.Row(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = rawStatusBarTop)
                     .height(contentHeight)
                     .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Start
+                horizontalArrangement = Arrangement.Start
             ) {
                 IconButton(
                     onClick = {
@@ -112,7 +114,11 @@ fun DreamToolScreenWithNavigateUpTopBar(
                     },
                     enabled = enabledBack,
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = White)
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = if (enabledBack) White else White.copy(alpha = 0.5f)
+                    )
                 }
 
                 // Title centered: use weight to take remaining space

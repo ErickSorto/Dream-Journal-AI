@@ -1,11 +1,14 @@
 package org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.do_you_want_to_save_this_dream
 import dreamjournalai.composeapp.shared.generated.resources.save_dream
@@ -34,7 +37,8 @@ fun AlertSave(
             TextButton(
                 onClick = {
                     onConfirm()
-                }
+                },
+                modifier = Modifier.padding(0.dp)
             ) {
                 //light white cloud blue
                 Text(stringResource(Res.string.save_dream), color = Color(0xFFE1F5FE))
@@ -44,9 +48,10 @@ fun AlertSave(
             TextButton(
                 onClick = {
                     onDismiss()
-                }
+                },
+                modifier = Modifier.padding(0.dp)
             ) {
-                Text("Discard Changes", color = RedOrange)
+                Text("Discard", color = RedOrange)
             }
         },
         shape = MaterialTheme.shapes.medium,

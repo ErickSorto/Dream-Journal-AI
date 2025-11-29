@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -32,7 +31,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -43,9 +41,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -54,6 +49,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -76,7 +72,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
@@ -87,15 +82,16 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.baseline_brush_24
-import dreamjournalai.composeapp.shared.generated.resources.dream_token
 import dreamjournalai.composeapp.shared.generated.resources.onboarding_long
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.BottomNavigationController
 import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
+import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
+import org.ballistic.dreamjournalai.shared.core.util.BackHandler
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ImageGenerationPopUp
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.ShootingStarLayer
@@ -104,6 +100,7 @@ import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.PaintDreamWo
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolButton
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolScreenWithNavigateUpTopBar
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.paint_dreams_screen.viewmodel.PaintDreamWorldScreenState
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
@@ -115,7 +112,6 @@ import kotlin.math.absoluteValue
 @Composable
 fun SharedTransitionScope.PaintDreamWorldScreen(
     paintDreamWorldScreenState: PaintDreamWorldScreenState,
-    bottomPaddingValue: Dp,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onEvent: (PaintDreamWorldEvent) -> Unit,
     onMainEvent: (MainScreenEvent) -> Unit,
@@ -124,12 +120,18 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val isAnimationFinished = remember { mutableStateOf(paintDreamWorldScreenState.isAnimationPlayed) }
-    
+
     val cost = if (paintDreamWorldScreenState.hasGeneratedDreamWorld) 5 else 0
 
     // Loading Animation State
     val progressAnim = remember { Animatable(0f) }
     var currentMessage by remember { mutableStateOf("Analyzing your recent dreams...") }
+
+    if (paintDreamWorldScreenState.isLoading) {
+        BackHandler(true) {
+            // Do nothing
+        }
+    }
 
     // Start loading animation when isLoading becomes true
     LaunchedEffect(paintDreamWorldScreenState.isLoading) {
@@ -157,6 +159,17 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
         }
     }
 
+    // Lock the drawer when this screen is active
+    LaunchedEffect(Unit) {
+        DrawerController.disable()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            DrawerController.enable()
+        }
+    }
+
     LaunchedEffect(Unit) {
         BottomNavigationController.sendEvent(BottomNavigationEvent.SetVisibility(false))
     }
@@ -166,7 +179,7 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
             snackbarHostState.showSnackbar(it)
         }
     }
-    
+
     if (paintDreamWorldScreenState.isImageGenerationPopUpVisible) {
         ImageGenerationPopUp(
             dreamTokens = paintDreamWorldScreenState.dreamTokens,
@@ -205,7 +218,7 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         BackgroundAnimation(
             shouldAnimate = !paintDreamWorldScreenState.isAnimationPlayed,
-            onAnimationFinished = { 
+            onAnimationFinished = {
                 isAnimationFinished.value = true
                 onEvent(PaintDreamWorldEvent.AnimationFinished)
             }
@@ -223,7 +236,7 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
                                 AnimatedContent(
                                     targetState = currentMessage,
                                     transitionSpec = {
-                                        fadeIn(animationSpec = tween(600)) togetherWith 
+                                        fadeIn(animationSpec = tween(600)) togetherWith
                                                 fadeOut(animationSpec = tween(200))
                                     },
                                     label = "LoadingText"
@@ -245,7 +258,10 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
                                 )
                             }
                         },
-                        navigateUp = navigateUp,
+                        navigateUp = {
+                            DrawerController.enable()
+                            navigateUp()
+                        },
                         onEvent = { onEvent(PaintDreamWorldEvent.TriggerVibration) },
                         enabledBack = !paintDreamWorldScreenState.isLoading,
                     )
@@ -471,11 +487,11 @@ fun SharedTransitionScope.ContentState(
             state.selectedPainting?.let { selected ->
                 val index = state.paintings.indexOfFirst { it.id == selected.id }
                 if (index >= 0) {
-                     if (pagerState.currentPage != index) {
-                         // Only animate if reasonable distance, else snap? 
-                         // For now always animate for smoothness, unless key change happened which handles 0 case.
-                         pagerState.animateScrollToPage(index)
-                     }
+                    if (pagerState.currentPage != index) {
+                        // Only animate if reasonable distance, else snap?
+                        // For now always animate for smoothness, unless key change happened which handles 0 case.
+                        pagerState.animateScrollToPage(index)
+                    }
                 }
             }
         }
@@ -488,7 +504,6 @@ fun SharedTransitionScope.ContentState(
                     .fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
                 pageSpacing = 16.dp,
-                // Removed key={...} from here as we are keying the whole pager
             ) { page ->
                 val infiniteTransition = rememberInfiniteTransition()
                 val scale by infiniteTransition.animateFloat(
@@ -516,7 +531,7 @@ fun SharedTransitionScope.ContentState(
                                 )
                                 scaleX = horizontalScale
                                 scaleY = horizontalScale
-                                
+
                                 alpha = lerp(
                                     start = 0.5f,
                                     stop = 1f,
@@ -573,7 +588,7 @@ fun SharedTransitionScope.ContentState(
                                         .align(Alignment.TopEnd)
                                         .padding(12.dp)
                                         .background(Color.Black.copy(alpha = 0.5f), CircleShape)
-                                    .size(36.dp)
+                                        .size(36.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
@@ -734,11 +749,11 @@ fun SmoothTypewriterText(
     modifier: Modifier = Modifier,
     style: TextStyle = MaterialTheme.typography.headlineSmall,
     fontWeight: FontWeight = FontWeight.Normal,
-    color: Color = White,
+    color: Color = OriginalXmlColors.White,
     textAlign: TextAlign = TextAlign.Start
 ) {
     val progress = remember { Animatable(0f) }
-    
+
     // Reset when text changes
     LaunchedEffect(text) {
         progress.snapTo(0f)
@@ -750,9 +765,9 @@ fun SmoothTypewriterText(
             )
         )
     }
-    
+
     val currentProgress = progress.value
-    
+
     Text(
         text = buildAnnotatedString {
             text.forEachIndexed { index, char ->

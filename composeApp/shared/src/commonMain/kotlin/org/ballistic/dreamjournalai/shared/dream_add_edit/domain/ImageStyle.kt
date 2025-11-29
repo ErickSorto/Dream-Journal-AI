@@ -11,15 +11,15 @@ enum class ImageStyle(
         "Let AI Choose",
         "",
         "",
-        "https://firebasestorage.googleapis.com/v0/b/dream-journal-ai.appspot.com/o/DreamStyleImages%2FVibrantDream.png?alt=media&token=8d16286e-833b-40e5-a219-d3f1e488c59e",
+        "https://firebasestorage.googleapis.com/v0/b/dream-journal-ai.appspot.com/o/DreamStyleImages%2FAIChooseDreamWorld.png?alt=media&token=efc1844f-620c-4e27-aae6-07fb357ec204",
         "https://firebasestorage.googleapis.com/v0/b/dream-journal-ai.appspot.com/o/DreamStyleImages%2FAIChooseDreamWorld.png?alt=media&token=efc1844f-620c-4e27-aae6-07fb357ec204"
     ),
     VIBRANT(
         "Vibrant",
-        ", ultra-vibrant colors, dreamy atmosphere, painterly lighting, high detail, rich fantasy tones",
-        ", unified vibrant fantasy dream landscape",
+        ", ultra-vibrant cinematic color grading, warm-to-deep contrast, rich saturation, glowing highlights, high dynamic range lighting, painterly depth, dramatic dream tone, no pastel hues",
+        ", unified vibrant dream aesthetic with luminous contrast and rich color depth",
         "https://firebasestorage.googleapis.com/v0/b/dream-journal-ai.appspot.com/o/DreamStyleImages%2FVibrantDream.png?alt=media&token=8d16286e-833b-40e5-a219-d3f1e488c59e",
-        "https://firebasestorage.googleapis.com/v0/b/dream-journal-ai.appspot.com/o/DreamStyleImages%2FVibrantDream.png?alt=media&token=8d16286e-833b-40e5-a219-d3f1e488c59e"
+        "https://firebasestorage.googleapis.com/v0/b/dream-journal-ai.appspot.com/o/DreamStyleImages%2FVibrantWorld.png?alt=media&token=fcbc2aaa-ab95-4668-aadd-e6aa0ed70ece"
     ),
 
     REALISTIC(
