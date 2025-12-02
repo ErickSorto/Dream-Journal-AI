@@ -36,6 +36,7 @@ import org.ballistic.dreamjournalai.shared.navigation.BottomNavigationRoutes
 import org.ballistic.dreamjournalai.shared.navigation.Route
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BottomNavigation(
@@ -118,7 +119,7 @@ fun BottomNavigation(
                             // Main icon (top layer)
                             Icon(
                                 imageVector = item.icon,
-                                contentDescription = item.title,
+                                contentDescription = item.title?.let { stringResource(it) }, // Resolve StringResource here
                                 modifier = Modifier
                                     .size(24.dp)
                                     .graphicsLayer(alpha = 0.99f)
@@ -146,12 +147,14 @@ fun BottomNavigation(
                             visible = isSelected,
                             modifier = Modifier.padding(start = 4.dp),
                         ) {
-                            Text(
-                                text = item.title!!,
-                                color = White,
-                                style = typography.titleSmall,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
+                            item.title?.let {
+                                Text(
+                                    text = stringResource(it), // Resolve StringResource here
+                                    color = White,
+                                    style = typography.titleSmall,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                            }
                         }
                     }
                 },

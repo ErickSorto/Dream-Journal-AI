@@ -4,6 +4,9 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.dismiss
+import dreamjournalai.composeapp.shared.generated.resources.dream_deleted
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -23,6 +26,7 @@ import org.ballistic.dreamjournalai.shared.SnackbarAction
 import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.DreamListEvent
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.DreamUseCases
@@ -87,8 +91,8 @@ class DreamJournalListViewModel(
                     // Reintroduce undo snackbar via centralized controller
                     SnackbarController.sendEvent(
                         SnackbarEvent(
-                            message = "Dream deleted",
-                            action = SnackbarAction("Undo") { viewModelScope.launch { onEvent(DreamListEvent.RestoreDream) } }
+                            message = StringValue.Resource(Res.string.dream_deleted),
+                            action = SnackbarAction(StringValue.Resource(Res.string.dismiss)) { viewModelScope.launch { onEvent(DreamListEvent.RestoreDream) } }
                         )
                     )
                 }

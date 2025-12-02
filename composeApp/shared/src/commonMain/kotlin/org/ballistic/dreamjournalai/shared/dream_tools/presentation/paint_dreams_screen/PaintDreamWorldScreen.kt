@@ -81,17 +81,37 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.analyzing_recent_dreams
 import dreamjournalai.composeapp.shared.generated.resources.baseline_brush_24
+import dreamjournalai.composeapp.shared.generated.resources.combine_themes_description
+import dreamjournalai.composeapp.shared.generated.resources.delete
+import dreamjournalai.composeapp.shared.generated.resources.delete_painting_message
+import dreamjournalai.composeapp.shared.generated.resources.delete_painting_title
+import dreamjournalai.composeapp.shared.generated.resources.dismiss
+import dreamjournalai.composeapp.shared.generated.resources.dream_world_painting_content_description
+import dreamjournalai.composeapp.shared.generated.resources.extracting_themes_emotions
+import dreamjournalai.composeapp.shared.generated.resources.finalizing_masterpiece
+import dreamjournalai.composeapp.shared.generated.resources.next
 import dreamjournalai.composeapp.shared.generated.resources.onboarding_long
+import dreamjournalai.composeapp.shared.generated.resources.paint_dream_world_screen_title
+import dreamjournalai.composeapp.shared.generated.resources.paint_my_first_dream
+import dreamjournalai.composeapp.shared.generated.resources.paint_new_world
+import dreamjournalai.composeapp.shared.generated.resources.painting_dream_world
+import dreamjournalai.composeapp.shared.generated.resources.previous
+import dreamjournalai.composeapp.shared.generated.resources.visualize_dream_world
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.BottomNavigationController
 import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
 import org.ballistic.dreamjournalai.shared.DrawerController
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.core.util.BackHandler
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ImageGenerationPopUp
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.ShootingStarLayer
@@ -106,6 +126,7 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -123,9 +144,15 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
 
     val cost = if (paintDreamWorldScreenState.hasGeneratedDreamWorld) 5 else 0
 
+    // Hoist string resources outside LaunchedEffect
+    val analyzingDreamsMessage = stringResource(Res.string.analyzing_recent_dreams)
+    val extractingThemesMessage = stringResource(Res.string.extracting_themes_emotions)
+    val paintingWorldMessage = stringResource(Res.string.painting_dream_world)
+    val finalizingMasterpieceMessage = stringResource(Res.string.finalizing_masterpiece)
+
     // Loading Animation State
     val progressAnim = remember { Animatable(0f) }
-    var currentMessage by remember { mutableStateOf("Analyzing your recent dreams...") }
+    var currentMessage by remember { mutableStateOf(analyzingDreamsMessage) }
 
     if (paintDreamWorldScreenState.isLoading) {
         BackHandler(true) {
@@ -148,10 +175,10 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
                 while (isActive && progressAnim.value < 1f) {
                     val p = progressAnim.value
                     currentMessage = when {
-                        p < 0.25f -> "Analyzing your recent dreams..."
-                        p < 0.50f -> "Extracting themes and emotions..."
-                        p < 0.85f -> "Painting your dream world..."
-                        else -> "Finalizing masterpiece..."
+                        p < 0.25f -> analyzingDreamsMessage
+                        p < 0.50f -> extractingThemesMessage
+                        p < 0.85f -> paintingWorldMessage
+                        else -> finalizingMasterpieceMessage
                     }
                     delay(100)
                 }
@@ -176,7 +203,12 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
 
     LaunchedEffect(paintDreamWorldScreenState.error) {
         paintDreamWorldScreenState.error?.let {
-            snackbarHostState.showSnackbar(it)
+            SnackbarController.sendEvent(
+                SnackbarEvent(
+                    message = StringValue.DynamicString(it),
+                    action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                )
+            )
         }
     }
 
@@ -202,9 +234,9 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
 
     if (paintDreamWorldScreenState.isDeleteDialogVisible) {
         ActionBottomSheet(
-            title = "Delete Painting",
-            message = "Are you sure you want to delete this painting?",
-            buttonText = "Delete",
+            title = stringResource(Res.string.delete_painting_title),
+            message = stringResource(Res.string.delete_painting_message),
+            buttonText = stringResource(Res.string.delete),
             onClick = {
                 paintDreamWorldScreenState.paintingToDelete?.let {
                     onEvent(PaintDreamWorldEvent.DeletePainting(it))
@@ -251,7 +283,7 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
                                 }
                             } else {
                                 Text(
-                                    text = "Paint Dream World",
+                                    text = stringResource(Res.string.paint_dream_world_screen_title),
                                     color = White,
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
@@ -424,7 +456,7 @@ fun EmptyStateContent(onEvent: (PaintDreamWorldEvent) -> Unit, cost: Int) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Visualize your dream world",
+            text = stringResource(Res.string.visualize_dream_world),
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White,
             textAlign = TextAlign.Center,
@@ -432,7 +464,7 @@ fun EmptyStateContent(onEvent: (PaintDreamWorldEvent) -> Unit, cost: Int) {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Combine themes from your dreams into a unique digital painting.",
+            text = stringResource(Res.string.combine_themes_description),
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White.copy(alpha = 0.8f),
             textAlign = TextAlign.Center
@@ -440,7 +472,7 @@ fun EmptyStateContent(onEvent: (PaintDreamWorldEvent) -> Unit, cost: Int) {
         Spacer(modifier = Modifier.height(32.dp))
 
         DreamToolButton(
-            text = if (cost > 0) "Paint New World" else "Paint My First Dream \uD83C\uDF19",
+            text = if (cost > 0) stringResource(Res.string.paint_new_world) else stringResource(Res.string.paint_my_first_dream),
             icon = Res.drawable.baseline_brush_24,
             onClick = {
                 onEvent(PaintDreamWorldEvent.TriggerVibration)
@@ -560,7 +592,7 @@ fun SharedTransitionScope.ContentState(
                                         .memoryCacheKey("image/${painting.imageUrl}")
                                         .crossfade(true)
                                         .build(),
-                                    contentDescription = "Dream World Painting",
+                                    contentDescription = stringResource(Res.string.dream_world_painting_content_description),
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .aspectRatio(1f)
@@ -592,7 +624,7 @@ fun SharedTransitionScope.ContentState(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
-                                        contentDescription = "Delete",
+                                        contentDescription = stringResource(Res.string.delete),
                                         tint = RedOrange,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -628,11 +660,11 @@ fun SharedTransitionScope.ContentState(
                                 modifier = Modifier
                                     .align(Alignment.BottomStart)
                                     .padding(16.dp)
-                                    .background(Color.Black.copy(alpha = 0.3f), CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.KeyboardArrowLeft,
-                                    contentDescription = "Previous",
+                                    contentDescription = stringResource(Res.string.previous),
                                     tint = Color.White
                                 )
                             }
@@ -646,11 +678,11 @@ fun SharedTransitionScope.ContentState(
                                 modifier = Modifier
                                     .align(Alignment.BottomEnd)
                                     .padding(16.dp)
-                                    .background(Color.Black.copy(alpha = 0.3f), CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.KeyboardArrowRight,
-                                    contentDescription = "Next",
+                                    contentDescription = stringResource(Res.string.next),
                                     tint = Color.White
                                 )
                             }
@@ -678,7 +710,7 @@ fun SharedTransitionScope.ContentState(
                     )
                 } else {
                     DreamToolButton(
-                        text = if (cost > 0) "Paint New World" else "Paint My First Dream \uD83C\uDF19",
+                        text = if (cost > 0) stringResource(Res.string.paint_new_world) else stringResource(Res.string.paint_my_first_dream),
                         icon = Res.drawable.baseline_brush_24,
                         onClick = {
                             onEvent(PaintDreamWorldEvent.TriggerVibration)

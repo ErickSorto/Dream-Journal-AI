@@ -7,11 +7,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun DrawerGroupHeading(title: String) {
+fun DrawerGroupHeading(title: StringResource) {
     Text(
-        text = title,
+        text = stringResource(title),
         style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold,
         modifier = Modifier

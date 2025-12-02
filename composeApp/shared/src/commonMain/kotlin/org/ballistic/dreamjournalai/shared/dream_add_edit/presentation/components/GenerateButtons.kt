@@ -41,26 +41,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.ai_tools_selection
-import dreamjournalai.composeapp.shared.generated.resources.baseline_smart_display_24
-import dreamjournalai.composeapp.shared.generated.resources.dream_token
-import dreamjournalai.composeapp.shared.generated.resources.tap
-import dreamjournalai.composeapp.shared.generated.resources.watch_ad
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.SnackbarAction
 import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.SnackbarEvent
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.ButtonType
 import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.components.singleClick
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -95,7 +90,7 @@ fun GenerateButtonsLayout(
         Text(
             text = stringResource(Res.string.ai_tools_selection),
             style = MaterialTheme.typography.labelMedium,
-            color = White,
+            color = OriginalXmlColors.White,
             modifier = Modifier.padding(vertical = 8.dp)
         )
         Row(
@@ -107,7 +102,7 @@ fun GenerateButtonsLayout(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(color = White.copy(alpha = 0.1f))
+                    .background(color = OriginalXmlColors.White.copy(alpha = 0.1f))
             ) {
                 Row(
                     modifier = Modifier
@@ -140,15 +135,15 @@ fun GenerateButtonsLayout(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(color = White.copy(alpha = 0.1f))
+                    .background(color = OriginalXmlColors.White.copy(alpha = 0.1f))
                     .clickable {
                         onAddEditEvent(AddEditDreamEvent.TriggerVibration)
                         if (isUserAnonymous) {
                             scope.launch {
                                 SnackbarController.sendEvent(
                                     SnackbarEvent(
-                                        message = "Sign in to use feature!",
-                                        action = SnackbarAction("Dismiss") {}
+                                        message = StringValue.Resource(Res.string.sign_in_to_use_feature),
+                                        action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
                                     )
                                 )
                             }
@@ -156,10 +151,10 @@ fun GenerateButtonsLayout(
                             scope.launch {
                                 SnackbarController.sendEvent(
                                     SnackbarEvent(
-                                        message = "Delete recording to continue",
-                                        action = SnackbarAction("Delete") {
+                                        message = StringValue.Resource(Res.string.delete_recording_to_continue),
+                                        action = SnackbarAction(StringValue.Resource(Res.string.delete), {
                                             onShowDeleteDialog()
-                                        }
+                                        })
                                     )
                                 )
                             }
@@ -171,8 +166,8 @@ fun GenerateButtonsLayout(
             ) {
                 Icon(
                     imageVector = Icons.Filled.Mic,
-                    contentDescription = "Voice Recording",
-                    tint = White,
+                    contentDescription = stringResource(Res.string.voice_recording),
+                    tint = OriginalXmlColors.White,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -234,7 +229,8 @@ fun UniversalButton(
             Text(
                 text = stringResource(Res.string.tap),
                 fontSize = fontSize,
-                color = Color.Transparent
+                color = Color.Transparent,
+                textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -250,9 +246,10 @@ fun UniversalButton(
         if (hasText) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Tap to ${stringResource(buttonType.title)}",
+                text = stringResource(Res.string.tap_to_generate, stringResource(buttonType.title)),
                 fontSize = fontSize,
-                color = Color.White.copy(alpha = 0.6f)
+                color = Color.White.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -293,7 +290,7 @@ fun WatchAdButton(
             .fillMaxWidth()
             .height(50.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = RedOrange.copy(alpha = 0.8f)),
+        colors = ButtonDefaults.buttonColors(containerColor = OriginalXmlColors.RedOrange.copy(alpha = 0.8f)),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -303,7 +300,7 @@ fun WatchAdButton(
                 painter = painterResource(Res.drawable.baseline_smart_display_24),
                 contentDescription = stringResource(Res.string.watch_ad),
                 modifier = Modifier.size(24.dp),
-                tint = White,
+                tint = OriginalXmlColors.White,
             )
             Spacer(modifier = Modifier.size(8.dp))
             Text(
@@ -322,14 +319,14 @@ fun DreamTokenGenerateButton(
     amount: Int,
     customText: String? = null
 ) {
-    val amountText = if (amount == 0) "Free" else "$amount"
+    val amountText = if (amount == 0) stringResource(Res.string.free) else "$amount"
     Button(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(50.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = SkyBlue.copy(alpha = 0.8f)),
+        colors = ButtonDefaults.buttonColors(containerColor = OriginalXmlColors.SkyBlue.copy(alpha = 0.8f)),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -345,12 +342,12 @@ fun DreamTokenGenerateButton(
             } else {
                 Image(
                     painter = painterResource(Res.drawable.dream_token),
-                    contentDescription = "DreamToken",
+                    contentDescription = stringResource(Res.string.dream_token),
                     modifier = Modifier.size(30.dp)
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = "Use $amountText Dream Tokens",
+                    text = stringResource(Res.string.use_dream_tokens, amountText),
                     color = Color.White,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold

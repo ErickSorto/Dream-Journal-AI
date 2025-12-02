@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.Canvas
@@ -62,6 +63,7 @@ import androidx.compose.ui.zIndex
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.dream_onboarding_design
 import dreamjournalai.composeapp.shared.generated.resources.onboarding_long
+import dreamjournalai.composeapp.shared.generated.resources.welcome_dreamer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
@@ -77,10 +79,12 @@ import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.sig
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.SignupViewModelState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.uuid.ExperimentalUuidApi
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.rotate
+import dreamjournalai.composeapp.shared.generated.resources.app_name
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.random.Random
@@ -422,7 +426,7 @@ fun OnboardingScreen(
     val isEmailVerified = loginViewModelState.isEmailVerified
     val showLoginLayout = remember { mutableStateOf(false) }
     val isSplashScreenClosed = remember { mutableStateOf(false) }
-    val titleText = remember { mutableStateOf("Welcome Dreamer!") }
+    val welcomeDreamerString = stringResource(Res.string.welcome_dreamer) // Moved stringResource call here
     val visible = remember { mutableStateOf(true) }
     val transition = updateTransition(targetState = visible.value, label = "TitleVisibility")
     val titleColor by transition.animateColor(label = "titleColor") { state ->
@@ -589,7 +593,7 @@ fun OnboardingScreen(
                 .zIndex(0f),
             contentScale = ContentScale.Crop,
             alignment = VerticalBiasAlignment(cameraBiasY.value),
-            contentDescription = "DreamNorth",
+            contentDescription = stringResource(Res.string.app_name),
         )
 
         // Compute pan progress from camera bias (-1..1 -> 0..1)
@@ -663,7 +667,7 @@ fun OnboardingScreen(
                                     modifier = Modifier.padding(16.dp)
                                 )
                                 TypewriterText(
-                                    text = if (visible.value) titleText.value else "DreamNorth",
+                                    text = if (visible.value) welcomeDreamerString else stringResource(Res.string.app_name),
                                     modifier = Modifier.padding(16.dp),
                                     style = TextStyle(
                                         color = titleColor,
@@ -747,7 +751,7 @@ fun OnboardingScreen(
 
                             Image(
                                 painter = painterResource(Res.drawable.dream_onboarding_design),
-                                contentDescription = null,
+                                contentDescription = stringResource(Res.string.app_name),
                                 modifier = Modifier
                                     .fillMaxWidth(0.99f)
                                     .padding(top = 0.dp, bottom = 8.dp)

@@ -18,12 +18,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.dream_tools
+import dreamjournalai.composeapp.shared.generated.resources.menu
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.ToolsEvent
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,7 +45,7 @@ fun DreamToolsScreenTopBar(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Tools",
+                    text = stringResource(Res.string.dream_tools),
                     color = White,
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -58,7 +62,7 @@ fun DreamToolsScreenTopBar(
             }) {
                 Icon(
                     Icons.Filled.Menu,
-                    contentDescription = "Menu",
+                    contentDescription = stringResource(Res.string.menu),
                     tint = White
                 )
             }
@@ -67,7 +71,7 @@ fun DreamToolsScreenTopBar(
             IconButton(onClick = { /*TODO*/ }) {
                 Icon(
                     Icons.Filled.Menu,
-                    contentDescription = "Menu",
+                    contentDescription = stringResource(Res.string.menu),
                     tint = Color.Transparent
                 )
             }

@@ -7,6 +7,7 @@ import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.auth
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,15 +17,16 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.Resource
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.ReloadUserResponse
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.SendPasswordResetEmailResponse
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.SignInResponse
-import org.ballistic.dreamjournalai.shared.SnackbarController
-import org.ballistic.dreamjournalai.shared.SnackbarEvent
-import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
 
 class LoginViewModel(
     private val repo: AuthRepository
@@ -153,13 +155,13 @@ class LoginViewModel(
     private fun <T> handleResource(
         resourceFlow: Flow<Resource<T>>,
         transform: (T) -> LoginViewModelState,
-        errorTransform: (String) -> LoginViewModelState,
+        errorTransform: (StringValue) -> LoginViewModelState, // Changed to StringValue
         loadingTransform: () -> LoginViewModelState
     ) = resourceFlow.onEach { resource ->
         when (resource) {
             is Resource.Loading -> _state.value = loadingTransform()
             is Resource.Success -> _state.value = resource.data?.let { transform(it) }!!
-            is Resource.Error -> _state.value = errorTransform(resource.message ?: "Error")
+            is Resource.Error -> _state.value = errorTransform(StringValue.DynamicString(resource.message ?: "Error")) // Wrapped error message
         }
     }.launchIn(viewModelScope)
 
@@ -248,18 +250,18 @@ class LoginViewModel(
                  _state.value
               },
              errorTransform = { error ->
-                Logger.e("LoginViewModel") { "signInWithGoogle error: $error" }
+                Logger.e("LoginViewModel") { "signInWithGoogle error: $error" } // Use StringValue's toString for logging
                  viewModelScope.launch {
                      SnackbarController.sendEvent(
                          SnackbarEvent(
                              error,
-                             SnackbarAction("Dismiss") { }
+                             SnackbarAction(StringValue.Resource(Res.string.dismiss)) { } // Use StringValue.Resource
                          )
                      )
                  }
                  _state.value.copy(
                      isLoading = false,
-                     error = error,
+                     error = error, // Store StringValue
                      signInWithGoogleResponse = SignInUiState.Error(error)
                  )
              },
@@ -289,13 +291,13 @@ class LoginViewModel(
                     SnackbarController.sendEvent(
                         SnackbarEvent(
                             error,
-                            SnackbarAction("dismiss") { }
+                            SnackbarAction(StringValue.Resource(Res.string.dismiss)) { } // Use StringValue.Resource
                         )
                     )
                 }
                 _state.value.copy(
                     isLoading = false,
-                    error = error
+                    error = error // Store StringValue
                 )
             },
             loadingTransform = { _state.value.copy(isLoading = true) }
@@ -329,7 +331,7 @@ class LoginViewModel(
                 viewModelScope.launch {
                     SnackbarController.sendEvent(
                         SnackbarEvent(
-                            message = "Account deleted successfully",
+                            message = StringValue.Resource(Res.string.account_deleted_successfully), // Use StringValue
                             action = null
                         )
                     )
@@ -340,9 +342,9 @@ class LoginViewModel(
                 )
             },
             errorTransform = { error ->
-                Logger.withTag("LoginVM").e { "revokeAccess error: $error" }
+                Logger.withTag("LoginVM").e { "revokeAccess error: $error" } // Use StringValue's toString for logging
                 viewModelScope.launch {
-                    val lower = error.lowercase()
+                    val lower = if (error is StringValue.DynamicString) error.value.lowercase() else ""
                     val needsRecent = listOf(
                         "requires-recent-login",
                         "recent login",
@@ -352,17 +354,17 @@ class LoginViewModel(
                         "sensitive and requires"
                     ).any { lower.contains(it) }
                     val msg = if (needsRecent)
-                        "Please sign in again, then try deleting your account."
-                    else error
+                        StringValue.Resource(Res.string.re_auth_error) // Use StringValue
+                    else error // Already StringValue
                     SnackbarController.sendEvent(
                         SnackbarEvent(
                             message = msg,
-                            action = SnackbarAction("Dismiss") { }
+                            action = SnackbarAction(StringValue.Resource(Res.string.dismiss)) { } // Use StringValue.Resource
                         )
                     )
                 }
                 _state.value.copy(
-                    revokeAccess = RevokeAccessState(error = error)
+                    revokeAccess = RevokeAccessState(error = error) // Store StringValue
                 )
             },
             loadingTransform = {
@@ -383,7 +385,7 @@ class LoginViewModel(
                 Logger.withTag("LoginVM").e { "reauthWithGoogleAndDelete: no current user" }
                 SnackbarController.sendEvent(
                     SnackbarEvent(
-                        message = "No authenticated user",
+                        message = StringValue.Resource(Res.string.no_authenticated_user), // Use StringValue
                         action = null
                     )
                 )
@@ -397,8 +399,8 @@ class LoginViewModel(
             Logger.withTag("LoginVM").e { "reauthWithGoogleAndDelete error: ${e.message}" }
             SnackbarController.sendEvent(
                 SnackbarEvent(
-                    message = e.message ?: "Reauthentication failed",
-                    action = SnackbarAction("Dismiss") { }
+                    message = StringValue.DynamicString(e.message ?: "Reauthentication failed"), // Use StringValue
+                    action = SnackbarAction(StringValue.Resource(Res.string.dismiss)) { } // Use StringValue.Resource
                 )
             )
         }
@@ -423,14 +425,14 @@ data class LoginViewModelState(
     val isEmailVerified: Boolean = false,
     val isLoggedIn: Boolean = false,
     val isLoading: Boolean = false,
-    val error: String = "",
+    val error: StringValue = StringValue.Empty,
     val isUserAnonymous: Boolean = false,
  )
 
 data class RevokeAccessState(
      val isRevoked: Boolean = false,
      val isLoading: Boolean = false,
-     val error: String = ""
+     val error: StringValue = StringValue.Empty
  )
 
 @Immutable
@@ -459,5 +461,5 @@ sealed class SignInUiState {
     data class Success(val result: SignInResultUi) : SignInUiState()
 
     @Immutable
-    data class Error(val message: String) : SignInUiState()
+    data class Error(val message: StringValue) : SignInUiState()
 }

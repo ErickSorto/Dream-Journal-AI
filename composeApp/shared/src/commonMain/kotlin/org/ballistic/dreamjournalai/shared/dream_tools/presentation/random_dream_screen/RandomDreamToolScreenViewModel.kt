@@ -32,7 +32,6 @@ class RandomDreamToolScreenViewModel(
                     getDreams()
                 }
             }
-
             is RandomToolEvent.GetRandomDream -> {
                 viewModelScope.launch {
                     getRandomDream()

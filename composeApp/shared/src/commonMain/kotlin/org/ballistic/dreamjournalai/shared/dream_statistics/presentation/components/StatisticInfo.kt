@@ -59,7 +59,7 @@ fun StatisticInfo(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleSmall,
             color = Color.White,
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -95,7 +95,7 @@ fun StatisticInfo(
             }
             Text(
                 text = animatedValue.toInt().toString(),
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
                 color = Color.White,
                 fontSize = 32.sp
             )

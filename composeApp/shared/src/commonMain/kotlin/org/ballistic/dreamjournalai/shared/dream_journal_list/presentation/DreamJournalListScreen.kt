@@ -21,8 +21,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.TextFieldState
@@ -42,11 +42,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.new_dream_prompt
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.datetime.LocalDate
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.core.util.formatCustomDate
 import org.ballistic.dreamjournalai.shared.core.util.parseCustomDate
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.DreamListEvent
@@ -56,15 +59,14 @@ import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.compo
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components.DreamListScreenTopBar
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.viewmodel.DreamJournalListState
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
-import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModelState
 import org.ballistic.dreamjournalai.shared.utils.singleClick
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DreamJournalListScreen(
-    mainScreenViewModelState: MainScreenViewModelState,
     searchTextFieldState: TextFieldState,
     dreamJournalListState: DreamJournalListState,
     bottomPaddingValue: Dp,
@@ -102,9 +104,9 @@ fun DreamJournalListScreen(
     if (dreamJournalListState.bottomDeleteCancelSheetState) {
         ActionBottomSheet(
             modifier = Modifier.padding(),
-            title = "Delete this Dream?",
-            message = "Are you sure you want to delete this dream?",
-            buttonText = "Delete",
+            title = stringResource(Res.string.delete_this_dream),
+            message = stringResource(Res.string.are_you_sure_delete_dream),
+            buttonText = stringResource(Res.string.delete),
             onClick = {
                 onDreamListEvent(DreamListEvent.ToggleBottomDeleteCancelSheetState(false))
                 onDreamListEvent(

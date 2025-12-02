@@ -36,19 +36,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.interpret_dreams_title
 import dreamjournalai.composeapp.shared.generated.resources.interpret_vector
+import dreamjournalai.composeapp.shared.generated.resources.mass_interpretation_tool_content_description
+import dreamjournalai.composeapp.shared.generated.resources.mass_interpretation_tool_description
+import dreamjournalai.composeapp.shared.generated.resources.select_dreams
 import kotlinx.coroutines.delay
 import org.ballistic.dreamjournalai.shared.BottomNavigationController
 import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
-import org.ballistic.dreamjournalai.shared.dream_tools.domain.DreamTools
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.InterpretDreamsToolEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolButton
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolScreenWithNavigateUpTopBar
+import org.ballistic.dreamjournalai.shared.navigation.DreamTools
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -78,7 +83,7 @@ fun SharedTransitionScope.InterpretDreamsDetailScreen(
     Scaffold(
         topBar = {
             DreamToolScreenWithNavigateUpTopBar(
-                title = "Interpret Dreams",
+                title = stringResource(Res.string.interpret_dreams_title),
                 navigateUp = navigateUp,
                 onEvent = { onEvent(InterpretDreamsToolEvent.TriggerVibration) }
             )
@@ -97,7 +102,7 @@ fun SharedTransitionScope.InterpretDreamsDetailScreen(
             ) {
                 Image(
                     painter = painterResource(imageID),
-                    contentDescription = "Mass Interpretation Tool",
+                    contentDescription = stringResource(Res.string.mass_interpretation_tool_content_description),
                     modifier = Modifier
                         .aspectRatio(16 / 9f)
                         .fillMaxWidth()
@@ -122,7 +127,7 @@ fun SharedTransitionScope.InterpretDreamsDetailScreen(
                         .animateContentSize()
                 ) {
                     Text(
-                        text = DreamTools.AnalyzeDreams.title,
+                        text = stringResource(Res.string.interpret_dreams_title), // Assuming title is a StringResource and needs to be resolved
                         modifier = Modifier
                             .fillMaxWidth().padding(16.dp, 16.dp, 16.dp, 0.dp),
                         color = Color.White,
@@ -132,9 +137,7 @@ fun SharedTransitionScope.InterpretDreamsDetailScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     TypewriterText(
-                        text = "Interpretation tool for multiple dreams. This allows you to select " +
-                                "multiple dreams and analyze them together. You can find common themes, " +
-                                "emotions, and symbols in your dreams.",
+                        text = stringResource(Res.string.mass_interpretation_tool_description),
                         modifier = Modifier
                             .fillMaxWidth().padding(16.dp, 0.dp, 16.dp, 0.dp),
                         color = Color.White.copy(alpha = 0.85f),
@@ -154,7 +157,7 @@ fun SharedTransitionScope.InterpretDreamsDetailScreen(
                     if (isAnimationFinished) {
                         Spacer(modifier = Modifier.height(16.dp))
                         DreamToolButton(
-                            text = "Select Dreams",
+                            text = stringResource(Res.string.select_dreams),
                             icon = Res.drawable.interpret_vector,
                             onClick = {
                                 onEvent(InterpretDreamsToolEvent.TriggerVibration)

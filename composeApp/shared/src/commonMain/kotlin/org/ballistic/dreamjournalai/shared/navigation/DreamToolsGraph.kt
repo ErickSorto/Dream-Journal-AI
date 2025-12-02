@@ -202,7 +202,6 @@ fun DreamToolsGraph(
                     ToolFullScreenImageScreen(
                         imageID = route.imageURL,
                         animatedVisibilityScope = this,
-                        onMainEvent = onMainEvent,
                         onBackPress = {
                             navController.navigateUp()
                         }

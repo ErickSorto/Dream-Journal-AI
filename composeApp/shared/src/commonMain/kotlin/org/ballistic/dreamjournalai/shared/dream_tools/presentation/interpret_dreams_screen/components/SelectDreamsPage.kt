@@ -8,14 +8,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.dismiss
+import dreamjournalai.composeapp.shared.generated.resources.only_15_dreams_can_be_selected
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.core.util.formatCustomDate
 import org.ballistic.dreamjournalai.shared.core.util.parseCustomDate
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
@@ -23,15 +28,12 @@ import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.compo
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components.DreamItem
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.InterpretDreamsToolEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.viewmodel.InterpretDreamsScreenState
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SelectDreamsPage(
     interpretDreamsScreenState: InterpretDreamsScreenState,
-    snackbarHostState: SnackbarHostState,
     scope: CoroutineScope,
     chosenDreams: List<Dream>,
     modifier: Modifier = Modifier,
@@ -85,10 +87,14 @@ fun SelectDreamsPage(
                             )
                         ) {
                             scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    "Only 15 dreams can be selected",
-                                    "Dismiss",
-                                    duration = SnackbarDuration.Short
+                                SnackbarController.sendEvent(
+                                    SnackbarEvent(
+                                        message = StringValue.Resource(Res.string.only_15_dreams_can_be_selected),
+                                        action = SnackbarAction(
+                                            name = StringValue.Resource(Res.string.dismiss),
+                                            action = {}
+                                        )
+                                    )
                                 )
                             }
                         } else {

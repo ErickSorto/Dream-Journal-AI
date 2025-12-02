@@ -12,13 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.*
+import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIType
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
-import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +31,10 @@ fun QuestionAIGenerationBottomSheet(
     modifier: Modifier = Modifier
 ) {
     var selectedIndex by remember { mutableIntStateOf(0) }
-    val options = listOf("Standard AI", "Advanced AI")
+    val options = listOf(
+        stringResource(Res.string.standard_ai),
+        stringResource(Res.string.advanced_ai)
+    )
     val amount = selectedIndex
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -46,7 +49,7 @@ fun QuestionAIGenerationBottomSheet(
             Column(
                 modifier = modifier
                     .fillMaxWidth()
-                    .background(LightBlack)
+                    .background(OriginalXmlColors.LightBlack)
                     .verticalScroll(rememberScrollState())
                     .padding(bottom = 16.dp)
                     .animateContentSize(),
@@ -61,9 +64,9 @@ fun QuestionAIGenerationBottomSheet(
                 ) {
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        text = "Dream Question",
+                        text = stringResource(Res.string.dream_question),
                         style = MaterialTheme.typography.headlineSmall,
-                        color = White,
+                        color = OriginalXmlColors.White,
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     DreamTokenLayout(
@@ -78,7 +81,7 @@ fun QuestionAIGenerationBottomSheet(
                     },
                     label = {
                         Text(
-                            text = "Ask your Question",
+                            text = stringResource(Res.string.ask_your_question),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     },
@@ -106,9 +109,9 @@ fun QuestionAIGenerationBottomSheet(
                             label = { Text(label, style = MaterialTheme.typography.labelMedium) },
                             colors = SegmentedButtonDefaults.colors(
                                 activeContainerColor = OriginalXmlColors.SkyBlue.copy(alpha = 0.8f),
-                                activeContentColor = White,
+                                activeContentColor = OriginalXmlColors.White,
                                 inactiveContainerColor = Color.DarkGray.copy(alpha = 0.5f),
-                                inactiveContentColor = White.copy(alpha = 0.7f),
+                                inactiveContentColor = OriginalXmlColors.White.copy(alpha = 0.7f),
                                 activeBorderColor = OriginalXmlColors.SkyBlue
                             )
                         )
@@ -123,6 +126,6 @@ fun QuestionAIGenerationBottomSheet(
                 )
             }
         },
-        containerColor = LightBlack
+        containerColor = OriginalXmlColors.LightBlack
     )
 }

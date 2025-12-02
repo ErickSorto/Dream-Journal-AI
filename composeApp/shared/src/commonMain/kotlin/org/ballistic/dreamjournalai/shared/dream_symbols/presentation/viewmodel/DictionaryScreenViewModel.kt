@@ -9,6 +9,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.default_letter_a
+import dreamjournalai.composeapp.shared.generated.resources.dismiss_action
+import dreamjournalai.composeapp.shared.generated.resources.error_message_template
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,12 +20,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.DictionaryRepository
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_symbols.domain.SymbolEvent
 import co.touchlab.kermit.Logger
+import org.jetbrains.compose.resources.getString
+
 
 class DictionaryScreenViewModel(
     private val authRepository: AuthRepository,
@@ -91,8 +98,8 @@ class DictionaryScreenViewModel(
                             is Resource.Error -> {
                                 viewModelScope.launch {
                                     _symbolScreenState.value.snackBarHostState.value.showSnackbar(
-                                        message = "${result.message}",
-                                        actionLabel = "Dismiss"
+                                        message = getString(Res.string.error_message_template, result.message ?: ""),
+                                        actionLabel = getString(Res.string.dismiss_action)
                                     )
                                 }
                             }
@@ -183,8 +190,8 @@ class DictionaryScreenViewModel(
             is Resource.Error -> {
                 _symbolScreenState.value.bottomSheetState.value = false
                 _symbolScreenState.value.snackBarHostState.value.showSnackbar(
-                    message = "${result.message}",
-                    actionLabel = "Dismiss"
+                    message = getString(Res.string.error_message_template, result.message ?: ""),
+                    actionLabel = getString(Res.string.dismiss_action)
                 )
             }
 
@@ -216,10 +223,12 @@ class DictionaryScreenViewModel(
         val filtered = _symbolScreenState.value.dictionaryWordList.filter {
             it.word.startsWith(letter, ignoreCase = true)
         }
-        _symbolScreenState.value = _symbolScreenState.value.copy(
-            filteredWordsByLetter = filtered.toMutableList(),
-            selectedLetter = letter
-        )
+        _symbolScreenState.update { state ->
+            state.copy(
+                filteredWordsByLetter = filtered.toMutableList(),
+                selectedLetter = letter
+            )
+        }
     }
 
 
@@ -240,7 +249,7 @@ class DictionaryScreenViewModel(
             val defaultLetter = when {
                 availableLetters.contains('A') -> 'A'
                 availableLetters.isNotEmpty() -> availableLetters.minOrNull() ?: 'A'
-                else -> 'A'
+                else -> getString(Res.string.default_letter_a).first()
             }
             Logger.d("DictionaryVM") { "Default letter chosen: $defaultLetter (available=${availableLetters.sorted()})" }
             filterWordsByLetter(defaultLetter)

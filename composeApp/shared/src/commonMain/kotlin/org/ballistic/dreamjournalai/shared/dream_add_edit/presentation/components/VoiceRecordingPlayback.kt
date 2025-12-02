@@ -42,12 +42,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.fleeting_audio_warning
+import dreamjournalai.composeapp.shared.generated.resources.pause
+import dreamjournalai.composeapp.shared.generated.resources.play
+import dreamjournalai.composeapp.shared.generated.resources.view_transcription
 import org.ballistic.dreamjournalai.shared.core.platform.rememberAudioPlayer
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Yellow
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -74,12 +77,12 @@ fun VoiceRecordingPlayback(
 
     val filledBrush = remember {
         Brush.verticalGradient(
-            colors = listOf(RedOrange, SkyBlue)
+            colors = listOf(OriginalXmlColors.RedOrange, OriginalXmlColors.SkyBlue)
         )
     }
 
     val emptyBrush = remember {
-        SolidColor(White.copy(alpha = 0.3f))
+        SolidColor(OriginalXmlColors.White.copy(alpha = 0.3f))
     }
 
     val infiniteTransition = rememberInfiniteTransition(label = "HourglassRotation")
@@ -112,12 +115,16 @@ fun VoiceRecordingPlayback(
     ) {
         if (isTranscribing) {
             CircularProgressIndicator(
-                modifier = Modifier.size(24.dp).align(Alignment.Center),
-                color = White
+                modifier = Modifier
+                    .size(24.dp)
+                    .align(Alignment.Center),
+                color = OriginalXmlColors.White
             )
         } else {
             Row(
-                modifier = Modifier.fillMaxWidth().align(Alignment.Center)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.Center)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -138,8 +145,8 @@ fun VoiceRecordingPlayback(
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.HourglassEmpty, // Rounded Icon
-                                contentDescription = "Fleeting Audio Warning",
-                                tint = Yellow,
+                                contentDescription = stringResource(Res.string.fleeting_audio_warning),
+                                tint = OriginalXmlColors.Yellow,
                                 modifier = Modifier
                                     .size(24.dp) // Slightly bigger
                                     .rotate(rotation)
@@ -161,8 +168,8 @@ fun VoiceRecordingPlayback(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Message,
-                            contentDescription = "View Transcription",
-                            tint = White,
+                            contentDescription = stringResource(Res.string.view_transcription),
+                            tint = OriginalXmlColors.White,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -170,7 +177,9 @@ fun VoiceRecordingPlayback(
 
                 // Visualizer
                 Column(
-                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.Center
                 ) {
@@ -205,7 +214,7 @@ fun VoiceRecordingPlayback(
                     modifier = Modifier
                         .clip(CircleShape)
                         .size(40.dp)
-                        .background(White.copy(alpha = 0.2f))
+                        .background(OriginalXmlColors.White.copy(alpha = 0.2f))
                         .clickable {
                             if (isPlaying) {
                                 player.pause()
@@ -217,8 +226,10 @@ fun VoiceRecordingPlayback(
                 ) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = if (isPlaying) "Pause" else "Play",
-                        tint = White,
+                        contentDescription = if (isPlaying) stringResource(Res.string.pause) else stringResource(
+                            Res.string.play
+                        ),
+                        tint = OriginalXmlColors.White,
                         modifier = Modifier.size(24.dp)
                     )
                 }

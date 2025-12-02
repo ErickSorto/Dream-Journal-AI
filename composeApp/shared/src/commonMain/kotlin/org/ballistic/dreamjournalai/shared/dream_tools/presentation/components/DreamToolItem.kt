@@ -19,9 +19,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.coming_soon
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun DreamToolItem(
@@ -48,10 +51,10 @@ fun DreamToolItem(
     ) {
         val alphaIfDisabled = if (enabled) 1f else 0.4f
         val textColorIfDisabled = if (enabled) Color.White else Color.Gray
-        val titleIfDisabled = if (enabled) title else "Coming soon.."
+        val titleIfDisabled = if (enabled) title else stringResource(Res.string.coming_soon)
         Image(
             painter = painterResource(icon),
-            contentDescription = description,
+            contentDescription = description, // This description is passed in, so it's not hardcoded.
             modifier = modifier
                 .alpha(alphaIfDisabled)
                 .aspectRatio(16 / 9f)

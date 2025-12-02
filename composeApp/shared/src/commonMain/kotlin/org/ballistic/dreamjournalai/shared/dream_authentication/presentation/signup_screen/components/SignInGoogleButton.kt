@@ -26,8 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.ic_google_logo
-import org.ballistic.dreamjournalai.shared.core.Constants.SIGN_IN_WITH_GOOGLE
+import dreamjournalai.composeapp.shared.generated.resources.sign_in_with_google
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SignInGoogleButton(
@@ -77,7 +78,7 @@ fun SignInGoogleButton(
                             .align(Alignment.CenterStart)
                     )
                     Text(
-                        text = SIGN_IN_WITH_GOOGLE,
+                        text = stringResource(Res.string.sign_in_with_google),
                         fontSize = 16.sp,
                         color = Color.White,
                         modifier = Modifier.align(Alignment.Center)

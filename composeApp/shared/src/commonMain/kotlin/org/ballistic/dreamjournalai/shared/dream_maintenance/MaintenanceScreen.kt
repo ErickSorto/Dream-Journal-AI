@@ -15,8 +15,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.maintenance_message
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MaintenanceScreen(
@@ -34,12 +37,12 @@ fun MaintenanceScreen(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .background(
-                    color = DarkBlue.copy(alpha = 0.5f),
+                    color = OriginalXmlColors.DarkBlue.copy(alpha = 0.5f),
                     shape = RoundedCornerShape(16.dp)
                 ),
         ) {
             TypewriterText(
-                text = "In order to access store please log in! Anonymous users do not have access to the store!",
+                text = stringResource(Res.string.maintenance_message),
                 modifier = Modifier.padding(16.dp),
                 textAlign = TextAlign.Center,
                 animationDuration = animationDuration,

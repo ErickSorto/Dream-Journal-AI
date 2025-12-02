@@ -31,11 +31,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.baseline_lock_24
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
+import dreamjournalai.composeapp.shared.generated.resources.dream_token_content_description_text
+import dreamjournalai.composeapp.shared.generated.resources.unlock
+import dreamjournalai.composeapp.shared.generated.resources.view_word
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.DictionaryWord
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 
 @Composable
@@ -72,7 +74,7 @@ fun DictionaryWordItem(
             .padding(16.dp, 8.dp, 16.dp, 8.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(
-                if (wordItem.isUnlocked) LightBlack.copy(alpha = 0.8f) else LightBlack.copy(alpha = 0.2f)
+                if (wordItem.isUnlocked) OriginalXmlColors.LightBlack.copy(alpha = 0.8f) else OriginalXmlColors.LightBlack.copy(alpha = 0.2f)
             )
             .fillMaxWidth()
             .clickable {
@@ -92,7 +94,7 @@ fun DictionaryWordItem(
                 } else {
                     MaterialTheme.typography.titleMedium
                 },
-                color = if (wordItem.isUnlocked) BrighterWhite else BrighterWhite.copy(alpha = 0.7f),
+                color = if (wordItem.isUnlocked) OriginalXmlColors.BrighterWhite else OriginalXmlColors.BrighterWhite.copy(alpha = 0.7f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(vertical = 24.dp, horizontal = 8.dp)
@@ -102,10 +104,10 @@ fun DictionaryWordItem(
 
             if (wordItem.isUnlocked) {
                 Text(
-                    text = "View Word",
+                    text = stringResource(Res.string.view_word),
                     modifier = Modifier.padding(8.dp),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = BrighterWhite,
+                    color = OriginalXmlColors.BrighterWhite,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -117,16 +119,16 @@ fun DictionaryWordItem(
                         .padding(8.dp, 8.dp, 8.dp, 8.dp)
                         .shadow(4.dp, RoundedCornerShape(10.dp)), // Add shadow with rounded corners
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = RedOrange,
+                        containerColor = OriginalXmlColors.RedOrange,
                     ),
                     contentPadding = PaddingValues(start = 14.dp, end = 8.dp, top = 2.dp, bottom = 2.dp),
                     elevation = ButtonDefaults.buttonElevation(5.dp),
                     shape = RoundedCornerShape(10.dp) // Rounded corners for a softer look
                 ) {
                     Text(
-                        text = "Unlock",
+                        text = stringResource(Res.string.unlock),
                         style = MaterialTheme.typography.labelLarge,
-                        color = BrighterWhite,
+                        color = OriginalXmlColors.BrighterWhite,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -149,8 +151,8 @@ fun DictionaryCostLabel() {
     ) {
         Icon(
             painter = painterResource(Res.drawable.baseline_lock_24),
-            tint = BrighterWhite,
-            contentDescription = "DreamToken",
+            tint = OriginalXmlColors.BrighterWhite,
+            contentDescription = stringResource(Res.string.dream_token_content_description_text),
             modifier = Modifier
                 .size(35.dp)
                 .padding(8.dp, 4.dp, 0.dp, 4.dp),

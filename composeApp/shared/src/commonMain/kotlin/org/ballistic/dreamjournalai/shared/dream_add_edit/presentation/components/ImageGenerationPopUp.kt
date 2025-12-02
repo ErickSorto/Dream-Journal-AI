@@ -29,11 +29,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import dreamjournalai.composeapp.shared.generated.resources.*
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.ImageStyle
+import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.displayString
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.absoluteValue
 
 @OptIn(
@@ -53,8 +54,11 @@ fun ImageGenerationPopUp(
     fixedCost: Int? = null
 ) {
     var selectedIndex by remember { mutableIntStateOf(0) }
-    val options = listOf("High Quality", "Low Quality")
-    
+    val options = listOf(
+        stringResource(Res.string.high_quality),
+        stringResource(Res.string.low_quality)
+    )
+
     // Use fixedCost if provided, else standard calculation logic
     val amount = fixedCost ?: if (isWorldPainting) 5 else if (selectedIndex == 0) 2 else 1
 
@@ -70,7 +74,7 @@ fun ImageGenerationPopUp(
     LaunchedEffect(pagerState.currentPage) {
         onImageStyleChange(imageStyles[pagerState.currentPage])
     }
-    
+
     // Ensure pager stays in sync if external state changes
     LaunchedEffect(imageStyle) {
         if (pagerState.currentPage != imageStyle.ordinal) {
@@ -97,7 +101,7 @@ fun ImageGenerationPopUp(
                 modifier = modifier
                     .fillMaxWidth()
                     .background(
-                        LightBlack
+                        OriginalXmlColors.LightBlack
                     )
                     .verticalScroll(rememberScrollState())
                     .animateContentSize(),
@@ -112,9 +116,11 @@ fun ImageGenerationPopUp(
                 ) {
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        text = if (isWorldPainting) "Paint World" else "Dream Painter",
+                        text = if (isWorldPainting) stringResource(Res.string.paint_world) else stringResource(
+                            Res.string.dream_painter
+                        ),
                         style = MaterialTheme.typography.headlineSmall,
-                        color = White,
+                        color = OriginalXmlColors.White,
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     DreamTokenLayout(
@@ -141,9 +147,9 @@ fun ImageGenerationPopUp(
                                 label = { Text(label, style = MaterialTheme.typography.labelMedium) },
                                 colors = SegmentedButtonDefaults.colors(
                                     activeContainerColor = OriginalXmlColors.SkyBlue.copy(alpha = 0.8f),
-                                    activeContentColor = White,
+                                    activeContentColor = OriginalXmlColors.White,
                                     inactiveContainerColor = Color.DarkGray.copy(alpha = 0.5f),
-                                    inactiveContentColor = White.copy(alpha = 0.7f),
+                                    inactiveContentColor = OriginalXmlColors.White.copy(alpha = 0.7f),
                                     activeBorderColor = OriginalXmlColors.SkyBlue
                                 )
                             )
@@ -151,19 +157,19 @@ fun ImageGenerationPopUp(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-                
+
                 Text(
-                    text = "Choose Image Style",
+                    text = stringResource(Res.string.choose_image_style),
                     style = MaterialTheme.typography.titleMedium,
-                    color = White.copy(alpha = 0.8f)
+                    color = OriginalXmlColors.White.copy(alpha = 0.8f)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier.fillMaxWidth(),
-                     contentPadding = PaddingValues(horizontal = 26.dp),
-                     pageSpacing = (-12).dp
+                    contentPadding = PaddingValues(horizontal = 26.dp),
+                    pageSpacing = (-12).dp
                 ) { page ->
                     val infiniteTransition = rememberInfiniteTransition()
                     val scale by infiniteTransition.animateFloat(
@@ -209,10 +215,11 @@ fun ImageGenerationPopUp(
                                 .clip(RoundedCornerShape(16.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            val imageUrl = if (isWorldPainting) imageStyles[page].worldPaintingImage else imageStyles[page].image
+                            val imageUrl =
+                                if (isWorldPainting) imageStyles[page].worldPaintingImage else imageStyles[page].image
                             AsyncImage(
                                 model = imageUrl,
-                                contentDescription = imageStyles[page].displayName,
+                                contentDescription = imageStyles[page].displayString,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -227,8 +234,8 @@ fun ImageGenerationPopUp(
                                     .background(scrimBrush)
                             )
                             Text(
-                                text = imageStyles[page].displayName,
-                                color = White,
+                                text = imageStyles[page].displayString,
+                                color = OriginalXmlColors.White,
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Bold,
@@ -247,16 +254,17 @@ fun ImageGenerationPopUp(
                         onAdClick()
                     },
                     onDreamTokenClick = {
-                        val styleToSend = if (isWorldPainting) imageStyle.worldPromptAffix else imageStyle.promptAffix
+                        val styleToSend =
+                            if (isWorldPainting) imageStyle.worldPromptAffix else imageStyle.promptAffix
                         onDreamTokenClick(amount, styleToSend)
                     },
                     amount = amount,
-                    customText = if (fixedCost == 0) "Paint First Dream Free \uD83C\uDF19" else null
+                    customText = if (fixedCost == 0) stringResource(Res.string.paint_first_dream_free) else null
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
         },
-        containerColor = LightBlack
+        containerColor = OriginalXmlColors.LightBlack
     )
 }
 

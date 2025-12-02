@@ -18,12 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.menu
+import dreamjournalai.composeapp.shared.generated.resources.statistics_title
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.dream_statistics.StatisticEvent
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,8 +44,8 @@ fun DreamStatisticScreenTopBar(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Statistics",
-                    color = White,
+                    text = stringResource(Res.string.statistics_title),
+                    color = OriginalXmlColors.White,
                     modifier = Modifier
                         .align(Alignment.Center)
                 )
@@ -52,14 +55,14 @@ fun DreamStatisticScreenTopBar(
             IconButton(onClick = {
                 onEvent(StatisticEvent.TriggerVibration)
                 scope.launch {
-                    Logger.d("TopBar") { "Statistics: Menu icon clicked -> request open drawer" }
+                    Logger.d("TopBar") { "Nightmare: Menu icon clicked -> request open drawer" }
                     DrawerController.send(DrawerCommand.Open)
                 }
             }) {
                 Icon(
                     Icons.Filled.Menu,
-                    contentDescription = "Menu",
-                    tint = White
+                    contentDescription = stringResource(Res.string.menu),
+                    tint = OriginalXmlColors.White
                 )
             }
         },
@@ -67,13 +70,13 @@ fun DreamStatisticScreenTopBar(
             IconButton(onClick = { /*TODO*/ }) {
                 Icon(
                     Icons.Filled.Menu,
-                    contentDescription = "Menu",
+                    contentDescription = stringResource(Res.string.menu),
                     tint = Color.Transparent
                 )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = DarkBlue.copy(alpha = 0.5f),
+            containerColor = OriginalXmlColors.DarkBlue.copy(alpha = 0.5f),
             navigationIconContentColor = Color.Black,
             titleContentColor = Color.Black,
             actionIconContentColor = Color.Black

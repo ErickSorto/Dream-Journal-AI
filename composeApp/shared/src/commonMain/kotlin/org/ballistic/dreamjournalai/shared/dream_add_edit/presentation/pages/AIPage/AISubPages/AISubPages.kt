@@ -33,6 +33,9 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.ai_generated_image
+import dreamjournalai.composeapp.shared.generated.resources.dream_answer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
@@ -45,8 +48,7 @@ import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.components.singleClick
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.jetbrains.compose.resources.stringResource
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -154,7 +156,7 @@ fun StandardAIPageLayout(
         ) {
             Text(
                 text = title,
-                color = BrighterWhite,
+                color = OriginalXmlColors.BrighterWhite,
                 style = typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 16.dp)
             )
@@ -163,7 +165,7 @@ fun StandardAIPageLayout(
                 textAlign = TextAlign.Start,
                 style = typography.bodyMedium,
                 modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 16.dp),
-                color = White,
+                color = OriginalXmlColors.White,
                 useMarkdown = true
             )
         }
@@ -182,7 +184,7 @@ fun StandardAIPageLayout(
                 onAddEditEvent = onAddEditEvent,
                 snackBarState = snackBarState,
                 size = 160.dp,  // Adjusted size
-                fontSize = 24.sp,  // Adjusted font size
+                fontSize = 20.sp,  // Adjusted font size
                 modifier = Modifier.fillMaxSize(),
                 hasText = true,
                 canGenerateAI = canGenerateAI
@@ -279,7 +281,7 @@ fun SharedTransitionScope.AIPainterPage(
                     .placeholderMemoryCacheKey("image/${imageState.response}")
                     .memoryCacheKey("image/${imageState.response}")
                     .build(),
-                contentDescription = "AI Generated Image",
+                contentDescription = stringResource(Res.string.ai_generated_image),
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(10.dp))
@@ -304,7 +306,7 @@ fun SharedTransitionScope.AIPainterPage(
             UniversalButton(
                 buttonType = AIPageType.PAINTER.buttonType,
                 size = 160.dp,
-                fontSize = 24.sp,
+                fontSize = 20.sp,
                 onAddEditEvent = onAddEditEvent,
                 snackBarState = snackBarState,
                 modifier = Modifier.fillMaxSize(),
@@ -359,14 +361,14 @@ fun AIQuestionPage(
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
-                text = "Dream Answer",
-                color = BrighterWhite,
+                text = stringResource(Res.string.dream_answer),
+                color = OriginalXmlColors.BrighterWhite,
                 style = typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 8.dp)
             )
             Text(
                 text = questionState.question + if (questionState.question.endsWith("?")) "" else "?",
-                color = White,
+                color = OriginalXmlColors.White,
                 style = typography.titleSmall,
                 modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 0.dp),
                 textAlign = TextAlign.Center
@@ -376,7 +378,7 @@ fun AIQuestionPage(
                 style = typography.bodyMedium,
                 textAlign = TextAlign.Start,
                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 16.dp),
-                color = White,
+                color = OriginalXmlColors.White,
             )
         }
     } else {
@@ -390,7 +392,7 @@ fun AIQuestionPage(
         ) {
             UniversalButton(
                 size = 160.dp,
-                fontSize = 24.sp,
+                fontSize = 20.sp,
                 onAddEditEvent = onAddEditEvent,
                 snackBarState = snackBarState,
                 modifier = Modifier.fillMaxSize(),

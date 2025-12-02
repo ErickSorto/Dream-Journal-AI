@@ -32,15 +32,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.TransparentHintTextField
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.DreamListEvent
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.viewmodel.DreamJournalListState
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,8 +62,8 @@ fun DreamListScreenTopBar(
             ) {
                 if (!dreamJournalListState.isSearching) {
                     Text(
-                        text = "Dream Journal",
-                        color = White,
+                        text = stringResource(Res.string.dream_journal),
+                        color = OriginalXmlColors.White,
                         modifier = Modifier
                             .align(Alignment.Center)
                     )
@@ -85,14 +86,14 @@ fun DreamListScreenTopBar(
                 ) {
                     TransparentHintTextField(
                         textFieldState = searchTextFieldState,
-                        hint = "Search dream...",
+                        hint = stringResource(Res.string.search_dream),
                         isHintVisible = searchTextFieldState.text.isBlank(),
                         singleLine = true,
-                        textStyle = MaterialTheme.typography.headlineSmall.copy(White),
+                        textStyle = MaterialTheme.typography.headlineSmall.copy(OriginalXmlColors.White),
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
                             .background(
-                                color = White.copy(
+                                color = OriginalXmlColors.White.copy(
                                     alpha = 0.2f
                                 )
                             )
@@ -110,7 +111,7 @@ fun DreamListScreenTopBar(
                 Logger.d("TopBar") { "DreamList: Menu icon clicked -> request open drawer" }
                 scope.launch { DrawerController.send(DrawerCommand.Open) }
             }) {
-                Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = White)
+                Icon(Icons.Filled.Menu, contentDescription = stringResource(Res.string.menu), tint = OriginalXmlColors.White)
             }
         },
         actions = {
@@ -123,8 +124,8 @@ fun DreamListScreenTopBar(
                 ) {
                     Icon(
                         Icons.Filled.Search,
-                        contentDescription = "Search",
-                        tint = White
+                        contentDescription = stringResource(Res.string.search),
+                        tint = OriginalXmlColors.White
                     )
                 }
             } else {
@@ -138,14 +139,14 @@ fun DreamListScreenTopBar(
                 ) {
                     Icon(
                         Icons.Filled.Close,
-                        contentDescription = "Close",
-                        tint = White
+                        contentDescription = stringResource(Res.string.close),
+                        tint = OriginalXmlColors.White
                     )
                 }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = DarkBlue.copy(alpha = 0.5f),
+            containerColor = OriginalXmlColors.DarkBlue.copy(alpha = 0.5f),
             navigationIconContentColor = Color.Black,
             titleContentColor = Color.Black,
             actionIconContentColor = Color.Black

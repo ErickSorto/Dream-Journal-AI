@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
@@ -29,6 +30,7 @@ import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.DictionaryRepository
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.core.util.formatLocalDate
 import org.ballistic.dreamjournalai.shared.core.util.formatLocalTime
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AIResult
@@ -38,7 +40,6 @@ import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEve
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.ImageStyle
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
-import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.InvalidDreamException
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.DictionaryWord
 import kotlin.time.ExperimentalTime
@@ -94,8 +95,8 @@ class AddEditDreamViewModel(
 
     // Small helper to show snackbars succinctly
     private suspend fun showSnack(
-        message: String,
-        actionLabel: String = "Dismiss"
+        message: StringValue,
+        actionLabel: StringValue = StringValue.Resource(Res.string.dismiss)
     ) {
         SnackbarController.sendEvent(
             SnackbarEvent(
@@ -170,7 +171,7 @@ class AddEditDreamViewModel(
                         }
                         is Resource.Error<*> -> {
                             logger.e { "init: load dream failed: ${resource.message}" }
-                            viewModelScope.launch { showSnack("Couldn't get dream :(") }
+                            viewModelScope.launch { showSnack(StringValue.Resource(Res.string.get_dream_error)) }
                         }
                         is Resource.Loading<*> -> { /* no-op */ }
                     }
@@ -180,7 +181,7 @@ class AddEditDreamViewModel(
                 onEvent(AddEditDreamEvent.GetDreamTokens)
             }
         }
-        
+
         viewModelScope.launch {
             authRepository.isUserAnonymous.collect { isAnon ->
                 _addEditDreamState.update { it.copy(isUserAnonymous = isAnon) }
@@ -212,15 +213,15 @@ class AddEditDreamViewModel(
     private suspend fun performSave(onSaveSuccess: () -> Unit = {}): Boolean {
         val saveStart = kotlin.time.Clock.System.now()
         logger.d { "performSave: STARTED at ${saveStart.toEpochMilliseconds()}" }
-        
+
         // Auto title if blank
         val contentText = contentTextFieldState.value.text.toString()
         val transcription = _addEditDreamState.value.dreamInfo.dreamAudioTranscription
-        
+
         if (titleTextFieldState.value.text.isBlank()) {
             // Use content text if available, otherwise try transcription
             val textToGenerateFrom = if (contentText.isNotBlank()) contentText else transcription
-            
+
             if (textToGenerateFrom.isNotBlank()) {
                 val titleStart = kotlin.time.Clock.System.now()
                 logger.d { "performSave: Title generation STARTED" }
@@ -236,7 +237,7 @@ class AddEditDreamViewModel(
                 }
             }
         }
-        
+
         if (_addEditDreamState.value.dreamInfo.dreamId.isNullOrEmpty()) {
             updateDreamInfo { copy(dreamId = Uuid.random().toString()) }
         }
@@ -284,7 +285,7 @@ class AddEditDreamViewModel(
         if (saveResult is Resource.Error) {
             logger.e { "performSave: FAILED with error: ${saveResult.message}" }
             _addEditDreamState.update { it.copy(dreamIsSavingLoading = false) }
-            showSnack(saveResult.message ?: "Couldn't save dream :(")
+            showSnack(StringValue.DynamicString(saveResult.message ?: "Couldn't save dream :("))
             return false
         }
 
@@ -294,18 +295,18 @@ class AddEditDreamViewModel(
         val hasRemoteImage = dreamToSave.generatedImage.contains("firebasestorage.googleapis.com")
         // Check if current audioUrl is remote
         val hasRemoteAudio = dreamToSave.audioUrl.contains("firebasestorage.googleapis.com")
-        
+
         // If we expect an image (e.g. user requested one but it's blank or local), we poll.
         // But here, if generatedImage is blank, we don't expect one.
         // If audioUrl is blank, we don't expect one.
-        
+
         // We want to poll ONLY if we sent a local path and expect a remote path back.
         // Local paths usually don't contain "http".
         val sentLocalImage = dreamToSave.generatedImage.isNotBlank() && !dreamToSave.generatedImage.startsWith("http")
         val sentLocalAudio = dreamToSave.audioUrl.isNotBlank() && !dreamToSave.audioUrl.startsWith("http")
-        
+
         val needsPolling = sentLocalImage || sentLocalAudio
-        
+
         if (needsPolling) {
             val savedId = addEditDreamState.value.dreamInfo.dreamId
             if (!savedId.isNullOrBlank()) {
@@ -314,7 +315,7 @@ class AddEditDreamViewModel(
                         is Resource.Success<*> -> {
                             val latest = refreshed.data as Dream
                             var satisfied = true
-                            
+
                             if (sentLocalImage) {
                                 val newImage = latest.generatedImage
                                 if (newImage.contains("firebasestorage.googleapis.com")) {
@@ -324,7 +325,7 @@ class AddEditDreamViewModel(
                                     satisfied = false
                                 }
                             }
-                            
+
                             if (sentLocalAudio) {
                                 val newAudio = latest.audioUrl
                                 if (newAudio.contains("firebasestorage.googleapis.com")) {
@@ -333,7 +334,7 @@ class AddEditDreamViewModel(
                                     satisfied = false
                                 }
                             }
-                            
+
                             if (satisfied) return@repeat
                         }
                         else -> Unit
@@ -443,7 +444,7 @@ class AddEditDreamViewModel(
                             is Resource.Success -> _addEditDreamState.update { it.copy(unlockedWords = result.data?.toImmutableList() ?: persistentListOf()) }
                             is Resource.Error -> {
                                 Logger.e("AddEditDreamViewModel") { result.message.toString() }
-                                showSnack("Couldn't get unlocked words :(")
+                                showSnack(StringValue.Resource(Res.string.get_unlocked_words_error))
                             }
                             else -> Unit
                         }
@@ -465,8 +466,8 @@ class AddEditDreamViewModel(
                         addEditDreamState.value.dreamInfo.dreamId,
                         addEditDreamState.value.aiStates[AIType.IMAGE]?.response
                     )) {
-                        is Resource.Success<*> -> showSnack("Dream flagged successfully")
-                        is Resource.Error<*> -> showSnack("Couldn't flag dream :(")
+                        is Resource.Success<*> -> showSnack(StringValue.Resource(Res.string.dream_flagged_success))
+                        is Resource.Error<*> -> showSnack(StringValue.Resource(Res.string.dream_flagged_error))
                         else -> Unit
                     }
                 }
@@ -490,7 +491,7 @@ class AddEditDreamViewModel(
             is AddEditDreamEvent.TriggerVibrationSuccess -> viewModelScope.launch { vibratorUtil.triggerVibrationSuccess() }
             is AddEditDreamEvent.ResetNewImageGeneratedFlag -> _addEditDreamState.update { it.copy(isNewImageGenerated = false) }
             is AddEditDreamEvent.SetStartAnimation -> _addEditDreamState.update { it.copy(startAnimation = event.value) }
-            
+
             is AddEditDreamEvent.OnVoiceRecordingSaved -> {
                 markChanged()
                 _addEditDreamState.update { it.copy(isTranscribing = true) }
@@ -502,7 +503,7 @@ class AddEditDreamViewModel(
                         dreamIsAudioPermanent = false
                     )
                 }
-                
+
                 viewModelScope.launch {
                     logger.d { "OnVoiceRecordingSaved: Starting initial save..." }
                     val success = performSave(onSaveSuccess = {
@@ -510,7 +511,7 @@ class AddEditDreamViewModel(
                         viewModelScope.launch {
                             val uid = Firebase.auth.currentUser?.uid
                             val dreamId = addEditDreamState.value.dreamInfo.dreamId
-                            
+
                             if (uid != null && dreamId != null) {
                                 val storagePath = "$uid/dream_recordings/$dreamId.m4a"
                                 logger.d { "OnVoiceRecordingSaved: Starting transcription for $storagePath" }
@@ -519,16 +520,16 @@ class AddEditDreamViewModel(
                                     is AIResult.Success -> {
                                         val transEnd = kotlin.time.Clock.System.now()
                                         logger.d { "OnVoiceRecordingSaved: Transcription SUCCESS in ${(transEnd - transStart).inWholeMilliseconds}ms" }
-                                        
+
                                         updateDreamInfo { copy(dreamAudioTranscription = result.data) }
-                                        
+
                                         // Trigger Title generation implicitly via performSave check
                                         logger.d { "OnVoiceRecordingSaved: Calling final save (includes title gen)" }
                                         performSave(onSaveSuccess = {})
                                     }
                                     is AIResult.Error -> {
                                         logger.e { "OnVoiceRecordingSaved: Transcription FAILED: ${result.message}" }
-                                        showSnack("Transcription failed: ${result.message}")
+                                        showSnack(StringValue.Resource(Res.string.transcription_failed, result.message ?: ""))
                                     }
                                 }
                             }
@@ -536,7 +537,7 @@ class AddEditDreamViewModel(
                             _addEditDreamState.update { it.copy(isTranscribing = false) }
                         }
                     })
-                    
+
                     // If save failed (e.g. empty content), close the popup so it doesn't get stuck
                     if (!success) {
                         logger.e { "OnVoiceRecordingSaved: Initial save failed" }
@@ -546,14 +547,14 @@ class AddEditDreamViewModel(
             }
             is AddEditDreamEvent.DeleteVoiceRecording -> {
                 markChanged()
-                updateDreamInfo { 
+                updateDreamInfo {
                     copy(
                         dreamAudioUrl = "",
                         dreamAudioDuration = 0,
                         dreamAudioTimestamp = 0,
                         dreamIsAudioPermanent = false,
                         dreamAudioTranscription = ""
-                    ) 
+                    )
                 }
             }
             is AddEditDreamEvent.MakeAudioPermanent -> {
@@ -563,10 +564,10 @@ class AddEditDreamViewModel(
                         authRepository.consumeDreamTokens(cost)
                         markChanged()
                         updateDreamInfo { copy(dreamIsAudioPermanent = true) }
-                        showSnack("Audio recording is now permanent!")
+                        showSnack(StringValue.Resource(Res.string.audio_permanent_success))
                         performSave(onSaveSuccess = {})
                     } else {
-                        showSnack("Not enough Dream Tokens")
+                        showSnack(StringValue.Resource(Res.string.not_enough_dream_tokens))
                     }
                 }
             }
@@ -582,7 +583,7 @@ class AddEditDreamViewModel(
         when (result) {
             is Resource.Error -> {
                 _addEditDreamState.update { it.copy(bottomSheetState = false) }
-                showSnack(message = "${result.message}")
+                showSnack(message = StringValue.DynamicString(result.message ?: "Unknown error"))
             }
             is Resource.Success -> updateScreenStateForUnlockedWord(dictionaryWord)
             is Resource.Loading -> Unit
@@ -619,7 +620,7 @@ class AddEditDreamViewModel(
             if (isBlocking && fullContent.length < 20) {
                 _addEditDreamState.update { it.copy(isDreamExitOff = false) }
                 logger.d { "Snackbar shown: Dream content is too short. Content: '$fullContent'" }
-                showSnack(if (fullContent.isEmpty()) "Dream content is empty" else "Dream content is too short")
+                showSnack(StringValue.DynamicString(if (fullContent.isEmpty()) "Dream content is empty" else "Dream content is too short"))
                 return@launch
             }
 
@@ -637,7 +638,7 @@ class AddEditDreamViewModel(
 
             when (val res = aiService.generateText(aiTextType, fullContent, cost, extra)) {
                 is AIResult.Success -> updateAIState(aiType) { copy(response = res.data) }
-                is AIResult.Error -> showSnack("Error getting AI response")
+                is AIResult.Error -> showSnack(StringValue.Resource(Res.string.ai_response_error))
             }
 
             updateAIState(aiType) { copy(isLoading = false) }
@@ -663,7 +664,7 @@ class AddEditDreamViewModel(
         val details = when (val d = aiService.generateDetails(fullContent, cost)) {
             is AIResult.Success -> d.data
             is AIResult.Error -> {
-                showSnack("Error getting AI response")
+                showSnack(StringValue.Resource(Res.string.ai_response_error))
                 updateAIState(AIType.DETAILS) { copy(isLoading = false) }
                 _addEditDreamState.update { it.copy(isDreamExitOff = false) }
                 return@launch
@@ -676,7 +677,7 @@ class AddEditDreamViewModel(
                 updateAIState(AIType.IMAGE) { copy(response = img.data) }
                 _addEditDreamState.update { it.copy(isNewImageGenerated = true) }
             }
-            is AIResult.Error -> showSnack("Error getting AI image: ${img.message}")
+            is AIResult.Error -> showSnack(StringValue.Resource(Res.string.ai_image_error, img.message ?: ""))
         }
         updateAIState(AIType.IMAGE) { copy(isLoading = false) }
         if (cost > 0) authRepository.consumeDreamTokens(cost)

@@ -19,10 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.audio_transcription
+import dreamjournalai.composeapp.shared.generated.resources.date_duration_separator
+import dreamjournalai.composeapp.shared.generated.resources.no_transcription_available
 import org.ballistic.dreamjournalai.shared.core.util.formatDuration
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +42,7 @@ fun TranscriptionBottomSheet(
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
         onDismissRequest = onDismissRequest,
-        containerColor = LightBlack
+        containerColor = OriginalXmlColors.LightBlack
     ) {
         Column(
             modifier = Modifier
@@ -48,35 +51,35 @@ fun TranscriptionBottomSheet(
             horizontalAlignment = Alignment.Start
         ) {
             Text(
-                text = "Audio Transcription",
+                text = stringResource(Res.string.audio_transcription),
                 style = MaterialTheme.typography.headlineSmall,
-                color = BrighterWhite,
+                color = OriginalXmlColors.BrighterWhite,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = date,
                     style = MaterialTheme.typography.labelMedium,
-                    color = White.copy(alpha = 0.7f)
+                    color = OriginalXmlColors.White.copy(alpha = 0.7f)
                 )
                 Text(
-                    text = " • ",
+                    text = stringResource(Res.string.date_duration_separator),
                     style = MaterialTheme.typography.labelMedium,
-                    color = White.copy(alpha = 0.7f)
+                    color = OriginalXmlColors.White.copy(alpha = 0.7f)
                 )
                 Text(
                     text = formatDuration(duration),
                     style = MaterialTheme.typography.labelMedium,
-                    color = White.copy(alpha = 0.7f)
+                    color = OriginalXmlColors.White.copy(alpha = 0.7f)
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -84,9 +87,9 @@ fun TranscriptionBottomSheet(
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = transcription.ifBlank { "No transcription available." },
+                    text = transcription.ifBlank { stringResource(Res.string.no_transcription_available) },
                     style = MaterialTheme.typography.bodyLarge,
-                    color = White
+                    color = OriginalXmlColors.White
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))

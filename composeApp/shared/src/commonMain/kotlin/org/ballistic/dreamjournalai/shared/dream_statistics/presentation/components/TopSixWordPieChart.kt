@@ -15,11 +15,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.top_6_words_in_dreams
 import network.chaintech.cmpcharts.common.model.PlotType
 import network.chaintech.cmpcharts.ui.piechart.models.PieChartConfig
 import network.chaintech.cmpcharts.ui.piechart.models.PieChartData
 import org.ballistic.dreamjournalai.shared.dream_statistics.presentation.viewmodel.DreamStatisticScreenState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TopSixWordPieChart(
@@ -43,7 +46,7 @@ fun TopSixWordPieChart(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "Top 6 Words in Dreams",
+            text = stringResource(Res.string.top_6_words_in_dreams),
             modifier = Modifier.padding(bottom = 8.dp),
             style = MaterialTheme.typography.titleMedium.copy(
                 color = OriginalXmlColors.White

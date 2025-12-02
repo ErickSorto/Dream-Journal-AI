@@ -28,17 +28,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.hint_description
-import dreamjournalai.composeapp.shared.generated.resources.hint_title
+import dreamjournalai.composeapp.shared.generated.resources.*
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.FleetingAudioDialog
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.GenerateButtonsLayout
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.RecordingLayout
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.TransparentHintTextField
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -65,9 +62,9 @@ fun DreamPage(
 
     if (showDeleteAudioDialog) {
         ActionBottomSheet(
-            title = "Delete Audio",
-            message = "Are you sure you want to delete this audio recording?",
-            buttonText = "Delete",
+            title = stringResource(Res.string.delete_audio_title),
+            message = stringResource(Res.string.delete_audio_message),
+            buttonText = stringResource(Res.string.delete),
             onClick = {
                 onAddEditDreamEvent(AddEditDreamEvent.DeleteVoiceRecording)
                 showDeleteAudioDialog = false
@@ -99,11 +96,11 @@ fun DreamPage(
             hint = stringResource(Res.string.hint_title),
             isHintVisible = titleTextFieldState.text.isBlank(),
             singleLine = true,
-            textStyle = typography.headlineMedium.copy(color = White),
+            textStyle = typography.headlineMedium.copy(color = OriginalXmlColors.White),
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
                 .background(
-                    LightBlack.copy(.7f)
+                    OriginalXmlColors.LightBlack.copy(.7f)
                 )
                 .padding(16.dp),
             textFieldState = titleTextFieldState,
@@ -119,14 +116,14 @@ fun DreamPage(
                 .weight(1f)
                 .clip(RoundedCornerShape(8.dp))
                 .background(
-                    LightBlack.copy(.7f)
+                    OriginalXmlColors.LightBlack.copy(.7f)
                 ),
         ) {
             TransparentHintTextField(
                 hint = stringResource(Res.string.hint_description),
                 isHintVisible = contentTextFieldState.text.isBlank(),
                 textStyle = typography.bodyMedium.copy(
-                    color = White
+                    color = OriginalXmlColors.White
                 ),
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp, 8.dp))
@@ -174,6 +171,8 @@ fun DreamPage(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.consumeWindowInsets(WindowInsets.navigationBars).imePadding())
+        Spacer(modifier = Modifier
+            .consumeWindowInsets(WindowInsets.navigationBars)
+            .imePadding())
     }
 }

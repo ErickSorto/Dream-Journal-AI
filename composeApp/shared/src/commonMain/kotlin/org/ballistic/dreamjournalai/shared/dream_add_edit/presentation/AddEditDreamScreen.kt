@@ -50,8 +50,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.save_dream
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -59,7 +58,11 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.util.BackHandler
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.core.util.formatLocalDate
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.AlertSave
@@ -69,13 +72,13 @@ import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.platform.isIos
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
+@OptIn(
+    ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
     ExperimentalTime::class
 )
 @Composable
@@ -152,7 +155,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
     ) { index ->
         Image(
             painter = painterResource(Dream.dreamBackgroundImages[index]),
-            contentDescription = "Dream Background",
+            contentDescription = stringResource(Res.string.dream_background),
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxSize()
@@ -175,8 +178,19 @@ fun SharedTransitionScope.AddEditDreamScreen(
 
                 onAddEditDreamEvent(AddEditDreamEvent.SaveDream(onSaveSuccess = {
                     onMainEvent(MainScreenEvent.SetDreamRecentlySaved(true))
-                    onMainEvent(MainScreenEvent.ShowSnackBar("Dream Saved Successfully :)"))
                     onNavigateToDreamJournalScreen()
+                    scope.launch {
+                        SnackbarController.sendEvent(
+                            SnackbarEvent(
+                                message = StringValue.Resource(Res.string.dream_saved_successfully),
+                                action = SnackbarAction(
+                                    name = StringValue.Resource(Res.string.dismiss),
+                                    action = {
+
+                                    }), // Use dismissString
+                            )
+                        )
+                    }
                 }))
             },
             onClickOutside = {
@@ -184,7 +198,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
             }
         )
     }
-    
+
     if (addEditDreamState.transcriptionBottomSheetState) {
         val timestamp = addEditDreamState.dreamInfo.dreamAudioTimestamp
         val formattedDate = remember(timestamp) {
@@ -208,7 +222,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
     }
 
     val tint = if (!addEditDreamState.dreamIsSavingLoading && !addEditDreamState.isDreamExitOff
-    ) White
+    ) OriginalXmlColors.White
     else Color.Gray.copy(alpha = 0.1f)
 
     // Read the raw system status bar inset
@@ -248,7 +262,10 @@ fun SharedTransitionScope.AddEditDreamScreen(
                 topBar = {
                     // Keep the TopAppBar measured height exactly 72.dp so it doesn't push content down.
                     // Height = base 72.dp + any extra adjustment detected at runtime
-                    val topBarAlpha by animateFloatAsState(targetValue = if (layoutReady) 1f else 0f, animationSpec = tween(durationMillis = 180))
+                    val topBarAlpha by animateFloatAsState(
+                        targetValue = if (layoutReady) 1f else 0f,
+                        animationSpec = tween(durationMillis = 180)
+                    )
                     CenterAlignedTopAppBar(
                         modifier = Modifier
                             .height(topBarHeight)
@@ -256,9 +273,9 @@ fun SharedTransitionScope.AddEditDreamScreen(
                         title = {
                             Box(modifier = Modifier.height(topBarHeight)) {
                                 Text(
-                                    text = "DreamNorth",
-                                     color = White,
-                                     style = typography.titleMedium,
+                                    text = stringResource(Res.string.app_name),
+                                    color = OriginalXmlColors.White,
+                                    style = typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.align(Alignment.Center),
                                 )
@@ -281,7 +298,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
                                 Icon(
                                     modifier = Modifier.rotate(180f),
                                     imageVector = Icons.AutoMirrored.Filled.ArrowRightAlt,
-                                    contentDescription = "Back",
+                                    contentDescription = stringResource(Res.string.back_button_content_description),
                                     tint = tint
                                 )
                             }
@@ -294,7 +311,18 @@ fun SharedTransitionScope.AddEditDreamScreen(
                                     onMainEvent(MainScreenEvent.SetDreamRecentlySaved(true))
                                     onAddEditDreamEvent(AddEditDreamEvent.TriggerVibration)
                                     onAddEditDreamEvent(AddEditDreamEvent.SaveDream(onSaveSuccess = {
-                                        onMainEvent(MainScreenEvent.ShowSnackBar("Dream Saved Successfully :)") )
+                                        scope.launch {
+                                            SnackbarController.sendEvent(
+                                                SnackbarEvent(
+                                                    message = StringValue.Resource(Res.string.dream_saved_successfully),
+                                                    action = SnackbarAction(
+                                                        name = StringValue.Resource(Res.string.dismiss),
+                                                        action = {
+
+                                                        }), // Use dismissString
+                                                )
+                                            )
+                                        }
                                         onNavigateToDreamJournalScreen()
                                     }))
                                 },
@@ -308,7 +336,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = LightBlack.copy(alpha = 0.7f),
+                            containerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.7f),
                             navigationIconContentColor = Color.Black,
                             titleContentColor = Color.Black,
                             actionIconContentColor = Color.Black

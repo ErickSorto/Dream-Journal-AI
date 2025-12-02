@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.discard
 import dreamjournalai.composeapp.shared.generated.resources.do_you_want_to_save_this_dream
 import dreamjournalai.composeapp.shared.generated.resources.save_dream
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
@@ -51,7 +52,7 @@ fun AlertSave(
                 },
                 modifier = Modifier.padding(0.dp)
             ) {
-                Text("Discard", color = RedOrange)
+                Text(stringResource(Res.string.discard), color = RedOrange)
             }
         },
         shape = MaterialTheme.shapes.medium,

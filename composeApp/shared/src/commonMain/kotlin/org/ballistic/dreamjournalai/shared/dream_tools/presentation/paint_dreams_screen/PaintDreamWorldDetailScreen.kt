@@ -1,6 +1,5 @@
 package org.ballistic.dreamjournalai.shared.dream_tools.presentation.paint_dreams_screen
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
@@ -37,18 +36,22 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.baseline_brush_24
+import dreamjournalai.composeapp.shared.generated.resources.dream_visualization_tool
+import dreamjournalai.composeapp.shared.generated.resources.dream_world_detail_description
+import dreamjournalai.composeapp.shared.generated.resources.paint_dream_world_button
+import dreamjournalai.composeapp.shared.generated.resources.paint_dream_world_screen_title
 import kotlinx.coroutines.delay
 import org.ballistic.dreamjournalai.shared.BottomNavigationController
 import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
-import org.ballistic.dreamjournalai.shared.dream_tools.domain.DreamTools
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.PaintDreamWorldEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolButton
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolScreenWithNavigateUpTopBar
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -78,7 +81,7 @@ fun SharedTransitionScope.PaintDreamWorldDetailScreen(
     Scaffold(
         topBar = {
             DreamToolScreenWithNavigateUpTopBar(
-                title = "Visualize Dream World",
+                title = stringResource(Res.string.paint_dream_world_screen_title),
                 navigateUp = navigateUp,
                 onEvent = { onEvent(PaintDreamWorldEvent.TriggerVibration) }
             )
@@ -101,7 +104,7 @@ fun SharedTransitionScope.PaintDreamWorldDetailScreen(
             ) {
                 Image(
                     painter = painterResource(imageID),
-                    contentDescription = "Dream Visualization Tool",
+                    contentDescription = stringResource(Res.string.dream_visualization_tool),
                     modifier = Modifier
                         .aspectRatio(16 / 9f)
                         .fillMaxWidth()
@@ -126,7 +129,7 @@ fun SharedTransitionScope.PaintDreamWorldDetailScreen(
                         .animateContentSize()
                 ) {
                     Text(
-                        text = DreamTools.DREAM_WORLD.title,
+                        text = stringResource(org.ballistic.dreamjournalai.shared.navigation.DreamTools.DREAM_WORLD.title),
                         modifier = Modifier
                             .fillMaxWidth().padding(16.dp, 16.dp, 16.dp, 0.dp),
                         color = Color.White,
@@ -136,8 +139,7 @@ fun SharedTransitionScope.PaintDreamWorldDetailScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     TypewriterText(
-                        text = "Harness the power of AI to weave your recent dreams into a single, cohesive masterpiece. " +
-                                "This visual synthesis reveals hidden connections, recurring themes, and the overall atmosphere of your subconscious mind, offering a unique perspective on your dream journey.",
+                        text = stringResource(Res.string.dream_world_detail_description),
                         modifier = Modifier
                             .fillMaxWidth().padding(16.dp, 0.dp, 16.dp, 0.dp),
                         color = Color.White.copy(alpha = 0.8f),
@@ -157,7 +159,7 @@ fun SharedTransitionScope.PaintDreamWorldDetailScreen(
                     if (isAnimationFinished) {
                         Spacer(modifier = Modifier.height(16.dp))
                         DreamToolButton(
-                            text = "Paint Dream World",
+                            text = stringResource(Res.string.paint_dream_world_button),
                             icon = Res.drawable.baseline_brush_24,
                             onClick = {
                                 onEvent(PaintDreamWorldEvent.TriggerVibration)

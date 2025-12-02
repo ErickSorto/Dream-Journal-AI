@@ -38,6 +38,9 @@ import androidx.compose.ui.unit.sp
 import app.lexilabs.basic.ads.DependsOnGoogleMobileAds
 import app.lexilabs.basic.ads.composable.RewardedAd
 import coil3.compose.LocalPlatformContext
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.ad_unit_id
+import dreamjournalai.composeapp.shared.generated.resources.dream_token_benefit_content_description
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
@@ -47,7 +50,8 @@ import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components.DictionaryWordItem
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components.SymbolScreenTopBar
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.SymbolScreenState
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(DependsOnGoogleMobileAds::class)
 @Composable
@@ -122,7 +126,7 @@ fun SymbolScreen(
         if(symbolScreenState.isAdSymbol){
             RewardedAd(
                 activity = LocalPlatformContext.current,
-                adUnitId = "ca-app-pub-8710979310678386/8178296701",
+                adUnitId = stringResource(Res.string.ad_unit_id),
                 onRewardEarned = {
                     onEvent(
                         SymbolEvent.ClickBuySymbol(
@@ -156,7 +160,7 @@ fun SymbolScreen(
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(bottom = 32.dp, top = 8.dp)
                 ) {
-                    items(symbolScreenState.filteredSearchedWords) { wordItem ->
+                    items(processedWords) { wordItem ->
                         DictionaryWordItem(
                             wordItem = wordItem,
                             onWordClick = { onEvent(SymbolEvent.ClickWord(wordItem)) }
@@ -168,7 +172,7 @@ fun SymbolScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(color = DarkBlue.copy(alpha = 0.5f))
+                        .background(color = OriginalXmlColors.DarkBlue.copy(alpha = 0.5f))
                         .onGloballyPositioned { layoutCoordinates ->
                             screenWidth.intValue = layoutCoordinates.size.width // Store the width
                         }

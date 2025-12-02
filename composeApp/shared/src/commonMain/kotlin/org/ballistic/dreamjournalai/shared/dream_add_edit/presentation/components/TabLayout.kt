@@ -36,11 +36,15 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.dismiss
+import dreamjournalai.composeapp.shared.generated.resources.dream_is_too_short
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.SnackbarAction
 import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.SnackbarEvent
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AITool
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditPages
@@ -49,9 +53,9 @@ import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.Inf
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.aipage.AIPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.dictionary_page.WordPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -78,13 +82,13 @@ fun SharedTransitionScope.TabLayout(
         selectedTabIndex = pagerState.currentPage,
         indicator = {
             PrimaryIndicator(
-                color = White,
+                color = OriginalXmlColors.White,
                 modifier = Modifier.tabIndicatorOffset(pagerState.currentPage)
             )
         },
         divider = {},
-        contentColor = White,
-        containerColor = LightBlack.copy(alpha = 0.7f),
+        contentColor = OriginalXmlColors.White,
+        containerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.7f),
     ) {
         pages.forEachIndexed { index, page ->
             val isSelected = pagerState.currentPage == index
@@ -97,7 +101,7 @@ fun SharedTransitionScope.TabLayout(
                     if (targetState) {
                         keyframes {
                             durationMillis = 2300  // Total duration for the scale animation
-                            1.25f at 1500 using LinearOutSlowInEasing // Scale up slowly to 1.25 over 1500ms
+                            1.25f at 1500 using LinearOutSlowInEasing // Scale up to 1.25 over 1500ms
                             1.25f at 2000 using LinearEasing // Hold at 1.25 for 1 second (2000ms total)
                             0f at 2300 using FastOutLinearInEasing // Quickly decrease to 0 over 300ms
                         }
@@ -188,9 +192,9 @@ fun SharedTransitionScope.TabLayout(
                         scope.launch {
                             SnackbarController.sendEvent(
                                 SnackbarEvent(
-                                    message = "Dream content is too short",
+                                    message = StringValue.Resource(Res.string.dream_is_too_short),
                                     action = SnackbarAction(
-                                        name = "Dismiss",
+                                        name = StringValue.Resource(Res.string.dismiss),
                                         action = {}
                                     )
                                 )

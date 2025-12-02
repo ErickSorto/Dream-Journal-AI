@@ -30,11 +30,13 @@ import androidx.compose.ui.unit.sp
 import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.delete_account
+import dreamjournalai.composeapp.shared.generated.resources.logout
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.PasswordField
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun LogoutDeleteLayout(
@@ -75,8 +77,8 @@ fun LogoutDeleteLayout(
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SkyBlue,
-                    contentColor = White
+                    containerColor = OriginalXmlColors.SkyBlue,
+                    contentColor = OriginalXmlColors.White
                 ),
                 elevation = ButtonDefaults.buttonElevation(
                     defaultElevation = 6.dp,
@@ -85,12 +87,12 @@ fun LogoutDeleteLayout(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Logout,
-                    contentDescription = "Logout",
+                    contentDescription = stringResource(Res.string.logout),
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Logout",
+                    text = stringResource(Res.string.logout),
                     fontSize = 16.sp
                 )
             }
@@ -108,8 +110,8 @@ fun LogoutDeleteLayout(
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = RedOrange,
-                    contentColor = White
+                    containerColor = OriginalXmlColors.RedOrange,
+                    contentColor = OriginalXmlColors.White
                 ),
                 elevation = ButtonDefaults.buttonElevation(
                     defaultElevation = 6.dp,
@@ -118,12 +120,12 @@ fun LogoutDeleteLayout(
             ) {
                 Icon(
                     imageVector = Icons.Filled.Delete,
-                    contentDescription = "Delete Account",
+                    contentDescription = stringResource(Res.string.delete_account),
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Delete Account",
+                    text = stringResource(Res.string.delete_account),
                     fontSize = 16.sp
                 )
             }

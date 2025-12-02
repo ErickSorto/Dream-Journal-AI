@@ -11,22 +11,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.baseline_cached_24
-import dreamjournalai.composeapp.shared.generated.resources.baseline_star_24
-import dreamjournalai.composeapp.shared.generated.resources.false_awakening_icon
-import dreamjournalai.composeapp.shared.generated.resources.lighthouse_vector
-import dreamjournalai.composeapp.shared.generated.resources.nightmare_ghost_closed
-import dreamjournalai.composeapp.shared.generated.resources.nightmare_ghost_open
-import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
+import dreamjournalai.composeapp.shared.generated.resources.*
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Green
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Purple
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Yellow
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun LucidFavoriteLayout(
@@ -53,8 +43,8 @@ fun LucidFavoriteLayout(
                 onAddEditDreamEvent = onAddEditDreamEvent
             )
             FalseAwakeningCustomButton(
-                    isFalseAwakening = addEditDreamState.dreamInfo.dreamIsFalseAwakening,
-            onAddEditDreamEvent = onAddEditDreamEvent
+                isFalseAwakening = addEditDreamState.dreamInfo.dreamIsFalseAwakening,
+                onAddEditDreamEvent = onAddEditDreamEvent
             )
             NightmareCustomButton(
                 isNightmare = addEditDreamState.dreamInfo.dreamIsNightmare,
@@ -86,16 +76,16 @@ fun LucidCustomButton(
         Spacer(modifier = Modifier.height(8.dp))
         Icon(
             painter = painterResource(Res.drawable.lighthouse_vector),
-            contentDescription = "Lucid",
+            contentDescription = stringResource(Res.string.lucid),
             modifier = Modifier.size(36.dp),
-            tint = if (isLucid) SkyBlue else White.copy(
+            tint = if (isLucid) OriginalXmlColors.SkyBlue else OriginalXmlColors.White.copy(
                 alpha = 0.5f
             )
         )
 
         Text(
-            text = "Lucid",
-            color = White,
+            text = stringResource(Res.string.lucid),
+            color = OriginalXmlColors.White,
             style = typography.labelSmall
         )
     }
@@ -116,16 +106,16 @@ fun FavoriteCustomButton(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(8.dp))
-            Icon(
-                painter = painterResource(Res.drawable.baseline_star_24),
-                contentDescription = "Favorite",
-                modifier = Modifier.size(36.dp),
-                tint = if (isFavorite) Yellow else White.copy(
-                    alpha = 0.5f
-                )
+        Icon(
+            painter = painterResource(Res.drawable.baseline_star_24),
+            contentDescription = stringResource(Res.string.favorite),
+            modifier = Modifier.size(36.dp),
+            tint = if (isFavorite) OriginalXmlColors.Yellow else OriginalXmlColors.White.copy(
+                alpha = 0.5f
             )
+        )
         Text(
-            text = "Favorite", color = White,
+            text = stringResource(Res.string.favorite), color = OriginalXmlColors.White,
             style = typography.labelSmall
         )
     }
@@ -148,13 +138,15 @@ fun NightmareCustomButton(
         Spacer(modifier = Modifier.height(8.dp))
         Icon(
             painter = painterResource(if (isNightmare) Res.drawable.nightmare_ghost_open else Res.drawable.nightmare_ghost_closed),
-            contentDescription = if (isNightmare) "Nightmare (selected)" else "Nightmare (unselected)",
+            contentDescription = if (isNightmare) stringResource(Res.string.nightmare_selected) else stringResource(
+                Res.string.nightmare_unselected
+            ),
             modifier = Modifier.size(36.dp),
-            tint = if (isNightmare) RedOrange else White.copy(alpha = 0.5f)
+            tint = if (isNightmare) OriginalXmlColors.RedOrange else OriginalXmlColors.White.copy(alpha = 0.5f)
         )
         Text(
-            text = "Nightmare",
-            color = White,
+            text = stringResource(Res.string.nightmare),
+            color = OriginalXmlColors.White,
             style = typography.labelSmall
         )
     }
@@ -175,17 +167,17 @@ fun FalseAwakeningCustomButton(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(8.dp))
-            Icon(
-                painter = painterResource(Res.drawable.false_awakening_icon),
-                contentDescription = "False",
-                modifier = Modifier.size(36.dp),
-                tint = if (isFalseAwakening) Purple else White.copy(
-                    alpha = 0.5f
-                )
+        Icon(
+            painter = painterResource(Res.drawable.false_awakening_icon),
+            contentDescription = stringResource(Res.string.false_awakening),
+            modifier = Modifier.size(36.dp),
+            tint = if (isFalseAwakening) OriginalXmlColors.Purple else OriginalXmlColors.White.copy(
+                alpha = 0.5f
             )
+        )
         Text(
-            text = "False",
-            color = White,
+            text = stringResource(Res.string.false_awakening),
+            color = OriginalXmlColors.White,
             style = typography.labelSmall
         )
     }
@@ -206,17 +198,17 @@ fun RecurringCustomButton(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(8.dp))
-            Icon(
-                painter = painterResource(Res.drawable.baseline_cached_24),
-                contentDescription = "Recurring",
-                modifier = Modifier.size(36.dp),
-                tint = if (isRecurring) Green else White.copy(
-                    alpha = 0.5f
-                )
+        Icon(
+            painter = painterResource(Res.drawable.baseline_cached_24),
+            contentDescription = stringResource(Res.string.recurring),
+            modifier = Modifier.size(36.dp),
+            tint = if (isRecurring) OriginalXmlColors.Green else OriginalXmlColors.White.copy(
+                alpha = 0.5f
             )
+        )
         Text(
-            text = "Recurring",
-            color = White,
+            text = stringResource(Res.string.recurring),
+            color = OriginalXmlColors.White,
             style = typography.labelSmall
         )
     }
