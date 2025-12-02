@@ -32,9 +32,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.forgot_password
+import dreamjournalai.composeapp.shared.generated.resources.password
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.onKeyboardDismiss
-import org.ballistic.dreamjournalai.shared.core.Constants.PASSWORD_LABEL
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PasswordField(
@@ -54,7 +57,7 @@ fun PasswordField(
         OutlinedTextField(
             value = password,
             onValueChange = { onValueChange(it) },
-            label = { Text(text = PASSWORD_LABEL, color = Color.White) },
+            label = { Text(text = stringResource(Res.string.password), color = Color.White) },
             textStyle = LocalTextStyle.current.copy(color = Color.White, fontSize = 16.sp),
             singleLine = true,
             visualTransformation = if (passwordIsVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -68,7 +71,7 @@ fun PasswordField(
             trailingIcon = {
                 if (isLoginLayout) {
                     TextButton(onClick = { forgotPassword() }) {
-                        Text(text = "Forgot password?", color = Color.White.copy(alpha = 0.7f))
+                        Text(text = stringResource(Res.string.forgot_password), color = Color.White.copy(alpha = 0.7f))
                     }
                 }
             },
@@ -77,8 +80,8 @@ fun PasswordField(
                 .padding(bottom = 8.dp)
                 .onKeyboardDismiss { focusManager.clearFocus() },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = LightBlack.copy(alpha = 0.7f),
-                unfocusedContainerColor = LightBlack.copy(alpha = 0.7f),
+                focusedContainerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.7f),
+                unfocusedContainerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.7f),
                 disabledContainerColor = Color.Transparent,
                 errorContainerColor = Color.Transparent,
                 cursorColor = Color.White,
@@ -106,7 +109,7 @@ fun PasswordField(
                 },
                 label = {
                     Text(
-                        text = PASSWORD_LABEL,
+                        text = stringResource(Res.string.password),
                         color = Color.White
                     )
                 },
@@ -144,7 +147,7 @@ fun PasswordField(
                 trailingIcon = {
                     if (isLoginLayout) {
                         TextButton(onClick = { forgotPassword() }) {
-                            Text(text = "Forgot password?",
+                            Text(text = stringResource(Res.string.forgot_password),
                                 color = Color.White.copy(alpha = 0.7f)
                             )
                         }
@@ -157,8 +160,8 @@ fun PasswordField(
                         focusManager.clearFocus()
                     },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = LightBlack.copy(alpha = 0.7f),
-                    unfocusedContainerColor = LightBlack.copy(alpha = 0.7f),
+                    focusedContainerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.7f),
+                    unfocusedContainerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.7f),
                     disabledContainerColor = Color.Transparent,
                     errorContainerColor = Color.Transparent,
                     cursorColor = Color.White,

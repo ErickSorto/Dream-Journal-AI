@@ -19,10 +19,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.account_settings
+import dreamjournalai.composeapp.shared.generated.resources.menu
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,8 +41,8 @@ fun DreamAccountSettingsScreenTopBar() {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Account Settings",
-                    color = White,
+                    text = stringResource(Res.string.account_settings),
+                    color = OriginalXmlColors.White,
                     modifier = Modifier
                         .align(Alignment.Center)
                 )
@@ -54,8 +57,8 @@ fun DreamAccountSettingsScreenTopBar() {
             }) {
                 Icon(
                     Icons.Filled.Menu,
-                    contentDescription = "Menu",
-                    tint = White
+                    contentDescription = stringResource(Res.string.menu),
+                    tint = OriginalXmlColors.White
                 )
             }
         },
@@ -63,13 +66,13 @@ fun DreamAccountSettingsScreenTopBar() {
             IconButton(onClick = { /*TODO*/ }) {
                 Icon(
                     Icons.Filled.Menu,
-                    contentDescription = "Menu",
+                    contentDescription = stringResource(Res.string.menu),
                     tint = Color.Transparent
                 )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = DarkBlue.copy(alpha = 0.5f),
+            containerColor = OriginalXmlColors.DarkBlue.copy(alpha = 0.5f),
             navigationIconContentColor = Color.Black,
             titleContentColor = Color.Black,
             actionIconContentColor = Color.Black

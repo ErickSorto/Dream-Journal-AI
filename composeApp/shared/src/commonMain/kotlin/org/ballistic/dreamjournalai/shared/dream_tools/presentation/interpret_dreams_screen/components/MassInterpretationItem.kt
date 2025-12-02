@@ -37,6 +37,9 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.InterpretDreamsToolEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.model.MassInterpretation
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.viewmodel.InterpretDreamsScreenState
+import org.jetbrains.compose.resources.stringResource
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.interpretation_dreams_count
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -88,7 +91,7 @@ fun MassInterpretationItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Interpretation: ${massInterpretation.listOfDreamIDs.size} dreams",
+                text = stringResource(Res.string.interpretation_dreams_count, massInterpretation.listOfDreamIDs.size),
                 style = typography.titleSmall.copy(fontSize = 15.sp),
                 color = Color.White,
                 textAlign = TextAlign.Start,

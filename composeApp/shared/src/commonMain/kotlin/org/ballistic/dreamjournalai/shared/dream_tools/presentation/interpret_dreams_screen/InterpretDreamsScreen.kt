@@ -27,12 +27,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -48,14 +46,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.dismiss
+import dreamjournalai.composeapp.shared.generated.resources.interpret_dreams_count
+import dreamjournalai.composeapp.shared.generated.resources.interpret_dreams_title
 import dreamjournalai.composeapp.shared.generated.resources.interpret_vector
+import dreamjournalai.composeapp.shared.generated.resources.select_at_least_two_dreams
+import dreamjournalai.composeapp.shared.generated.resources.select_dreams
+import dreamjournalai.composeapp.shared.generated.resources.select_dreams_to_interpret
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.BottomNavigationController
 import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
 import org.ballistic.dreamjournalai.shared.DrawerController
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.core.util.BackHandler
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.MassInterpretationTabs
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.InterpretDreamsToolEvent
@@ -68,6 +76,7 @@ import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dr
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -116,7 +125,7 @@ fun MassInterpretDreamToolScreen(
     Scaffold(
         topBar = {
             DreamToolScreenWithNavigateUpTopBar(
-                title = "Interpret Dreams",
+                title = stringResource(Res.string.interpret_dreams_title),
                 navigateUp = {
                     DrawerController.enable()
                     navigateUp()
@@ -222,7 +231,7 @@ fun MassInterpretDreamToolScreen(
                                     exit = fadeOut(animationSpec = tween(durationMillis = 0)),
                                 ) {
                                     Text(
-                                        text = page.title,
+                                        text = stringResource(page.title),
                                         style = typography.titleSmall,
                                         color = Color.White
                                     )
@@ -244,7 +253,6 @@ fun MassInterpretDreamToolScreen(
                         ) {
                             SelectDreamsPage(
                                 interpretDreamsScreenState = interpretDreamsScreenState,
-                                snackbarHostState = snackbarHostState,
                                 scope = scope,
                                 chosenDreams = chosenDreams,
                                 modifier = Modifier
@@ -254,24 +262,26 @@ fun MassInterpretDreamToolScreen(
                                 onEvent = onEvent
                             )
                             DreamToolButton(
-                                text = if (chosenDreams.isEmpty()) "Select Dreams" else "Interpret Dreams (${chosenDreams.size}/15)",
+                                text = if (chosenDreams.isEmpty()) stringResource(Res.string.select_dreams) else stringResource(Res.string.interpret_dreams_count, chosenDreams.size),
                                 icon = Res.drawable.interpret_vector,
                                 onClick = {
                                     onEvent(InterpretDreamsToolEvent.TriggerVibration)
                                     if (chosenDreams.isEmpty()) {
                                         scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                message = "Please select dreams to interpret",
-                                                actionLabel = "Dismiss",
-                                                duration = SnackbarDuration.Short
+                                            SnackbarController.sendEvent(
+                                                SnackbarEvent(
+                                                    message = StringValue.Resource(Res.string.select_dreams_to_interpret),
+                                                    action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                                                )
                                             )
                                         }
                                     } else if (chosenDreams.size < 2) {
                                         scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                message = "Select at least two dreams to interpret",
-                                                actionLabel = "Dismiss",
-                                                duration = SnackbarDuration.Short
+                                            SnackbarController.sendEvent(
+                                                SnackbarEvent(
+                                                    message = StringValue.Resource(Res.string.select_at_least_two_dreams),
+                                                    action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                                                )
                                             )
                                         }
                                     } else {
@@ -298,7 +308,6 @@ fun MassInterpretDreamToolScreen(
                             interpretDreamsScreenState = interpretDreamsScreenState,
                             onEvent = onEvent,
                             onMainScreenEvent = onMainScreenEvent,
-                            snackBarHostState = snackbarHostState,
                             scope = scope,
                             pagerState = pagerState,
                         )
@@ -307,7 +316,6 @@ fun MassInterpretDreamToolScreen(
                     2 -> {
                         MassInterpretationHistoryPage(
                             interpretDreamsScreenState = interpretDreamsScreenState,
-                            snackbarHostState = snackbarHostState,
                             onEvent = onEvent,
                             scope = scope,
                             pagerState = pagerState,

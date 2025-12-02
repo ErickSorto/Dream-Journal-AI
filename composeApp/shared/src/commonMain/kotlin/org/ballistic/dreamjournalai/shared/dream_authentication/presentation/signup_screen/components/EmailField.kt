@@ -21,9 +21,11 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.email
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.onKeyboardDismiss
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.core.Constants.EMAIL_LABEL
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EmailField(
@@ -40,7 +42,7 @@ fun EmailField(
         OutlinedTextField(
             value = email,
             onValueChange = { newValue -> onValueChange(newValue) },
-            label = { Text(text = EMAIL_LABEL, color = Color.White) },
+            label = { Text(text = stringResource(Res.string.email), color = Color.White) },
             textStyle = LocalTextStyle.current.copy(color = Color.White, fontSize = 16.sp),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -78,7 +80,7 @@ fun EmailField(
                 },
                 label = {
                     Text(
-                        text = EMAIL_LABEL,
+                        text = stringResource(Res.string.email),
                         color = Color.White
                     )
                 },

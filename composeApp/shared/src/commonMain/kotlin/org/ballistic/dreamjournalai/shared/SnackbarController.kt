@@ -2,14 +2,15 @@ package org.ballistic.dreamjournalai.shared
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 
 data class SnackbarEvent(
-    val message: String,
+    val message: StringValue,
     val action: SnackbarAction? = null
 )
 
 data class SnackbarAction (
-    val name: String,
+    val name: StringValue,
     val action: () -> Unit
 )
 

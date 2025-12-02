@@ -118,12 +118,9 @@ class PaintDreamWorldViewModel(
             _state.update { it.copy(isLoading = true, error = null, isImageGenerationPopUpVisible = false) }
             
             try {
-                logger.d { "Fetching recent dreams..." }
                 val allDreams = dreamUseCases.getDreams(OrderType.Date).first()
-                logger.d { "Fetched ${allDreams.size} dreams." }
                 
                 if (allDreams.size < 3) {
-                     logger.w { "Not enough dreams to generate world (found ${allDreams.size}, need 3+)" }
                      _state.update { it.copy(isLoading = false, error = "Need at least 3 dreams to generate a world") }
                      return@launch
                 }
@@ -133,44 +130,34 @@ class PaintDreamWorldViewModel(
                 } else {
                     allDreams
                 }
-                logger.d { "Processing ${dreamsToProcess.size} random dreams." }
 
                 val content = dreamsToProcess.joinToString("\n\n") { dream ->
                     val transcription = if (dream.audioTranscription.isNotBlank()) "\nTranscription: ${dream.audioTranscription}" else ""
                     "Date: ${dream.date}\nContent: ${dream.content}$transcription"
                 }
-                logger.d { "Prepared content for summary (first 100 chars): ${content.take(100)}..." }
-                
-                // Generate Summary
-                logger.d { "Calling generateText(DREAM_WORLD_SUMMARY)..." }
+
                 val summaryResult = aiService.generateText(AITextType.DREAM_WORLD_SUMMARY, content, cost = 0)
                 if (summaryResult is AIResult.Error) {
-                    logger.e { "Summary generation failed: ${summaryResult.message}" }
                     _state.update { it.copy(isLoading = false, error = "Failed to summarize: ${summaryResult.message}") }
                     return@launch
                 }
                 
                 val summary = (summaryResult as AIResult.Success).data
-                logger.d { "Summary generated successfully: $summary" }
                 
                 // Generate Image
                 // Using gpt-image-1 as requested
                 // Style is now passed directly (it contains the worldPromptAffix from ImageStyle)
-                logger.d { "Calling generateImageFromDetails..." }
                 val imageResult = aiService.generateImageFromDetails(summary, cost = cost, style = style, model = "gpt-image-1")
                 
                 if (imageResult is AIResult.Error) {
-                     logger.e { "Image generation failed: ${imageResult.message}" }
                      _state.update { it.copy(isLoading = false, error = "Failed to paint: ${imageResult.message}") }
                      return@launch
                 }
                 
                 val imageUrl = (imageResult as AIResult.Success).data
-                logger.d { "Image generated successfully. URL: $imageUrl" }
                 
                 // Success - Consume tokens & Save
                 if (cost > 0) {
-                    logger.d { "Consuming $cost tokens..." }
                     authRepository.consumeDreamTokens(cost)
                 }
                 
@@ -193,16 +180,13 @@ class PaintDreamWorldViewModel(
                     timestamp = now.toEpochMilliseconds(),
                     date = formatLocalDate(today)
                 )
-                
-                logger.d { "Saving painting: $painting" }
+
                 dreamWorldPaintingRepository.savePainting(painting)
                 vibratorUtil.triggerVibration()
                 
                 _state.update { it.copy(isLoading = false, selectedPainting = painting) }
-                logger.d { "Generation complete and saved." }
                 
             } catch (e: Exception) {
-                logger.e(e) { "Generation failed with exception" }
                 _state.update { it.copy(isLoading = false, error = e.message) }
             }
         }

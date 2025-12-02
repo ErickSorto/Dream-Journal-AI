@@ -47,6 +47,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -76,7 +77,24 @@ import dev.icerock.moko.permissions.compose.BindEffect
 import dev.icerock.moko.permissions.compose.PermissionsControllerFactory
 import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
 import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.add_dream
+import dreamjournalai.composeapp.shared.generated.resources.animated_heart
+import dreamjournalai.composeapp.shared.generated.resources.background_image
 import dreamjournalai.composeapp.shared.generated.resources.blue_lighthouse
+import dreamjournalai.composeapp.shared.generated.resources.date_prefix
+import dreamjournalai.composeapp.shared.generated.resources.dismiss
+import dreamjournalai.composeapp.shared.generated.resources.dream_separator
+import dreamjournalai.composeapp.shared.generated.resources.export_dreams_pdf_filename
+import dreamjournalai.composeapp.shared.generated.resources.export_dreams_txt_filename
+import dreamjournalai.composeapp.shared.generated.resources.export_failed
+import dreamjournalai.composeapp.shared.generated.resources.export_successful
+import dreamjournalai.composeapp.shared.generated.resources.heart
+import dreamjournalai.composeapp.shared.generated.resources.others
+import dreamjournalai.composeapp.shared.generated.resources.pages
+import dreamjournalai.composeapp.shared.generated.resources.settings
+import dreamjournalai.composeapp.shared.generated.resources.title_prefix
+import dreamjournalai.composeapp.shared.generated.resources.transcript_prefix
+import dreamjournalai.composeapp.shared.generated.resources.version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -90,6 +108,7 @@ import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.components.ExportDreamsBottomSheet
 import org.ballistic.dreamjournalai.shared.core.platform.getPlatformName
 import org.ballistic.dreamjournalai.shared.core.platform.rememberDreamExporter
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.util.OrderType
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
@@ -99,7 +118,9 @@ import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.Mai
 import org.ballistic.dreamjournalai.shared.navigation.DrawerNavigation
 import org.ballistic.dreamjournalai.shared.navigation.Route
 import org.ballistic.dreamjournalai.shared.navigation.ScreenGraph
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MainScreenView(
@@ -139,11 +160,23 @@ fun MainScreenView(
     LaunchedEffect(Unit) {
         onMainEvent(MainScreenEvent.GetAuthState)
         onMainEvent(MainScreenEvent.UserInteracted)
+        DrawerController.enable()
     }
 
     var showExportSheet by remember { mutableStateOf(false) }
     val dreamExporter = rememberDreamExporter()
     var dreamsToExport by remember { mutableStateOf<List<Dream>>(emptyList()) }
+
+    val exportDreamsPdfFilename = stringResource(Res.string.export_dreams_pdf_filename)
+    val exportSuccessfulMessage = StringValue.Resource(Res.string.export_successful)
+    val exportFailedMessage = StringValue.Resource(Res.string.export_failed)
+    val exportDreamsTxtFilename = stringResource(Res.string.export_dreams_txt_filename)
+
+    val titlePrefix = stringResource(Res.string.title_prefix)
+    val datePrefix = stringResource(Res.string.date_prefix)
+    val transcriptPrefix = stringResource(Res.string.transcript_prefix)
+    val dreamSeparator = stringResource(Res.string.dream_separator)
+    val dismissString = StringValue.Resource(Res.string.dismiss)
 
     if (showExportSheet) {
         LaunchedEffect(Unit) {
@@ -154,13 +187,13 @@ fun MainScreenView(
         ExportDreamsBottomSheet(
             onPdfClick = {
                 showExportSheet = false
-                dreamExporter.exportToPdf(dreamsToExport, "DreamNorth Dreams.pdf") { success ->
-                    val message = if (success) "Dream exported successfully" else "Export failed"
-                    coroutineScope.launch {
+                dreamExporter.exportToPdf(dreamsToExport, exportDreamsPdfFilename) { success ->
+                    val message = if (success) exportSuccessfulMessage else exportFailedMessage
+                    coroutineScope.launch { // Launch in coroutineScope for suspend function
                         SnackbarController.sendEvent(
                             SnackbarEvent(
                                 message = message,
-                                action = SnackbarAction("Dismiss") {}
+                                action = SnackbarAction(name = dismissString, action = {}), // Use dismissString
                             )
                         )
                     }
@@ -168,14 +201,20 @@ fun MainScreenView(
             },
             onTxtClick = {
                 showExportSheet = false
-                val formattedDreams = formatDreams(dreamsToExport)
-                dreamExporter.exportToTxt(formattedDreams, "dreams.txt") { success ->
-                    val message = if (success) "Dream exported successfully" else "Export failed"
-                    coroutineScope.launch {
+                val formattedDreams = formatDreams(
+                    dreams = dreamsToExport,
+                    titlePrefix = titlePrefix,
+                    datePrefix = datePrefix,
+                    transcriptPrefix = transcriptPrefix,
+                    dreamSeparator = dreamSeparator
+                )
+                dreamExporter.exportToTxt(formattedDreams, exportDreamsTxtFilename) { success ->
+                    val message = if (success) exportSuccessfulMessage else exportFailedMessage
+                    coroutineScope.launch { // Launch in coroutineScope for suspend function
                         SnackbarController.sendEvent(
                             SnackbarEvent(
                                 message = message,
-                                action = SnackbarAction("Dismiss") {}
+                                action = SnackbarAction(name = dismissString, action = {}), // Use dismissString
                             )
                         )
                     }
@@ -188,39 +227,41 @@ fun MainScreenView(
     }
 
     val navController = rememberNavController()
-    val drawerGroups = listOf(
-        DrawerGroup(
-            title = "Pages",
-            items = listOf(
-                DrawerNavigation.DreamJournalScreen,
-                DrawerNavigation.StoreScreen,
-                DrawerNavigation.Favorites,
-                DrawerNavigation.Nightmares,
-                DrawerNavigation.DreamToolGraphScreen,
-                DrawerNavigation.Statistics,
-                DrawerNavigation.Symbol,
-            )
-        ),
-        DrawerGroup(
-            title = "Settings",
-            items = listOf(
-                DrawerNavigation.AccountSettings,
-                //   DrawerNavigation.NotificationSettings,
-                //    Screens.DreamSettings,
-            )
-        ),
-        DrawerGroup(
-            title = "Others",
-            items = listOf(
-                DrawerNavigation.ExportDreams,
-                DrawerNavigation.RateMyApp,
-                //  Screens.AboutMe
+    val drawerGroups = remember {
+        listOf(
+            DrawerGroup(
+                title = Res.string.pages,
+                items = listOf(
+                    DrawerNavigation.DreamJournalScreen,
+                    DrawerNavigation.StoreScreen,
+                    DrawerNavigation.Favorites,
+                    DrawerNavigation.Nightmares,
+                    DrawerNavigation.DreamToolGraphScreen,
+                    DrawerNavigation.Statistics,
+                    DrawerNavigation.Symbol,
+                )
+            ),
+            DrawerGroup(
+                title = Res.string.settings,
+                items = listOf(
+                    DrawerNavigation.AccountSettings,
+                    //   DrawerNavigation.NotificationSettings,
+                    //    Screens.DreamSettings,
+                )
+            ),
+            DrawerGroup(
+                title = Res.string.others,
+                items = listOf(
+                    DrawerNavigation.ExportDreams,
+                    DrawerNavigation.RateMyApp,
+                    //  Screens.AboutMe
+                )
             )
         )
-    )
+    }
     val selectedItem = remember { mutableStateOf(drawerGroups.first().items.first()) }
 
-    androidx.compose.runtime.DisposableEffect(navController) {
+    DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
             val route = destination.route ?: return@OnDestinationChangedListener
             val matchedScreen = drawerGroups.flatMap { it.items }.firstOrNull {
@@ -236,12 +277,12 @@ fun MainScreenView(
     }
 
     Image(
-        painter = painterResource(Res.drawable.blue_lighthouse),
+        painter = painterResource(mainScreenViewModelState.backgroundResource),
         contentScale = ContentScale.Crop,
         modifier = Modifier
             .fillMaxSize()
             .blur(15.dp),
-        contentDescription = "Background Image"
+        contentDescription = stringResource(Res.string.background_image)
     )
 
     // Local drawer state owned by the composable for Compose stability. The ViewModel exposes
@@ -253,7 +294,7 @@ fun MainScreenView(
 
     // Drive the drawer from a simple controller to avoid VM<->UI races
     ObserveAsEvents(DrawerController.events, key1 = drawerState) { cmd ->
-        Logger.d("MainScreen") { "DrawerCommand: $cmd | current=${drawerState.currentValue} anim=${drawerState.isAnimationRunning}" }
+        Logger.d("MainScreen") { "DrawerCommand: $cmd | current=${drawerState.currentValue} anim=${drawerState.isAnimationRunning} | programmatic=${programmaticChangeInProgress.value}" }
         programmaticChangeInProgress.value = true
         coroutineScope.launch {
             try {
@@ -267,7 +308,6 @@ fun MainScreenView(
             }
         }
     }
-
     LaunchedEffect(drawerState) {
         snapshotFlow { drawerState.currentValue }
             .collectLatest { current ->
@@ -275,6 +315,9 @@ fun MainScreenView(
             }
     }
     val isDrawerEnabled by DrawerController.isEnabled.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    SnackbarHandler(snackbarHostState = snackbarHostState)
 
 
     ModalNavigationDrawer(
@@ -305,7 +348,9 @@ fun MainScreenView(
                                             )
                                         }
                                     },
-                                    label = { Text(item.title ?: "") },
+                                    label = {
+                                        item.title?.let { Text(stringResource(it)) }
+                                    },
                                     selected = item == selectedItem.value,
                                     onClick = {
                                         onMainEvent(MainScreenEvent.TriggerVibration)
@@ -344,7 +389,7 @@ fun MainScreenView(
                     }
 
                     Text(
-                        text = "Version: 1.3.0",
+                        text = stringResource(Res.string.version),
                         color = if (isSystemInDarkTheme()) Color.White else Color.Black,
                         modifier = Modifier
                             .padding(bottom = 16.dp, top = 8.dp)
@@ -355,25 +400,6 @@ fun MainScreenView(
             }
         },
         content = {
-            // Local snackbar host state — main view model no longer holds snackbar UI state.
-            val snackbarHostState = remember { SnackbarHostState() }
-
-            // Observe events from the centralized controller and show them on the local host.
-            ObserveAsEvents(SnackbarController.events) { event ->
-                coroutineScope.launch {
-                    Logger.d("MainScreen") { "SnackbarEvent 1: $event" }
-                    snackbarHostState.currentSnackbarData?.dismiss()
-                    val result = snackbarHostState.showSnackbar(
-                        message = event.message,
-                        actionLabel = event.action?.name,
-                        duration = SnackbarDuration.Long
-                    )
-                    if (result == SnackbarResult.ActionPerformed) {
-                        event.action?.action?.invoke()
-                    }
-                }
-            }
-
             Scaffold(
                 snackbarHost = {
                     SnackbarHost(
@@ -483,7 +509,7 @@ fun MainScreenView(
                                     Icon(
                                         Icons.Filled.Add,
                                         tint = Color.White,
-                                        contentDescription = "Add dream",
+                                        contentDescription = stringResource(Res.string.add_dream),
                                         modifier = Modifier.size(32.dp)
                                     )
                                 }
@@ -509,26 +535,68 @@ fun MainScreenView(
     )
 }
 
-fun formatDreams(dreams: List<Dream>): String {
+@Composable
+fun SnackbarHandler(
+    snackbarHostState: SnackbarHostState
+) {
+    var eventToShow by remember { mutableStateOf<SnackbarEvent?>(null) }
+
+    // Stage 1: Collect events from the controller
+    LaunchedEffect(Unit) {
+        SnackbarController.events.collect { event ->
+            eventToShow = event
+        }
+    }
+
+    // Stage 2: Resolve and show the snackbar when an event is available
+    val currentEvent = eventToShow
+    if (currentEvent != null) {
+        // Part A: Resolve strings in the Composable scope
+        val message = currentEvent.message.asString()
+        val actionLabel = currentEvent.action?.name?.asString()
+
+        // Part B: Show the snackbar in a separate LaunchedEffect
+        LaunchedEffect(currentEvent, message, actionLabel) {
+            val result = snackbarHostState.showSnackbar(
+                message = message,
+                actionLabel = actionLabel,
+                duration = SnackbarDuration.Short
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                currentEvent.action?.action?.invoke()
+            }
+            // Reset the state to be ready for the next event
+            eventToShow = null
+        }
+    }
+}
+
+fun formatDreams(
+    dreams: List<Dream>,
+    titlePrefix: String,
+    datePrefix: String,
+    transcriptPrefix: String,
+    dreamSeparator: String
+): String {
     val builder = StringBuilder()
     dreams.forEach { dream ->
-        builder.append("Title: ${dream.title}\n")
-        builder.append("Date: ${dream.date}\n\n")
+        builder.append(titlePrefix + dream.title + "\n")
+        builder.append(datePrefix + dream.date + "\n\n")
         builder.append(dream.content)
 
         if (dream.audioTranscription.isNotBlank()) {
-            builder.append("\n\nTranscript:\n")
+            builder.append(transcriptPrefix)
             builder.append(dream.audioTranscription)
         }
 
-        builder.append("\n\n--------------------------------------------------\n\n")
+        builder.append(dreamSeparator)
     }
     return builder.toString()
 }
 
 
 data class DrawerGroup(
-    val title: String,
+    val title: StringResource,
     val items: List<DrawerNavigation>
 )
 
@@ -547,14 +615,14 @@ fun AnimatedHeartIcon(animate: Boolean = true) {
 
         Icon(
             imageVector = Icons.Default.Favorite,
-            contentDescription = "Animated Heart",
+            contentDescription = stringResource(Res.string.animated_heart),
             tint = Color.Red,
             modifier = Modifier.size(size.dp)
         )
     } else {
         Icon(
             imageVector = Icons.Default.Favorite,
-            contentDescription = "Heart",
+            contentDescription = stringResource(Res.string.heart),
             tint = Color.Red,
             modifier = Modifier.size(24.dp)
         )

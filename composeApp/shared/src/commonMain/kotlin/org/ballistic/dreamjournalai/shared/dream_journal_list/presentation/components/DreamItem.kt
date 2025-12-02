@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components
 
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -24,22 +25,25 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -54,31 +58,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.background_during_day
-import dreamjournalai.composeapp.shared.generated.resources.baseline_cached_24
-import dreamjournalai.composeapp.shared.generated.resources.baseline_star_24
-import dreamjournalai.composeapp.shared.generated.resources.false_awakening_icon
-import dreamjournalai.composeapp.shared.generated.resources.lighthouse_vector
-import dreamjournalai.composeapp.shared.generated.resources.nightmare_ghost_closed
-import dreamjournalai.composeapp.shared.generated.resources.nightmare_ghost_open
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream.Companion.dreamBackgroundImages
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Green
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Purple
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.Yellow
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
-import androidx.compose.animation.Crossfade
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.draw.alpha
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.key
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -121,10 +108,10 @@ fun DreamItem(
                 ambientColor = glowColor
             )
             .border(
-            width = (borderThickness?.value ?: 4f).dp,
-            brush = shimmerBrush!!,
-            shape = RoundedCornerShape(8.dp)
-        )
+                width = (borderThickness?.value ?: 4f).dp,
+                brush = shimmerBrush!!,
+                shape = RoundedCornerShape(8.dp)
+            )
     } else {
         modifier
     }
@@ -132,7 +119,7 @@ fun DreamItem(
     Box(
         modifier = chosenModifier
             .clip(RoundedCornerShape(8.dp))
-            .background(LightBlack.copy(alpha = 0.8f))
+            .background(OriginalXmlColors.LightBlack.copy(alpha = 0.8f))
             .combinedClickable(
                 onClick = {
                     if (!isLongPressTriggered) {
@@ -174,14 +161,14 @@ fun DreamItem(
                     key(generatedImage) {
                         SubcomposeAsyncImage(
                             model = generatedImage,
-                            contentDescription = "Dream Image",
+                            contentDescription = stringResource(Res.string.dream_image),
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop,
                             loading = {
                                 // Fallback + shimmer while loading/empty
                                 Image(
                                     painter = painterResource(chosenBackground),
-                                    contentDescription = "Dream Image Placeholder",
+                                    contentDescription = stringResource(Res.string.dream_image_placeholder),
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
                                 )
@@ -195,7 +182,7 @@ fun DreamItem(
                                 // Fallback on error
                                 Image(
                                     painter = painterResource(chosenBackground),
-                                    contentDescription = "Dream Image Fallback",
+                                    contentDescription = stringResource(Res.string.dream_image_fallback),
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
                                 )
@@ -206,13 +193,13 @@ fun DreamItem(
                         )
                     }
                 } else {
-                     Image(
-                         painter = painterResource(chosenBackground),
-                         modifier = Modifier.fillMaxSize(),
-                         contentScale = ContentScale.Crop,
-                         contentDescription = "Dream Image"
-                     )
-                 }
+                    Image(
+                        painter = painterResource(chosenBackground),
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        contentDescription = stringResource(Res.string.dream_image)
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(8.dp))
             Column(
@@ -224,7 +211,7 @@ fun DreamItem(
                     text = dream.title,
                     style = typography.titleSmall,
                     fontSize = 16.sp,
-                    color = BrighterWhite,
+                    color = OriginalXmlColors.BrighterWhite,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.basicMarquee()
@@ -236,7 +223,7 @@ fun DreamItem(
                     text = if (dream.content.isNotBlank()) dream.content else dream.audioTranscription,
                     style = typography.bodySmall,
                     fontSize = 13.sp,
-                    color = White,
+                    color = OriginalXmlColors.White,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -250,8 +237,8 @@ fun DreamItem(
                 if (dream.isFavorite) {
                     Icon(
                         painter = painterResource(Res.drawable.baseline_star_24),
-                        tint = Yellow,
-                        contentDescription = "Favorite",
+                        tint = OriginalXmlColors.Yellow,
+                        contentDescription = stringResource(Res.string.favorite),
                         modifier = Modifier
                             .size(26.dp)
                             .padding(bottom = 4.dp),
@@ -269,8 +256,8 @@ fun DreamItem(
                 if (dream.isRecurring) {
                     Icon(
                         painter = painterResource(Res.drawable.baseline_cached_24),
-                        tint = Green,
-                        contentDescription = "Recurring",
+                        tint = OriginalXmlColors.Green,
+                        contentDescription = stringResource(Res.string.recurring),
                         modifier = Modifier
                             .size(26.dp)
                             .padding(bottom = 4.dp),
@@ -280,8 +267,8 @@ fun DreamItem(
                 if (dream.isLucid) {
                     Icon(
                         painter = painterResource(Res.drawable.lighthouse_vector),
-                        tint = SkyBlue,
-                        contentDescription = "Lucid",
+                        tint = OriginalXmlColors.SkyBlue,
+                        contentDescription = stringResource(Res.string.lucid),
                         modifier = Modifier
                             .size(26.dp)
                             .padding(bottom = 4.dp),
@@ -291,8 +278,8 @@ fun DreamItem(
                 if (dream.falseAwakening) {
                     Icon(
                         painter = painterResource(Res.drawable.false_awakening_icon),
-                        tint = Purple,
-                        contentDescription = "Day Dream",
+                        tint = OriginalXmlColors.Purple,
+                        contentDescription = stringResource(Res.string.day_dream),
                         modifier = Modifier
                             .size(26.dp)
                             .padding(bottom = 4.dp),
@@ -363,8 +350,8 @@ fun Modifier.shimmerEffect(): Modifier = composed {
 @Composable
 private fun NightmareGhostAnimatedIcon(
     modifier: Modifier = Modifier,
-    tintOpen: Color = RedOrange,
-    tintClosed: Color = White,         // closed is white
+    tintOpen: Color = OriginalXmlColors.RedOrange,
+    tintClosed: Color = OriginalXmlColors.White,         // closed is white
     holdOpenMillis: Int = 5000,        // hold at full open ~5s
     closedHoldMillis: Int = 900,       // brief closed pause
     crossfadeMillis: Int = 260,        // snappy swap
@@ -408,7 +395,9 @@ private fun NightmareGhostAnimatedIcon(
         val tint = if (open) tintOpen else tintClosed
         Icon(
             painter = painter,
-            contentDescription = if (open) "Nightmare (open)" else "Nightmare (closed)",
+            contentDescription = if (open) stringResource(Res.string.nightmare_open) else stringResource(
+                Res.string.nightmare_closed
+            ),
             tint = tint,
             modifier = modifier
                 .offset(y = offsetY.value.dp)

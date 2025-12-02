@@ -55,8 +55,7 @@ import androidx.compose.ui.unit.dp
 import app.lexilabs.basic.ads.DependsOnGoogleMobileAds
 import app.lexilabs.basic.ads.composable.RewardedAd
 import coil3.compose.LocalPlatformContext
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.baseline_report_24
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.SnackbarAction
@@ -64,6 +63,7 @@ import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AIPageType
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AITool
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
@@ -73,10 +73,9 @@ import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.component
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.AIPage.AISubPages.UniversalAIPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
@@ -101,9 +100,9 @@ fun SharedTransitionScope.AIPage(
 
     if (flagContentBottomSheetState.value) {
         ActionBottomSheet(
-            title = "Flag Content",
-            message = "Are you sure you want to flag this content?",
-            buttonText = "Flag",
+            title = stringResource(Res.string.flag_content),
+            message = stringResource(Res.string.flag_content_message),
+            buttonText = stringResource(Res.string.flag),
             onClick = {
                 onAddEditDreamEvent(AddEditDreamEvent.FlagDreamContent)
                 flagContentBottomSheetState.value = false
@@ -125,9 +124,9 @@ fun SharedTransitionScope.AIPage(
                         scope.launch {
                             SnackbarController.sendEvent(
                                 SnackbarEvent(
-                                    message = "Not enough dream tokens",
+                                    message = StringValue.Resource(Res.string.not_enough_dream_tokens),
                                     action = SnackbarAction(
-                                        name = "Dismiss",
+                                        name = StringValue.Resource(Res.string.dismiss),
                                         action = {}
                                     )
                                 )
@@ -165,7 +164,7 @@ fun SharedTransitionScope.AIPage(
 
         AIPage.INTERPRETATION -> {
             DreamInterpretationPopUp(
-                title = "Dream Interpreter",
+                title = stringResource(Res.string.dream_interpreter),
                 dreamTokens = dreamTokens,
                 onAdClick = {
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
@@ -183,9 +182,9 @@ fun SharedTransitionScope.AIPage(
                         scope.launch {
                             SnackbarController.sendEvent(
                                 SnackbarEvent(
-                                    message = "Not enough dream tokens",
+                                    message = StringValue.Resource(Res.string.not_enough_dream_tokens),
                                     action = SnackbarAction(
-                                        name = "Dismiss",
+                                        name = StringValue.Resource(Res.string.dismiss),
                                         action = {}
                                     )
                                 )
@@ -211,7 +210,7 @@ fun SharedTransitionScope.AIPage(
 
         AIPage.ADVICE -> {
             DreamInterpretationPopUp(
-                title = "Dream Advice",
+                title = stringResource(Res.string.dream_advice),
                 dreamTokens = dreamTokens,
                 onAdClick = {
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
@@ -229,9 +228,9 @@ fun SharedTransitionScope.AIPage(
                         scope.launch {
                             SnackbarController.sendEvent(
                                 SnackbarEvent(
-                                    message = "Not enough dream tokens",
+                                    message = StringValue.Resource(Res.string.not_enough_dream_tokens),
                                     action = SnackbarAction(
-                                        name = "Dismiss",
+                                        name = StringValue.Resource(Res.string.dismiss),
                                         action = {}
                                     )
                                 )
@@ -265,9 +264,9 @@ fun SharedTransitionScope.AIPage(
                         scope.launch {
                             SnackbarController.sendEvent(
                                 SnackbarEvent(
-                                    message = "Not enough dream tokens",
+                                    message = StringValue.Resource(Res.string.not_enough_dream_tokens),
                                     action = SnackbarAction(
-                                        name = "Dismiss",
+                                        name = StringValue.Resource(Res.string.dismiss),
                                         action = {}
                                     )
                                 )
@@ -302,7 +301,7 @@ fun SharedTransitionScope.AIPage(
 
         AIPage.STORY -> {
             DreamInterpretationPopUp(
-                title = "Dream Story",
+                title = stringResource(Res.string.dream_story),
                 dreamTokens = dreamTokens,
                 onDreamTokenClick = { amount ->
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
@@ -310,9 +309,9 @@ fun SharedTransitionScope.AIPage(
                         scope.launch {
                             SnackbarController.sendEvent(
                                 SnackbarEvent(
-                                    message = "Not enough dream tokens",
+                                    message = StringValue.Resource(Res.string.not_enough_dream_tokens),
                                     action = SnackbarAction(
-                                        name = "Dismiss",
+                                        name = StringValue.Resource(Res.string.dismiss),
                                         action = {}
                                     )
                                 )
@@ -347,7 +346,7 @@ fun SharedTransitionScope.AIPage(
 
         AIPage.MOOD -> {
             DreamInterpretationPopUp(
-                title = "Dream Mood",
+                title = stringResource(Res.string.dream_mood),
                 dreamTokens = dreamTokens,
                 onAdClick = {
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
@@ -365,9 +364,9 @@ fun SharedTransitionScope.AIPage(
                         scope.launch {
                             SnackbarController.sendEvent(
                                 SnackbarEvent(
-                                    message = "Not enough dream tokens",
+                                    message = StringValue.Resource(Res.string.not_enough_dream_tokens),
                                     action = SnackbarAction(
-                                        name = "Dismiss",
+                                        name = StringValue.Resource(Res.string.dismiss),
                                         action = {}
                                     )
                                 )
@@ -515,13 +514,13 @@ fun SharedTransitionScope.AIPage(
             .fillMaxSize()
             .padding(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 16.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(LightBlack.copy(alpha = 0.7f)),
+            .background(OriginalXmlColors.LightBlack.copy(alpha = 0.7f)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "AI Tools Selection",
+            text = stringResource(Res.string.ai_tools_selection),
             style = typography.labelMedium,
-            color = White,
+            color = OriginalXmlColors.White,
             modifier = Modifier.padding(4.dp, 8.dp, 4.dp, 4.dp)
         )
 
@@ -535,13 +534,13 @@ fun SharedTransitionScope.AIPage(
             selectedTabIndex = pagerState2.currentPage,
             indicator = {
                 TabRowDefaults.SecondaryIndicator(
-                    color = White,
+                    color = OriginalXmlColors.White,
                     modifier = Modifier.tabIndicatorOffset(pagerState2.currentPage)
                 )
             },
             divider = {},
-            contentColor = White,
-            containerColor = LightBlack.copy(alpha = 0.5f),
+            contentColor = OriginalXmlColors.White,
+            containerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.5f),
         ) {
             pages.forEachIndexed { index, page ->
                 val isSelected = pagerState2.currentPage == index
@@ -564,7 +563,7 @@ fun SharedTransitionScope.AIPage(
                     targetValue = if (isSelected) {
                         if (canGenerateAI) {
                             AITool.entries[index].color
-                        } else White
+                        } else OriginalXmlColors.White
                     } else Color.LightGray.copy(alpha = 0.6f),
                     animationSpec = tween(durationMillis = 500), label = ""
                 )
@@ -580,8 +579,8 @@ fun SharedTransitionScope.AIPage(
                 val gradientBackground = if (isSelected) {
                     Brush.linearGradient(
                         colors = listOf(
-                            BrighterWhite.copy(alpha = 0.12f),
-                            BrighterWhite.copy(alpha = 0.02f)
+                            OriginalXmlColors.BrighterWhite.copy(alpha = 0.12f),
+                            OriginalXmlColors.BrighterWhite.copy(alpha = 0.02f)
                         ),
                         start = Offset(0f, 0f),
                         end = Offset(100f, 100f)
@@ -635,7 +634,7 @@ fun SharedTransitionScope.AIPage(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
-                .background(LightBlack.copy(alpha = 0.7f))
+                .background(OriginalXmlColors.LightBlack.copy(alpha = 0.7f))
                 .weight(1f)
                 .fillMaxWidth(),
         ) {
@@ -646,7 +645,7 @@ fun SharedTransitionScope.AIPage(
                     .fillMaxSize()
                     .align(Alignment.Center)
                     .background(
-                        color = LightBlack.copy(alpha = 0.0f)
+                        color = OriginalXmlColors.LightBlack.copy(alpha = 0.0f)
                     ),
                 beyondViewportPageCount = 0,
                 verticalAlignment = Alignment.Top
@@ -666,9 +665,9 @@ fun SharedTransitionScope.AIPage(
                         scope.launch {
                             SnackbarController.sendEvent(
                                 SnackbarEvent(
-                                    message = "Dream is too short",
+                                    message = StringValue.Resource(Res.string.dream_is_too_short),
                                     action = SnackbarAction(
-                                        name = "Dismiss",
+                                        name = StringValue.Resource(Res.string.dismiss),
                                         action = {}
                                     )
                                 )
@@ -700,8 +699,8 @@ fun SharedTransitionScope.AIPage(
                         .weight(1f)
                 )
                 Text(
-                    text = "Tokens",
-                    style = typography.titleMedium.copy(BrighterWhite),
+                    text = stringResource(Res.string.tokens),
+                    style = typography.titleMedium.copy(OriginalXmlColors.BrighterWhite),
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -721,15 +720,17 @@ fun SharedTransitionScope.AIPage(
             ) {
                 Icon(
                     painterResource(Res.drawable.baseline_report_24),
-                    contentDescription = "Report",
+                    contentDescription = stringResource(Res.string.report),
                     tint = Color.White,
                 )
             }
         }
 
         AIButton(
-            text = "Generate " + AIPage.entries[pagerState2.currentPage].name.lowercase()
-                .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+            text = stringResource(
+                Res.string.generate_button_text,
+                AIPage.entries[pagerState2.currentPage].name.lowercase()
+                    .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }),
             color = AITool.entries[pagerState2.currentPage].color,
             onClick = {
                 if (canGenerateAI) {
@@ -742,9 +743,9 @@ fun SharedTransitionScope.AIPage(
                     scope.launch {
                         SnackbarController.sendEvent(
                             SnackbarEvent(
-                                message = "Dream is too short",
+                                message = StringValue.Resource(Res.string.dream_is_too_short),
                                 action = SnackbarAction(
-                                    name = "Dismiss",
+                                    name = StringValue.Resource(Res.string.dismiss),
                                     action = {}
                                 )
                             )
@@ -775,7 +776,7 @@ fun AIButton(
             .padding(16.dp, 8.dp, 16.dp, 8.dp)
             .border(
                 width = 4.dp,
-                color = LightBlack.copy(alpha = 0.3f),
+                color = OriginalXmlColors.LightBlack.copy(alpha = 0.3f),
                 shape = RoundedCornerShape(9.dp)
             ),
         shape = RoundedCornerShape(8.dp),

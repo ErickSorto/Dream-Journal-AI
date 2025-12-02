@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonDefaults.buttonColors
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,15 +29,17 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.coroutines.delay
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LighterYellow
+import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.core.ComposableData
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.SignupEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.LoginViewModelState
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.SignupViewModelState
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 
 @Composable
@@ -43,7 +47,7 @@ fun SignupLoginTabLayout(loginViewModelState: LoginViewModelState, onLayoutChang
     if (!loginViewModelState.isForgotPasswordLayout) {
         Row {
             LoginOrSignupTab(
-                text = "Login",
+                text = stringResource(Res.string.login),
                 isLoginLayout = loginViewModelState.isLoginLayout,
                 isSignUpLayout = loginViewModelState.isSignUpLayout,
                 isClicked = {
@@ -54,7 +58,7 @@ fun SignupLoginTabLayout(loginViewModelState: LoginViewModelState, onLayoutChang
                     .padding(end = 4.dp, bottom = 8.dp, start = 16.dp)
             )
             LoginOrSignupTab(
-                text = "Signup",
+                text = stringResource(Res.string.signup),
                 isLoginLayout = loginViewModelState.isLoginLayout,
                 isSignUpLayout = loginViewModelState.isSignUpLayout,
                 isClicked = {
@@ -73,6 +77,19 @@ fun ForgotPasswordLayout(
     loginViewModelState: LoginViewModelState,
     authEvent: (LoginEvent) -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    if (loginViewModelState.error is StringValue.DynamicString && (loginViewModelState.error as StringValue.DynamicString).value.isNotEmpty()) {
+        LaunchedEffect(loginViewModelState.error) {
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    (loginViewModelState.error as StringValue.DynamicString).value
+                )
+            }
+        }
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -86,7 +103,7 @@ fun ForgotPasswordLayout(
                 mutableStateOf(true)
             }
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
@@ -98,7 +115,7 @@ fun ForgotPasswordLayout(
                 .height(40.dp),
             shape = RoundedCornerShape(12.dp),
             colors = buttonColors(
-                containerColor = LighterYellow
+                containerColor = OriginalXmlColors.LighterYellow
             ),
             elevation = ButtonDefaults.buttonElevation(
                 defaultElevation = 4.dp,
@@ -106,12 +123,12 @@ fun ForgotPasswordLayout(
             )
         ) {
             Text(
-                text = "Reset Password",
+                text = stringResource(Res.string.reset_password),
                 fontSize = 15.sp,
                 color = Color.Black
             )
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
@@ -123,7 +140,7 @@ fun ForgotPasswordLayout(
                 .height(40.dp),
             shape = RoundedCornerShape(12.dp),
             colors = buttonColors(
-                containerColor = SkyBlue
+                containerColor = OriginalXmlColors.SkyBlue
             ),
             elevation = ButtonDefaults.buttonElevation(
                 defaultElevation = 4.dp,
@@ -131,21 +148,12 @@ fun ForgotPasswordLayout(
             )
         ) {
             Text(
-                text = "Back to Login",
+                text = stringResource(Res.string.back_to_login),
                 fontSize = 15.sp,
                 color = Color.Black
             )
         }
     }
-
-    ForgotPassword(
-        navigateBack = {
-            authEvent(LoginEvent.ShowLoginLayout)
-        },
-        showResetPasswordMessage = { /*TODO*/ },
-        showErrorMessage = { /*TODO*/ },
-        loginViewModelState = loginViewModelState
-    )
 }
 
 
@@ -185,7 +193,7 @@ fun SignupLayout(
                 mutableStateOf(true)
             },
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(
@@ -203,7 +211,7 @@ fun SignupLayout(
             },
             shape = RoundedCornerShape(12.dp),
             colors = buttonColors(
-                containerColor = SkyBlue
+                containerColor = OriginalXmlColors.SkyBlue
             ),
             elevation = ButtonDefaults.buttonElevation(
                 defaultElevation = 4.dp,
@@ -211,7 +219,7 @@ fun SignupLayout(
             )
         ) {
             Text(
-                text = "Sign Up",
+                text = stringResource(Res.string.sign_up),
                 fontSize = 15.sp,
                 color = Color.Black
             )
@@ -234,23 +242,40 @@ fun LoginLayout(
     useExternalStagger: Boolean = false,
     preferFadeExit: Boolean = false,
 ) {
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    if (loginViewModelState.error is StringValue.DynamicString && (loginViewModelState.error as StringValue.DynamicString).value.isNotEmpty()) {
+        LaunchedEffect(loginViewModelState.error) {
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    (loginViewModelState.error as StringValue.DynamicString).value
+                )
+            }
+        }
+    }
 
     val enterDuration = 300
     val staggeredDelay = staggerMillis
 
+    val emailString = stringResource(Res.string.email)
+    val passwordString = stringResource(Res.string.password)
+    val loginButtonString = stringResource(Res.string.login)
+
+
     // Local default visibility states when not using external stagger
     val localStates = remember {
         listOf(
-            ComposableData(key = "Email", visible = mutableStateOf(false)),
-            ComposableData(key = "Password", visible = mutableStateOf(false)),
-            ComposableData(key = "LoginButton", visible = mutableStateOf(false)),
+            ComposableData(key = emailString, visible = mutableStateOf(false)),
+            ComposableData(key = passwordString, visible = mutableStateOf(false)),
+            ComposableData(key = loginButtonString, visible = mutableStateOf(false)),
         )
     }
 
     // Decide which states to use
-    val emailState = emailVisible ?: localStates.first { it.key == "Email" }.visible
-    val passwordState = passwordVisible ?: localStates.first { it.key == "Password" }.visible
-    val loginButtonState = loginButtonVisible ?: localStates.first { it.key == "LoginButton" }.visible
+    val emailState = emailVisible ?: localStates.first { it.key == emailString }.visible
+    val passwordState = passwordVisible ?: localStates.first { it.key == passwordString }.visible
+    val loginButtonState = loginButtonVisible ?: localStates.first { it.key == loginButtonString }.visible
 
     // Only run internal stagger when not using external one
     LaunchedEffect(shouldAnimate, staggerMillis, useExternalStagger) {
@@ -314,9 +339,6 @@ fun LoginLayout(
             exitWithFade = preferFadeExit,
         )
     }
-    if (!useExternalStagger) {
-        LogIn(showErrorMessage = { /*TODO*/ }, loginViewModelState = loginViewModelState)
-    }
 }
 
 @Composable
@@ -327,13 +349,15 @@ fun LoginOrSignupTab(
     isSignUpLayout: Boolean,
     isClicked: () -> Unit,
 ) {
+    val loginString = stringResource(Res.string.login)
+    val signupString = stringResource(Res.string.signup)
     TextButton(
         modifier = modifier
             .background(
-                if (isLoginLayout && text == "Login" || isSignUpLayout && text == "Signup") {
-                    LightBlack.copy(alpha = 0.7f)
+                if (isLoginLayout && text == loginString || isSignUpLayout && text == signupString) {
+                    OriginalXmlColors.LightBlack.copy(alpha = 0.7f)
                 } else {
-                   LightBlack.copy(alpha = 0.1f)
+                    OriginalXmlColors.LightBlack.copy(alpha = 0.1f)
                 },
                 shape = RoundedCornerShape(8.dp)
             ),
@@ -344,7 +368,7 @@ fun LoginOrSignupTab(
         Text(
             text = text,
             fontSize = 16.sp,
-            color = if (isLoginLayout && text == "Login" || isSignUpLayout && text == "Signup") {
+            color = if (isLoginLayout && text == loginString || isSignUpLayout && text == signupString) {
                 Color.White
             } else {
                 Color.White.copy(alpha = 0.5f)

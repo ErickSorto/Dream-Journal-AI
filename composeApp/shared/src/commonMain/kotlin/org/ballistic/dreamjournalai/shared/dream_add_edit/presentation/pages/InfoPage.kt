@@ -30,21 +30,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlin.time.Instant
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import dreamjournalai.composeapp.shared.generated.resources.*
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.DateAndTimeButtonsLayout
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.DreamImageSelectionRow
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.LucidFavoriteLayout
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.dream_notifications.presentation.components.DialWithDialogExample
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,16 +117,16 @@ fun InfoPage(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
-                .background(color = LightBlack.copy(alpha = 0.7f))
+                .background(color = OriginalXmlColors.LightBlack.copy(alpha = 0.7f))
         ) {
             Column {
                 Text(
-                    text = "Dream Background",
+                    text = stringResource(Res.string.dream_background),
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
                         .padding(16.dp, 16.dp, 16.dp, 0.dp), //bold
-                    style = typography.titleMedium.copy(color = White)
+                    style = typography.titleMedium.copy(color = OriginalXmlColors.White)
                         .copy(
                             fontWeight = FontWeight.Normal
                         ),
@@ -145,13 +145,13 @@ fun InfoPage(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
-                .background(color = LightBlack.copy(alpha = 0.7f))
+                .background(color = OriginalXmlColors.LightBlack.copy(alpha = 0.7f))
         ) {
             //row for isLucid
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(12.dp)
+                    .padding(12.dp, 12.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -164,14 +164,14 @@ fun InfoPage(
                     onDateClick = { onAddEditDreamEvent(AddEditDreamEvent.ToggleCalendarDialog(show = true)) },
                     onSleepTimeClick = { onAddEditDreamEvent(AddEditDreamEvent.ToggleSleepTimePickerDialog(show = true)) },
                     onWakeTimeClick = { onAddEditDreamEvent(AddEditDreamEvent.ToggleWakeTimePickerDialog(show = true)) }
-                    )
+                )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
 
                 // Slider for lucidity
                 SliderWithLabel(
-                    label = "Lucidity",
+                    label = stringResource(Res.string.lucidity),
                     value = addEditDreamState.dreamInfo.dreamLucidity,
                     onValueChange = { onAddEditDreamEvent(AddEditDreamEvent.ChangeLucidity(it)) },
                     modifier = Modifier
@@ -182,7 +182,7 @@ fun InfoPage(
 
                 // Slider for vividness
                 SliderWithLabel(
-                    label = "Vividness",
+                    label = stringResource(Res.string.vividness),
                     value = addEditDreamState.dreamInfo.dreamVividness,
                     onValueChange = { onAddEditDreamEvent(AddEditDreamEvent.ChangeVividness(it)) },
                     modifier = Modifier
@@ -193,7 +193,7 @@ fun InfoPage(
 
                 // Slider for mood
                 SliderWithLabel(
-                    label = "Mood",
+                    label = stringResource(Res.string.mood),
                     value = addEditDreamState.dreamInfo.dreamEmotion,
                     onValueChange = { onAddEditDreamEvent(AddEditDreamEvent.ChangeMood(it)) },
                     modifier = Modifier
@@ -223,7 +223,7 @@ fun SliderWithLabel(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp),
-            style = typography.bodyLarge.copy(color = White)
+            style = typography.bodyLarge.copy(color = OriginalXmlColors.White)
         )
         Slider(
             value = animatedValue,
@@ -231,9 +231,9 @@ fun SliderWithLabel(
             valueRange = 0f..5f,
             modifier = Modifier.fillMaxWidth(),
             colors = SliderDefaults.colors(
-                thumbColor = White,
-                activeTrackColor = SkyBlue,
-                inactiveTrackColor = White.copy(alpha = 0.3f)
+                thumbColor = OriginalXmlColors.White,
+                activeTrackColor = OriginalXmlColors.SkyBlue,
+                inactiveTrackColor = OriginalXmlColors.White.copy(alpha = 0.3f)
             )
         )
     }
@@ -261,12 +261,12 @@ fun DatePickerModal(
                 onDateSelected(selectedDate)
                 onDismiss()
             }) {
-                Text("OK")
+                Text(stringResource(Res.string.ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         }
     ) {

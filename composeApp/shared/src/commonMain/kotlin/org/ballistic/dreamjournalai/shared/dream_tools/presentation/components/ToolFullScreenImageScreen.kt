@@ -48,27 +48,39 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.back_button_content_description
 import dreamjournalai.composeapp.shared.generated.resources.baseline_report_24
+import dreamjournalai.composeapp.shared.generated.resources.dismiss
+import dreamjournalai.composeapp.shared.generated.resources.flag
+import dreamjournalai.composeapp.shared.generated.resources.flag_content
+import dreamjournalai.composeapp.shared.generated.resources.flag_content_message
+import dreamjournalai.composeapp.shared.generated.resources.full_screen_image
 import dreamjournalai.composeapp.shared.generated.resources.ic_baseline_arrow_left_alt_24
+import dreamjournalai.composeapp.shared.generated.resources.image_flagged_successfully
 import dreamjournalai.composeapp.shared.generated.resources.onboarding_long
+import dreamjournalai.composeapp.shared.generated.resources.report
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.ballistic.dreamjournalai.shared.BottomNavigationController
 import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.core.util.BackHandler
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_fullscreen.FullScreenEvent
-import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.TwinklesLayer
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SharedTransitionScope.ToolFullScreenImageScreen(
     imageID: String,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onMainEvent: (MainScreenEvent) -> Unit,
     onFullScreenEvent: (FullScreenEvent) -> Unit = {},
     onBackPress: () -> Unit
 ) {
@@ -88,6 +100,8 @@ fun SharedTransitionScope.ToolFullScreenImageScreen(
     val initialTopBar = (rawStatusBarTop + 24.dp).coerceIn(minTopBar, maxTopBar)
     var topBarHeight by remember { mutableStateOf(initialTopBar) }
     var layoutReady by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
 
     LaunchedEffect(Unit) {
         val observedInset = withTimeoutOrNull(500L) {
@@ -149,7 +163,7 @@ fun SharedTransitionScope.ToolFullScreenImageScreen(
         )
 
         Scaffold(
-            snackbarHost = { SnackbarHost(SnackbarHostState()) },
+            snackbarHost = { SnackbarHost(remember { SnackbarHostState() }) },
             containerColor = Color.Transparent,
             topBar = {
                 if (layoutReady) {
@@ -179,7 +193,7 @@ fun SharedTransitionScope.ToolFullScreenImageScreen(
                             ) {
                                 Icon(
                                     painterResource(Res.drawable.ic_baseline_arrow_left_alt_24),
-                                    contentDescription = "Back",
+                                    contentDescription = stringResource(Res.string.back_button_content_description),
                                     tint = Color.White,
                                 )
                             }
@@ -190,7 +204,7 @@ fun SharedTransitionScope.ToolFullScreenImageScreen(
                             ) {
                                 Icon(
                                     painterResource(Res.drawable.baseline_report_24),
-                                    contentDescription = "Report",
+                                    contentDescription = stringResource(Res.string.report),
                                     tint = Color.White,
                                 )
                             }
@@ -208,17 +222,23 @@ fun SharedTransitionScope.ToolFullScreenImageScreen(
             // Background behind the app bar and content
             if (flagContentBottomSheetState.value) {
                 ActionBottomSheet(
-                    title = "Flag Content",
-                    message = "Are you sure you want to flag this content?",
-                    buttonText = "Flag",
+                    title = stringResource(Res.string.flag_content),
+                    message = stringResource(Res.string.flag_content_message),
+                    buttonText = stringResource(Res.string.flag),
                     onClick = {
                         onFullScreenEvent(
                             FullScreenEvent.Flag(
                                 imageID,
                                 onSuccessEvent = {
-                                    onMainEvent(
-                                        MainScreenEvent.ShowSnackBar("Image flagged successfully")
-                                    )
+                                    scope.launch {
+                                        SnackbarController.sendEvent(
+                                            SnackbarEvent(
+                                                message = StringValue.Resource(Res.string.image_flagged_successfully),
+                                                action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                                            )
+                                        )
+                                    }
+
                                 }
                             )
                         )
@@ -242,7 +262,7 @@ fun SharedTransitionScope.ToolFullScreenImageScreen(
                         .placeholderMemoryCacheKey("image/$imageID")
                         .memoryCacheKey("image/$imageID")
                         .build(),
-                    contentDescription = "Full Screen Image",
+                    contentDescription = stringResource(Res.string.full_screen_image),
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f)

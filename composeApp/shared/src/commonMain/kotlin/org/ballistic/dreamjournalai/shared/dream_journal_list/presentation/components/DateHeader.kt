@@ -9,16 +9,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.today
+import dreamjournalai.composeapp.shared.generated.resources.yesterday
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.core.util.getDayOfWeekDisplayName
 import org.ballistic.dreamjournalai.shared.core.util.getStartOfWeek
 import org.ballistic.dreamjournalai.shared.core.util.parseCustomDate
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.ExperimentalTime
 
 
@@ -27,7 +30,11 @@ import kotlin.time.ExperimentalTime
 fun DateHeader(dateString: String,
                paddingStart: Int = 12
 ) {
-    val displayString = remember(dateString) {
+    // Resolve string resources outside the remember block
+    val todayString = stringResource(Res.string.today)
+    val yesterdayString = stringResource(Res.string.yesterday)
+
+    val displayString = remember(dateString, todayString, yesterdayString) {
         // Define the system's default time zone
         val timeZone = TimeZone.currentSystemDefault()
 
@@ -52,8 +59,8 @@ fun DateHeader(dateString: String,
         }
 
         when {
-            date == todayDate -> "Today"
-            date == yesterdayDate -> "Yesterday"
+            date == todayDate -> todayString
+            date == yesterdayDate -> yesterdayString
             date != null && date > thisWeekStartDate -> {
                 // Get the full display name of the day of the week
                 getDayOfWeekDisplayName(date.dayOfWeek)
@@ -66,7 +73,7 @@ fun DateHeader(dateString: String,
         modifier = Modifier
             .padding(start = paddingStart.dp, top = 8.dp, end = 8.dp, bottom = 8.dp)
             .background(
-                color = LightBlack.copy(alpha = 0.8f),
+                color = OriginalXmlColors.LightBlack.copy(alpha = 0.8f),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
             )
     ) {
@@ -76,7 +83,7 @@ fun DateHeader(dateString: String,
             modifier = Modifier
                 .padding(6.dp)
                 .padding(horizontal = 8.dp),
-            color = White,
+            color = OriginalXmlColors.White,
             fontWeight = MaterialTheme.typography.bodyLarge.fontWeight
         )
     }

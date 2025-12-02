@@ -35,14 +35,17 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.back_button
+import dreamjournalai.composeapp.shared.generated.resources.menu
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.platform.isIos
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,7 +96,7 @@ fun DreamToolScreenWithNavigateUpTopBar(
         Box(modifier = Modifier
             .fillMaxWidth()
             .height(totalHeight)
-            .background(DarkBlue.copy(alpha = 0.5f))
+            .background(OriginalXmlColors.DarkBlue.copy(alpha = 0.5f))
             .dynamicBottomNavigationPadding()
         ) {
             Row(
@@ -116,8 +119,8 @@ fun DreamToolScreenWithNavigateUpTopBar(
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = if (enabledBack) White else White.copy(alpha = 0.5f)
+                        contentDescription = stringResource(Res.string.back_button),
+                        tint = if (enabledBack) OriginalXmlColors.White else OriginalXmlColors.White.copy(alpha = 0.5f)
                     )
                 }
 
@@ -125,13 +128,13 @@ fun DreamToolScreenWithNavigateUpTopBar(
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     if (titleComposable != null) {
                         titleComposable()
-                    } else if (title != null) {
-                        Text(text = title, color = White, style = typography.titleMedium, fontWeight = FontWeight.Bold)
+                    } else {
+                        Text(text = title?: "", color = OriginalXmlColors.White, style = typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
                 }
 
                 IconButton(onClick = { /*TODO*/ }) {
-                    Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = Color.Transparent)
+                    Icon(Icons.Filled.Menu, contentDescription = stringResource(Res.string.menu), tint = Color.Transparent)
                 }
             }
         }

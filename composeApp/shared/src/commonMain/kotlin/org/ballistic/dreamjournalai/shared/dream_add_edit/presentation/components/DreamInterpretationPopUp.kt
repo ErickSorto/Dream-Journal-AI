@@ -12,11 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.advanced_ai
+import dreamjournalai.composeapp.shared.generated.resources.standard_ai
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,7 +30,10 @@ fun DreamInterpretationPopUp(
     modifier: Modifier = Modifier,
 ) {
     var selectedIndex by remember { mutableIntStateOf(0) }
-    val options = listOf("Standard AI", "Advanced AI")
+    val options = listOf(
+        stringResource(Res.string.standard_ai),
+        stringResource(Res.string.advanced_ai)
+    )
     val amount = selectedIndex
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -46,7 +50,7 @@ fun DreamInterpretationPopUp(
             Column(
                 modifier = modifier
                     .fillMaxWidth()
-                    .background(LightBlack)
+                    .background(OriginalXmlColors.LightBlack)
                     .verticalScroll(rememberScrollState())
                     .padding(bottom = 16.dp)
                     .animateContentSize(),
@@ -63,7 +67,7 @@ fun DreamInterpretationPopUp(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.headlineSmall,
-                        color = White,
+                        color = OriginalXmlColors.White,
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     DreamTokenLayout(
@@ -90,9 +94,9 @@ fun DreamInterpretationPopUp(
                             label = { Text(label, style = MaterialTheme.typography.labelMedium) },
                             colors = SegmentedButtonDefaults.colors(
                                 activeContainerColor = OriginalXmlColors.SkyBlue.copy(alpha = 0.8f),
-                                activeContentColor = White,
+                                activeContentColor = OriginalXmlColors.White,
                                 inactiveContainerColor = Color.DarkGray.copy(alpha = 0.5f),
-                                inactiveContentColor = White.copy(alpha = 0.7f),
+                                inactiveContentColor = OriginalXmlColors.White.copy(alpha = 0.7f),
                                 activeBorderColor = OriginalXmlColors.SkyBlue
                             )
                         )
@@ -111,6 +115,6 @@ fun DreamInterpretationPopUp(
                 )
             }
         },
-        containerColor = LightBlack
+        containerColor = OriginalXmlColors.LightBlack
     )
 }

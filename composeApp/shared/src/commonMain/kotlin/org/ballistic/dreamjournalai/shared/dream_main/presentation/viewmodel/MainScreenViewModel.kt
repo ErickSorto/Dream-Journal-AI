@@ -20,10 +20,13 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.ballistic.dreamjournalai.shared.BottomNavigationController
 import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
+import org.ballistic.dreamjournalai.shared.SnackbarAction
 import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.core.util.StoreLinkOpener
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
@@ -145,25 +148,15 @@ class MainScreenViewModel(
                 val result = repo.consumeDreamTokens(event.tokensToConsume)
                 if (result is Resource.Error) {
                     result.message?.let { msg ->
-                        viewModelScope.launch {
-                            SnackbarController.sendEvent(
-                                org.ballistic.dreamjournalai.shared.SnackbarEvent(
-                                    message = msg,
-                                    action = org.ballistic.dreamjournalai.shared.SnackbarAction("Dismiss") { }
-                                )
+                        SnackbarController.sendEvent(
+                            SnackbarEvent(
+                                message = StringValue.DynamicString(msg),
+                                action = SnackbarAction(StringValue.DynamicString("Dismiss")) {
+                                    // No need to clear state here, SnackbarController handles it
+                                }
                             )
-                        }
-                    }
-                }
-            }
-            is MainScreenEvent.ShowSnackBar -> {
-                viewModelScope.launch {
-                    SnackbarController.sendEvent(
-                        org.ballistic.dreamjournalai.shared.SnackbarEvent(
-                            message = event.message,
-                            action = org.ballistic.dreamjournalai.shared.SnackbarAction("Dismiss") { }
                         )
-                    )
+                    }
                 }
             }
             is MainScreenEvent.ToggleDrawerState -> {
@@ -213,7 +206,7 @@ data class MainScreenViewModelState(
     val isBottomBarEnabledState : Boolean = true,
     // ViewModel no longer holds a Compose DrawerState; instead expose a simple boolean intent
     val isDrawerOpen: Boolean = false,
-    // Keep search text as a plain String for stability; composables handle input
+    // Keep search text as a plain String for stability; composables handle text input and emit events
     val searchedText: String = "",
     val dreamTokens: Int = 0,
     val backgroundResource: DrawableResource = Res.drawable.background_during_day,

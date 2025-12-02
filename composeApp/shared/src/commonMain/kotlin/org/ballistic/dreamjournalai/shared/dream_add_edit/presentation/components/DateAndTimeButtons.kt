@@ -90,17 +90,19 @@ fun DateButton(
     ) {
         Text(
             text = stringResource(Res.string.date),
-            style = typography.labelMedium,
+            style = typography.labelSmall,
             fontWeight = FontWeight.Bold,
             color = White,
-            modifier = Modifier.padding(top = 16.dp)
+            modifier = Modifier.padding(top = 16.dp),
+            maxLines = 1
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = addEditDreamState.dreamInfo.dreamDate,
             style = typography.labelSmall,
             color = White,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 16.dp),
+            maxLines = 1
         )
     }
 }
@@ -121,17 +123,19 @@ fun SleepTimeButton(
 
         Text(
             text = stringResource(Res.string.sleep_time),
-            style = typography.labelMedium,
+            style = typography.labelSmall,
             fontWeight = FontWeight.Bold,
             color = White,
-            modifier = Modifier.padding(top = 16.dp)
+            modifier = Modifier.padding(top = 16.dp),
+            maxLines = 1
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = addEditDreamState.dreamInfo.dreamSleepTime,
             style = typography.labelSmall,
             color = White,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 16.dp),
+            maxLines = 1
         )
     }
 }
@@ -152,17 +156,19 @@ fun WakeTimeButton(
     ) {
         Text(
             text = stringResource(Res.string.wake_time),
-            style = typography.labelMedium,
+            style = typography.labelSmall,
             fontWeight = FontWeight.Bold,
             color = White,
-            modifier = Modifier.padding(top = 16.dp)
+            modifier = Modifier.padding(top = 16.dp),
+            maxLines = 1
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = addEditDreamState.dreamInfo.dreamWakeTime,
             style = typography.labelSmall,
             color = White,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 16.dp),
+            maxLines = 1
         )
     }
 }

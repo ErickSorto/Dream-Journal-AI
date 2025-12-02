@@ -1,54 +1,62 @@
 package org.ballistic.dreamjournalai.shared.dream_store.domain
 
 import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.dream_ad_free_description
+import dreamjournalai.composeapp.shared.generated.resources.dream_ad_free_title
+import dreamjournalai.composeapp.shared.generated.resources.dream_token_slide_title
 import dreamjournalai.composeapp.shared.generated.resources.dream_benefit_interpretation
 import dreamjournalai.composeapp.shared.generated.resources.dream_benefit_no_ads
 import dreamjournalai.composeapp.shared.generated.resources.dream_benefit_painting
 import dreamjournalai.composeapp.shared.generated.resources.dream_benefit_words
+import dreamjournalai.composeapp.shared.generated.resources.dream_dictionary_description
+import dreamjournalai.composeapp.shared.generated.resources.dream_dictionary_title
+import dreamjournalai.composeapp.shared.generated.resources.dream_interpretation_description
+import dreamjournalai.composeapp.shared.generated.resources.dream_interpretation_title
+import dreamjournalai.composeapp.shared.generated.resources.dream_painting_description
+import dreamjournalai.composeapp.shared.generated.resources.dream_painting_title
 import dreamjournalai.composeapp.shared.generated.resources.dream_token_benefit
+import dreamjournalai.composeapp.shared.generated.resources.dream_token_slide_benefit_1
+import dreamjournalai.composeapp.shared.generated.resources.dream_token_slide_benefit_2
+import dreamjournalai.composeapp.shared.generated.resources.dream_token_slide_benefit_3
+import dreamjournalai.composeapp.shared.generated.resources.dream_token_slide_benefit_4
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.StringResource
 
 enum class DreamTokenBenefit(
-    val title: String,
-    val description: String = "",
-    val benefit1: String = "",
-    val benefit2: String = "",
-    val benefit3: String = "",
-    val benefit4: String = "",
+    val title: StringResource,
+    val description: StringResource? = null,
+    val benefit1: StringResource? = null,
+    val benefit2: StringResource? = null,
+    val benefit3: StringResource? = null,
+    val benefit4: StringResource? = null,
     val image: DrawableResource
 ) {
     DreamTokenSlideBenefit(
-        title = "500 Dream Tokens can unlock:",
-        benefit1 = "500 Dream interpretations",
-        benefit2 = "250 Dream paintings",
-        benefit3 = "250 Dream symbols",
-        benefit4 = "Enough tokens for 6 months",
+        title = Res.string.dream_token_slide_title,
+        benefit1 = Res.string.dream_token_slide_benefit_1,
+        benefit2 = Res.string.dream_token_slide_benefit_2,
+        benefit3 = Res.string.dream_token_slide_benefit_3,
+        benefit4 = Res.string.dream_token_slide_benefit_4,
         image = Res.drawable.dream_token_benefit
     ),
     DreamPainting(
-        title = "Visualize your dreams",
-        description = "Transform your dreams into art with AI. Instantly turn your visions into digital paintings. " +
-                "Share your dreams with the world in a new, creative way with Dream Tokens.",
+        title = Res.string.dream_painting_title,
+        description = Res.string.dream_painting_description,
         image = Res.drawable.dream_benefit_painting
     ),
     DreamInterpretation(
-        title = "Interpret dreams and more",
-        description = "Get Dream Tokens for immediate, AI-powered dream interpretations and mood " +
-                "insights. Your questions answered, your emotions explored, and your dreams " +
-                "transformed into stories. ",
+        title = Res.string.dream_interpretation_title,
+        description = Res.string.dream_interpretation_description,
         image = Res.drawable.dream_benefit_interpretation
     ),
     DreamDictionary(
-        title = "Unlock more dream symbols",
-        description = "Unlock the dream symbols with Dream Tokens. Discover the meanings behind " +
-                "the symbols, objects, and themes that appear in your dreams. ",
+        title = Res.string.dream_dictionary_title,
+        description = Res.string.dream_dictionary_description,
         image = Res.drawable.dream_benefit_words
     ),
     DreamAdFree(
-        title = "Ad-Free Experience",
-        description = "Enjoy an ad-free experience with Dream Tokens. Use tokens instead of watching ads. " +
-                "Focus on your dreams without interruptions. ",
+        title = Res.string.dream_ad_free_title,
+        description = Res.string.dream_ad_free_description,
         image = Res.drawable.dream_benefit_no_ads
     ),
 }
-

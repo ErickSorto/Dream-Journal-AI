@@ -1,5 +1,9 @@
 package org.ballistic.dreamjournalai.shared.dream_add_edit.domain
 
+import androidx.compose.runtime.Composable
+import dreamjournalai.composeapp.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
+
 enum class ImageStyle(
     val displayName: String,
     val promptAffix: String,
@@ -58,3 +62,15 @@ enum class ImageStyle(
         "https://firebasestorage.googleapis.com/v0/b/dream-journal-ai.appspot.com/o/DreamStyleImages%2FSciFiDreamWorld.png?alt=media&token=680e8ff9-d2f5-4c6c-b099-de90ce961cd2"
     )
 }
+
+val ImageStyle.displayString: String
+    @Composable
+    get() = when (this) {
+        ImageStyle.LET_AI_CHOOSE -> stringResource(Res.string.image_style_let_ai_choose)
+        ImageStyle.VIBRANT -> stringResource(Res.string.image_style_vibrant)
+        ImageStyle.REALISTIC -> stringResource(Res.string.image_style_realistic)
+        ImageStyle.ANIME -> stringResource(Res.string.image_style_anime)
+        ImageStyle.FANTASY -> stringResource(Res.string.image_style_fantasy)
+        ImageStyle.NIGHTMARE -> stringResource(Res.string.image_style_nightmare)
+        ImageStyle.SCI_FI -> stringResource(Res.string.image_style_sci_fi)
+    }

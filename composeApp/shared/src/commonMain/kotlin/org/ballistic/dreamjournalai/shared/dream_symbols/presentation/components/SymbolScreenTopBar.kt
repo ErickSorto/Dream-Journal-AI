@@ -30,15 +30,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.close
+import dreamjournalai.composeapp.shared.generated.resources.menu
+import dreamjournalai.composeapp.shared.generated.resources.search
+import dreamjournalai.composeapp.shared.generated.resources.search_symbol
+import dreamjournalai.composeapp.shared.generated.resources.symbols_title
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.TransparentHintTextField
 import org.ballistic.dreamjournalai.shared.dream_symbols.domain.SymbolEvent
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.SymbolScreenState
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,8 +64,8 @@ fun SymbolScreenTopBar(
             ) {
                 if (!symbolScreenState.isSearching) {
                     Text(
-                        text = "Symbols",
-                        color = White,
+                        text = stringResource(Res.string.symbols_title),
+                        color = OriginalXmlColors.White,
                         modifier = Modifier
                             .align(Alignment.Center)
                     )
@@ -81,14 +87,14 @@ fun SymbolScreenTopBar(
                 ) {
                     TransparentHintTextField(
                         textFieldState = searchedTextFieldState,
-                        hint = "Search symbol...",
+                        hint = stringResource(Res.string.search_symbol),
                         isHintVisible = searchedTextFieldState.text.toString().isEmpty(),
                         singleLine = true,
-                        textStyle = MaterialTheme.typography.headlineSmall.copy(White),
+                        textStyle = MaterialTheme.typography.headlineSmall.copy(OriginalXmlColors.White),
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
                             .background(
-                                color = White.copy(
+                                color = OriginalXmlColors.White.copy(
                                     alpha = 0.2f
                                 )
                             )
@@ -104,14 +110,13 @@ fun SymbolScreenTopBar(
             IconButton(onClick = {
                 onDictionaryEvent(SymbolEvent.TriggerVibration)
                 scope.launch {
-                    Logger.d("TopBar") { "Symbols: Menu icon clicked -> request open drawer" }
                     DrawerController.send(DrawerCommand.Open)
                 }
             }) {
                 Icon(
                     Icons.Filled.Menu,
-                    contentDescription = "Menu",
-                    tint = White
+                    contentDescription = stringResource(Res.string.menu),
+                    tint = OriginalXmlColors.White
                 )
             }
         },
@@ -126,8 +131,8 @@ fun SymbolScreenTopBar(
                     content = {
                         Icon(
                             Icons.Filled.Search,
-                            contentDescription = "Search",
-                            tint = White
+                            contentDescription = stringResource(Res.string.search),
+                            tint = OriginalXmlColors.White
                         )
                     }
                 )
@@ -140,15 +145,15 @@ fun SymbolScreenTopBar(
                     content = {
                         Icon(
                             Icons.Filled.Close,
-                            contentDescription = "Close",
-                            tint = White
+                            contentDescription = stringResource(Res.string.close),
+                            tint = OriginalXmlColors.White
                         )
                     }
                 )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = DarkBlue.copy(alpha = 0.5f),
+            containerColor = OriginalXmlColors.DarkBlue.copy(alpha = 0.5f),
             navigationIconContentColor = Color.Black,
             titleContentColor = Color.Black,
             actionIconContentColor = Color.Black

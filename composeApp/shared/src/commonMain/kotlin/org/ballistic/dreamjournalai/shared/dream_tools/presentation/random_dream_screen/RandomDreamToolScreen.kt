@@ -38,20 +38,25 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.baseline_casino_24
+import dreamjournalai.composeapp.shared.generated.resources.random_dream_button_text
+import dreamjournalai.composeapp.shared.generated.resources.random_dream_description
+import dreamjournalai.composeapp.shared.generated.resources.random_dream_image_content_description
+import dreamjournalai.composeapp.shared.generated.resources.random_dream_screen_title
 import kotlinx.coroutines.delay
 import org.ballistic.dreamjournalai.shared.BottomNavigationController
 import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.core.util.BackHandler
-import org.ballistic.dreamjournalai.shared.dream_tools.domain.DreamTools
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.RandomToolEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolButton
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.components.DreamToolScreenWithNavigateUpTopBar
+import org.ballistic.dreamjournalai.shared.navigation.DreamTools
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.InternalResourceApi
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class, InternalResourceApi::class)
 @Composable
@@ -98,7 +103,7 @@ fun SharedTransitionScope.RandomDreamToolScreen(
     Scaffold(
         topBar = {
             DreamToolScreenWithNavigateUpTopBar(
-                title = "Random Dream",
+                title = stringResource(Res.string.random_dream_screen_title),
                 navigateUp = navigateUp,
                 onEvent = { onEvent(RandomToolEvent.TriggerVibration) }
             )
@@ -117,7 +122,7 @@ fun SharedTransitionScope.RandomDreamToolScreen(
             ) {
                 Image(
                     painter = painterResource(imageID),
-                    contentDescription = "Random Dream",
+                    contentDescription = stringResource(Res.string.random_dream_image_content_description),
                     modifier = Modifier
                         .aspectRatio(16 / 9f)
                         .fillMaxWidth()
@@ -142,7 +147,7 @@ fun SharedTransitionScope.RandomDreamToolScreen(
                         .animateContentSize()
                 ) {
                     Text(
-                        text = DreamTools.RandomDreamPicker.title,
+                        text = stringResource(DreamTools.RandomDreamPicker.title),
                         modifier = Modifier
                             .fillMaxWidth().padding(16.dp, 16.dp, 16.dp, 0.dp),
                         color = Color.White,
@@ -152,9 +157,7 @@ fun SharedTransitionScope.RandomDreamToolScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     TypewriterText(
-                        text = "Reading a random dream is important because it sharpens your ability to " +
-                                "recall dreams and reveals underlying patterns, crucial for insightful " +
-                                "dream analysis and mastering lucid dreaming.",
+                        text = stringResource(Res.string.random_dream_description),
                         modifier = Modifier
                             .fillMaxWidth().padding(16.dp, 0.dp, 16.dp, 0.dp),
                         color = Color.White.copy(alpha = 0.8f),
@@ -174,7 +177,7 @@ fun SharedTransitionScope.RandomDreamToolScreen(
                     if (isAnimationFinished) {
                         Spacer(modifier = Modifier.height(16.dp))
                         DreamToolButton(
-                            text = "Random Dream",
+                            text = stringResource(Res.string.random_dream_button_text),
                             icon = Res.drawable.baseline_casino_24,
                             onClick = { onEvent(RandomToolEvent.GetRandomDream) },
                             modifier = Modifier.fillMaxWidth(),

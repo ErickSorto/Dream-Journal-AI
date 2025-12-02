@@ -35,13 +35,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.dream_token
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LighterYellow
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
+import dreamjournalai.composeapp.shared.generated.resources.*
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.viewmodel.StoreScreenViewModelState
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.ExperimentalTime
 
 
@@ -89,7 +87,7 @@ fun DreamToken500ButtonBuy(
             .height(80.dp),
         shape = RoundedCornerShape(8.dp, 8.dp, 8.dp, 8.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = LighterYellow.copy(alpha = 0.8f),
+            containerColor = OriginalXmlColors.LighterYellow.copy(alpha = 0.8f),
             contentColor = Color.White
         ),
         enabled = !storeScreenViewModelState.isBillingClientLoading
@@ -97,7 +95,7 @@ fun DreamToken500ButtonBuy(
         // Replaced CoilImage with Compose Image for static resource
         Image(
             painter = painterResource(Res.drawable.dream_token),
-            contentDescription = "Dream Token",
+            contentDescription = stringResource(Res.string.dream_token_content_description_text),
             modifier = Modifier
                 .offset(x = (-12).dp)
                 .padding(end = 4.dp)
@@ -106,7 +104,7 @@ fun DreamToken500ButtonBuy(
         )
         Box(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "500 Dream Tokens",
+                text = stringResource(Res.string.five_hundred_dream_tokens),
                 fontSize = 20.sp,
                 fontWeight = Bold,
                 maxLines = 1,
@@ -122,7 +120,7 @@ fun DreamToken500ButtonBuy(
             ) {
                 // Display the original price with a strikethrough
                 Text(
-                    text = "\$14.99",
+                    text = stringResource(Res.string.price_14_99),
                     color = Color.White,
                     fontSize = 12.sp,
                     maxLines = 1,
@@ -131,7 +129,7 @@ fun DreamToken500ButtonBuy(
                 )
                 // Display the new price below
                 Text(
-                    text = "\$4.99", // New price
+                    text = stringResource(Res.string.price_4_99), // New price
                     fontSize = 20.sp,
                     fontWeight = Bold,
                     maxLines = 1,
@@ -156,14 +154,14 @@ fun DreamToken100ButtonBuy(
             .height(80.dp),
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = SkyBlue.copy(alpha = 0.8f),
+            containerColor = OriginalXmlColors.SkyBlue.copy(alpha = 0.8f),
             contentColor = Color.White
         ),
         enabled = !storeScreenViewModelState.isBillingClientLoading
     ) {
         Image(
             painter = painterResource(Res.drawable.dream_token),
-            contentDescription = "Dream Token",
+            contentDescription = stringResource(Res.string.dream_token_content_description_text),
             modifier = Modifier
                 .offset(x = (-12).dp)
                 .padding(end = 4.dp)
@@ -172,7 +170,7 @@ fun DreamToken100ButtonBuy(
         )
         Box(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "100 dream tokens",
+                text = stringResource(Res.string.one_hundred_dream_tokens),
                 fontSize = 20.sp,
                 fontWeight = Bold,
                 maxLines = 1,
@@ -184,7 +182,7 @@ fun DreamToken100ButtonBuy(
 
             Column(modifier = Modifier.align(Alignment.CenterEnd)) {
                 Text(
-                    text = "\$2.99",
+                    text = stringResource(Res.string.price_2_99),
                     fontSize = 20.sp,
                     fontWeight = Bold,
                     maxLines = 1,
@@ -221,8 +219,8 @@ fun MostPopularBanner(modifier: Modifier = Modifier) {
     // Defining a more vibrant red-orange gradient background
     val backgroundBrush = Brush.horizontalGradient(
         colors = listOf(
-           RedOrange.copy(alpha = 0.9f),
-            RedOrange.copy(alpha = 1f)
+            OriginalXmlColors.RedOrange.copy(alpha = 0.9f),
+            OriginalXmlColors.RedOrange.copy(alpha = 1f)
         )
     )
 
@@ -246,7 +244,7 @@ fun MostPopularBanner(modifier: Modifier = Modifier) {
             .background(brush = shimmerBrush)
     ) {
         Text(
-            text = "Most Popular (Save 66%)",
+            text = stringResource(Res.string.most_popular_save_66),
             modifier = Modifier
                 .padding(4.dp, 6.dp, 4.dp, 6.dp)
                 .align(Alignment.Center),

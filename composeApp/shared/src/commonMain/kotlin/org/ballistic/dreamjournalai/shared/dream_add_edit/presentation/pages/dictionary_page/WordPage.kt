@@ -19,15 +19,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.no_words_found
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ArcRotationAnimation
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components.BuySymbolBottomSheet
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components.DictionaryWordDrawer
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components.DictionaryWordItem
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
-import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 
 @Composable
@@ -55,13 +58,12 @@ fun WordPage(
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
                     .background(
-                        color = DarkBlue.copy(alpha = 0.7f),
+                        color = OriginalXmlColors.DarkBlue.copy(alpha = 0.7f),
                         shape = RoundedCornerShape(16.dp)
                     ),
             ) {
                 TypewriterText(
-                    text = "No words found in your dream from the symbol list. " +
-                            "Try adding more words to your dream!",
+                    text = stringResource(Res.string.no_words_found),
                     modifier = Modifier.padding(16.dp),
                     textAlign = TextAlign.Center,
                     animationDuration = 2000,

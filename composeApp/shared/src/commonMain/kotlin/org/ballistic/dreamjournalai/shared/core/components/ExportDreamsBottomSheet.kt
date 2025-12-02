@@ -21,7 +21,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.export_dreams_description
+import dreamjournalai.composeapp.shared.generated.resources.export_dreams_title
+import dreamjournalai.composeapp.shared.generated.resources.pdf_format
+import dreamjournalai.composeapp.shared.generated.resources.txt_format
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,13 +54,13 @@ fun ExportDreamsBottomSheet(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Export Dreams",
+                    text = stringResource(Res.string.export_dreams_title),
                     style = Typography().titleLarge,
                     color = OriginalXmlColors.BrighterWhite
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = "Choose your desired format",
+                    text = stringResource(Res.string.export_dreams_description),
                     style = Typography().bodySmall,
                     color = OriginalXmlColors.BrighterWhite
 
@@ -69,7 +75,7 @@ fun ExportDreamsBottomSheet(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = "PDF Format",
+                        text = stringResource(Res.string.pdf_format),
                         style = Typography().headlineLarge,
                         color = OriginalXmlColors.White
                     )
@@ -84,7 +90,7 @@ fun ExportDreamsBottomSheet(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = "TXT Format",
+                        text = stringResource(Res.string.txt_format),
                         style = Typography().headlineLarge,
                         color = OriginalXmlColors.White
                     )

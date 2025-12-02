@@ -37,7 +37,10 @@ import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dr
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
-
+import org.jetbrains.compose.resources.stringResource
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.standard_ai
+import dreamjournalai.composeapp.shared.generated.resources.advanced_ai
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +57,7 @@ fun BottomModalSheetMassInterpretation(
     var selectedIndex by remember { mutableIntStateOf(0) }
     var amount by remember { mutableIntStateOf(interpretDreamsScreenState.chosenDreams.size) }
     
-    val options = listOf("Standard AI", "Advanced AI")
+    val options = listOf(stringResource(Res.string.standard_ai), stringResource(Res.string.advanced_ai))
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )

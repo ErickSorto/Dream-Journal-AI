@@ -9,12 +9,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -27,8 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.anonymous_icon
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import dreamjournalai.composeapp.shared.generated.resources.guest_account
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AnonymousButton(
@@ -56,9 +55,9 @@ fun AnonymousButton(
                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Black.copy(alpha = 0.5f),
-                    contentColor = White,
+                    contentColor = OriginalXmlColors.White,
                     disabledContainerColor = Color.Black.copy(alpha = 0.1f),
-                    disabledContentColor = White.copy(alpha = 0.3f)
+                    disabledContentColor = OriginalXmlColors.White.copy(alpha = 0.3f)
                 ),
                 elevation = ButtonDefaults.buttonElevation(
                     defaultElevation = 0.dp,
@@ -78,9 +77,9 @@ fun AnonymousButton(
                         contentDescription = null
                     )
                     Text(
-                        text = "Guest Account",
+                        text = stringResource(Res.string.guest_account),
                         fontSize = 16.sp,
-                        color = White,
+                        color = OriginalXmlColors.White,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }

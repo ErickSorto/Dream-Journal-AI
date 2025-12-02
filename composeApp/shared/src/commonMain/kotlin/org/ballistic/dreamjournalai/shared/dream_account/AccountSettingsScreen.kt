@@ -27,6 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.account_guest_warning
+import dreamjournalai.composeapp.shared.generated.resources.account_login_prompt
 import dev.gitlive.firebase.auth.GoogleAuthProvider as FirebaseGoogleAuthProvider
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.ObserveAsEvents
@@ -44,6 +47,8 @@ import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.sig
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.SignupViewModelState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
+import org.jetbrains.compose.resources.stringResource
+
 
 @Composable
 fun AccountSettingsScreen(
@@ -138,8 +143,7 @@ fun AccountSettingsScreen(
                             ),
                     ) {
                         Text(
-                            text = "Log in to save your dreams! \n" +
-                                    "You are currently using a guest account.",
+                            text = stringResource(Res.string.account_login_prompt),
                             modifier = Modifier.padding(16.dp),
                             textAlign = TextAlign.Center,
                             color = Color.White,
@@ -173,7 +177,6 @@ fun AccountSettingsScreen(
                             },
                             {
                                 onLoginEvent(LoginEvent.ToggleLoading(false))
-                                println("Google sign-in error: $it")
                             },
                             isLoading
                         )
@@ -202,7 +205,7 @@ fun AccountSettingsScreen(
                                 )
                         ) {
                             TypewriterText(
-                                text = "Warning: Guest accounts are deleted after 30 days of inactivity.",
+                                text = stringResource(Res.string.account_guest_warning),
                                 modifier = Modifier.padding(16.dp),
                                 textAlign = TextAlign.Center,
                             )

@@ -18,13 +18,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.favorites
+import dreamjournalai.composeapp.shared.generated.resources.menu
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_favorites.domain.FavoriteEvent
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,8 +45,8 @@ fun DreamFavoriteScreenTopBar(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Favorites",
-                    color = White,
+                    text = stringResource(Res.string.favorites),
+                    color = OriginalXmlColors.White,
                     modifier = Modifier
                         .align(Alignment.Center)
                 )
@@ -59,8 +62,8 @@ fun DreamFavoriteScreenTopBar(
             }) {
                 Icon(
                     Icons.Filled.Menu,
-                    contentDescription = "Menu",
-                    tint = White
+                    contentDescription = stringResource(Res.string.menu),
+                    tint = OriginalXmlColors.White
                 )
             }
         },
@@ -68,13 +71,13 @@ fun DreamFavoriteScreenTopBar(
             IconButton(onClick = { /*TODO*/ }) {
                 Icon(
                     Icons.Filled.Menu,
-                    contentDescription = "Menu",
+                    contentDescription = stringResource(Res.string.menu),
                     tint = Color.Transparent
                 )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = DarkBlue.copy(alpha = 0.5f),
+            containerColor = OriginalXmlColors.DarkBlue.copy(alpha = 0.5f),
             navigationIconContentColor = Color.Black,
             titleContentColor = Color.Black,
             actionIconContentColor = Color.Black

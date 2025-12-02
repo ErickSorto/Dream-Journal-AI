@@ -19,10 +19,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.PasswordField
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import co.touchlab.kermit.Logger
+import dreamjournalai.composeapp.shared.generated.resources.*
+import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.PasswordField
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ConfirmDeleteAccountDialog(
@@ -52,8 +53,8 @@ fun ConfirmDeleteAccountDialog(
         },
         title = {
             Text(
-                text = "Delete Account",
-                color = BrighterWhite,
+                text = stringResource(Res.string.delete_account_title),
+                color = OriginalXmlColors.BrighterWhite,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -61,13 +62,13 @@ fun ConfirmDeleteAccountDialog(
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "This action is permanent and will delete all your data.",
-                    color = BrighterWhite,
+                    text = stringResource(Res.string.delete_account_description),
+                    color = OriginalXmlColors.BrighterWhite,
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Type \"$expectedPhrase\" to confirm.",
+                    text = stringResource(Res.string.delete_account_prompt, expectedPhrase),
                     color = Color(0xFFB0BEC5),
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -80,18 +81,18 @@ fun ConfirmDeleteAccountDialog(
                     singleLine = true,
                     keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.None),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = BrighterWhite,
-                        unfocusedTextColor = BrighterWhite,
-                        focusedBorderColor = if (phraseMatches || typed.value.isBlank()) Color.White.copy(alpha = 0.6f) else RedOrange,
-                        unfocusedBorderColor = if (phraseMatches || typed.value.isBlank()) Color.White.copy(alpha = 0.3f) else RedOrange.copy(alpha = 0.7f),
+                        focusedTextColor = OriginalXmlColors.BrighterWhite,
+                        unfocusedTextColor = OriginalXmlColors.BrighterWhite,
+                        focusedBorderColor = if (phraseMatches || typed.value.isBlank()) Color.White.copy(alpha = 0.6f) else OriginalXmlColors.RedOrange,
+                        unfocusedBorderColor = if (phraseMatches || typed.value.isBlank()) Color.White.copy(alpha = 0.3f) else OriginalXmlColors.RedOrange.copy(alpha = 0.7f),
                         cursorColor = Color.White
                     )
                 )
                 if (!phraseMatches && typed.value.isNotBlank()) {
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "Phrase does not match",
-                        color = RedOrange,
+                        text = stringResource(Res.string.delete_account_phrase_mismatch),
+                        color = OriginalXmlColors.RedOrange,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -107,8 +108,8 @@ fun ConfirmDeleteAccountDialog(
                     if (password.isBlank()) {
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            text = "Password required",
-                            color = RedOrange,
+                            text = stringResource(Res.string.password_required),
+                            color = OriginalXmlColors.RedOrange,
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -124,15 +125,15 @@ fun ConfirmDeleteAccountDialog(
                 enabled = canConfirm
             ) {
                 Text(
-                    "Confirm Delete",
-                    color = if (canConfirm) RedOrange else Color.Gray,
+                    stringResource(Res.string.confirm_delete),
+                    color = if (canConfirm) OriginalXmlColors.RedOrange else Color.Gray,
                     fontWeight = if (canConfirm) FontWeight.Bold else FontWeight.Normal
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color(0xFFE1F5FE))
+                Text(stringResource(Res.string.cancel), color = Color(0xFFE1F5FE))
             }
         },
         shape = MaterialTheme.shapes.medium,

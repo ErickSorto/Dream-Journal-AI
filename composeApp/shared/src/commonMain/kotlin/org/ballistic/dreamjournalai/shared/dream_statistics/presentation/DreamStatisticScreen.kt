@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.dream_token
+import dreamjournalai.composeapp.shared.generated.resources.total_dreams
+import dreamjournalai.composeapp.shared.generated.resources.dream_tokens
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ArcRotationAnimation
 import org.ballistic.dreamjournalai.shared.dream_statistics.StatisticEvent
@@ -24,6 +26,7 @@ import org.ballistic.dreamjournalai.shared.dream_statistics.presentation.compone
 import org.ballistic.dreamjournalai.shared.dream_statistics.presentation.components.TopSixWordPieChart
 import org.ballistic.dreamjournalai.shared.dream_statistics.presentation.viewmodel.DreamStatisticScreenState
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun DreamStatisticScreen(
@@ -73,14 +76,14 @@ fun DreamStatisticScreen(
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         StatisticInfo(
-                            title = "Total Dreams",
+                            title = stringResource(Res.string.total_dreams),
                             value = dreamStatisticScreenState.totalDreams,
                             modifier = Modifier.weight(1f),
                             icon = Icons.Filled.Book
                         )
                         Spacer(modifier = Modifier.padding(8.dp))
                         StatisticInfo(
-                            title = "Dream Tokens",
+                            title = stringResource(Res.string.dream_tokens),
                             value = dreamStatisticScreenState.dreamTokens,
                             modifier = Modifier.weight(1f),
                             icon = painterResource(Res.drawable.dream_token)

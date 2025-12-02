@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.check_mark
+import dreamjournalai.composeapp.shared.generated.resources.dream_token_benefit_content_description
+import dreamjournalai.composeapp.shared.generated.resources.get_more_dream_tokens
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
@@ -41,8 +43,10 @@ import org.ballistic.dreamjournalai.shared.dream_store.domain.StoreEvent
 import org.ballistic.dreamjournalai.shared.dream_store.presentation.anonymous_store_screen.AnonymousStoreScreen
 import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.components.CustomButtonLayout
 import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.viewmodel.StoreScreenViewModelState
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.StringResource
 
 @Composable
 fun StoreScreen(
@@ -59,9 +63,8 @@ fun StoreScreen(
         onMainEvent(MainScreenEvent.SetTopBarState(true))
         AnonymousStoreScreen(
             paddingValues = PaddingValues(bottom = 68.dp),
-        ) {
-            navigateToAccountScreen()
-        }
+            navigateToAccountScreen = navigateToAccountScreen
+        )
     } else {
         onMainEvent(MainScreenEvent.SetTopBarState(false))
 
@@ -91,7 +94,7 @@ fun StoreScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Get more Dream Tokens",
+                    text = stringResource(Res.string.get_more_dream_tokens),
                     maxLines = 1,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
@@ -170,12 +173,12 @@ fun DreamTokenBenefitItem(
                 .fillMaxWidth()
                 .aspectRatio(9f / 12f)
                 .clip(RoundedCornerShape(8.dp))
-                .background(LightBlack.copy(alpha = 0.8f))
+                .background(OriginalXmlColors.LightBlack.copy(alpha = 0.8f))
                 .verticalScroll(rememberScrollState())
         ) {
             Image(
                 painter = painterResource(dreamTokenBenefit.image),
-                contentDescription = "Dream Token Benefit",
+                contentDescription = stringResource(Res.string.dream_token_benefit_content_description),
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f),
@@ -183,29 +186,25 @@ fun DreamTokenBenefitItem(
             )
             Spacer(modifier = Modifier.size(16.dp))
             Text(
-                text = dreamTokenBenefit.title,
+                text = stringResource(dreamTokenBenefit.title),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color.White,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
             Spacer(modifier = Modifier.size(8.dp))
-            if (dreamTokenBenefit.description.isNotEmpty()) {
+            if (dreamTokenBenefit.description != null) {
                 Text(
-                    text = dreamTokenBenefit.description,
+                    text = stringResource(dreamTokenBenefit.description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             } else {
-                for (i in 1..4) {
-                    when (i) {
-                        1 -> CheckAndBenefit(dreamTokenBenefit.benefit1)
-                        2 -> CheckAndBenefit(dreamTokenBenefit.benefit2)
-                        3 -> CheckAndBenefit(dreamTokenBenefit.benefit3)
-                        4 -> CheckAndBenefit(dreamTokenBenefit.benefit4)
-                    }
-                }
+                dreamTokenBenefit.benefit1?.let { CheckAndBenefit(it) }
+                dreamTokenBenefit.benefit2?.let { CheckAndBenefit(it) }
+                dreamTokenBenefit.benefit3?.let { CheckAndBenefit(it) }
+                dreamTokenBenefit.benefit4?.let { CheckAndBenefit(it) }
             }
         }
         if (dreamTokenBenefit == DreamTokenBenefit.DreamTokenSlideBenefit) {
@@ -221,20 +220,20 @@ fun DreamTokenBenefitItem(
 }
 
 @Composable
-fun CheckAndBenefit(benefit: String) {
+fun CheckAndBenefit(benefit: StringResource) {
     Row(
         modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, end = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
             painter = painterResource(Res.drawable.check_mark),
-            contentDescription = "Check Mark",
+            contentDescription = stringResource(Res.string.check_mark),
             modifier = Modifier.size(32.dp),
             contentScale = ContentScale.FillBounds
         )
         Spacer(modifier = Modifier.size(8.dp))
         Text(
-            text = benefit,
+            text = stringResource(benefit),
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White,
         )

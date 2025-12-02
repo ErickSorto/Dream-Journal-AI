@@ -18,10 +18,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.login
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.LoginViewModelState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LighterYellow
-import org.ballistic.dreamjournalai.shared.core.Constants
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun LoginButton(
@@ -58,7 +60,7 @@ fun LoginButton(
             )
         ) {
             Text(
-                text = Constants.LOGIN,
+                text = stringResource(Res.string.login),
                 fontSize = 15.sp,
                 color = Color.Black
             )
@@ -92,7 +94,7 @@ fun LoginButton(
                 )
             ) {
                 Text(
-                    text = Constants.LOGIN,
+                    text = stringResource(Res.string.login),
                     fontSize = 15.sp,
                     color = Color.Black
                 )

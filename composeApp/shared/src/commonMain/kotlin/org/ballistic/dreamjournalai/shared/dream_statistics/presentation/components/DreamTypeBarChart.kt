@@ -35,8 +35,16 @@ import com.patrykandpatrick.vico.multiplatform.common.Fill
 import com.patrykandpatrick.vico.multiplatform.common.component.LineComponent
 import com.patrykandpatrick.vico.multiplatform.common.component.rememberTextComponent
 import com.patrykandpatrick.vico.multiplatform.common.data.ExtraStore
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.day_dream
+import dreamjournalai.composeapp.shared.generated.resources.dream_types
+import dreamjournalai.composeapp.shared.generated.resources.favorite
+import dreamjournalai.composeapp.shared.generated.resources.lucid
+import dreamjournalai.composeapp.shared.generated.resources.nightmare
+import dreamjournalai.composeapp.shared.generated.resources.recurring
 import org.ballistic.dreamjournalai.shared.dream_statistics.presentation.viewmodel.DreamStatisticScreenState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 @Composable
@@ -48,7 +56,13 @@ fun DreamChartBarChart(
     }
 
     val dreamTypeLabels =
-        listOf("Lucid", "Nightmare", "Favorite", "Recurring", "False Awakening")
+        listOf(
+            stringResource(Res.string.lucid),
+            stringResource(Res.string.nightmare),
+            stringResource(Res.string.favorite),
+            stringResource(Res.string.recurring),
+            stringResource(Res.string.day_dream)
+        )
 
     // Map data to the dream type labels
     val data = listOf(
@@ -135,7 +149,7 @@ fun DreamChartBarChart(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Dream Types",
+                text = stringResource(Res.string.dream_types),
                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 8.dp),
                 style = MaterialTheme.typography.titleMedium.copy(
                     color = OriginalXmlColors.White

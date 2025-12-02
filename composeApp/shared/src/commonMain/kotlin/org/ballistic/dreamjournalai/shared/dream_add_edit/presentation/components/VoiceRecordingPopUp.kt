@@ -52,6 +52,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -59,10 +60,8 @@ import org.ballistic.dreamjournalai.shared.core.platform.AudioRecorder
 import org.ballistic.dreamjournalai.shared.core.platform.rememberAudioRecorder
 import org.ballistic.dreamjournalai.shared.core.platform.rememberRecordAudioPermissionState
 import org.ballistic.dreamjournalai.shared.core.util.formatDuration
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.ExperimentalTime
 
 enum class RecorderState {
@@ -88,7 +87,12 @@ fun VoiceRecordingPopUp(
     val progressAnim = remember { Animatable(0f) }
     var isFinishing by remember { mutableStateOf(false) }
     var hasEnteredProcessingMode by remember { mutableStateOf(false) }
-    var currentMessage by remember { mutableStateOf("Saving Recording...") }
+
+    val savingRecordingMessage = stringResource(Res.string.saving_recording)
+    val encryptingMessage = stringResource(Res.string.encrypting)
+    val transcribingMessage = stringResource(Res.string.transcribing)
+    var currentMessage by remember { mutableStateOf(savingRecordingMessage) }
+
 
     // Once we enter processing mode, we latch it
     if (isTranscribing) {
@@ -109,9 +113,9 @@ fun VoiceRecordingPopUp(
                 while(progressAnim.value < 1f && isActive) {
                     val p = progressAnim.value
                     currentMessage = when {
-                        p < 0.33f -> "Saving Recording..."
-                        p < 0.66f -> "Encrypting..."
-                        else -> "Transcribing..."
+                        p < 0.33f -> savingRecordingMessage
+                        p < 0.66f -> encryptingMessage
+                        else -> transcribingMessage
                     }
                     delay(50)
                 }
@@ -127,7 +131,7 @@ fun VoiceRecordingPopUp(
             }
         }
     }
-    
+
     // We only show progress if we have entered processing mode at least once
     val showProgress = hasEnteredProcessingMode
 
@@ -138,12 +142,12 @@ fun VoiceRecordingPopUp(
             while (isActive) {
                 val elapsed = (kotlin.time.Clock.System.now().toEpochMilliseconds() - startTime) / 1000
                 durationSeconds = elapsed
-                
+
                 if (durationSeconds >= maxDuration) {
                     recorder.pause()
                     recorderState = RecorderState.MAX_REACHED
                 }
-                
+
                 delay(100)
             }
         }
@@ -174,7 +178,7 @@ fun VoiceRecordingPopUp(
                 onDismissRequest()
             }
         },
-        containerColor = LightBlack
+        containerColor = OriginalXmlColors.LightBlack
     ) {
         Column(
             modifier = Modifier
@@ -186,7 +190,7 @@ fun VoiceRecordingPopUp(
                 AnimatedContent(
                     targetState = currentMessage,
                     transitionSpec = {
-                        fadeIn(animationSpec = tween(600)) togetherWith 
+                        fadeIn(animationSpec = tween(600)) togetherWith
                                 fadeOut(animationSpec = tween(200))
                     },
                     label = "ProcessTextAnimation"
@@ -194,23 +198,23 @@ fun VoiceRecordingPopUp(
                     SmoothTypewriterText(
                         text = targetText,
                         style = MaterialTheme.typography.headlineSmall,
-                        color = White
+                        color = OriginalXmlColors.White
                     )
                 }
                 Spacer(modifier = Modifier.height(24.dp))
                 LoadingProgressBar(
                     progress = progressAnim.value,
                     brush = Brush.horizontalGradient(
-                        colors = listOf(RedOrange, SkyBlue)
+                        colors = listOf(OriginalXmlColors.RedOrange, OriginalXmlColors.SkyBlue)
                     ),
                     modifier = Modifier.height(48.dp)
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             } else {
                 Text(
-                    text = "Voice Recorder",
+                    text = stringResource(Res.string.voice_recorder),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = White
+                    color = OriginalXmlColors.White
                 )
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -222,7 +226,7 @@ fun VoiceRecordingPopUp(
                     maxDuration = maxDuration,
                     warningThreshold = warningThreshold
                 )
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 when (recorderState) {
@@ -239,13 +243,15 @@ fun VoiceRecordingPopUp(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = RedOrange),
+                            colors = ButtonDefaults.buttonColors(containerColor = OriginalXmlColors.RedOrange),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
-                                text = if (permissionState.isGranted) "Start Recording" else "Grant Permission",
+                                text = if (permissionState.isGranted) stringResource(Res.string.start_recording) else stringResource(
+                                    Res.string.grant_permission
+                                ),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = White
+                                color = OriginalXmlColors.White
                             )
                         }
                     }
@@ -258,13 +264,13 @@ fun VoiceRecordingPopUp(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = RedOrange.copy(alpha = 0.8f)),
+                            colors = ButtonDefaults.buttonColors(containerColor = OriginalXmlColors.RedOrange.copy(alpha = 0.8f)),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
-                                text = "Pause",
+                                text = stringResource(Res.string.pause),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = White
+                                color = OriginalXmlColors.White
                             )
                         }
                     }
@@ -279,13 +285,13 @@ fun VoiceRecordingPopUp(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(50.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = RedOrange),
+                                    colors = ButtonDefaults.buttonColors(containerColor = OriginalXmlColors.RedOrange),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
                                     Text(
-                                        text = "Resume",
+                                        text = stringResource(Res.string.resume),
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = White
+                                        color = OriginalXmlColors.White
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(12.dp))
@@ -299,13 +305,13 @@ fun VoiceRecordingPopUp(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(50.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = SkyBlue),
+                                colors = ButtonDefaults.buttonColors(containerColor = OriginalXmlColors.SkyBlue),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Text(
-                                    text = "Save",
+                                    text = stringResource(Res.string.save),
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = White
+                                    color = OriginalXmlColors.White
                                 )
                             }
                         }
@@ -319,13 +325,13 @@ fun VoiceRecordingPopUp(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = SkyBlue),
+                            colors = ButtonDefaults.buttonColors(containerColor = OriginalXmlColors.SkyBlue),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
-                                text = "Save",
+                                text = stringResource(Res.string.save),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = White
+                                color = OriginalXmlColors.White
                             )
                         }
                     }
@@ -357,7 +363,7 @@ fun RecordingVisualizer(
             }
         }
     }
-    
+
     // Pulsing effect when recording
     val infiniteTransition = rememberInfiniteTransition()
     val pulseAlpha by infiniteTransition.animateFloat(
@@ -379,20 +385,20 @@ fun RecordingVisualizer(
         Text(
             text = formatDuration(durationSeconds),
             style = MaterialTheme.typography.displayMedium,
-            color = if (isRecording) White.copy(alpha = pulseAlpha) else White
+            color = if (isRecording) OriginalXmlColors.White.copy(alpha = pulseAlpha) else OriginalXmlColors.White
         )
-        
+
         if (showWarning) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Max almost reached: ${formatDuration(remaining)}",
+                text = stringResource(Res.string.max_almost_reached, formatDuration(remaining)),
                 style = MaterialTheme.typography.bodyMedium,
-                color = RedOrange
+                color = OriginalXmlColors.RedOrange
             )
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -407,7 +413,7 @@ fun RecordingVisualizer(
                 val startX = (size.width - (amplitudes.size * barWidth)) / 2f
 
                 drawLine(
-                    color = White.copy(alpha = 0.1f),
+                    color = OriginalXmlColors.White.copy(alpha = 0.1f),
                     start = Offset(0f, size.height / 2),
                     end = Offset(size.width, size.height / 2),
                     strokeWidth = 2.dp.toPx()
@@ -415,12 +421,12 @@ fun RecordingVisualizer(
 
                 amplitudes.forEachIndexed { index, amp ->
                     val height = (amp * size.height * 0.8f).coerceAtLeast(4.dp.toPx())
-                    
+
                     val x = startX + index * barWidth
                     val y = (size.height - height) / 2
 
                     val brush = Brush.verticalGradient(
-                        colors = listOf(RedOrange, SkyBlue)
+                        colors = listOf(OriginalXmlColors.RedOrange, OriginalXmlColors.SkyBlue)
                     )
 
                     drawRoundRect(
@@ -490,10 +496,10 @@ fun SmoothTypewriterText(
     text: String,
     modifier: Modifier = Modifier,
     style: TextStyle = MaterialTheme.typography.headlineSmall,
-    color: Color = White
+    color: Color = OriginalXmlColors.White
 ) {
     val progress = remember { Animatable(0f) }
-    
+
     // Reset when text changes
     LaunchedEffect(text) {
         progress.snapTo(0f)
@@ -505,9 +511,9 @@ fun SmoothTypewriterText(
             )
         )
     }
-    
+
     val currentProgress = progress.value
-    
+
     Text(
         text = buildAnnotatedString {
             text.forEachIndexed { index, char ->

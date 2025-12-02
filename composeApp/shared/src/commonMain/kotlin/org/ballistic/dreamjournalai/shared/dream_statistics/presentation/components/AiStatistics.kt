@@ -13,10 +13,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.*
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AITool
 import org.ballistic.dreamjournalai.shared.dream_statistics.presentation.viewmodel.DreamStatisticScreenState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AiStatistics(
@@ -32,7 +34,7 @@ fun AiStatistics(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "AI Generated Content",
+            text = stringResource(Res.string.ai_generated_content),
             style = MaterialTheme.typography.titleMedium,
             color = OriginalXmlColors.White,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -43,42 +45,42 @@ fun AiStatistics(
         ) {
             val animationDelayStep = 200L
             AiStatisticItem(
-                title = "Paintings",
+                title = stringResource(Res.string.paintings),
                 value = dreamStatisticScreenState.totalImages,
                 icon = painterResource(AITool.PAINT_DREAM.icon),
                 color = AITool.PAINT_DREAM.color,
                 animationDelay = animationDelayStep * 0
             )
             AiStatisticItem(
-                title = "Interpretations",
+                title = stringResource(Res.string.interpretations),
                 value = dreamStatisticScreenState.totalInterpretations,
                 icon = painterResource(AITool.INTERPRET_DREAM.icon),
                 color = AITool.INTERPRET_DREAM.color,
                 animationDelay = animationDelayStep
             )
             AiStatisticItem(
-                title = "Stories",
+                title = stringResource(Res.string.stories),
                 value = dreamStatisticScreenState.totalStories,
                 icon = painterResource(AITool.DREAM_STORY.icon),
                 color = AITool.DREAM_STORY.color,
                 animationDelay = animationDelayStep * 2
             )
             AiStatisticItem(
-                title = "Moods",
+                title = stringResource(Res.string.moods),
                 value = dreamStatisticScreenState.totalMoods,
                 icon = painterResource(AITool.DREAM_MOOD.icon),
                 color = AITool.DREAM_MOOD.color,
                 animationDelay = animationDelayStep * 3
             )
             AiStatisticItem(
-                title = "Advice",
+                title = stringResource(Res.string.advice),
                 value = dreamStatisticScreenState.totalAdvice,
                 icon = painterResource(AITool.DREAM_ADVICE.icon),
                 color = AITool.DREAM_ADVICE.color,
                 animationDelay = animationDelayStep * 4
             )
             AiStatisticItem(
-                title = "Questions",
+                title = stringResource(Res.string.questions),
                 value = dreamStatisticScreenState.totalQuestions,
                 icon = painterResource(AITool.DREAM_QUESTION.icon),
                 color = AITool.DREAM_QUESTION.color,

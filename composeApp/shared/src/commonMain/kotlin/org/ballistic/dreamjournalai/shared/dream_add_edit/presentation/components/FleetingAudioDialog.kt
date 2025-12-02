@@ -29,15 +29,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.dream_token
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Instant
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 
@@ -80,7 +77,7 @@ fun FleetingAudioDialog(
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
         onDismissRequest = { onDismiss() },
-        containerColor = LightBlack
+        containerColor = OriginalXmlColors.LightBlack
     ) {
         Column(
             modifier = Modifier
@@ -94,9 +91,9 @@ fun FleetingAudioDialog(
             ) {
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = "Fleeting Audio",
+                    text = stringResource(Res.string.fleeting_audio_title),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = White,
+                    color = OriginalXmlColors.White,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -107,9 +104,9 @@ fun FleetingAudioDialog(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "This audio recording will disappear in:",
+                text = stringResource(Res.string.fleeting_audio_disappears_in),
                 style = MaterialTheme.typography.bodyMedium,
-                color = White.copy(alpha = 0.8f)
+                color = OriginalXmlColors.White.copy(alpha = 0.8f)
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -117,16 +114,16 @@ fun FleetingAudioDialog(
             Text(
                 text = timeLeft,
                 style = MaterialTheme.typography.displaySmall,
-                color = RedOrange,
+                color = OriginalXmlColors.RedOrange,
                 fontWeight = FontWeight.Bold
             )
             
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "Keep this recording forever?",
+                text = stringResource(Res.string.fleeting_audio_keep_forever),
                 style = MaterialTheme.typography.titleMedium,
-                color = White
+                color = OriginalXmlColors.White
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -138,7 +135,7 @@ fun FleetingAudioDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = SkyBlue),
+                colors = ButtonDefaults.buttonColors(containerColor = OriginalXmlColors.SkyBlue),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
@@ -147,14 +144,14 @@ fun FleetingAudioDialog(
                 ) {
                     Image(
                         painter = painterResource(Res.drawable.dream_token),
-                        contentDescription = "Dream Token",
+                        contentDescription = stringResource(Res.string.dream_token_content_description),
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Use $tokensCost Dream Tokens",
+                        text = stringResource(Res.string.fleeting_audio_use_tokens, tokensCost),
                         style = MaterialTheme.typography.titleMedium,
-                        color = White,
+                        color = OriginalXmlColors.White,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -167,13 +164,13 @@ fun FleetingAudioDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = White.copy(alpha = 0.1f)),
+                colors = ButtonDefaults.buttonColors(containerColor = OriginalXmlColors.White.copy(alpha = 0.1f)),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Maybe Later",
+                    text = stringResource(Res.string.fleeting_audio_maybe_later),
                     style = MaterialTheme.typography.titleMedium,
-                    color = White
+                    color = OriginalXmlColors.White
                 )
             }
             

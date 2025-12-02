@@ -95,7 +95,6 @@ fun ScreenGraph(
                             )
                         )
                     },
-                    mainScreenViewModelState = mainScreenViewModelState,
                     searchTextFieldState = searchTextFieldState
                 )
             }
@@ -179,7 +178,6 @@ fun ScreenGraph(
                     onFullScreenEvent = {
                         fullScreenViewModel.onEvent(it)
                     },
-                    onMainEvent = { onMainEvent(it) }
                 )
             }
 

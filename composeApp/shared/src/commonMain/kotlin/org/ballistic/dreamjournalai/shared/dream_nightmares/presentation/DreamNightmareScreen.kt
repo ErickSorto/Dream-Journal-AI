@@ -23,19 +23,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.datetime.LocalDate
-import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.core.util.formatCustomDate
 import org.ballistic.dreamjournalai.shared.core.util.parseCustomDate
+import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components.DateHeader
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components.DreamItem
 import org.ballistic.dreamjournalai.shared.dream_nightmares.domain.NightmareEvent
 import org.ballistic.dreamjournalai.shared.dream_nightmares.presentation.components.DreamNightmareScreenTopBar
 import org.ballistic.dreamjournalai.shared.dream_nightmares.presentation.viewmodel.DreamNightmareScreenState
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -49,9 +51,9 @@ fun DreamNightmareScreen(
     // Bottom sheet if deleting a dream
     if (dreamNightmareScreenState.bottomDeleteCancelSheetState) {
         ActionBottomSheet(
-            title = "Delete this Dream?",
-            buttonText = "Delete",
-            message = "Are you sure you want to delete this dream?",
+            title = stringResource(Res.string.delete_this_nightmare),
+            buttonText = stringResource(Res.string.delete),
+            message = stringResource(Res.string.are_you_sure_delete_nightmare),
             onClick = {
                 dreamNightmareScreenState.dreamToDelete?.let { NightmareEvent.DeleteDream(it) }
                     ?.let { onEvent(it) }
@@ -91,12 +93,12 @@ fun DreamNightmareScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp)
                         .background(
-                            color = DarkBlue.copy(alpha = 0.8f),
+                            color = OriginalXmlColors.DarkBlue.copy(alpha = 0.8f),
                             shape = RoundedCornerShape(16.dp)
                         )
                 ) {
                     TypewriterText(
-                        text = "You currently have no nightmares. Hopefully you never do!",
+                        text = stringResource(Res.string.no_nightmares),
                         modifier = Modifier.padding(16.dp),
                         textAlign = TextAlign.Center,
                     )

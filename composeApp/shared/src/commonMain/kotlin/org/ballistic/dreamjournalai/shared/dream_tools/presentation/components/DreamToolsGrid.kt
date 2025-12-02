@@ -17,6 +17,7 @@ import org.ballistic.dreamjournalai.shared.navigation.DreamDrawable
 import org.ballistic.dreamjournalai.shared.navigation.DreamTools
 import org.ballistic.dreamjournalai.shared.navigation.ToolRoute
 import org.ballistic.dreamjournalai.shared.navigation.toDrawableResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -37,9 +38,9 @@ fun SharedTransitionScope.DreamToolsGrid(
         items(dreamToolsList.size) { index ->
             val tool = dreamToolsList[index]
             DreamToolItem(
-                title = tool.title,
+                title = stringResource(tool.title),
                 icon = DreamDrawable.valueOf(tool.route.image).toDrawableResource(),
-                description = tool.description,
+                description = stringResource(tool.description),
                 enabled = tool.enabled,
                 onClick = singleClick(
                     lastClickTimeState = lastClickTime,

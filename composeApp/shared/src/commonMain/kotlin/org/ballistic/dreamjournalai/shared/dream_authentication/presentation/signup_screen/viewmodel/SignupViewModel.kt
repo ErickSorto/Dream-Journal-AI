@@ -4,6 +4,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,13 +14,14 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.Resource
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.SignUpResponse
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.SignupEvent
-import org.ballistic.dreamjournalai.shared.SnackbarController
-import org.ballistic.dreamjournalai.shared.SnackbarEvent
-import org.ballistic.dreamjournalai.shared.SnackbarAction
 
 class SignupViewModel(
     private val repo: AuthRepository
@@ -55,13 +57,13 @@ class SignupViewModel(
     private fun <T> handleResource(
         resourceFlow: Flow<Resource<T>>,
         transform: (T) -> Job,
-        errorTransform: (String) -> SignupViewModelState,
+        errorTransform: (StringValue) -> SignupViewModelState, // Changed to StringValue
         loadingTransform: () -> SignupViewModelState
     ) = resourceFlow.onEach { resource ->
         when (resource) {
             is Resource.Loading -> _state.value = loadingTransform()
             is Resource.Success -> resource.data?.let { transform(it) }
-            is Resource.Error -> _state.value = errorTransform(resource.message ?: "Error")
+            is Resource.Error -> _state.value = errorTransform(StringValue.DynamicString(resource.message ?: "Error")) // Wrapped error message
         }
     }.launchIn(viewModelScope)
 
@@ -73,8 +75,8 @@ class SignupViewModel(
                 viewModelScope.launch {
                     SnackbarController.sendEvent(
                         SnackbarEvent(
-                            result,
-                            SnackbarAction("dismiss") { }
+                            message = StringValue.DynamicString(result), // Wrapped result
+                            action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {}) // Use StringValue.Resource
                         )
                     )
                 }
@@ -83,8 +85,8 @@ class SignupViewModel(
                 viewModelScope.launch {
                     SnackbarController.sendEvent(
                         SnackbarEvent(
-                            error,
-                            SnackbarAction("dismiss") { }
+                            message = error, // Already StringValue
+                            action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {}) // Use StringValue.Resource
                         )
                     )
                 }
@@ -114,13 +116,13 @@ class SignupViewModel(
                 viewModelScope.launch {
                     SnackbarController.sendEvent(
                         SnackbarEvent(
-                            error,
-                            SnackbarAction("dismiss") { }
+                            message = error, // Already StringValue
+                            action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {}) // Use StringValue.Resource
                         )
                     )
                 }
                 _state.value.copy(error = error)
-                             },
+            },
             loadingTransform = { _state.value.copy(isLoading = true) }
         )
     }
@@ -131,8 +133,8 @@ class SignupViewModel(
             _state.value.signUpEmail.isEmpty() || _state.value.signUpPassword.isEmpty() -> {
                 SnackbarController.sendEvent(
                     SnackbarEvent(
-                        message = "Email or password is empty",
-                        action = SnackbarAction("dismiss") { }
+                        message = StringValue.Resource(Res.string.email_password_empty), // Use StringValue
+                        action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {}) // Use StringValue.Resource
                     )
                 )
                 false
@@ -141,8 +143,8 @@ class SignupViewModel(
             !_state.value.signUpEmail.contains("@") || !_state.value.signUpEmail.contains(".") -> {
                 SnackbarController.sendEvent(
                     SnackbarEvent(
-                        message = "Email is not in correct format",
-                        action = SnackbarAction("dismiss") { }
+                        message = StringValue.Resource(Res.string.email_incorrect_format), // Use StringValue
+                        action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {}) // Use StringValue.Resource
                     )
                 )
                 false
@@ -151,8 +153,8 @@ class SignupViewModel(
             _state.value.signUpPassword.length < 6 -> {
                 SnackbarController.sendEvent(
                     SnackbarEvent(
-                        message = "Password must be at least 6 characters",
-                        action = SnackbarAction("dismiss") { }
+                        message = StringValue.Resource(Res.string.password_too_short), // Use StringValue
+                        action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {}) // Use StringValue.Resource
                     )
                 )
                 false
@@ -177,17 +179,17 @@ data class SignupViewModelState(
     val sendEmailVerificationResponse: Resource<Boolean> = Resource.Success(),
     val emailVerification: VerifyEmailState = VerifyEmailState(),
     val revokeAccess: RevokeAccessState = RevokeAccessState(),
-     val isUserExist: Boolean = false,
-     val isEmailVerified: Boolean = false,
-     val isLoggedIn: Boolean = false,
-     val isLoading: Boolean = false,
-     val error: String = "",
-     val isUserAnonymous: Boolean = false,
+    val isUserExist: Boolean = false,
+    val isEmailVerified: Boolean = false,
+    val isLoggedIn: Boolean = false,
+    val isLoading: Boolean = false,
+    val error: StringValue = StringValue.Empty,
+    val isUserAnonymous: Boolean = false,
 )
 
 data class VerifyEmailState(
     val verified: Boolean = false,
     val sent: Boolean = false,
     val isLoading: Boolean = false,
-    val error: String = ""
+    val error: StringValue = StringValue.Empty
 )

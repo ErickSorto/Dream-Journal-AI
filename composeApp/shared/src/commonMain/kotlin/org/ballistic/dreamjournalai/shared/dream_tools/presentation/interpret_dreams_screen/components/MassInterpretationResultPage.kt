@@ -22,8 +22,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,11 +33,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.dismiss
+import dreamjournalai.composeapp.shared.generated.resources.interpret_dreams_button
+import dreamjournalai.composeapp.shared.generated.resources.interpret_dreams_count
+import dreamjournalai.composeapp.shared.generated.resources.interpret_dreams_title
+import dreamjournalai.composeapp.shared.generated.resources.interpret_icon_content_description
 import dreamjournalai.composeapp.shared.generated.resources.mass_dream_interpretation_icon
+import dreamjournalai.composeapp.shared.generated.resources.not_enough_dream_tokens_snackbar
+import dreamjournalai.composeapp.shared.generated.resources.please_select_dreams_to_interpret_message
+import dreamjournalai.composeapp.shared.generated.resources.please_select_one_more_dream
+import dreamjournalai.composeapp.shared.generated.resources.select_dreams
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.SnackbarAction
+import org.ballistic.dreamjournalai.shared.SnackbarController
+import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
+import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ArcRotationAnimation
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.InterpretDreamsToolEvent
@@ -47,12 +58,11 @@ import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dr
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.jetbrains.compose.resources.painterResource
-
+import org.jetbrains.compose.resources.stringResource
 @Composable
 fun MassInterpretationResultPage(
     interpretDreamsScreenState: InterpretDreamsScreenState,
     onMainScreenEvent: (MainScreenEvent) -> Unit,
-    snackBarHostState: SnackbarHostState,
     scope: CoroutineScope,
     pagerState: PagerState,
     onEvent: (InterpretDreamsToolEvent) -> Unit,
@@ -61,17 +71,18 @@ fun MassInterpretationResultPage(
 
     if (interpretDreamsScreenState.bottomMassInterpretationSheetState) {
         BottomModalSheetMassInterpretation(
-            title = "Interpret Dreams",
+            title = stringResource(Res.string.interpret_dreams_title),
             interpretDreamsScreenState = interpretDreamsScreenState,
             onDreamTokenClick = {
                 onEvent(InterpretDreamsToolEvent.TriggerVibration)
                 onEvent(InterpretDreamsToolEvent.ToggleBottomMassInterpretationSheetState(false))
                 if (interpretDreamsScreenState.dreamTokens < 2) {
                     scope.launch {
-                        snackBarHostState.showSnackbar(
-                            message = "Not enough dream tokens",
-                            actionLabel = "Dismiss",
-                            duration = SnackbarDuration.Short
+                        SnackbarController.sendEvent(
+                            SnackbarEvent(
+                                message = StringValue.Resource(Res.string.not_enough_dream_tokens_snackbar),
+                                action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                            )
                         )
                     }
                 } else {
@@ -134,7 +145,7 @@ fun MassInterpretationResultPage(
         ) {
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "Interpretation",
+                text = stringResource(Res.string.interpret_dreams_title),
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
                 color = Color.White,
@@ -164,7 +175,7 @@ fun MassInterpretationResultPage(
                 )
             } else if (interpretDreamsScreenState.chosenMassInterpretation.interpretation.isNotEmpty()) {
                 TypewriterText(
-                    text = interpretDreamsScreenState.chosenMassInterpretation.interpretation,
+                    text = interpretDreamsScreenState.chosenMassInterpretation.interpretation.replace("\\\\", ""),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Start,
                     color = Color.White,
@@ -177,7 +188,7 @@ fun MassInterpretationResultPage(
             } else {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Please select dreams and click on the 'Interpret Dreams' button to get an interpretation.",
+                    text = stringResource(Res.string.please_select_dreams_to_interpret_message),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = Color.White,
@@ -223,10 +234,11 @@ fun MassInterpretationResultPage(
                 } else if (interpretDreamsScreenState.chosenDreams.size < 2) {
                     scope.launch {
                         pagerState.animateScrollToPage(0)
-                        snackBarHostState.showSnackbar(
-                            message = "Please select one more dream",
-                            actionLabel = "Dismiss",
-                            duration = SnackbarDuration.Short
+                        SnackbarController.sendEvent(
+                            SnackbarEvent(
+                                message = StringValue.Resource(Res.string.please_select_one_more_dream),
+                                action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                            )
                         )
                     }
                 } else {
@@ -247,7 +259,7 @@ fun MassInterpretationResultPage(
         ) {
             Image(
                 painter = painterResource(Res.drawable.mass_dream_interpretation_icon),
-                contentDescription = "Interpret Icon",
+                contentDescription = stringResource(Res.string.interpret_icon_content_description),
                 modifier = Modifier.size(40.dp),
                 colorFilter = ColorFilter.tint(Color.White)
             )
@@ -255,7 +267,7 @@ fun MassInterpretationResultPage(
             if (interpretDreamsScreenState.chosenDreams.isEmpty()) {
                 Spacer(modifier = Modifier.width(3.dp))
                 Text(
-                    text = "Select Dreams",
+                    text = stringResource(Res.string.select_dreams),
                     modifier = Modifier
                         .padding(8.dp),
                     color = Color.White,
@@ -266,14 +278,14 @@ fun MassInterpretationResultPage(
                 Spacer(modifier = Modifier.weight(1f))
                 Image(
                     painter = painterResource(Res.drawable.mass_dream_interpretation_icon),
-                    contentDescription = "Interpret ${interpretDreamsScreenState.chosenDreams.size} dreams",
+                    contentDescription = stringResource(Res.string.interpret_dreams_count, interpretDreamsScreenState.chosenDreams.size),
                     modifier = Modifier.size(40.dp),
                     colorFilter = ColorFilter.tint(Color.Transparent)
                 )
             } else {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Interpret Dreams",
+                    text = stringResource(Res.string.interpret_dreams_button),
                     modifier = Modifier
                         .padding(8.dp),
                     color = Color.White,
@@ -284,7 +296,7 @@ fun MassInterpretationResultPage(
                 Spacer(modifier = Modifier.weight(1f))
 
                 Text(
-                    text = "${interpretDreamsScreenState.chosenDreams.size}/15",
+                    text = stringResource(Res.string.interpret_dreams_count, interpretDreamsScreenState.chosenDreams.size),
                     modifier = Modifier
                         .padding(8.dp),
                     color = Color.White,

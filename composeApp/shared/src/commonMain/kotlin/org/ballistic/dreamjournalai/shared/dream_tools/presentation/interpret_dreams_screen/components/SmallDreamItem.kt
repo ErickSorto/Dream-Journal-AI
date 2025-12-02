@@ -31,13 +31,19 @@ import coil3.compose.rememberAsyncImagePainter
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.baseline_question_mark_24
 import dreamjournalai.composeapp.shared.generated.resources.baseline_star_24
+import dreamjournalai.composeapp.shared.generated.resources.deleted_dream
+import dreamjournalai.composeapp.shared.generated.resources.deleted_dream_icon_question_mark
+import dreamjournalai.composeapp.shared.generated.resources.dream_image_content_description
+import dreamjournalai.composeapp.shared.generated.resources.favorite_content_description
 import dreamjournalai.composeapp.shared.generated.resources.lighthouse_vector
+import dreamjournalai.composeapp.shared.generated.resources.lucid_content_description
+import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
+import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components.shimmerEffect
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.BrighterWhite
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
-import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
-import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.components.shimmerEffect
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SmallDreamItem(
@@ -55,7 +61,7 @@ fun SmallDreamItem(
         }
 
     val title = if (isDeleted) {
-        "Deleted Dream"
+        stringResource(Res.string.deleted_dream)
     } else {
         dream.title
     }
@@ -88,7 +94,7 @@ fun SmallDreamItem(
                 if (isDeleted) {
                     Icon(
                         painter = painterResource(imageResId),
-                        contentDescription = "Deleted Dream Icon Question Mark",
+                        contentDescription = stringResource(Res.string.deleted_dream_icon_question_mark),
                         modifier = Modifier
                             .fillMaxSize()
                             .background(Color.LightGray),
@@ -101,7 +107,7 @@ fun SmallDreamItem(
                         Box(Modifier.fillMaxSize()) {
                             Image(
                                 painter = painter,
-                                contentDescription = "Dream Image",
+                                contentDescription = stringResource(Res.string.dream_image_content_description),
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
                             )
@@ -116,7 +122,7 @@ fun SmallDreamItem(
                     } else {
                         Image(
                             painter = painterResource(imageResId),
-                            contentDescription = "Dream Image",
+                            contentDescription = stringResource(Res.string.dream_image_content_description),
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
@@ -140,7 +146,7 @@ fun SmallDreamItem(
             if (dream.isFavorite) {
                 Image(
                     painter = painterResource(Res.drawable.baseline_star_24),
-                    contentDescription = "Favorite",
+                    contentDescription = stringResource(Res.string.favorite_content_description),
                     modifier = Modifier
                         .size(24.dp)
                 )
@@ -149,7 +155,7 @@ fun SmallDreamItem(
             if (dream.isLucid) {
                 Image(
                     painter = painterResource(Res.drawable.lighthouse_vector),
-                    contentDescription = "Lucid",
+                    contentDescription = stringResource(Res.string.lucid_content_description),
                     modifier = Modifier
                         .size(24.dp)
                 )

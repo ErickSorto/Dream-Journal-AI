@@ -26,9 +26,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
+import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.anonymous_store_message
+import dreamjournalai.composeapp.shared.generated.resources.login_button
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
+import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AnonymousStoreScreen(
@@ -50,12 +53,12 @@ fun AnonymousStoreScreen(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .background(
-                    color = DarkBlue.copy(alpha = 0.5f),
+                    color = OriginalXmlColors.DarkBlue.copy(alpha = 0.5f),
                     shape = RoundedCornerShape(16.dp)
                 ),
         ) {
             TypewriterText(
-                text = "In order to access store please log in! Anonymous users do not have access to the store!",
+                text = stringResource(Res.string.anonymous_store_message),
                 modifier = Modifier.padding(16.dp),
                 textAlign = TextAlign.Center,
                 animationDuration = animationDuration,
@@ -75,12 +78,12 @@ fun AnonymousStoreScreen(
                 modifier = Modifier.padding(horizontal = 16.dp).systemBarsPadding(),
                 shape = RoundedCornerShape(6.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = RedOrange // Replace with your desired color
+                    containerColor = OriginalXmlColors.RedOrange // Replace with your desired color
                 ),
                 onClick = { navigateToAccountScreen() }
             ) {
                 Text(
-                    text = "Login",
+                    text = stringResource(Res.string.login_button),
                     modifier = Modifier.padding(8.dp),
                     fontSize = 18.sp,
                     color = Color.White
