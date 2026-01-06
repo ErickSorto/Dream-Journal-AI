@@ -36,7 +36,6 @@ fun DreamStatisticScreen(
 ) {
     LaunchedEffect(key1 = Unit) {
         onEvent(StatisticEvent.LoadDreams)
-        onEvent(StatisticEvent.GetDreamTokens)
     }
 
     Scaffold(

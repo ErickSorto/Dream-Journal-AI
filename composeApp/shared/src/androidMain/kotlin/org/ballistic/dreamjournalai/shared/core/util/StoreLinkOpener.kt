@@ -3,6 +3,7 @@ package org.ballistic.dreamjournalai.shared.core.util
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 
 actual interface StoreLinkOpener {
     actual fun openStoreLink()
@@ -16,7 +17,8 @@ class StoreLinkOpenerAndroid(
         val playStoreLink = "https://play.google.com/store/apps/details?id=org.ballistic.dreamjournalai"
 
         val intent = Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse(playStoreLink)
+            data = playStoreLink.toUri()
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             setPackage("com.android.vending") // force the Play Store app if installed
         }
 
@@ -25,7 +27,9 @@ class StoreLinkOpenerAndroid(
             context.startActivity(intent)
         } else {
             // Otherwise, fall back to any browser
-            val fallbackIntent = Intent(Intent.ACTION_VIEW, Uri.parse(playStoreLink))
+            val fallbackIntent = Intent(Intent.ACTION_VIEW, playStoreLink.toUri()).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
             context.startActivity(fallbackIntent)
         }
     }

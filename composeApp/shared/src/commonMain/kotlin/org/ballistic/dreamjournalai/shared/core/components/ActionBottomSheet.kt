@@ -83,7 +83,7 @@ fun ActionBottomSheet(
                 }
             }
         },
-        containerColor = LightBlack
-
+        containerColor = LightBlack,
+        scrimColor = Color.Transparent
     )
 }

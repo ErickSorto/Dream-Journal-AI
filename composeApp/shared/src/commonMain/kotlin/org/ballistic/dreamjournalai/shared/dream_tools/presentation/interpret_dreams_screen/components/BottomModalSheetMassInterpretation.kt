@@ -149,6 +149,7 @@ fun BottomModalSheetMassInterpretation(
                 )
             }
         },
-        containerColor = LightBlack
+        containerColor = LightBlack,
+        scrimColor = Color.Transparent
     )
 }

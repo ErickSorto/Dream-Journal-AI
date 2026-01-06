@@ -35,13 +35,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.lexilabs.basic.ads.DependsOnGoogleMobileAds
-import app.lexilabs.basic.ads.composable.RewardedAd
-import coil3.compose.LocalPlatformContext
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.ad_unit_id
-import dreamjournalai.composeapp.shared.generated.resources.dream_token_benefit_content_description
 import kotlinx.coroutines.launch
+import org.ballistic.dreamjournalai.shared.ad.RewardedAd
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_symbols.domain.SymbolEvent
@@ -51,9 +46,7 @@ import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components.SymbolScreenTopBar
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.SymbolScreenState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
-import org.jetbrains.compose.resources.stringResource
 
-@OptIn(DependsOnGoogleMobileAds::class)
 @Composable
 fun SymbolScreen(
     symbolScreenState: SymbolScreenState,
@@ -69,7 +62,6 @@ fun SymbolScreen(
     val tokens = symbolScreenState.dreamTokens
 
     LaunchedEffect(Unit) {
-        onEvent(SymbolEvent.GetDreamTokens)
         onEvent(SymbolEvent.LoadWords)
         onEvent(SymbolEvent.GetUnlockedWords)
         onEvent(SymbolEvent.FilterByLetter('A'))
@@ -125,18 +117,17 @@ fun SymbolScreen(
         }
         if(symbolScreenState.isAdSymbol){
             RewardedAd(
-                activity = LocalPlatformContext.current,
-                adUnitId = stringResource(Res.string.ad_unit_id),
-                onRewardEarned = {
+                onAdLoaded = {},
+                onAdFailedToLoad = {
+                    onEvent(SymbolEvent.AdSymbolToggle(false))
+                },
+                onAdReward = {
                     onEvent(
                         SymbolEvent.ClickBuySymbol(
                             dictionaryWord = symbolScreenState.clickedSymbol,
                             isAd = true
                         )
                     )
-                    onEvent(SymbolEvent.AdSymbolToggle(false))
-                },
-                onDismissed = {
                     onEvent(SymbolEvent.AdSymbolToggle(false))
                 }
             )

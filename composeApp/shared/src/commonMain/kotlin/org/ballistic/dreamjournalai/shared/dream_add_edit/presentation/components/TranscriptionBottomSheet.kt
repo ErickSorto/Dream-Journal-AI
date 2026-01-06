@@ -17,6 +17,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
@@ -42,7 +43,8 @@ fun TranscriptionBottomSheet(
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
         onDismissRequest = onDismissRequest,
-        containerColor = OriginalXmlColors.LightBlack
+        containerColor = OriginalXmlColors.LightBlack,
+        scrimColor = Color.Transparent
     ) {
         Column(
             modifier = Modifier

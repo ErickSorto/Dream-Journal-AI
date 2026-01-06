@@ -52,15 +52,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import app.lexilabs.basic.ads.DependsOnGoogleMobileAds
-import app.lexilabs.basic.ads.composable.RewardedAd
-import coil3.compose.LocalPlatformContext
 import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.SnackbarAction
 import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.SnackbarEvent
+import org.ballistic.dreamjournalai.shared.ad.RewardedAd
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
 import org.ballistic.dreamjournalai.shared.core.util.StringValue
@@ -72,14 +70,14 @@ import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.component
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.QuestionAIGenerationBottomSheet
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.AIPage.AISubPages.UniversalAIPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIPage
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIType
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(
-    ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
-    DependsOnGoogleMobileAds::class
+    ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class
 )
 @Composable
 fun SharedTransitionScope.AIPage(
@@ -397,9 +395,11 @@ fun SharedTransitionScope.AIPage(
 
     if (addEditDreamState.isAdImage) {
         RewardedAd(
-            activity = LocalPlatformContext.current,
-            adUnitId = "ca-app-pub-8710979310678386/8178296701",
-            onRewardEarned = {
+            onAdLoaded = {},
+            onAdFailedToLoad = {
+                onAddEditDreamEvent(AddEditDreamEvent.AdAIImageToggle(false))
+            },
+            onAdReward = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateAIImage(
                         style = addEditDreamState.imageStyle.promptAffix,
@@ -407,18 +407,17 @@ fun SharedTransitionScope.AIPage(
                     )
                 )
                 onAddEditDreamEvent(AddEditDreamEvent.AdAIImageToggle(false))
-            },
-            onDismissed = {
-                onAddEditDreamEvent(AddEditDreamEvent.AdAIImageToggle(false))
             }
         )
     }
 
     if (addEditDreamState.isAdResponse) {
         RewardedAd(
-            activity = LocalPlatformContext.current,
-            adUnitId = "ca-app-pub-8710979310678386/8178296701",
-            onRewardEarned = {
+            onAdLoaded = {},
+            onAdFailedToLoad = {
+                onAddEditDreamEvent(AddEditDreamEvent.AdAIResponseToggle(false))
+            },
+            onAdReward = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateAIResponse(
                         content = textFieldState.text.toString(),
@@ -426,18 +425,17 @@ fun SharedTransitionScope.AIPage(
                     )
                 )
                 onAddEditDreamEvent(AddEditDreamEvent.AdAIResponseToggle(false))
-            },
-            onDismissed = {
-                onAddEditDreamEvent(AddEditDreamEvent.AdAIResponseToggle(false))
             }
         )
     }
 
     if (addEditDreamState.isAdAdvice) {
         RewardedAd(
-            activity = LocalPlatformContext.current,
-            adUnitId = "ca-app-pub-8710979310678386/8178296701",
-            onRewardEarned = {
+            onAdLoaded = {},
+            onAdFailedToLoad = {
+                onAddEditDreamEvent(AddEditDreamEvent.AdAIAdviceToggle(false))
+            },
+            onAdReward = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateAIAdvice(
                         content = textFieldState.text.toString(),
@@ -445,18 +443,17 @@ fun SharedTransitionScope.AIPage(
                     )
                 )
                 onAddEditDreamEvent(AddEditDreamEvent.AdAIAdviceToggle(false))
-            },
-            onDismissed = {
-                onAddEditDreamEvent(AddEditDreamEvent.AdAIAdviceToggle(false))
             }
         )
     }
 
     if (addEditDreamState.isAdQuestion) {
         RewardedAd(
-            activity = LocalPlatformContext.current,
-            adUnitId = "ca-app-pub-8710979310678386/8178296701",
-            onRewardEarned = {
+            onAdLoaded = {},
+            onAdFailedToLoad = {
+                onAddEditDreamEvent(AddEditDreamEvent.AdQuestionToggle(false))
+            },
+            onAdReward = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateFromQuestion(
                         content = textFieldState.text.toString(),
@@ -464,18 +461,17 @@ fun SharedTransitionScope.AIPage(
                     )
                 )
                 onAddEditDreamEvent(AddEditDreamEvent.AdQuestionToggle(false))
-            },
-            onDismissed = {
-                onAddEditDreamEvent(AddEditDreamEvent.AdQuestionToggle(false))
             }
         )
     }
 
     if (addEditDreamState.isAdStory) {
         RewardedAd(
-            activity = LocalPlatformContext.current,
-            adUnitId = "ca-app-pub-8710979310678386/8178296701",
-            onRewardEarned = {
+            onAdLoaded = {},
+            onAdFailedToLoad = {
+                onAddEditDreamEvent(AddEditDreamEvent.AdStoryToggle(false))
+            },
+            onAdReward = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateStory(
                         content = textFieldState.text.toString(),
@@ -483,27 +479,23 @@ fun SharedTransitionScope.AIPage(
                     )
                 )
                 onAddEditDreamEvent(AddEditDreamEvent.AdStoryToggle(false))
-            },
-            onDismissed = {
-                onAddEditDreamEvent(AddEditDreamEvent.AdStoryToggle(false))
             }
         )
     }
 
     if (addEditDreamState.isAdMood) {
         RewardedAd(
-            activity = LocalPlatformContext.current,
-            adUnitId = "ca-app-pub-8710979310678386/8178296701",
-            onRewardEarned = {
+            onAdLoaded = {},
+            onAdFailedToLoad = {
+                onAddEditDreamEvent(AddEditDreamEvent.AdMoodToggle(false))
+            },
+            onAdReward = {
                 onAddEditDreamEvent(
                     AddEditDreamEvent.ClickGenerateMood(
                         content = textFieldState.text.toString(),
                         cost = 0
                     )
                 )
-                onAddEditDreamEvent(AddEditDreamEvent.AdMoodToggle(false))
-            },
-            onDismissed = {
                 onAddEditDreamEvent(AddEditDreamEvent.AdMoodToggle(false))
             }
         )
@@ -647,7 +639,7 @@ fun SharedTransitionScope.AIPage(
                     .background(
                         color = OriginalXmlColors.LightBlack.copy(alpha = 0.0f)
                     ),
-                beyondViewportPageCount = 0,
+                beyondViewportPageCount = 5,
                 verticalAlignment = Alignment.Top
             ) { page ->
 
@@ -726,6 +718,16 @@ fun SharedTransitionScope.AIPage(
             }
         }
 
+        val aiType = when (pagerState2.currentPage) {
+            0 -> AIType.IMAGE
+            1 -> AIType.INTERPRETATION
+            2 -> AIType.ADVICE
+            3 -> AIType.QUESTION_ANSWER
+            4 -> AIType.STORY
+            5 -> AIType.MOOD
+            else -> null
+        }
+
         AIButton(
             text = stringResource(
                 Res.string.generate_button_text,
@@ -753,7 +755,8 @@ fun SharedTransitionScope.AIPage(
                     }
                 }
             },
-            onAddEditDreamEvent = onAddEditDreamEvent
+            onAddEditDreamEvent = onAddEditDreamEvent,
+            isGenerating = addEditDreamState.aiStates[aiType]?.isLoading ?: false
         )
     }
 }
@@ -765,12 +768,14 @@ fun AIButton(
     color: Color,
     onClick: () -> Unit,
     onAddEditDreamEvent: (AddEditDreamEvent) -> Unit,
+    isGenerating: Boolean
 ) {
     Button(
         onClick = {
             onClick()
             onAddEditDreamEvent(AddEditDreamEvent.TriggerVibration)
         },
+        enabled = !isGenerating,
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp, 8.dp, 16.dp, 8.dp)

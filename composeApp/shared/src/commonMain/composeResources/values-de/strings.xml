@@ -326,4 +326,6 @@
     <string name="export_dreams_description">Format wählen</string>
     <string name="pdf_format">PDF-Format</string>
     <string name="txt_format">TXT-Format</string>
+    <string name="please_wait_for_the_process_to_finish">Verarbeite...</string>
+    <string name="ai_image_save_error">Fehler beim Speichern des KI-Bildes</string>
 </resources>

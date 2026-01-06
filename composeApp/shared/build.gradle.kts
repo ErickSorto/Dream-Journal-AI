@@ -1,8 +1,3 @@
-import org.gradle.kotlin.dsl.implementation
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
-
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinMultiplatform)
@@ -11,9 +6,11 @@ plugins {
     alias(libs.plugins.googleServices)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.kotlinCocoapods)
+    alias(libs.plugins.stability.analyzer)
 }
 
 kotlin {
+    jvmToolchain(17)
     androidTarget {
         compilerOptions {
             freeCompilerArgs.add("-Xexpect-actual-classes")
@@ -69,7 +66,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.4.0")
-            implementation("co.touchlab.crashkios:crashlytics:0.9.0")
+            implementation(libs.crashkios.crashlytics)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -82,6 +79,7 @@ kotlin {
             implementation(libs.kotlin.stdlib)
             implementation(libs.datetime)
             implementation(libs.richeditor.compose)
+            implementation(libs.mpfilepicker)
 
 
             //Image
@@ -94,10 +92,6 @@ kotlin {
             implementation(libs.firebaseFunctions)
             implementation(libs.firebaseStorage)
             implementation(libs.firebaseAuth)
-
-            implementation(libs.lexilabs.basic.ads)
-
-
 
             // koin
             api(libs.koin.core)
@@ -117,9 +111,6 @@ kotlin {
             implementation("io.coil-kt.coil3:coil-compose:3.3.0")
 
             implementation(libs.in1.app.review.kmp.google.play)
-
-            implementation(libs.permissions)
-            implementation(libs.permissions.compose)
 
             implementation(libs.purchases.core)
             implementation(libs.purchases.datetime)   // Optional
@@ -146,6 +137,7 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.accompanistPermissions)
 
 
             //koin
@@ -153,7 +145,6 @@ kotlin {
             implementation(libs.koin.androidx.compose)
 
             implementation(libs.coreSplashscreen)
-            implementation(libs.kmpnotifier)
 
 
             implementation(libs.ktor.client.okhttp)
@@ -192,18 +183,20 @@ kotlin {
 
 android {
     namespace = "org.ballistic.dreamjournalai.shared"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdk = 36
 
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    sourceSets["main"].res.srcDirs("src/commonMain/resources", "src/androidMain/res")
-    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+    sourceSets.getByName("main") {
+        manifest.srcFile("src/androidMain/AndroidManifest.xml")
+        res.srcDirs("src/commonMain/resources", "src/androidMain/res")
+        resources.srcDirs("src/commonMain/resources")
+    }
 
     defaultConfig {
         applicationId = "org.ballistic.dreamjournalai"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 75
-        versionName = "1.3.0"
+        versionCode = 80
+        versionName = "1.3.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -213,11 +206,14 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
-            isShrinkResources = true
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -235,13 +231,4 @@ android {
         debugImplementation(libs.compose.ui.tooling)
     }
     buildFeatures.compose = true
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.toString()
-    }
-
-    packagingOptions {
-        jniLibs {
-            useLegacyPackaging = true
-        }
-    }
 }

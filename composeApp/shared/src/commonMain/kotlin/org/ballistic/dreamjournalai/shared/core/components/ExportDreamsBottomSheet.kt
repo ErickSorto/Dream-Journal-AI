@@ -97,7 +97,7 @@ fun ExportDreamsBottomSheet(
                 }
             }
         },
-        containerColor = OriginalXmlColors.LightBlack
-
+        containerColor = OriginalXmlColors.LightBlack,
+        scrimColor = Color.Transparent
     )
 }

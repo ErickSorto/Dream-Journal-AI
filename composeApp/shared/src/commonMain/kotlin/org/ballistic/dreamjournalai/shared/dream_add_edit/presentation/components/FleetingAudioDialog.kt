@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.*
@@ -77,7 +78,8 @@ fun FleetingAudioDialog(
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
         onDismissRequest = { onDismiss() },
-        containerColor = OriginalXmlColors.LightBlack
+        containerColor = OriginalXmlColors.LightBlack,
+        scrimColor = Color.Transparent
     ) {
         Column(
             modifier = Modifier

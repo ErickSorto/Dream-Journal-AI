@@ -3,11 +3,10 @@ package org.ballistic.dreamjournalai.shared
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Context
 import androidx.work.Configuration
 import androidx.work.WorkManager
 import co.touchlab.crashkios.crashlytics.enableCrashlytics
-import com.mmk.kmpnotifier.notification.NotifierManager
-import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfiguration
 import com.revenuecat.purchases.kmp.LogLevel
 import com.revenuecat.purchases.kmp.Purchases
 import com.revenuecat.purchases.kmp.configure
@@ -19,8 +18,8 @@ import org.koin.android.ext.koin.androidContext
 class DreamJournalAIApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        instance = this
         enableCrashlytics()
-       // GoogleAuthProvider.credential(credentials = GoogleAuthCredentials(serverId = "433518106186-fas918qt78ffo3t0rl2eg86ta05sic89.apps.googleusercontent.com"))
 
         createNotificationChannel()
         initializeWorkManager()
@@ -37,13 +36,6 @@ class DreamJournalAIApp : Application() {
             // or leave it null to let RevenueCat create an anonymous ID
             appUserId = Firebase.auth.currentUser?.uid
         }
-
-        NotifierManager.initialize(
-            configuration = NotificationPlatformConfiguration.Android(
-                notificationIconResId = R.drawable.dream_logo,
-                showPushNotification = true // if you’re also using push
-            )
-        )
     }
 
     private fun createNotificationChannel() {
@@ -64,5 +56,10 @@ class DreamJournalAIApp : Application() {
 
     companion object {
         const val CHANNEL_ID = "dream_journal_channel"
+        private var instance: DreamJournalAIApp? = null
+
+        fun applicationContext(): Context {
+            return instance!!.applicationContext
+        }
     }
 }

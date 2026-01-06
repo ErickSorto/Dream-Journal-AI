@@ -250,8 +250,8 @@ $dreamContent""".trimIndent()
     override suspend fun generateImageFromDetails(details: String, cost: Int, style: String, model: String?): AIResult<String> {
         logger.d { "generateImageFromDetails called. Details length: ${details.length}, Cost: $cost, Style: $style, Model: $model" }
         val apiKey = OpenAIApiKeyUtil.getOpenAISecretKey()
-        val primaryModel = model ?: if (cost <= 1) "gpt-image-1-mini" else "gpt-image-1"
-        val fallbackModel = if (cost <= 1) "dall-e-2" else "gpt-image-1" 
+        val primaryModel = model ?: if (cost <= 1) "mini" else "gpt-image-1"
+        val fallbackModel = if (cost <= 1) "mini" else "gpt-image-1" 
 
         val gptSizeString = "1024x1024"
         val fallbackSizeString = "512x512"
@@ -271,6 +271,7 @@ $dreamContent""".trimIndent()
                     setBody(bodyJson)
                     timeout { requestTimeoutMillis = 70_000; connectTimeoutMillis = 30_000; socketTimeoutMillis = 70_000 }
                 }.bodyAsText()
+                logger.i { "Image generation response: $response" }
                 val root = Json.parseToJsonElement(response).jsonObject
                 val dataNode = root["data"] ?: return AIResult.Error(root["error"]?.jsonObject?.get("message")?.jsonPrimitive?.content ?: "No data in response")
                 val data = dataNode as? JsonArray ?: return AIResult.Error("Malformed response: data not array")
@@ -296,7 +297,7 @@ $dreamContent""".trimIndent()
         suspend fun generate(model: String): AIResult<String> {
             val normalizedModel = model.lowercase()
             // Determine size based on model
-            val size = if (normalizedModel.contains("dall-e-2") || cost <= 1) fallbackSizeString else gptSizeString
+            val size = if (normalizedModel.contains("mini") || cost <= 1) fallbackSizeString else gptSizeString
             
             return generateWithKtor(normalizedModel, finalPrompt, size)
         }

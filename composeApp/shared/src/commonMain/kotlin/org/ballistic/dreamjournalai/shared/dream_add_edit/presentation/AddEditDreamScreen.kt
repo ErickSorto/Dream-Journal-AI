@@ -30,6 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -58,6 +59,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.ballistic.dreamjournalai.shared.BottomNavigationController
+import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.SnackbarAction
 import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.SnackbarEvent
@@ -103,6 +106,19 @@ fun SharedTransitionScope.AddEditDreamScreen(
         }
     }
 
+    LaunchedEffect(Unit){
+        onAddEditDreamEvent(
+            AddEditDreamEvent.GetDreamTokens
+        )
+    }
+
+    DisposableEffect(Unit) {
+        DrawerController.disable()
+        onDispose {
+            DrawerController.enable()
+        }
+    }
+
     listOf(
         MainScreenEvent.SetBottomBarVisibilityState(false),
         MainScreenEvent.SetFloatingActionButtonState(false),
@@ -113,8 +129,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
     val scope = rememberCoroutineScope()
 
     BackHandler(true) {
-        val isLoading = addEditDreamState.aiStates.any { it.value.isLoading }
-        if (!addEditDreamState.isDreamExitOff && !addEditDreamState.dreamIsSavingLoading && !isLoading) {
+        if (!addEditDreamState.isGeneratingAI && !addEditDreamState.dreamIsSavingLoading) {
             focusManager.clearFocus()
             keyboardController?.hide()
             if (addEditDreamState.dreamHasChanged) {
@@ -125,7 +140,17 @@ fun SharedTransitionScope.AddEditDreamScreen(
                 onNavigateToDreamJournalScreen()
             }
         } else {
-            //TODO: Show a snackbar that the dream is saving
+            scope.launch {
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = StringValue.Resource(Res.string.please_wait_for_the_process_to_finish),
+                        action = SnackbarAction(
+                            name = StringValue.Resource(Res.string.dismiss),
+                            action = {}
+                        )
+                    )
+                )
+            }
         }
     }
 
@@ -221,7 +246,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
         )
     }
 
-    val tint = if (!addEditDreamState.dreamIsSavingLoading && !addEditDreamState.isDreamExitOff
+    val tint = if (!addEditDreamState.dreamIsSavingLoading && !addEditDreamState.isGeneratingAI
     ) OriginalXmlColors.White
     else Color.Gray.copy(alpha = 0.1f)
 
@@ -293,7 +318,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
                                         onNavigateToDreamJournalScreen()
                                     }
                                 },
-                                enabled = !addEditDreamState.isDreamExitOff && !addEditDreamState.dreamIsSavingLoading,
+                                enabled = !addEditDreamState.isGeneratingAI && !addEditDreamState.dreamIsSavingLoading,
                             ) {
                                 Icon(
                                     modifier = Modifier.rotate(180f),
@@ -326,7 +351,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
                                         onNavigateToDreamJournalScreen()
                                     }))
                                 },
-                                enabled = !addEditDreamState.dreamIsSavingLoading && !addEditDreamState.isDreamExitOff,
+                                enabled = !addEditDreamState.dreamIsSavingLoading && !addEditDreamState.isGeneratingAI,
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Save,

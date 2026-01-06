@@ -264,7 +264,8 @@ fun ImageGenerationPopUp(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         },
-        containerColor = OriginalXmlColors.LightBlack
+        containerColor = OriginalXmlColors.LightBlack,
+        scrimColor = Color.Transparent
     )
 }
 

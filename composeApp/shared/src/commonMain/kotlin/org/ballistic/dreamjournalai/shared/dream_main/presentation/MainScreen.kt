@@ -69,13 +69,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
-import dev.icerock.moko.permissions.DeniedAlwaysException
-import dev.icerock.moko.permissions.DeniedException
-import dev.icerock.moko.permissions.Permission
-import dev.icerock.moko.permissions.PermissionsController
-import dev.icerock.moko.permissions.compose.BindEffect
-import dev.icerock.moko.permissions.compose.PermissionsControllerFactory
-import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.add_dream
 import dreamjournalai.composeapp.shared.generated.resources.animated_heart
@@ -129,29 +122,8 @@ fun MainScreenView(
     onNavigateToOnboardingScreen: () -> Unit = {},
     onDataLoaded: () -> Unit
 ) {
-    val factory: PermissionsControllerFactory = rememberPermissionsControllerFactory()
-    val controller: PermissionsController = remember(factory) { factory.createPermissionsController() }
+    RequestNotificationPermission()
     val coroutineScope: CoroutineScope = rememberCoroutineScope()
-    BindEffect(controller)
-    LaunchedEffect(Unit) {
-        coroutineScope.launch {
-            // Check if permission is already granted
-            val alreadyGranted = controller.isPermissionGranted(Permission.REMOTE_NOTIFICATION)
-            if (!alreadyGranted) {
-                try {
-                    // Request the permission
-                    controller.providePermission(Permission.REMOTE_NOTIFICATION)
-                } catch (_: DeniedAlwaysException) {
-                    // The user has denied the permission *always* (Don’t ask again).
-                    // Handle your fallback scenario here — e.g., show a dialog explaining
-                    // that notifications won't work, or navigate the user somewhere else.
-                } catch (_: DeniedException) {
-                    // The user has denied the permission (but not “don’t ask again”).
-                    // You could decide to ask again or show rationale to the user.
-                }
-            }
-        }
-    }
 
     LaunchedEffect(Unit) {
         onDataLoaded()
@@ -512,7 +484,7 @@ fun MainScreenView(
                                         contentDescription = stringResource(Res.string.add_dream),
                                         modifier = Modifier.size(32.dp)
                                     )
-                                }
+                                 }
                             }
                         }
                     }
@@ -628,3 +600,6 @@ fun AnimatedHeartIcon(animate: Boolean = true) {
         )
     }
 }
+
+@Composable
+expect fun RequestNotificationPermission()

@@ -99,7 +99,7 @@ fun SharedTransitionScope.UniversalAIPage(
                 aiContent = aiContent,
                 title = contentType.title,
                 contentType = contentType,
-                textFieldState = textFieldState,
+                addEditDreamState = addEditDreamState,
                 onAddEditEvent = onAddEditEvent,
                 snackBarState = snackBarState,
                 canGenerateAI = canGenerateAI
@@ -113,7 +113,7 @@ fun StandardAIPageLayout(
     aiContent: AIState,
     title: String,
     contentType: AIPageType,
-    textFieldState: TextFieldState,
+    addEditDreamState: AddEditDreamState,
     onAddEditEvent: (AddEditDreamEvent) -> Unit,
     snackBarState: () -> Unit,
     canGenerateAI: Boolean
@@ -166,7 +166,11 @@ fun StandardAIPageLayout(
                 style = typography.bodyMedium,
                 modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 16.dp),
                 color = OriginalXmlColors.White,
-                useMarkdown = true
+                useMarkdown = true,
+                animate = addEditDreamState.newlyGeneratedAIType == contentType.aiType,
+                onAnimationComplete = {
+                    onAddEditEvent(AddEditDreamEvent.SetNewlyGeneratedAIType(null))
+                }
             )
         }
     } else {
@@ -379,6 +383,10 @@ fun AIQuestionPage(
                 textAlign = TextAlign.Start,
                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 16.dp),
                 color = OriginalXmlColors.White,
+                animate = addEditDreamState.newlyGeneratedAIType == AIType.QUESTION_ANSWER,
+                onAnimationComplete = {
+                    onAddEditEvent(AddEditDreamEvent.SetNewlyGeneratedAIType(null))
+                }
             )
         }
     } else {
@@ -478,9 +486,9 @@ private fun rememberTimedProgress(
     contentType: AIPageType,
     onFullyFinished: () -> Unit = {}
 ): Triple<Float, Boolean, Boolean> {
-    val progressAnim = remember { Animatable(0f) }
-    var show by remember { mutableStateOf(false) }
-    var isAnimationFinished by remember { mutableStateOf(false) }
+    val progressAnim = remember(contentType) { Animatable(0f) }
+    var show by remember(contentType) { mutableStateOf(false) }
+    var isAnimationFinished by remember(contentType) { mutableStateOf(false) }
 
     val (durationMs, bufferCap) = when (contentType) {
         AIPageType.PAINTER -> 30_000L to 0.95f
@@ -489,16 +497,17 @@ private fun rememberTimedProgress(
 
     LaunchedEffect(isLoading) {
         if (isLoading) {
-            show = true
-            isAnimationFinished = false
-            progressAnim.snapTo(0f)
-            progressAnim.animateTo(
-                targetValue = bufferCap,
-                animationSpec = tween(
-                    durationMillis = durationMs.toInt(),
-                    easing = LinearEasing
+            if (progressAnim.value == 0f) { // Only start animation if it's not already running
+                show = true
+                isAnimationFinished = false
+                progressAnim.animateTo(
+                    targetValue = bufferCap,
+                    animationSpec = tween(
+                        durationMillis = durationMs.toInt(),
+                        easing = LinearEasing
+                    )
                 )
-            )
+            }
         } else {
             if (show) {
                 progressAnim.animateTo(

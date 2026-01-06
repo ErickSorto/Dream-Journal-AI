@@ -178,7 +178,8 @@ fun VoiceRecordingPopUp(
                 onDismissRequest()
             }
         },
-        containerColor = OriginalXmlColors.LightBlack
+        containerColor = OriginalXmlColors.LightBlack,
+        scrimColor = Color.Transparent
     ) {
         Column(
             modifier = Modifier

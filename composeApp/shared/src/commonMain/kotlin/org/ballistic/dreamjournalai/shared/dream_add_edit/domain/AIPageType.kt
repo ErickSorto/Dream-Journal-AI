@@ -16,24 +16,31 @@ import org.jetbrains.compose.resources.stringResource
 enum class AIPageType(
     val getState: (AddEditDreamState) -> AIState,
     val buttonType: ButtonType,
+    val aiType: AIType,
 ) {
     PAINTER({ it.aiStates[AIType.IMAGE]!! },
-        ButtonType.PAINT
+        ButtonType.PAINT,
+        AIType.IMAGE
     ),
     EXPLANATION({ it.aiStates[AIType.INTERPRETATION]!! },
-        ButtonType.INTERPRET
+        ButtonType.INTERPRET,
+        AIType.INTERPRETATION
     ),
     ADVICE({ it.aiStates[AIType.ADVICE]!! },
-        ButtonType.ADVICE
+        ButtonType.ADVICE,
+        AIType.ADVICE
     ),
     QUESTION({ it.aiStates[AIType.QUESTION_ANSWER]!! },
-        ButtonType.QUESTION
+        ButtonType.QUESTION,
+        AIType.QUESTION_ANSWER
     ),
     STORY({ it.aiStates[AIType.STORY]!! },
-        ButtonType.STORY
+        ButtonType.STORY,
+        AIType.STORY
     ),
     MOOD({ it.aiStates[AIType.MOOD]!! },
-        ButtonType.MOOD
+        ButtonType.MOOD,
+        AIType.MOOD
     );
 
     val title: String

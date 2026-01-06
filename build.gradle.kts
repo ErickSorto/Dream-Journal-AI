@@ -19,9 +19,10 @@ plugins {
     alias(libs.plugins.kotlinSerialization) apply false
     alias(libs.plugins.googleServices) apply false
     alias(libs.plugins.kotlinCocoapods) apply false
+    alias(libs.plugins.stability.analyzer) apply false
 
 }
 
 tasks.register<Delete>("clean") {
-    delete(rootProject.buildDir)
+    delete(rootProject.layout.buildDirectory)
 }

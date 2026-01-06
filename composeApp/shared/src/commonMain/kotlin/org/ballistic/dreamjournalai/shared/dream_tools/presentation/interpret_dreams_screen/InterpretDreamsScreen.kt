@@ -112,7 +112,6 @@ fun MassInterpretDreamToolScreen(
 
     LaunchedEffect(Unit) {
         BottomNavigationController.sendEvent(BottomNavigationEvent.SetVisibility(false))
-        onEvent(InterpretDreamsToolEvent.GetDreamTokens)
         onEvent(InterpretDreamsToolEvent.GetDreams)
         onEvent(InterpretDreamsToolEvent.GetMassInterpretations)
         delay(1000)

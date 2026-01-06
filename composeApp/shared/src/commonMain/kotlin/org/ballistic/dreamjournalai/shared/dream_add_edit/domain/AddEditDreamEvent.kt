@@ -3,6 +3,7 @@ package org.ballistic.dreamjournalai.shared.dream_add_edit.domain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIPage
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIType
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.DictionaryWord
 
 sealed class AddEditDreamEvent {
@@ -100,4 +101,5 @@ sealed class AddEditDreamEvent {
     
     data class MakeAudioPermanent(val cost: Int) : AddEditDreamEvent()
     data class ToggleTranscriptionBottomSheet(val value: Boolean) : AddEditDreamEvent()
+    data class SetNewlyGeneratedAIType(val type: AIType?) : AddEditDreamEvent()
 }

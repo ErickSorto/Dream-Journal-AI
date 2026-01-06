@@ -326,4 +326,6 @@
     <string name="export_dreams_description">Choose your desired format</string>
     <string name="pdf_format">PDF Format</string>
     <string name="txt_format">TXT Format</string>
+    <string name="please_wait_for_the_process_to_finish">Processing...</string>
+    <string name="ai_image_save_error">Error saving AI image</string>
 </resources>

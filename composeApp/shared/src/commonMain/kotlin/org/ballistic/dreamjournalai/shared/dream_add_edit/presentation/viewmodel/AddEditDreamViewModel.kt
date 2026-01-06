@@ -8,7 +8,9 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
+import dev.gitlive.firebase.storage.storage
 import dreamjournalai.composeapp.shared.generated.resources.*
+import io.ktor.util.decodeBase64Bytes
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
@@ -31,6 +33,7 @@ import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.DictionaryRepository
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.core.util.StringValue
+import org.ballistic.dreamjournalai.shared.core.util.createTempFile
 import org.ballistic.dreamjournalai.shared.core.util.formatLocalDate
 import org.ballistic.dreamjournalai.shared.core.util.formatLocalTime
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AIResult
@@ -358,7 +361,7 @@ class AddEditDreamViewModel(
             val cost = if (event.isAd) 0 else event.dictionaryWord.cost
             val result = authRepository.unlockWord(event.dictionaryWord.word, cost)
             processUnlockWordResult(result, event.dictionaryWord)
-            _addEditDreamState.update { it.copy(isDreamExitOff = false) }
+            _addEditDreamState.update { it.copy(isGeneratingAI = false) }
         }
     }
 
@@ -451,7 +454,7 @@ class AddEditDreamViewModel(
                     }
                 }
             }
-            is AddEditDreamEvent.ClickBuyWord -> { _addEditDreamState.update { it.copy(isDreamExitOff = true) }; handleUnlockWord(event) }
+            is AddEditDreamEvent.ClickBuyWord -> { _addEditDreamState.update { it.copy(isGeneratingAI = true) }; handleUnlockWord(event) }
             is AddEditDreamEvent.SetAIPage -> _addEditDreamState.update { it.copy(aiPage = event.page) }
             is AddEditDreamEvent.ToggleDialogState -> _addEditDreamState.update { it.copy(dialogState = event.value) }
             is AddEditDreamEvent.ToggleBottomSheetState -> _addEditDreamState.update { it.copy(bottomSheetState = event.value) }
@@ -531,7 +534,7 @@ class AddEditDreamViewModel(
                                         logger.e { "OnVoiceRecordingSaved: Transcription FAILED: ${result.message}" }
                                         showSnack(StringValue.Resource(Res.string.transcription_failed, result.message ?: ""))
                                     }
-                                }
+                                 }
                             }
                             logger.d { "OnVoiceRecordingSaved: Process complete, setting isTranscribing=false" }
                             _addEditDreamState.update { it.copy(isTranscribing = false) }
@@ -574,6 +577,9 @@ class AddEditDreamViewModel(
             is AddEditDreamEvent.ToggleTranscriptionBottomSheet -> {
                 _addEditDreamState.update { it.copy(transcriptionBottomSheetState = event.value) }
             }
+            is AddEditDreamEvent.SetNewlyGeneratedAIType -> {
+                _addEditDreamState.update { it.copy(newlyGeneratedAIType = event.type) }
+            }
         }
     }
 
@@ -604,10 +610,7 @@ class AddEditDreamViewModel(
 
     private fun requestAIText(aiType: AIType, content: String, cost: Int) {
         logger.d { "requestAIText: AIType=${aiType}, content length=${content.length}, cost=${cost}" }
-        val isBlocking = aiType == AIType.INTERPRETATION
-        if (isBlocking) {
-            _addEditDreamState.update { it.copy(isDreamExitOff = true) }
-        }
+        _addEditDreamState.update { it.copy(isGeneratingAI = true) }
 
         viewModelScope.launch {
             val transcription = addEditDreamState.value.dreamInfo.dreamAudioTranscription
@@ -617,14 +620,16 @@ class AddEditDreamViewModel(
                 content
             }
 
-            if (isBlocking && fullContent.length < 20) {
-                _addEditDreamState.update { it.copy(isDreamExitOff = false) }
+            if (fullContent.length < 20) {
+                _addEditDreamState.update { it.copy(isGeneratingAI = false) }
                 logger.d { "Snackbar shown: Dream content is too short. Content: '$fullContent'" }
                 showSnack(StringValue.DynamicString(if (fullContent.isEmpty()) "Dream content is empty" else "Dream content is too short"))
                 return@launch
             }
 
             updateAIState(aiType) { copy(isLoading = true) }
+            _addEditDreamState.update { it.copy(newlyGeneratedAIType = aiType) }
+
 
             val aiTextType = when (aiType) {
                 AIType.INTERPRETATION -> AITextType.INTERPRETATION
@@ -643,14 +648,13 @@ class AddEditDreamViewModel(
 
             updateAIState(aiType) { copy(isLoading = false) }
             if (cost > 0) authRepository.consumeDreamTokens(cost)
-            if (isBlocking) {
-                _addEditDreamState.update { it.copy(isDreamExitOff = false) }
-            }
+            _addEditDreamState.update { it.copy(isGeneratingAI = false) }
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     private fun requestImage(style: String, cost: Int) = viewModelScope.launch {
-        _addEditDreamState.update { it.copy(isDreamExitOff = true) }
+        _addEditDreamState.update { it.copy(isGeneratingAI = true) }
         updateAIState(AIType.IMAGE) { copy(isLoading = true) }
         updateAIState(AIType.DETAILS) { copy(isLoading = true) }
         val dreamContent = _contentTextFieldState.value.text.toString()
@@ -666,7 +670,7 @@ class AddEditDreamViewModel(
             is AIResult.Error -> {
                 showSnack(StringValue.Resource(Res.string.ai_response_error))
                 updateAIState(AIType.DETAILS) { copy(isLoading = false) }
-                _addEditDreamState.update { it.copy(isDreamExitOff = false) }
+                _addEditDreamState.update { it.copy(isGeneratingAI = false) }
                 return@launch
             }
         }
@@ -674,14 +678,30 @@ class AddEditDreamViewModel(
 
         when (val img = aiService.generateImageFromDetails(details, cost, style)) {
             is AIResult.Success -> {
-                updateAIState(AIType.IMAGE) { copy(response = img.data) }
-                _addEditDreamState.update { it.copy(isNewImageGenerated = true) }
+                val imageBytes = if (img.data.startsWith("data:image")) {
+                    img.data.substringAfter("base64,").decodeBase64Bytes()
+                } else {
+                    return@launch
+                }
+
+                val dreamId = addEditDreamState.value.dreamInfo.dreamId ?: Uuid.random().toString()
+                val uid = Firebase.auth.currentUser?.uid
+                if (uid != null) {
+                    val tempFile = createTempFile(imageBytes)
+                    val storageRef = Firebase.storage.reference.child("images/$uid/$dreamId.jpg")
+                    storageRef.putFile(tempFile)
+                    val downloadUrl = storageRef.getDownloadUrl()
+                    updateAIState(AIType.IMAGE) { copy(response = downloadUrl) }
+                    _addEditDreamState.update { it.copy(isNewImageGenerated = true) }
+                } else {
+                    showSnack(StringValue.Resource(Res.string.ai_image_save_error))
+                }
             }
             is AIResult.Error -> showSnack(StringValue.Resource(Res.string.ai_image_error, img.message ?: ""))
         }
         updateAIState(AIType.IMAGE) { copy(isLoading = false) }
         if (cost > 0) authRepository.consumeDreamTokens(cost)
-        _addEditDreamState.update { it.copy(isDreamExitOff = false) }
+        _addEditDreamState.update { it.copy(isGeneratingAI = false) }
     }
 }
 
@@ -712,7 +732,7 @@ data class AddEditDreamState(
     val sleepTimePickerDialogState: Boolean = false,
     val wakeTimePickerDialogState: Boolean = false,
     val aiPage: AIPage? = null,
-    val isDreamExitOff: Boolean = false,
+    val isGeneratingAI: Boolean = false,
     val dictionaryWords: ImmutableList<DictionaryWord> = persistentListOf(),
     val dreamFilteredDictionaryWords: ImmutableList<DictionaryWord> = persistentListOf(),
     val unlockedWords: ImmutableList<String> = persistentListOf(),
@@ -733,14 +753,15 @@ data class AddEditDreamState(
     val startAnimation: Boolean = false,
     val isTranscribing: Boolean = false,
     val transcriptionBottomSheetState: Boolean = false,
-    val isUserAnonymous: Boolean = false
+    val isUserAnonymous: Boolean = false,
+    val newlyGeneratedAIType: AIType? = null
 )
 
 @Stable
 data class AIState(
     val response: String = "",
     val isLoading: Boolean = false,
-    val error: String? = null,
+val error: String? = null,
     //for question
     val question: String = ""
 )

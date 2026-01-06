@@ -115,6 +115,7 @@ fun DreamInterpretationPopUp(
                 )
             }
         },
-        containerColor = OriginalXmlColors.LightBlack
+        containerColor = OriginalXmlColors.LightBlack,
+        scrimColor = Color.Transparent
     )
 }
