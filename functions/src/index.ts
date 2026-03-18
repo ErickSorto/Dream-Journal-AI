@@ -5,8 +5,8 @@ import express from "express";
 import cors from "cors";
 import * as nodemailer from "nodemailer";
 import { google } from "googleapis";
-import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
-import axios from "axios";
+import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 admin.initializeApp();
 
@@ -16,15 +16,108 @@ app.use(cors({ origin: true }));
 app.use(express.json());
 
 const DELETE_UNVERIFIED_USERS_AFTER = 60;
-const client = new SecretManagerServiceClient();
+const secretClient = new SecretManagerServiceClient();
 
 async function getSecret(name: string): Promise<string> {
     const secretName = `projects/${process.env.GCLOUD_PROJECT}/secrets/${name}/versions/latest`;
-    const [version] = await client.accessSecretVersion({ name: secretName });
+    const [version] = await secretClient.accessSecretVersion({ name: secretName });
     if (!version.payload || !version.payload.data) {
         throw new Error(`Secret ${name} payload is null or undefined.`);
     }
     return version.payload.data.toString();
+}
+
+// Lazy initialization for the Gemini client
+let genAI: GoogleGenerativeAI | null = null;
+async function getGenAIClient(): Promise<GoogleGenerativeAI> {
+    if (genAI === null) {
+        const apiKey = await getSecret("GEMENI_SECRET_KEY");
+        genAI = new GoogleGenerativeAI(apiKey);
+    }
+    return genAI;
+}
+
+type DreamCategorizationResult = {
+    isLucid: boolean;
+    isNightmare: boolean;
+    isRecurring: boolean;
+    isFalseAwakening: boolean;
+    lucidity: number;
+    vividness: number;
+    mood: number;
+};
+
+function parseCategorizationResponse(rawResponse: string): DreamCategorizationResult {
+    const normalized = rawResponse
+        .trim()
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/\s*```$/, "");
+
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(normalized);
+    } catch (error) {
+        throw new Error("Gemini returned invalid JSON for dream categorization.");
+    }
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("Gemini returned a non-object categorization payload.");
+    }
+
+    const payload = parsed as Record<string, unknown>;
+
+    return {
+        isLucid: readBooleanField(payload, "isLucid"),
+        isNightmare: readBooleanField(payload, "isNightmare"),
+        isRecurring: readBooleanField(payload, "isRecurring"),
+        isFalseAwakening: readBooleanField(payload, "isFalseAwakening"),
+        lucidity: readRatingField(payload, "lucidity"),
+        vividness: readRatingField(payload, "vividness"),
+        mood: readRatingField(payload, "mood"),
+    };
+}
+
+function readBooleanField(payload: Record<string, unknown>, fieldName: string): boolean {
+    const value = payload[fieldName];
+
+    if (typeof value === "boolean") {
+        return value;
+    }
+
+    if (typeof value === "string") {
+        const normalized = value.trim().toLowerCase();
+        if (normalized === "true") {
+            return true;
+        }
+        if (normalized === "false") {
+            return false;
+        }
+    }
+
+    throw new Error(`Gemini returned an invalid boolean for ${fieldName}.`);
+}
+
+function readRatingField(payload: Record<string, unknown>, fieldName: string): number {
+    const value = payload[fieldName];
+
+    let parsed: number | null = null;
+    if (typeof value === "number") {
+        parsed = value;
+    } else if (typeof value === "string" && value.trim() !== "") {
+        parsed = Number(value);
+    }
+
+    if (parsed === null || !Number.isFinite(parsed)) {
+        throw new Error(`Gemini returned an invalid numeric rating for ${fieldName}.`);
+    }
+
+    const rounded = Math.round(parsed);
+    if (rounded < 1 || rounded > 5) {
+        throw new Error(`Gemini returned an out-of-range rating for ${fieldName}.`);
+    }
+
+    return rounded;
 }
 
 exports.getOpenAISecretKey = functions.https.onCall(async (data, context) => {
@@ -73,25 +166,18 @@ exports.transcribeAudio = functions.runWith({
         const [buffer] = await file.download();
         const base64Audio = buffer.toString('base64');
 
-        const apiKey = await getSecret("GEMENI_SECRET_KEY");
-        const model = "gemini-2.5-flash";
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const client = await getGenAIClient();
+        const model = client.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        const response = await axios.post(url, {
-            contents: [{
-                parts: [
-                    { text: "Generate a transcript of the speech." },
-                    {
-                        inline_data: {
-                            mime_type: "audio/mp4",
-                            data: base64Audio
-                        }
-                    }
-                ]
-            }]
-        });
+        const audioPart = {
+            inlineData: {
+                data: base64Audio,
+                mimeType: "audio/mp4",
+            },
+        };
 
-        const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const result = await model.generateContent(["Generate a transcript of the speech.", audioPart]);
+        const text = result.response.text();
 
         if (!text) {
             throw new Error("Empty response from Gemini");
@@ -100,13 +186,78 @@ exports.transcribeAudio = functions.runWith({
         return { text: text };
 
     } catch (error) {
-        console.error("Transcription error:", error);
-        if (axios.isAxiosError(error)) {
-             console.error("Axios error details:", error.response?.data);
-        }
+        functions.logger.error("Transcription error:", error);
         throw new functions.https.HttpsError('internal', 'Transcription failed', error);
     }
 });
+
+exports.categorizeDream = functions.https.onCall(async (data, context) => {
+    functions.logger.info("Starting categorizeDream function", { structuredData: true });
+
+    if (!context.auth) {
+        functions.logger.warn("Unauthenticated call to categorizeDream");
+        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+
+    const dreamContent = data.dreamContent;
+    if (!dreamContent || typeof dreamContent !== 'string' || dreamContent.trim().length === 0) {
+        functions.logger.error("Invalid dreamContent argument", {
+            dreamContentType: typeof dreamContent,
+            hasDreamContent: Boolean(dreamContent),
+        });
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with valid dreamContent.');
+    }
+
+    try {
+        const client = await getGenAIClient();
+        const model = client.getGenerativeModel({
+            model: "gemini-2.5-flash",
+            generationConfig: { responseMimeType: "application/json" },
+            safetySettings: [
+                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            ]
+        });
+
+
+        const prompt = `
+            Analyze the following dream content and return a JSON object with the specified structure.
+            - isLucid: boolean (true if the dream is lucid)
+            - isNightmare: boolean (true if it is a nightmare)
+            - isRecurring: boolean (true if it seems recurring)
+            - isFalseAwakening: boolean (true if it involves a false awakening)
+            - lucidity: integer (a score from 1-5 for lucidity)
+            - vividness: integer (a score from 1-5 for vividness)
+            - mood: integer (a score from 1-5 for mood, 1 being very negative, 5 being very positive)
+
+            Only return the JSON object, nothing else.
+
+            Dream Content: "${dreamContent}"
+        `;
+
+        functions.logger.info("Sending prompt to Gemini API");
+
+        const result = await model.generateContent(prompt);
+        const rawResponse = result.response.text();
+
+        if (!rawResponse) {
+            functions.logger.error("Empty response from Gemini");
+            throw new Error("Empty response from Gemini");
+        }
+
+        const finalResult = parseCategorizationResponse(rawResponse);
+
+        functions.logger.info("Returning result:", { result: finalResult });
+        return finalResult;
+
+    } catch (error) {
+        functions.logger.error("Error in categorizeDream:", error);
+        throw new functions.https.HttpsError('internal', 'Dream categorization failed', error);
+    }
+});
+
 
 export const deleteUnverifiedUsers =
   functions.pubsub.schedule("every 60 minutes").onRun(async () => {

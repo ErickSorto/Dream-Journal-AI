@@ -271,7 +271,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
         val recomputed = (observedInset + 32.dp).coerceIn(minTopBar, maxTopBar)
         topBarHeight = recomputed
         layoutReady = true
-        Logger.d { "[DJAI/AddEdit] observedInset=$observedInset topBarHeight=$recomputed" }
+        Logger.withTag("AddEditDreamScreen").d { "[DJAI/AddEdit] observedInset=$observedInset topBarHeight=$recomputed" }
     }
 
     // Draw a small background box at the top (height = cappedStatusBarTop) behind the Scaffold so the app bar background extends into the status area without increasing the topBar measured height. Then set the Scaffold.topBar to a CenterAlignedTopAppBar with a fixed 72.dp height and the same background color. This prevents the topBar from growing too tall and avoids wrapping TabLayout in a Box that broke its layout.

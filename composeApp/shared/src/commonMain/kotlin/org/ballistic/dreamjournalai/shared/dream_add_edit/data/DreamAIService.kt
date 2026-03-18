@@ -36,6 +36,7 @@ interface DreamAIService {
     suspend fun generateDetails(dreamContent: String, cost: Int): AIResult<String>
     suspend fun generateImageFromDetails(details: String, cost: Int, style: String, model: String? = null): AIResult<String>
     suspend fun transcribeAudio(storagePath: String): AIResult<String>
+    suspend fun categorizeDream(dreamContent: String): AIResult<DreamCategorization>
 }
 
 sealed class AIResult<out T> {
@@ -47,6 +48,17 @@ enum class AITextType { TITLE, INTERPRETATION, ADVICE, MOOD, STORY, QUESTION_ANS
 
 @Serializable
 data class TranscriptionResponse(val text: String)
+
+@Serializable
+data class DreamCategorization(
+    val isLucid: Boolean = false,
+    val isNightmare: Boolean = false,
+    val isRecurring: Boolean = false,
+    val isFalseAwakening: Boolean = false,
+    val lucidity: Int = 0,
+    val vividness: Int = 0,
+    val mood: Int = 0
+)
 
 class DefaultDreamAIService(
     private val dreamRepository: DreamRepository
@@ -329,6 +341,25 @@ $dreamContent""".trimIndent()
         } catch (e: Exception) {
             logger.e { "transcription error: ${e.message}" }
             AIResult.Error(e.message ?: "Unknown transcription error")
+        }
+    }
+
+    override suspend fun categorizeDream(dreamContent: String): AIResult<DreamCategorization> {
+        logger.d { "categorizeDream called with content: ${dreamContent.take(50)}..." }
+        return try {
+            val functions = Firebase.functions
+            val result = functions
+                .httpsCallable("categorizeDream")
+                .invoke(mapOf("dreamContent" to dreamContent))
+
+            val response = result.data<DreamCategorization>()
+            logger.i { "Parsed categorization data: $response" }
+            
+            AIResult.Success(response)
+
+        } catch (e: Exception) {
+            logger.e(e) { "categorization error" }
+            AIResult.Error(e.message ?: "Unknown categorization error")
         }
     }
 }
