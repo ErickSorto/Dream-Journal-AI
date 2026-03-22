@@ -21,8 +21,8 @@ fun ObserveLoginState(
 
     //anonymous user observer
     if(!isUserAnonymousAlready) {
-        LaunchedEffect(isUserAnonymous) {
-            if (isUserAnonymous) {
+        LaunchedEffect(isUserAnonymous, isLoggedIn) {
+            if (isUserAnonymous && isLoggedIn) {
                 navigateToDreamJournalScreen()
             }
         }

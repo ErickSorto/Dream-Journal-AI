@@ -36,6 +36,7 @@ class DreamStatisticScreenViewModel(
     val dreamStatisticScreen: StateFlow<DreamStatisticScreenState> = _dreamStatisticScreen
 
     private var getDreamJob: Job? = null
+    private var getDreamTokensJob: Job? = null
 
     fun onEvent(event: StatisticEvent) {
         when (event) {
@@ -71,8 +72,8 @@ class DreamStatisticScreenViewModel(
                 }
             }
             is StatisticEvent.GetDreamTokens -> {
-
-                viewModelScope.launch {
+                getDreamTokensJob?.cancel()
+                getDreamTokensJob = viewModelScope.launch {
                     collectDreamTokens()
                 }
             }

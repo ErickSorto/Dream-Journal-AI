@@ -30,6 +30,10 @@ import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.viewm
 import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_nightmares.presentation.viewmodel.DreamNightmareScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_notifications.domain.createDataStore
+import org.ballistic.dreamjournalai.shared.dream_onboarding.data.DefaultOnboardingPreferencesRepository
+import org.ballistic.dreamjournalai.shared.dream_onboarding.data.OnboardingPreferencesRepository
+import org.ballistic.dreamjournalai.shared.dream_onboarding.domain.LoggingOnboardingAnalytics
+import org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalytics
 import org.ballistic.dreamjournalai.shared.dream_statistics.presentation.viewmodel.DreamStatisticScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_store.data.repository.RevenueCatBillingRepositoryImpl
 import org.ballistic.dreamjournalai.shared.dream_store.domain.repository.BillingRepository
@@ -73,6 +77,8 @@ val appModule = module {
     }
 
     single<DataStore<Preferences>> { createDataStore() }
+    single<OnboardingPreferencesRepository> { DefaultOnboardingPreferencesRepository(get()) }
+    single<OnboardingAnalytics> { LoggingOnboardingAnalytics() }
 
     // AI service binding
     factory { DefaultDreamAIService(get()) } bind DreamAIService::class

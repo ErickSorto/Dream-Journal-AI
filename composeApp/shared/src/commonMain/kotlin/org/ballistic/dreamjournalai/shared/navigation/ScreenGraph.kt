@@ -211,6 +211,7 @@ fun ScreenGraph(
                 AccountSettingsScreen(
                      loginViewModelState = loginViewModelState,
                      signupViewModelState = signupViewModelState,
+                     onMainEvent = { onMainEvent(it) },
                      navigateToOnboardingScreen = onNavigateToOnboardingScreen,
                      onLoginEvent = { loginViewModel.onEvent(it) },
                      onSignupEvent = { signupViewModel.onEvent(it) },

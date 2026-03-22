@@ -1,36 +1,42 @@
 package org.ballistic.dreamjournalai.shared.dream_onboarding.presentation
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.animateColor
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.Image
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,60 +44,96 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.Canvas
-import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.dream_onboarding_design
-import dreamjournalai.composeapp.shared.generated.resources.onboarding_long
-import dreamjournalai.composeapp.shared.generated.resources.welcome_dreamer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
-import org.ballistic.dreamjournalai.shared.dream_account.MyGoogleSignInButton
-import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.AnonymousButton
-import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.LoginLayout
+import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.ObserveLoginState
-import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.SignupLoginLayout
-import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.SignupLoginTabLayout
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.SignupEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.LoginViewModelState
+import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.SignInUiState
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.SignupViewModelState
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
-import kotlin.uuid.ExperimentalUuidApi
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.rotate
-import dreamjournalai.composeapp.shared.generated.resources.app_name
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingAuthCard
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingDreamOutcomePage
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingFarOutcomePage
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingNamePage
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingNearOutcomePage
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingPageBackground
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingPaywallPage
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingRecallPage
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingReviewStoriesPage
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingRescuePage
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingSevenNightsPage
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingSnapshotPage
+import org.koin.compose.koinInject
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.random.Random
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
 
 // Animation timing constants (file-level)
 private const val STAGGER_MS: Long = 200
 private const val ENTER_DURATION_MS: Int = 300
+
+private enum class OnboardingStep {
+    Intro,
+    Profile,
+    Focus,
+    Reviews,
+    Login
+}
+
+@Composable
+private fun OnboardingAuthDivider(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(Color.White.copy(alpha = 0.14f))
+        )
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp),
+            style = TextStyle(
+                color = Color.White.copy(alpha = 0.68f),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium
+            )
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(Color.White.copy(alpha = 0.14f))
+        )
+    }
+}
 
 // --- Shooting star overlay (defined early so it's always in scope) ---
 @Composable
@@ -241,14 +283,211 @@ fun ShootingStarLayer(
     }
 }
 
-private data class VerticalBiasAlignment(
-    val verticalBias: Float
-) : Alignment {
-    override fun align(size: IntSize, space: IntSize, layoutDirection: LayoutDirection): IntOffset {
-        val x = (space.width - size.width) / 2
-        val biasFraction = (verticalBias + 1f) / 2f // -1..1 -> 0..1
-        val y = ((space.height - size.height) * biasFraction).toInt()
-        return IntOffset(x, y)
+private data class DispersionEmber(
+    val angle: Float,
+    val maxDist: Float,
+    val size: Float,
+    val lifeSpan: Float
+)
+
+@Composable
+private fun ProfileIntroStarOverlay(
+    visible: Boolean,
+    targetCenter: Offset?,
+    onImpact: () -> Unit,
+    onFinished: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val travelProgress = remember { Animatable(0f) }
+    val impactProgress = remember { Animatable(0f) }
+    val overlayAlpha = remember { Animatable(0f) }
+    val sequenceStarted = remember { mutableStateOf(false) }
+    val impactSent = remember { mutableStateOf(false) }
+    val finishSent = remember { mutableStateOf(false) }
+
+    val starCore = Color(0xFFFFFBFF)
+    val starWarm = Color(0xFFFFE8C8)
+    val starPink = Color(0xFFFFC5EE)
+    val starLilac = Color(0xFFD4B2FF)
+    val starViolet = Color(0xFF7F63FF)
+
+    val embers = remember {
+        val random = Random(888)
+        List(8) {
+            DispersionEmber(
+                angle = random.nextFloat() * 2f * PI.toFloat(),
+                maxDist = random.nextFloat() * 80f + 20f,
+                size = random.nextFloat() * 4f + 1f,
+                lifeSpan = random.nextFloat() * 0.4f + 0.6f
+            )
+        }
+    }
+
+    LaunchedEffect(visible) {
+        if (!visible) {
+            if (overlayAlpha.value > 0f) {
+                overlayAlpha.animateTo(0f, tween(250))
+            }
+            sequenceStarted.value = false
+            return@LaunchedEffect
+        }
+
+        if (sequenceStarted.value) return@LaunchedEffect
+        sequenceStarted.value = true
+
+        travelProgress.snapTo(0f)
+        impactProgress.snapTo(0f)
+        overlayAlpha.snapTo(1f)
+        impactSent.value = false
+        finishSent.value = false
+
+        delay(100)
+
+        // Travel to center (1100ms elegant cubic bezier)
+        travelProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(
+                durationMillis = 1100, 
+                easing = CubicBezierEasing(0.3f, 0.0f, 0.4f, 1f)
+            )
+        )
+
+        // Trigger impact, wait 60ms to trigger the hero reveal properly
+        if (!impactSent.value) {
+            impactSent.value = true
+            launch {
+                delay(60)
+                onImpact()
+            }
+        }
+
+        // Fast, compact bloom sequence (480ms)
+        impactProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(
+                durationMillis = 480, 
+                easing = FastOutSlowInEasing
+            )
+        )
+        
+        overlayAlpha.animateTo(0f, tween(200))
+
+        if (!finishSent.value) {
+            finishSent.value = true
+            onFinished()
+        }
+    }
+
+    if (overlayAlpha.value <= 0.001f) return
+
+    Canvas(modifier = modifier.graphicsLayer(alpha = overlayAlpha.value)) {
+        val width = size.width
+        val height = size.height
+        val tp = travelProgress.value
+        val impact = impactProgress.value
+
+        val end = targetCenter ?: Offset(width * 0.52f, height * 0.31f)
+        val start = Offset(end.x - width * 0.18f, height + 120.dp.toPx())
+        val c1 = Offset(end.x - width * 0.22f, height * 0.82f) // mostly vertical rise
+        val c2 = Offset(end.x + width * 0.20f, height * 0.56f) // inward sweep
+
+        fun pointAt(t: Float): Offset {
+            val u = 1f - t
+            return Offset(
+                x = u*u*u*start.x + 3f*u*u*t*c1.x + 3f*u*t*t*c2.x + t*t*t*end.x,
+                y = u*u*u*start.y + 3f*u*u*t*c1.y + 3f*u*t*t*c2.y + t*t*t*end.y
+            )
+        }
+
+        // 1. Draw Travel Trail
+        if (tp > 0f && tp < 1f && impact == 0f) {
+            val tailWindow = 0.16f
+            val segments = 18
+            val phaseAlpha = 1f
+
+            for (i in 1..segments) {
+                val t1 = (tp - tailWindow * (i - 1) / segments).coerceAtLeast(0f)
+                val t0 = (tp - tailWindow * i / segments).coerceAtLeast(0f)
+                if (t1 <= 0f) break
+
+                val a = pointAt(t0)
+                val b = pointAt(t1)
+                val k = 1f - i / segments.toFloat()
+
+                drawLine(
+                    color = starViolet.copy(alpha = 0.10f * k * phaseAlpha),
+                    start = a,
+                    end = b,
+                    strokeWidth = 24.dp.toPx() * (0.55f + 0.45f * k),
+                    cap = StrokeCap.Round
+                )
+
+                drawLine(
+                    color = starPink.copy(alpha = 0.18f * k * phaseAlpha),
+                    start = a,
+                    end = b,
+                    strokeWidth = 11.dp.toPx() * (0.65f + 0.35f * k),
+                    cap = StrokeCap.Round
+                )
+
+                drawLine(
+                    color = starCore.copy(alpha = 0.55f * k * phaseAlpha),
+                    start = a,
+                    end = b,
+                    strokeWidth = 3.5.dp.toPx(),
+                    cap = StrokeCap.Round
+                )
+            }
+        }
+
+        // 2. Draw Impact Burst (compact and snappy bloom)
+        if (impact > 0f && impact < 1f) {
+            val flash = 1f - impact
+            val bloomRadius = 14.dp.toPx() + 48.dp.toPx() * impact
+            val ringRadius = 10.dp.toPx() + 34.dp.toPx() * impact
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        starCore.copy(alpha = 0.85f * flash),
+                        starPink.copy(alpha = 0.30f * flash),
+                        Color.Transparent
+                    ),
+                    center = end,
+                    radius = bloomRadius
+                ),
+                radius = bloomRadius,
+                center = end
+            )
+
+            drawCircle(
+                color = starLilac.copy(alpha = 0.34f * flash),
+                radius = ringRadius,
+                center = end,
+                style = Stroke(width = 4.dp.toPx() * flash.coerceAtLeast(0.2f))
+            )
+
+            // Embers
+            embers.forEach { ember ->
+                val emberT = impact / ember.lifeSpan
+                if (emberT <= 1f) {
+                    val emberEase = 1f - (1f - emberT) * (1f - emberT)
+                    val dx = cos(ember.angle) * ember.maxDist * emberEase
+                    val dy = sin(ember.angle) * ember.maxDist * emberEase - (emberEase * height * 0.02f)
+                    val sparkPos = Offset(end.x + dx, end.y + dy)
+                    val sparkSize = ember.size * (1f - emberT)
+                    val sparkAlpha = (1f - emberT) * 0.8f
+                    
+                    if (sparkAlpha > 0.01f && sparkSize > 0.5f) {
+                        drawCircle(
+                            color = starWarm.copy(alpha = sparkAlpha),
+                            radius = sparkSize,
+                            center = sparkPos
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -327,10 +566,6 @@ fun TwinklesLayer(
     }
 
     fun easeInOutCubic(t: Float): Float = if (t < 0.5f) 4f * t * t * t else 1f - (-2f * t + 2f).let { it * it * it } / 2f
-    fun easeOutCubic(t: Float): Float {
-        val u = 1f - t
-        return 1f - u * u * u
-    }
 
     val time by rememberInfiniteTransition(label = "twinkles_time").animateFloat(
         initialValue = 0f,
@@ -410,7 +645,7 @@ fun TwinklesLayer(
     }
 }
 
-@OptIn(ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 @ExperimentalAnimationApi
 @Composable
 fun OnboardingScreen(
@@ -420,205 +655,187 @@ fun OnboardingScreen(
     onLoginEvent: (LoginEvent) -> Unit,
     onSignupEvent: (SignupEvent) -> Unit,
     onDataLoaded: () -> Unit,
+    requestInAppReview: () -> Unit = {},
 ) {
+    val vibratorUtil = koinInject<VibratorUtil>()
+    val onboardingAnalytics = koinInject<org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalytics>()
+    val onboardingPreferences = koinInject<org.ballistic.dreamjournalai.shared.dream_onboarding.data.OnboardingPreferencesRepository>()
+
     val isUserAnonymous = loginViewModelState.isUserAnonymous
     val isUserLoggedIn = loginViewModelState.isLoggedIn
     val isEmailVerified = loginViewModelState.isEmailVerified
-    val showLoginLayout = remember { mutableStateOf(false) }
-    val isSplashScreenClosed = remember { mutableStateOf(false) }
-    val welcomeDreamerString = stringResource(Res.string.welcome_dreamer) // Moved stringResource call here
-    val visible = remember { mutableStateOf(true) }
-    val transition = updateTransition(targetState = visible.value, label = "TitleVisibility")
-    val titleColor by transition.animateColor(label = "titleColor") { state ->
-        if (state) Color.White else Color.Transparent
-    }
-    val showSubheader = remember { mutableStateOf(false) }
     val isLoading = loginViewModelState.isLoading
+    val googleAuthSucceeded =
+        isUserLoggedIn && loginViewModelState.signInWithGoogleResponse is SignInUiState.Success
+    val anonymousAuthSucceeded = isUserAnonymous && isUserLoggedIn
+
+    var currentStep by remember { mutableStateOf(OnboardingFlowStep.DreamOutcome) }
+    var answers by remember { mutableStateOf(OnboardingAnswers()) }
+    val derivedPlan = remember(answers) { deriveOnboardingPlan(answers) }
+
+    var authReturnStep by remember { mutableStateOf(OnboardingFlowStep.Paywall) }
+    var completionMode by remember { mutableStateOf<String?>(null) }
+    var reviewPromptShown by remember { mutableStateOf(false) }
+    var outcomeHeroCenter by remember { mutableStateOf<Offset?>(null) }
+    val outcomeHeroRevealStarted = remember { mutableStateOf(false) }
+    val outcomeOrbVisible = remember { mutableStateOf(false) }
+
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-
-    // Centralized visibility states for a consistent stagger
-    val vTabs = remember { mutableStateOf(false) }
-    val vEmail = remember { mutableStateOf(false) }
-    val vPassword = remember { mutableStateOf(false) }
-    val vLoginBtn = remember { mutableStateOf(false) }
-    val vGoogle = remember { mutableStateOf(false) }
-    val vGuest = remember { mutableStateOf(false) }
-    val onboardingImageEntered = remember { mutableStateOf(false) }
-
-    // Shooting star trigger (monotonic). Increment to play once.
-    val shootingStarTrigger = remember { mutableStateOf(0) }
-
-    // Camera bias for onboarding_long panning. -1f = top, +1f = bottom
     val cameraBiasY = remember { Animatable(-1f) }
-    // Subtle zoom scale for the background image
     val cameraScale = remember { Animatable(1f) }
-    // Box height expansion before typewriter starts (0..1 fraction)
-    val boxExpand = remember { Animatable(0f) }
-    val startTypewriter = remember { mutableStateOf(false) }
-    val showWelcomeBox = remember { mutableStateOf(true) }
-
-    // Declare isPanningDown state alongside other UI states so exit animations can reference it during the pan-down transition.
+    val masterOverlayAlpha = remember { Animatable(1f) }
     val isPanningDown = remember { mutableStateOf(false) }
+    val exitTransitionStarted = remember { mutableStateOf(false) }
+    val screenEnteredAtMs = remember { mutableStateOf(kotlin.time.Clock.System.now().toEpochMilliseconds()) }
+    val previousStep = remember { mutableStateOf(currentStep) }
 
-    // Welcome box fade-in/out state
-    val welcomeBoxAlpha = remember { Animatable(1f) }
-    // Login container fade-in/out state
-    val loginContainerAlpha = remember { Animatable(1f) }
+    fun trackSelection(field: String, value: String) {
+        onboardingAnalytics.track(
+            org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalyticsEvent.SelectionMade(
+                step = currentStep,
+                field = field,
+                value = value
+            )
+        )
+    }
 
-    // Ensure we start at the very top and default scales
+    fun trackCta(label: String) {
+        onboardingAnalytics.track(
+            org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalyticsEvent.CtaTapped(
+                step = currentStep,
+                ctaLabel = label
+            )
+        )
+    }
+
+    fun dispatchReviewPrompt(triggerStep: OnboardingFlowStep) {
+        if (reviewPromptShown) return
+        reviewPromptShown = true
+        onboardingAnalytics.track(
+            org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalyticsEvent.ReviewPromptShown(
+                triggerStep = triggerStep
+            )
+        )
+        requestInAppReview()
+    }
+
     LaunchedEffect(Unit) {
         cameraBiasY.snapTo(-1f)
         cameraScale.snapTo(1f)
-        boxExpand.snapTo(0f)
-        welcomeBoxAlpha.snapTo(1f)
-        loginContainerAlpha.snapTo(1f)
+        masterOverlayAlpha.snapTo(1f)
+        delay(900)
+        onDataLoaded()
+        onLoginEvent(LoginEvent.BeginAuthStateListener)
+        outcomeOrbVisible.value = true
+        onboardingAnalytics.track(
+            org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalyticsEvent.ScreenViewed(
+                step = currentStep
+            )
+        )
     }
 
-    // Trigger the welcome box expansion, then start the typewriter
-    LaunchedEffect(isSplashScreenClosed.value) {
-        if (isSplashScreenClosed.value) {
-            boxExpand.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = 900,
-                    easing = CubicBezierEasing(0.2f, 0.0f, 0.0f, 1f) // slower expand from center
+    LaunchedEffect(currentStep) {
+        val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        if (previousStep.value != currentStep) {
+            onboardingAnalytics.track(
+                org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalyticsEvent.ScreenDwellRecorded(
+                    step = previousStep.value,
+                    durationMs = now - screenEnteredAtMs.value
                 )
             )
-            startTypewriter.value = true
-        }
-    }
-
-    // Stagger login items after typewriter completes
-    LaunchedEffect(showLoginLayout.value) {
-        if (showLoginLayout.value) {
-            // defer showing tabs until the onboarding image finishes its bounce
-        } else {
-            // Reset all visibilities when leaving login layout
-            vTabs.value = false
-            vEmail.value = false
-            vPassword.value = false
-            vLoginBtn.value = false
-            vGoogle.value = false
-            vGuest.value = false
-            onboardingImageEntered.value = false
-        }
-    }
-
-    // After tabs reveal, drive the entire stagger chain: fields (3 steps), Google, Guest
-    LaunchedEffect(Unit) {
-        delay(1000)
-        onDataLoaded()
-        isSplashScreenClosed.value = true
-    }
-
-    LaunchedEffect(Unit) {
-        onLoginEvent(LoginEvent.BeginAuthStateListener)
-    }
-
-    // When login state indicates success, pan camera to bottom with slight zoom-in, then navigate
-    ObserveLoginState(
-        isLoggedIn = isUserLoggedIn,
-        isEmailVerified = isEmailVerified,
-        isUserAnonymous = isUserAnonymous,
-        navigateToDreamJournalScreen = {
-            scope.launch {
-                isPanningDown.value = true
-
-                // Fade welcome box without unmounting to avoid vertical reflow
-                val fadeWelcome = launch {
-                    if (showWelcomeBox.value) {
-                        welcomeBoxAlpha.animateTo(
-                            targetValue = 0f,
-                            animationSpec = tween<Float>(durationMillis = 450, easing = FastOutSlowInEasing)
-                        )
-                        showWelcomeBox.value = false
-                        welcomeBoxAlpha.snapTo(1f) // reset for future entries
-                    }
-                }
-
-                // Fade entire login container without changing child visibilities
-                val fadeLogin = launch {
-                    if (showLoginLayout.value) {
-                        loginContainerAlpha.animateTo(
-                            targetValue = 0f,
-                            animationSpec = tween<Float>(durationMillis = 480, easing = FastOutSlowInEasing)
-                        )
-                        // keep it mounted during pan; it will be unmounted by navigation
-                    }
-                }
-
-                // Run background pan and zoom concurrently (slower)
-                val endScale = 1.20f
-                val pan = launch {
-                    cameraBiasY.animateTo(
-                        targetValue = 1f,
-                        animationSpec = tween(
-                            durationMillis = 2400,
-                            easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f) // smooth ease-in-out
-                        )
-                    )
-                }
-                val zoom = launch {
-                    cameraScale.animateTo(
-                        targetValue = endScale,
-                        animationSpec = tween(
-                            durationMillis = 2400,
-                            easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
-                        )
-                    )
-                }
-
-                // Wait for UI fades to finish; pan and zoom continue in parallel
-                fadeWelcome.join()
-                fadeLogin.join()
-                pan.join(); zoom.join()
-
-                navigateToDreamJournalScreen()
-            }
-        },
-    )
-
-    // Re-layer the scene: background image, shooting star (background), then foreground UI
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(Res.drawable.onboarding_long),
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer(
-                    scaleX = cameraScale.value,
-                    scaleY = cameraScale.value,
-                    transformOrigin = TransformOrigin(0.5f, 1f) // anchor at bottom center
+            screenEnteredAtMs.value = now
+            previousStep.value = currentStep
+            onboardingAnalytics.track(
+                org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalyticsEvent.ScreenViewed(
+                    step = currentStep
                 )
-                .zIndex(0f),
-            contentScale = ContentScale.Crop,
-            alignment = VerticalBiasAlignment(cameraBiasY.value),
-            contentDescription = stringResource(Res.string.app_name),
-        )
+            )
+        }
 
-        // Compute pan progress from camera bias (-1..1 -> 0..1)
+        when (currentStep) {
+            OnboardingFlowStep.Paywall -> onboardingAnalytics.track(
+                org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalyticsEvent.PaywallShown(
+                    headlineVariant = derivedPlan.paywallHeadlineVariant
+                )
+            )
+            OnboardingFlowStep.Rescue -> onboardingAnalytics.track(
+                org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalyticsEvent.RescueShown(
+                    entryPoint = "paywall_decline"
+                )
+            )
+            else -> Unit
+        }
+    }
+
+    fun beginExitToDreamJournal() {
+        if (exitTransitionStarted.value) return
+        exitTransitionStarted.value = true
+        scope.launch {
+            completionMode?.let { mode ->
+                onboardingPreferences.markCompleted(mode)
+                onboardingAnalytics.track(
+                    org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalyticsEvent.OnboardingCompleted(
+                        completionMode = mode
+                    )
+                )
+            }
+
+            isPanningDown.value = true
+            masterOverlayAlpha.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 320, easing = LinearEasing)
+            )
+            val pan = launch {
+                cameraBiasY.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(
+                        durationMillis = 2200,
+                        easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
+                    )
+                )
+            }
+            val zoom = launch {
+                cameraScale.animateTo(
+                    targetValue = 1.18f,
+                    animationSpec = tween(
+                        durationMillis = 2200,
+                        easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
+                    )
+                )
+            }
+            pan.join()
+            zoom.join()
+            navigateToDreamJournalScreen()
+        }
+    }
+
+    if (currentStep == OnboardingFlowStep.Auth) {
+        ObserveLoginState(
+            isLoggedIn = isUserLoggedIn || googleAuthSucceeded,
+            isEmailVerified = isEmailVerified || googleAuthSucceeded,
+            isUserAnonymous = anonymousAuthSucceeded,
+            navigateToDreamJournalScreen = {
+                beginExitToDreamJournal()
+            },
+        )
+    }
+
+    val pageContainerModifier = Modifier
+        .fillMaxWidth()
+        .navigationBarsPadding()
+        .padding(start = 10.dp, top = 10.dp, end = 10.dp)
+        .widthIn(max = 500.dp)
+
+    Box(modifier = Modifier.fillMaxSize()) {
         val panProgress = ((cameraBiasY.value + 1f) / 2f).coerceIn(0f, 1f)
-        // Subtle twinkles behind UI and behind the shooting star; drift upward during pan
-        TwinklesLayer(
-            twinkleCount = 34,
+        OnboardingPageBackground(
+            cameraScale = cameraScale.value,
+            cameraBiasY = cameraBiasY.value,
             panProgress = panProgress,
-            driftUpFraction = 1.3f,
-            modifier = Modifier
-                .fillMaxSize()
-                .zIndex(0.05f)
-        )
-
-        // Shooting star behind UI, above twinkles and background image
-        ShootingStarLayer(
-            trigger = shootingStarTrigger.value,
-            starColor = Color(0xFFB49CFF),
-            trailMaxAlpha = 0.75f,
-            trailCount = 28,
-            trailStep = 0.028f,
-            durationMs = 1250,
-            modifier = Modifier
-                .fillMaxSize()
-                .zIndex(0.1f)
+            shootingStarTrigger = 0,
+            overlayAlpha = masterOverlayAlpha.value,
+            modifier = Modifier.fillMaxSize()
         )
 
         Scaffold(
@@ -628,225 +845,245 @@ fun OnboardingScreen(
                 .fillMaxSize()
                 .zIndex(1f)
         ) { paddingValues ->
-
             Column(
                 modifier = Modifier
-                    .padding(paddingValues)
-                    .fillMaxSize(),
+                    .padding(top = paddingValues.calculateTopPadding())
+                    .fillMaxSize()
+                    .graphicsLayer(alpha = masterOverlayAlpha.value),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
-                // Welcome box: fixed outer height, inner height expands from center
-                if (showWelcomeBox.value) {
-                    val welcomeTargetHeight = 70.dp
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .padding(top = 24.dp, bottom = 16.dp, start = 32.dp, end = 32.dp)
-                            .fillMaxWidth()
-                            .height(welcomeTargetHeight)
-                            .graphicsLayer(alpha = welcomeBoxAlpha.value)
-                    ) {
-                        val boxHeight = lerp(0.dp, welcomeTargetHeight, boxExpand.value)
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(boxHeight)
-                                .graphicsLayer(
-                                    transformOrigin = TransformOrigin(0.5f, 0.5f)
-                                )
-                                .background(
-                                    color = LightBlack.copy(alpha = 0.7f),
-                                    shape = RoundedCornerShape(16.dp)
-                                )
-                        ) {
-                            if (startTypewriter.value) {
-                                Text(
-                                    text = "", // hold space with padding for typewriter
-                                    modifier = Modifier.padding(16.dp)
-                                )
-                                TypewriterText(
-                                    text = if (visible.value) welcomeDreamerString else stringResource(Res.string.app_name),
-                                    modifier = Modifier.padding(16.dp),
-                                    style = TextStyle(
-                                        color = titleColor,
-                                        fontSize = 32.sp,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    textAlign = TextAlign.Center,
-                                    animationDuration = 4000,
-                                    onAnimationComplete = {
-                                        scope.launch {
-                                            // Reveal login UI only after typewriter completes
-                                            showLoginLayout.value = true
-                                            showSubheader.value = true
-                                        }
-                                    }
-                                )
-                            }
+                AnimatedContent(
+                    targetState = currentStep,
+                    transitionSpec = {
+                        if (initialState == OnboardingFlowStep.DreamOutcome && targetState == OnboardingFlowStep.Name) {
+                            (fadeIn(animationSpec = tween(560, easing = FastOutSlowInEasing)) +
+                                scaleIn(
+                                    initialScale = 0.98f,
+                                    animationSpec = tween(560, easing = FastOutSlowInEasing)
+                                )) togetherWith fadeOut(
+                                animationSpec = tween(220, easing = FastOutSlowInEasing)
+                            )
+                        } else {
+                            (fadeIn(animationSpec = tween(540, delayMillis = 40, easing = FastOutSlowInEasing)) +
+                                slideInHorizontally(
+                                    animationSpec = tween(540, easing = FastOutSlowInEasing),
+                                    initialOffsetX = { it / 10 }
+                                )) togetherWith
+                                (fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) +
+                                    slideOutHorizontally(
+                                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                                        targetOffsetX = { -it / 12 }
+                                    ))
                         }
-                    }
-                }
+                    },
+                    label = "emotional_onboarding_flow"
+                ) { step ->
+                    when (step) {
+                        OnboardingFlowStep.DreamOutcome -> {
+                            OnboardingDreamOutcomePage(
+                                startAnimation = outcomeHeroRevealStarted.value,
+                                onHeroCenterChanged = { outcomeHeroCenter = it },
+                                onPrimaryClick = {
+                                    vibratorUtil.triggerVibration()
+                                    trackCta("Start my dream path")
+                                    currentStep = OnboardingFlowStep.Name
+                                },
+                                onSecondaryClick = {
+                                    vibratorUtil.triggerVibration()
+                                    trackCta("I already have an account")
+                                    completionMode = null
+                                    authReturnStep = OnboardingFlowStep.DreamOutcome
+                                    onLoginEvent(LoginEvent.ShowLoginLayout)
+                                    currentStep = OnboardingFlowStep.Auth
+                                },
+                                modifier = pageContainerModifier
+                            )
+                        }
 
-                // Reduce big gap: replace weighted spacer with a small fixed spacer
-                Spacer(modifier = Modifier.height(2.dp))
+                        OnboardingFlowStep.Name -> {
+                            OnboardingNamePage(
+                                firstName = answers.firstName,
+                                onNameChanged = { answers = answers.copy(firstName = it) },
+                                onContinue = {
+                                    vibratorUtil.triggerVibration()
+                                    trackCta("Continue")
+                                    currentStep = OnboardingFlowStep.NearOutcome
+                                },
+                                modifier = pageContainerModifier
+                            )
+                        }
 
-                // Login section container: fixed height to avoid layout bumps
-                val loginContainerHeight = 1000.dp
-                AnimatedVisibility(
-                    visible = showLoginLayout.value,
-                    enter = fadeIn(animationSpec = tween(300)),
-                    exit = fadeOut(animationSpec = tween(200))
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(loginContainerHeight)
-                            .graphicsLayer(alpha = loginContainerAlpha.value),
-                        contentAlignment = Alignment.TopCenter
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 12.dp),
-                            verticalArrangement = Arrangement.Top,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            // Bouncy onboarding design above the whole layout
-                            val onboardingScale = remember { Animatable(0f) }
-                            LaunchedEffect(showLoginLayout.value) {
-                                if (showLoginLayout.value) {
-                                    onboardingScale.snapTo(0f)
-                                    // slower pop-up: brief delay then softer spring
-                                    delay(180)
-                                    onboardingScale.animateTo(
-                                        targetValue = 1f,
-                                        animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                                            stiffness = Spring.StiffnessVeryLow
+                        OnboardingFlowStep.NearOutcome -> {
+                            OnboardingNearOutcomePage(
+                                firstName = answers.firstName,
+                                selectedGoals = answers.nearGoals,
+                                onToggleGoal = { goal ->
+                                    vibratorUtil.triggerVibration()
+                                    val updated = if (answers.nearGoals.contains(goal)) {
+                                        answers.nearGoals - goal
+                                    } else {
+                                        (answers.nearGoals + goal).take(2)
+                                    }
+                                    answers = answers.copy(nearGoals = updated)
+                                    trackSelection("near_goal", goal.title)
+                                },
+                                onContinue = {
+                                    vibratorUtil.triggerVibration()
+                                    trackCta("Next")
+                                    currentStep = OnboardingFlowStep.FarOutcome
+                                },
+                                modifier = pageContainerModifier
+                            )
+                        }
+
+                        OnboardingFlowStep.FarOutcome -> {
+                            OnboardingFarOutcomePage(
+                                selectedGoal = answers.farGoal,
+                                onGoalSelected = {
+                                    vibratorUtil.triggerVibration()
+                                    answers = answers.copy(farGoal = it)
+                                    trackSelection("far_goal", it.title)
+                                },
+                                onContinue = {
+                                    vibratorUtil.triggerVibration()
+                                    trackCta("Keep going")
+                                    currentStep = OnboardingFlowStep.Recall
+                                },
+                                modifier = pageContainerModifier
+                            )
+                        }
+
+                        OnboardingFlowStep.Recall -> {
+                            OnboardingRecallPage(
+                                recallDaysPerWeek = answers.recallDaysPerWeek,
+                                selectedBlocker = answers.mainBlocker,
+                                onRecallChanged = {
+                                    answers = answers.copy(recallDaysPerWeek = it)
+                                    trackSelection("recall_days_per_week", it.toString())
+                                },
+                                onBlockerSelected = {
+                                    vibratorUtil.triggerVibration()
+                                    answers = answers.copy(mainBlocker = it)
+                                    trackSelection("main_blocker", it.title)
+                                },
+                                onContinue = {
+                                    vibratorUtil.triggerVibration()
+                                    trackCta("That's me")
+                                    currentStep = OnboardingFlowStep.Snapshot
+                                },
+                                onValidationError = {
+                                    vibratorUtil.triggerVibration()
+                                },
+                                modifier = pageContainerModifier
+                            )
+                        }
+
+                        OnboardingFlowStep.Snapshot -> {
+                            OnboardingSnapshotPage(
+                                firstName = answers.firstName,
+                                cards = derivedPlan.snapshotCards,
+                                onContinue = {
+                                    vibratorUtil.triggerVibration()
+                                    trackCta("Show me my plan")
+                                    currentStep = OnboardingFlowStep.FirstSevenNights
+                                },
+                                modifier = pageContainerModifier
+                            )
+                        }
+
+                        OnboardingFlowStep.FirstSevenNights -> {
+                            OnboardingSevenNightsPage(
+                                firstName = answers.firstName,
+                                subheadline = derivedPlan.roadmapSubheadline,
+                                milestones = derivedPlan.roadmapMilestones,
+                                onContinue = {
+                                    vibratorUtil.triggerVibration()
+                                    trackCta("Show me my full plan")
+                                    currentStep = OnboardingFlowStep.Paywall
+                                },
+                                modifier = pageContainerModifier
+                            )
+                        }
+
+                        OnboardingFlowStep.Paywall -> {
+                            OnboardingPaywallPage(
+                                firstName = answers.firstName,
+                                summary = derivedPlan.commitmentSummary,
+                                selectedNearGoalLabel = answers.primaryNearGoal?.title ?: "dream clarity",
+                                selectedFarGoalLabel = answers.farGoal?.title ?: "clearer self-understanding",
+                                onPrimaryClick = {
+                                    vibratorUtil.triggerVibration()
+                                    trackCta(derivedPlan.primaryCtaVariant)
+                                    currentStep = OnboardingFlowStep.Review
+                                },
+                                onSecondaryClick = {
+                                    trackCta("See all plans")
+                                },
+                                onDeclineClick = {
+                                    trackCta("Continue with basic mode")
+                                    currentStep = OnboardingFlowStep.Rescue
+                                },
+                                modifier = pageContainerModifier
+                            )
+                        }
+
+                        OnboardingFlowStep.Review -> {
+                            OnboardingReviewStoriesPage(
+                                onReachedReviewPromptMoment = {
+                                    dispatchReviewPrompt(OnboardingFlowStep.Review)
+                                },
+                                onContinue = {
+                                    vibratorUtil.triggerVibration()
+                                    completionMode = "full_plan_auth"
+                                    authReturnStep = OnboardingFlowStep.Review
+                                    onLoginEvent(LoginEvent.ShowSignUpLayout)
+                                    onboardingAnalytics.track(
+                                        org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalyticsEvent.PaywallPrimaryTapped(
+                                            ctaLabel = derivedPlan.primaryCtaVariant
                                         )
                                     )
-                                    // Mark image finished to kick off uniform stagger chain
-                                    onboardingImageEntered.value = true
-                                } else {
-                                    onboardingScale.snapTo(0f)
-                                    onboardingImageEntered.value = false
-                                }
-                            }
-                            val floatTransition =
-                                rememberInfiniteTransition(label = "onboarding_float")
-                            val floatOffset by floatTransition.animateFloat(
-                                initialValue = 0f,
-                                targetValue = -8f,
-                                animationSpec = infiniteRepeatable(
-                                    animation = tween(
-                                        durationMillis = 1600,
-                                        easing = FastOutSlowInEasing
-                                    ),
-                                    repeatMode = RepeatMode.Reverse
-                                ),
-                                label = "onboarding_offset"
+                                    currentStep = OnboardingFlowStep.Auth
+                                },
+                                modifier = pageContainerModifier
                             )
+                        }
 
-                            Image(
-                                painter = painterResource(Res.drawable.dream_onboarding_design),
-                                contentDescription = stringResource(Res.string.app_name),
-                                modifier = Modifier
-                                    .fillMaxWidth(0.99f)
-                                    .padding(top = 0.dp, bottom = 8.dp)
-                                    .graphicsLayer { }
-                                    .align(Alignment.CenterHorizontally)
-                                    .scale(onboardingScale.value)
-                                    .offset(y = floatOffset.dp)
-                            )
-
-                            // Tabs row slides in first
-                            if (loginViewModelState.isLoginLayout) {
-                                AnimatedVisibility(
-                                    visible = vTabs.value,
-                                    enter = slideInHorizontally(animationSpec = tween(ENTER_DURATION_MS), initialOffsetX = { 1000 }),
-                                    exit = if (isPanningDown.value) {
-                                        fadeOut(animationSpec = tween(durationMillis = 220))
-                                    } else {
-                                        slideOutHorizontally(animationSpec = tween(ENTER_DURATION_MS), targetOffsetX = { -1000 })
-                                    }
-                                ) {
-                                    SignupLoginTabLayout(
-                                        loginViewModelState = loginViewModelState,
-                                        onLayoutChange = onLoginEvent
+                        OnboardingFlowStep.Rescue -> {
+                            OnboardingRescuePage(
+                                onPrimaryClick = {
+                                    vibratorUtil.triggerVibration()
+                                    completionMode = "basic_mode"
+                                    onboardingAnalytics.track(
+                                        org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalyticsEvent.BasicModeStarted(
+                                            entryPoint = "rescue"
+                                        )
                                     )
-                                }
-                            }
+                                    onSignupEvent(SignupEvent.AnonymousSignIn)
+                                },
+                                onSecondaryClick = {
+                                    vibratorUtil.triggerVibration()
+                                    currentStep = OnboardingFlowStep.Paywall
+                                },
+                                modifier = pageContainerModifier
+                            )
+                        }
 
-                            // Login/Signup content
-                            if (loginViewModelState.isLoginLayout) {
-                                LoginLayout(
-                                    loginViewModelState = loginViewModelState,
-                                    onLoginEvent = onLoginEvent,
-                                    onAnimationComplete = { /* handled by scheduler */ },
-                                    shouldAnimate = true,
-                                    staggerMillis = STAGGER_MS,
-                                    emailVisible = vEmail,
-                                    passwordVisible = vPassword,
-                                    loginButtonVisible = vLoginBtn,
-                                    useExternalStagger = true,
-                                    preferFadeExit = isPanningDown.value,
-                                )
-                            } else if (loginViewModelState.isSignUpLayout || loginViewModelState.isForgotPasswordLayout) {
-                                SignupLoginLayout(
+                        OnboardingFlowStep.Auth -> {
+                            Column(
+                                modifier = pageContainerModifier,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                OnboardingAuthCard(
+                                    enteredName = answers.firstName,
                                     loginViewModelState = loginViewModelState,
                                     signupViewModelState = signupViewModelState,
+                                    isLoading = isLoading,
                                     onLoginEvent = onLoginEvent,
-                                    onSignupEvent = onSignupEvent
-                                )
-                            }
-                        }
-
-                        // Bottom overlay for Google and Guest (stable position)
-                        Column(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .height(150.dp)
-                                .padding(horizontal = 24.dp, vertical = 4.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // small spacer to reduce distance from login button consistently
-                            Spacer(modifier = Modifier.height(4.dp))
-                            AnimatedVisibility(
-                                visible = vGoogle.value,
-                                enter = slideInHorizontally(animationSpec = tween(ENTER_DURATION_MS), initialOffsetX = { 1000 }),
-                                exit = if (isPanningDown.value) {
-                                    fadeOut(animationSpec = tween(durationMillis = 220))
-                            } else {
-                                slideOutHorizontally(animationSpec = tween(ENTER_DURATION_MS), targetOffsetX = { -1000 })
-                            }
-                        ) {
-                            MyGoogleSignInButton(
-                                { account ->
-                                    val googleCredential =
-                                        dev.gitlive.firebase.auth.GoogleAuthProvider.credential(
-                                            idToken = account.idToken,
-                                            accessToken = account.accessTokenOrNonce
-                                        )
-                                    onLoginEvent(LoginEvent.SignInWithGoogle(googleCredential))
-                                },
-                                {
-                                    onLoginEvent(LoginEvent.ToggleLoading(false))
-                                    println("Google sign-in error: $it")
-                                },
-                                isLoading
-                            )
-                        }
-
-                            if (!isUserAnonymous) {
-                                AnonymousButton(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    isVisible = vGuest.value,
-                                    onClick = { onSignupEvent(SignupEvent.AnonymousSignIn) },
-                                    isEnabled = !isLoading,
-                                    enterDurationMillis = ENTER_DURATION_MS,
+                                    onSignupEvent = onSignupEvent,
+                                    onBackClick = {
+                                        vibratorUtil.triggerVibration()
+                                        currentStep = authReturnStep
+                                    }
                                 )
                             }
                         }
@@ -854,35 +1091,19 @@ fun OnboardingScreen(
                 }
             }
         }
-    }
 
-    // Single uniform stagger sequence: Tabs -> Email -> Password -> Login -> Google -> Guest
-    LaunchedEffect(onboardingImageEntered.value) {
-        if (onboardingImageEntered.value) {
-            vTabs.value = true
-            delay(STAGGER_MS)
-            vEmail.value = true
-            delay(STAGGER_MS)
-            vPassword.value = true
-            delay(STAGGER_MS)
-            vLoginBtn.value = true
-            delay(STAGGER_MS)
-            vGoogle.value = true
-            delay(STAGGER_MS)
-            vGuest.value = true
-            // After the entire chain finishes, trigger a one-off shooting star
-            delay(220)
-            shootingStarTrigger.value = shootingStarTrigger.value + 1
-        } else {
-            vTabs.value = false
-            vEmail.value = false
-            vPassword.value = false
-            vLoginBtn.value = false
-            vGoogle.value = false
-            vGuest.value = false
-        }
+        ProfileIntroStarOverlay(
+            visible = currentStep == OnboardingFlowStep.DreamOutcome && outcomeOrbVisible.value,
+            targetCenter = outcomeHeroCenter,
+            onImpact = {
+                outcomeHeroRevealStarted.value = true
+            },
+            onFinished = {
+                outcomeOrbVisible.value = false
+            },
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(2f)
+        )
     }
-
-    // Overlay: quick shooting star pass once the chain is done
-    // ShootingStarLayer(trigger = shootingStarTrigger.value)
 }

@@ -277,6 +277,7 @@ class LoginViewModel(
 
 
     private suspend fun loginWithEmailAndPassword(email: String, password: String) {
+        if (!checkLoginFields()) return
         handleResource(
             resourceFlow = repo.firebaseSignInWithEmailAndPassword(email, password),
             transform = {
@@ -287,21 +288,82 @@ class LoginViewModel(
                 )
             },
             errorTransform = { error ->
+                val normalizedError = normalizeAuthError(error)
                 viewModelScope.launch {
                     SnackbarController.sendEvent(
                         SnackbarEvent(
-                            error,
+                            normalizedError,
                             SnackbarAction(StringValue.Resource(Res.string.dismiss)) { } // Use StringValue.Resource
                         )
                     )
                 }
                 _state.value.copy(
                     isLoading = false,
-                    error = error // Store StringValue
+                    error = normalizedError // Store StringValue
                 )
             },
             loadingTransform = { _state.value.copy(isLoading = true) }
         )
+    }
+
+    private suspend fun checkLoginFields(): Boolean {
+        return when {
+            _state.value.loginEmail.isEmpty() || _state.value.loginPassword.isEmpty() -> {
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = StringValue.Resource(Res.string.email_password_empty),
+                        action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                    )
+                )
+                false
+            }
+
+            !_state.value.loginEmail.contains("@") || !_state.value.loginEmail.contains(".") -> {
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = StringValue.Resource(Res.string.email_incorrect_format),
+                        action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                    )
+                )
+                false
+            }
+
+            _state.value.loginPassword.length < 6 -> {
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = StringValue.Resource(Res.string.password_too_short),
+                        action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                    )
+                )
+                false
+            }
+
+            else -> true
+        }
+    }
+
+    private fun normalizeAuthError(error: StringValue): StringValue {
+        val raw = (error as? StringValue.DynamicString)?.value?.lowercase() ?: return error
+
+        return when {
+            "invalid credential" in raw ||
+                "wrong-password" in raw ||
+                "wrong password" in raw ||
+                "invalid login credentials" in raw ||
+                "user-not-found" in raw -> {
+                StringValue.DynamicString("Incorrect email or password")
+            }
+
+            "invalid-email" in raw || "badly formatted" in raw -> {
+                StringValue.Resource(Res.string.email_incorrect_format)
+            }
+
+            "password should be at least 6 characters" in raw -> {
+                StringValue.Resource(Res.string.password_too_short)
+            }
+
+            else -> error
+        }
     }
 
     private fun sendPasswordResetEmail(email: String) = viewModelScope.launch {
@@ -319,7 +381,13 @@ class LoginViewModel(
 
     private fun signOut() = viewModelScope.launch {
         repo.signOut()
-        _state.value = _state.value.copy(isLoggedIn = false)
+        _state.value = _state.value.copy(
+            isLoggedIn = false,
+            isEmailVerified = false,
+            isUserAnonymous = false,
+            isLoading = false,
+            signInWithGoogleResponse = SignInUiState.Loading
+        )
     }
 
     private suspend fun revokeAccess(password: String?) {

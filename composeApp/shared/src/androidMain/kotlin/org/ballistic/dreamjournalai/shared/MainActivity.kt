@@ -55,7 +55,8 @@ class MainActivity : ComponentActivity() {
                 onSplashFinished = {
                     keepSplashOpened = false
                 },
-                context = this@MainActivity
+                context = this@MainActivity,
+                requestInAppReview = ::showInAppReview,
             )
         }
     }

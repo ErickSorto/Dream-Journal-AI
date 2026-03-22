@@ -1,7 +1,6 @@
 package org.ballistic.dreamjournalai.shared.dream_nightmares.presentation
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -11,22 +10,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.datetime.LocalDate
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
-import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
+import org.ballistic.dreamjournalai.shared.core.components.PremiumIllustratedEmptyState
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.core.util.formatCustomDate
 import org.ballistic.dreamjournalai.shared.core.util.parseCustomDate
@@ -36,7 +31,6 @@ import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.compo
 import org.ballistic.dreamjournalai.shared.dream_nightmares.domain.NightmareEvent
 import org.ballistic.dreamjournalai.shared.dream_nightmares.presentation.components.DreamNightmareScreenTopBar
 import org.ballistic.dreamjournalai.shared.dream_nightmares.presentation.viewmodel.DreamNightmareScreenState
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -83,27 +77,24 @@ fun DreamNightmareScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
+                    .padding(
+                        top = paddingValues.calculateTopPadding(),
+                        bottom = bottomPaddingValue,
+                        start = 16.dp,
+                        end = 16.dp
+                    )
                     .dynamicBottomNavigationPadding(),
                 contentAlignment = Alignment.Center
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp)
-                        .background(
-                            color = OriginalXmlColors.DarkBlue.copy(alpha = 0.8f),
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                ) {
-                    TypewriterText(
-                        text = stringResource(Res.string.no_nightmares),
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center,
-                    )
-                }
+                PremiumIllustratedEmptyState(
+                    image = Res.drawable.nightmares_empty_hero,
+                    eyebrow = "Nightmares",
+                    title = "Nightmares you save will gather here.",
+                    body = "When you keep the hard dreams too, this page becomes a quieter place to revisit them, notice patterns, and take some power back.",
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
+            return@Scaffold
         }
 
         // Otherwise, display them in a LazyColumn

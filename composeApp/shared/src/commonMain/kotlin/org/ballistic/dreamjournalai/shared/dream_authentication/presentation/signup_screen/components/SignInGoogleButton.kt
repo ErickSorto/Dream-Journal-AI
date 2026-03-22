@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,14 +34,10 @@ fun SignInGoogleButton(
     modifier: Modifier,
     isVisible: Boolean,
     isEnabled: Boolean,
+    label: String? = null,
     onClick: () -> Unit,
 ) {
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ) {
+    Box(modifier = modifier) {
         AnimatedVisibility(
             visible = isVisible,
             enter = slideInHorizontally(initialOffsetX = { 1000 }),
@@ -67,7 +62,11 @@ fun SignInGoogleButton(
                 enabled = isEnabled,
                 onClick = onClick
             ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Image(
                         painter = painterResource(
                             Res.drawable.ic_google_logo
@@ -75,13 +74,12 @@ fun SignInGoogleButton(
                         contentDescription = null,
                         modifier = Modifier
                             .size(28.dp)
-                            .align(Alignment.CenterStart)
                     )
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = stringResource(Res.string.sign_in_with_google),
+                        text = label ?: stringResource(Res.string.sign_in_with_google),
                         fontSize = 16.sp,
-                        color = Color.White,
-                        modifier = Modifier.align(Alignment.Center)
+                        color = Color.White
                     )
                 }
             }

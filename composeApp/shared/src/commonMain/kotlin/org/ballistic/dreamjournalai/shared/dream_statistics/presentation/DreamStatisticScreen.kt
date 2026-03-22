@@ -14,8 +14,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.dream_token
+import dreamjournalai.composeapp.shared.generated.resources.statistics_empty_hero
 import dreamjournalai.composeapp.shared.generated.resources.total_dreams
 import dreamjournalai.composeapp.shared.generated.resources.dream_tokens
+import org.ballistic.dreamjournalai.shared.core.components.PremiumIllustratedEmptyState
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ArcRotationAnimation
 import org.ballistic.dreamjournalai.shared.dream_statistics.StatisticEvent
@@ -36,6 +38,7 @@ fun DreamStatisticScreen(
 ) {
     LaunchedEffect(key1 = Unit) {
         onEvent(StatisticEvent.LoadDreams)
+        onEvent(StatisticEvent.GetDreamTokens)
     }
 
     Scaffold(
@@ -46,7 +49,28 @@ fun DreamStatisticScreen(
         },
         containerColor = Color.Transparent,
     ) {
-        if (dreamStatisticScreenState.topSixWordsInDreams.isEmpty()) {
+        if (dreamStatisticScreenState.dreams.isEmpty() && !dreamStatisticScreenState.isDreamWordFilterLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        top = it.calculateTopPadding(),
+                        bottom = bottomPaddingValue,
+                        start = 16.dp,
+                        end = 16.dp
+                    )
+                    .dynamicBottomNavigationPadding(),
+                contentAlignment = Alignment.Center
+            ) {
+                PremiumIllustratedEmptyState(
+                    image = Res.drawable.statistics_empty_hero,
+                    eyebrow = "Statistics",
+                    title = "Your dream patterns will appear here.",
+                    body = "Write a few dreams and this page will start showing moods, patterns, favorite themes, and the symbols your nights keep repeating.",
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        } else if (dreamStatisticScreenState.topSixWordsInDreams.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center

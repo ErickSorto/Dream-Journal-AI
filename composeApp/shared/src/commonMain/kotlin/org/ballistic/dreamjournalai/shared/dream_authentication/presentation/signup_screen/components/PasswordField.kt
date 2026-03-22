@@ -6,8 +6,12 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -23,8 +27,10 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,6 +44,8 @@ import dreamjournalai.composeapp.shared.generated.resources.password
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.onKeyboardDismiss
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.stringResource
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun PasswordField(
@@ -53,6 +61,8 @@ fun PasswordField(
 ) {
     var passwordIsVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val scope = rememberCoroutineScope()
     if (!animate) {
         OutlinedTextField(
             value = password,
@@ -71,28 +81,39 @@ fun PasswordField(
             trailingIcon = {
                 if (isLoginLayout) {
                     TextButton(onClick = { forgotPassword() }) {
-                        Text(text = stringResource(Res.string.forgot_password), color = Color.White.copy(alpha = 0.7f))
+                        Text(text = "Forgot?", color = Color.White.copy(alpha = 0.7f))
                     }
                 }
             },
             modifier = modifier
                 .fillMaxWidth()
+                .heightIn(min = 58.dp)
                 .padding(bottom = 8.dp)
+                .bringIntoViewRequester(bringIntoViewRequester)
+                .onFocusChanged { focusState ->
+                    if (focusState.isFocused) {
+                        scope.launch {
+                            delay(180)
+                            bringIntoViewRequester.bringIntoView()
+                        }
+                    }
+                }
                 .onKeyboardDismiss { focusManager.clearFocus() },
+            shape = RoundedCornerShape(18.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.7f),
-                unfocusedContainerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.7f),
+                focusedContainerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.62f),
+                unfocusedContainerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.54f),
                 disabledContainerColor = Color.Transparent,
                 errorContainerColor = Color.Transparent,
                 cursorColor = Color.White,
                 errorCursorColor = Color.Red,
-                focusedBorderColor =  Color.White.copy(alpha = 0.4f),
-                unfocusedBorderColor = Color.Transparent,
+                focusedBorderColor =  Color.White.copy(alpha = 0.34f),
+                unfocusedBorderColor = Color.White.copy(alpha = 0.16f),
                 disabledBorderColor = Color.Black,
                 errorBorderColor = Color.Red,
-                focusedLabelColor = Color.Black,
-                unfocusedLabelColor = Color.Black,
-                disabledLabelColor = Color.Black,
+                focusedLabelColor = Color.White.copy(alpha = 0.92f),
+                unfocusedLabelColor = Color.White.copy(alpha = 0.72f),
+                disabledLabelColor = Color.White.copy(alpha = 0.5f),
                 errorLabelColor = Color.Red,
             )
         )
@@ -147,7 +168,7 @@ fun PasswordField(
                 trailingIcon = {
                     if (isLoginLayout) {
                         TextButton(onClick = { forgotPassword() }) {
-                            Text(text = stringResource(Res.string.forgot_password),
+                            Text(text = "Forgot?",
                                 color = Color.White.copy(alpha = 0.7f)
                             )
                         }
@@ -155,24 +176,35 @@ fun PasswordField(
                 },
                 modifier = modifier
                     .fillMaxWidth()
+                    .heightIn(min = 58.dp)
                     .padding(bottom = 8.dp)
+                    .bringIntoViewRequester(bringIntoViewRequester)
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            scope.launch {
+                                delay(180)
+                                bringIntoViewRequester.bringIntoView()
+                            }
+                        }
+                    }
                     .onKeyboardDismiss {
                         focusManager.clearFocus()
                     },
+                shape = RoundedCornerShape(18.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.7f),
-                    unfocusedContainerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.7f),
+                    focusedContainerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.62f),
+                    unfocusedContainerColor = OriginalXmlColors.LightBlack.copy(alpha = 0.54f),
                     disabledContainerColor = Color.Transparent,
                     errorContainerColor = Color.Transparent,
                     cursorColor = Color.White,
                     errorCursorColor = Color.Red,
-                    focusedBorderColor =  Color.White.copy(alpha = 0.4f),
-                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor =  Color.White.copy(alpha = 0.34f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.16f),
                     disabledBorderColor = Color.Black,
                     errorBorderColor = Color.Red,
-                    focusedLabelColor = Color.Black,
-                    unfocusedLabelColor = Color.Black,
-                    disabledLabelColor = Color.Black,
+                    focusedLabelColor = Color.White.copy(alpha = 0.92f),
+                    unfocusedLabelColor = Color.White.copy(alpha = 0.72f),
+                    disabledLabelColor = Color.White.copy(alpha = 0.5f),
                     errorLabelColor = Color.Red,
                 )
             )

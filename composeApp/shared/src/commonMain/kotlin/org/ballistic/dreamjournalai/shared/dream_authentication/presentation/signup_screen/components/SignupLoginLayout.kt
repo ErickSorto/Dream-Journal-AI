@@ -1,11 +1,8 @@
 package org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.SignupEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.LoginViewModelState
@@ -18,12 +15,12 @@ fun SignupLoginLayout(
     onLoginEvent: (LoginEvent) -> Unit = {},
     onSignupEvent: (SignupEvent) -> Unit = {},
     onAnimationComplete: () -> Unit = {},
+    loginShouldAnimate: Boolean = true,
+    signupShouldAnimate: Boolean = true,
 ) {
 
     Column(
-        modifier = Modifier
-            .padding(0.dp, 0.dp, 0.dp, 0.dp)
-            .navigationBarsPadding(),
+        modifier = Modifier,
     ) {
 
         SignupLoginTabLayout(loginViewModelState = loginViewModelState, onLayoutChange = onLoginEvent)
@@ -34,7 +31,8 @@ fun SignupLoginLayout(
                     onLoginEvent = {
                         onLoginEvent(it)
                     },
-                    onAnimationComplete = onAnimationComplete
+                    onAnimationComplete = onAnimationComplete,
+                    shouldAnimate = loginShouldAnimate
                 )
             }
 
@@ -54,7 +52,8 @@ fun SignupLoginLayout(
                     onSignupEvent = {
                         onSignupEvent(it)
                     },
-                    onLoginEvent = { onLoginEvent(it) }
+                    onLoginEvent = { onLoginEvent(it) },
+                    shouldAnimate = signupShouldAnimate
                 )
             }
         }

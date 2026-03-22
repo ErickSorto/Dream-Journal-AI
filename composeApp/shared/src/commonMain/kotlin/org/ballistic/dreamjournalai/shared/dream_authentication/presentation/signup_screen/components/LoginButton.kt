@@ -5,8 +5,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,12 +36,15 @@ fun LoginButton(
     exitWithFade: Boolean = false,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
+    val isEnabled = loginViewModelState.loginEmail.isNotBlank() &&
+        loginViewModelState.loginPassword.isNotBlank()
     if (!animate) {
         Button(
             modifier = modifier
-                .fillMaxWidth(.5f)
-                .height(40.dp),
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 52.dp),
             shape = RoundedCornerShape(12.dp),
+            enabled = isEnabled,
             onClick = {
                 keyboard?.hide()
                 onLoginEvent(
@@ -73,9 +76,10 @@ fun LoginButton(
         ) {
             Button(
                 modifier = modifier
-                    .fillMaxWidth(.5f)
-                    .height(40.dp),
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 52.dp),
                 shape = RoundedCornerShape(12.dp),
+                enabled = isEnabled,
                 onClick = {
                     keyboard?.hide()
                     onLoginEvent(

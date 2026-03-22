@@ -1,53 +1,49 @@
 package org.ballistic.dreamjournalai.shared.dream_account
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.account_guest_warning
-import dreamjournalai.composeapp.shared.generated.resources.account_login_prompt
-import dev.gitlive.firebase.auth.GoogleAuthProvider as FirebaseGoogleAuthProvider
-import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.shared.ObserveAsEvents
-import org.ballistic.dreamjournalai.shared.SnackbarController
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.CircleShape
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.dream_account.components.DreamAccountSettingsScreenTopBar
 import org.ballistic.dreamjournalai.shared.dream_account.components.LogoutDeleteLayout
-import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.AnonymousButton
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.ObserveLoginState
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.ObserverLogoutDeleteState
-import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.SignupLoginLayout
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.LoginEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.events.SignupEvent
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.LoginViewModelState
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.SignupViewModelState
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
-import org.jetbrains.compose.resources.stringResource
+import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
+import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.onboarding_page.OnboardingAuthCard
 
 
 @Composable
@@ -56,6 +52,7 @@ fun AccountSettingsScreen(
     signupViewModelState: SignupViewModelState,
     onLoginEvent: (LoginEvent) -> Unit = {},
     onSignupEvent: (SignupEvent) -> Unit = {},
+    onMainEvent: (MainScreenEvent) -> Unit = {},
     navigateToOnboardingScreen: () -> Unit = {},
     navigateToDreamJournalScreen: () -> Unit = {}
 ) {
@@ -63,7 +60,6 @@ fun AccountSettingsScreen(
     val isUserAnonymous = loginViewModelState.isUserAnonymous
     val isEmailVerified = loginViewModelState.isEmailVerified
     val isUserLoggedIn = loginViewModelState.isLoggedIn
-    val animationDisplay = remember { mutableStateOf(false) }
     var logoutInProgress by remember { mutableStateOf(false) }
 
     // Synchronous detection of logout transition (persisted across branches)
@@ -72,11 +68,6 @@ fun AccountSettingsScreen(
     SideEffect { prevLoggedIn = isUserLoggedIn }
     LaunchedEffect(justLoggedOut) {
         if (justLoggedOut) navigateToOnboardingScreen()
-    }
-
-    // Navigate immediately if user clicks logout
-    LaunchedEffect(logoutInProgress) {
-        if (logoutInProgress) navigateToOnboardingScreen()
     }
 
     // Navigate to Home only when transitioning from not-logged-in to logged-in+verified
@@ -89,10 +80,17 @@ fun AccountSettingsScreen(
         prevLoggedInAndVerified = loggedInAndVerified
     }
 
+    LaunchedEffect(isUserAnonymous) {
+        onMainEvent(MainScreenEvent.SetBottomBarVisibilityState(!isUserAnonymous))
+        onMainEvent(MainScreenEvent.SetTopBarState(!isUserAnonymous))
+    }
+
     Scaffold(
         topBar = {
-            DreamAccountSettingsScreenTopBar(
-            )
+            if (!isUserAnonymous) {
+                DreamAccountSettingsScreenTopBar(
+                )
+            }
         },
         snackbarHost = {
         },
@@ -132,87 +130,86 @@ fun AccountSettingsScreen(
                         .padding(it)
                         .navigationBarsPadding()
                         .fillMaxSize()
-                        .padding(),
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Box(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .background(
-                                color = LightBlack.copy(alpha = 0.7f),
-                                shape = RoundedCornerShape(16.dp)
-                            ),
+                        modifier = Modifier.widthIn(max = 520.dp)
                     ) {
-                        Text(
-                            text = stringResource(Res.string.account_login_prompt),
-                            modifier = Modifier.padding(16.dp),
-                            textAlign = TextAlign.Center,
-                            color = Color.White,
-                        )
-                    }
-
-                    SignupLoginLayout(
-                        loginViewModelState = loginViewModelState,
-                        signupViewModelState = signupViewModelState,
-                        onLoginEvent = { onLoginEvent(it) },
-                        onSignupEvent = { onSignupEvent(it) },
-                        onAnimationComplete = {
-                            animationDisplay.value = true
-                        },
-                    )
-
-                    // Add padding around the Google sign-in button
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, top = 32.dp, bottom = 16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        MyGoogleSignInButton(
-                            { account ->
-                                val googleCredential = FirebaseGoogleAuthProvider.credential(
-                                    idToken = account.idToken,
-                                    accessToken = account.accessTokenOrNonce
-                                )
-                                onLoginEvent(LoginEvent.SignInWithGoogle(googleCredential))
+                        OnboardingAuthCard(
+                            enteredName = "",
+                            loginViewModelState = loginViewModelState,
+                            signupViewModelState = signupViewModelState,
+                            isLoading = isLoading,
+                            onLoginEvent = onLoginEvent,
+                            onSignupEvent = onSignupEvent,
+                            onBackClick = null,
+                            eyebrowText = if (isUserAnonymous) "Guest account" else "Account setup",
+                            titleOverride = if (isUserAnonymous) {
+                                "Save your guest progress."
+                            } else {
+                                "Create your account."
                             },
-                            {
-                                onLoginEvent(LoginEvent.ToggleLoading(false))
+                            subtitleOverride = if (isUserAnonymous) {
+                                "Connect an account to keep your dreams, sync across devices, and make this guest journal permanent."
+                            } else {
+                                "Create or connect an account to sync your dreams and keep everything safe."
                             },
-                            isLoading
+                            showGuestButton = !isUserAnonymous,
+                            modifier = Modifier.fillMaxWidth()
                         )
-                    }
 
-                    if (!isUserAnonymous) {
-                        AnonymousButton(
-                            modifier = Modifier
-                                .padding(bottom = 8.dp, top = 8.dp, start = 16.dp, end = 16.dp),
-                            isVisible = true,
-                            onClick = {
-                                onLoginEvent(LoginEvent.ToggleLoading(true))
-                                onSignupEvent(SignupEvent.AnonymousSignIn)
-                            },
-                            isEnabled = !isLoading
-                        )
-                    }
-
-                    if (animationDisplay.value) {
-                        Box(
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .background(
-                                    color = RedOrange.copy(alpha = 0.8f),
-                                    shape = RoundedCornerShape(16.dp)
-                                )
-                        ) {
-                            TypewriterText(
-                                text = stringResource(Res.string.account_guest_warning),
-                                modifier = Modifier.padding(16.dp),
-                                textAlign = TextAlign.Center,
+                        if (isUserAnonymous) {
+                            GuestAccountDismissBubble(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(top = 12.dp, end = 12.dp),
+                                onClick = {
+                                    onMainEvent(MainScreenEvent.SetBottomBarVisibilityState(true))
+                                    onMainEvent(MainScreenEvent.SetTopBarState(true))
+                                    navigateToDreamJournalScreen()
+                                }
                             )
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun GuestAccountDismissBubble(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(38.dp)
+            .clip(CircleShape)
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0.18f),
+                        Color(0xFF5A3C92).copy(alpha = 0.34f)
+                    )
+                )
+            )
+            .border(
+                width = 1.dp,
+                color = Color.White.copy(alpha = 0.22f),
+                shape = CircleShape
+            )
+            .clickable(onClick = onClick)
+    ) {
+        Text(
+            text = "X",
+            style = TextStyle(
+                color = Color.White.copy(alpha = 0.92f),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        )
     }
 }

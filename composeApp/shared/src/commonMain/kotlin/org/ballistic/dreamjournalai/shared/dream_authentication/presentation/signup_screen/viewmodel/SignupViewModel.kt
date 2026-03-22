@@ -82,16 +82,17 @@ class SignupViewModel(
                 }
             },
             errorTransform = { error ->
+                val normalizedError = normalizeSignupError(error)
                 viewModelScope.launch {
                     SnackbarController.sendEvent(
                         SnackbarEvent(
-                            message = error, // Already StringValue
+                            message = normalizedError,
                             action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {}) // Use StringValue.Resource
                         )
                     )
                 }
                 _state.value.copy(
-                    error = error,
+                    error = normalizedError,
                 )
             },
             loadingTransform = { _state.value.copy(isLoading = true) }
@@ -163,6 +164,26 @@ class SignupViewModel(
             else -> {
                 true
             }
+        }
+    }
+
+    private fun normalizeSignupError(error: StringValue): StringValue {
+        val raw = (error as? StringValue.DynamicString)?.value?.lowercase() ?: return error
+
+        return when {
+            "invalid-email" in raw || "badly formatted" in raw -> {
+                StringValue.Resource(Res.string.email_incorrect_format)
+            }
+
+            "weak-password" in raw || "at least 6 characters" in raw -> {
+                StringValue.Resource(Res.string.password_too_short)
+            }
+
+            "email-already-in-use" in raw || "already in use" in raw -> {
+                StringValue.DynamicString("That email is already in use")
+            }
+
+            else -> error
         }
     }
 }

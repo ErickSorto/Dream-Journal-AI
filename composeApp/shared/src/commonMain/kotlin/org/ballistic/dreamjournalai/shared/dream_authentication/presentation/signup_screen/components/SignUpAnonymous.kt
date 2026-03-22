@@ -8,10 +8,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,12 +38,9 @@ fun AnonymousButton(
     onClick: () -> Unit,
     isEnabled : Boolean,
     enterDurationMillis: Int = 300,
+    label: String? = null,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ) {
+    Box(modifier = modifier) {
         AnimatedVisibility(
             visible = isVisible,
             enter = slideInHorizontally(animationSpec = tween(enterDurationMillis), initialOffsetX = { 1000 }),
@@ -66,21 +65,24 @@ fun AnonymousButton(
                 onClick = onClick,
                 enabled = isEnabled
             ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Image(
                         painter = painterResource(
                             Res.drawable.anonymous_icon
                         ),
                         modifier = Modifier
-                            .size(28.dp)
-                            .align(Alignment.CenterStart),
+                            .size(28.dp),
                         contentDescription = null
                     )
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = stringResource(Res.string.guest_account),
+                        text = label ?: stringResource(Res.string.guest_account),
                         fontSize = 16.sp,
-                        color = OriginalXmlColors.White,
-                        modifier = Modifier.align(Alignment.Center)
+                        color = OriginalXmlColors.White
                     )
                 }
             }

@@ -60,13 +60,15 @@ fun StoreScreen(
     val tokenTotal = storeScreenViewModelState.dreamTokens
 
     if (isAnonymous) {
-        onMainEvent(MainScreenEvent.SetTopBarState(true))
+        onMainEvent(MainScreenEvent.SetTopBarState(false))
+        onMainEvent(MainScreenEvent.SetBottomBarVisibilityState(true))
         AnonymousStoreScreen(
-            paddingValues = PaddingValues(bottom = 68.dp),
-            navigateToAccountScreen = navigateToAccountScreen
+            paddingValues = PaddingValues(bottom = bottomPaddingValue + 16.dp),
+            navigateToAccountScreen = navigateToAccountScreen,
         )
     } else {
         onMainEvent(MainScreenEvent.SetTopBarState(false))
+        onMainEvent(MainScreenEvent.SetBottomBarVisibilityState(true))
 
         Column(
             modifier = Modifier

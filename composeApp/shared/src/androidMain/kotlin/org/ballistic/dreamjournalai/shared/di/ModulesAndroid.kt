@@ -5,7 +5,6 @@ import com.mikhailovskii.inappreview.InAppReviewDelegate
 import com.mikhailovskii.inappreview.googlePlay.GooglePlayInAppReviewInitParams
 import com.mikhailovskii.inappreview.googlePlay.GooglePlayInAppReviewManager
 import org.ballistic.dreamjournalai.shared.core.domain.DictionaryFileReader
-import org.ballistic.dreamjournalai.shared.core.domain.ReviewComponent
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtilImpl
 import org.ballistic.dreamjournalai.shared.core.util.StoreLinkOpener
@@ -24,16 +23,11 @@ actual val platformModule: Module = module {
         VibratorUtilImpl(context = androidApplication())
     }
 
-//    factory<InAppReviewDelegate> { (act: Activity) ->
-//        // Now you have a real activity from parameters
-//        val googlePlayParams = GooglePlayInAppReviewInitParams(act)
-//        GooglePlayInAppReviewManager(googlePlayParams)
-//    }
-//
-//    // Add a single for ReviewComponent, same approach as iOS
-//    single {
-//        ReviewComponent(inAppReviewDelegate = get())
-//    }
+    factory<InAppReviewDelegate> { (act: Activity) ->
+        GooglePlayInAppReviewManager(
+            GooglePlayInAppReviewInitParams(act)
+        )
+    }
 
     single<StoreLinkOpener> {
         StoreLinkOpenerAndroid(context = androidContext())

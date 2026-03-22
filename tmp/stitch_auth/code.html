@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DreamNorth - Sign In</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&amp;family=Manrope:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-highest": "#23233f",
+                        "outline": "#74738b",
+                        "on-primary-container": "#2c2100",
+                        "tertiary-fixed": "#c29fff",
+                        "inverse-on-surface": "#53536a",
+                        "secondary-fixed": "#ddc8ff",
+                        "tertiary-container": "#b78efe",
+                        "on-error-container": "#ffb2b9",
+                        "error": "#ff6e84",
+                        "surface": "#0c0c1f",
+                        "error-container": "#a70138",
+                        "on-tertiary-container": "#330070",
+                        "tertiary-dim": "#b189f8",
+                        "on-tertiary": "#3f0f81",
+                        "surface-dim": "#0c0c1f",
+                        "error-dim": "#d73357",
+                        "surface-variant": "#23233f",
+                        "primary-fixed-dim": "#eec540",
+                        "outline-variant": "#46465c",
+                        "on-secondary-fixed-variant": "#5a477e",
+                        "secondary-fixed-dim": "#d0b9f9",
+                        "primary": "#fdd34d",
+                        "on-secondary-fixed": "#3c2a5f",
+                        "inverse-primary": "#745c00",
+                        "secondary-container": "#503d73",
+                        "on-error": "#490013",
+                        "on-secondary": "#4b386e",
+                        "inverse-surface": "#fcf8ff",
+                        "surface-container-high": "#1d1d37",
+                        "on-tertiary-fixed": "#22004f",
+                        "primary-fixed": "#fdd34d",
+                        "on-background": "#e5e3ff",
+                        "surface-container": "#17172f",
+                        "on-primary": "#5c4900",
+                        "surface-container-lowest": "#000000",
+                        "on-secondary-container": "#dcc7ff",
+                        "on-surface-variant": "#aaa8c3",
+                        "surface-container-low": "#111127",
+                        "surface-tint": "#fdd34d",
+                        "tertiary-fixed-dim": "#b78efe",
+                        "primary-container": "#c19c13",
+                        "on-surface": "#e5e3ff",
+                        "tertiary": "#c29fff",
+                        "background": "#0c0c1f",
+                        "on-primary-fixed-variant": "#675200",
+                        "primary-dim": "#eec540",
+                        "secondary": "#d6beff",
+                        "secondary-dim": "#c8b1f0",
+                        "on-primary-fixed": "#463600",
+                        "on-tertiary-fixed-variant": "#491d8a",
+                        "surface-bright": "#292948"
+                    },
+                    fontFamily: {
+                        "headline": ["Noto Serif"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glow-icon {
+            filter: drop-shadow(0 0 4px rgba(253, 211, 77, 0.4));
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary/30 min-h-screen relative overflow-x-hidden">
+<!-- Celestial Background Layers -->
+<div class="fixed inset-0 z-0">
+<div class="absolute inset-0 bg-gradient-to-b from-[#0c0c1f] via-[#17172f] to-[#0c0c1f]"></div>
+<!-- Stylized Nebula Clouds -->
+<div class="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-secondary-container/10 blur-[120px]"></div>
+<div class="absolute bottom-[-5%] right-[-5%] w-[50%] h-[50%] rounded-full bg-tertiary-container/5 blur-[100px]"></div>
+<!-- Decorative Star field (Simulated via CSS) -->
+<div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(white 1px, transparent 0); background-size: 50px 50px;"></div>
+</div>
+<!-- Main Canvas -->
+<main class="relative z-10 min-h-screen flex items-center justify-center p-6 sm:p-12">
+<div class="max-w-[480px] w-full space-y-10">
+<!-- Branding & Emblem Section -->
+<div class="text-center space-y-6">
+<div class="relative inline-block">
+<!-- Outer Glow Ring -->
+<div class="absolute inset-0 bg-primary/20 rounded-full blur-2xl scale-125"></div>
+<!-- Emblem Container -->
+<div class="relative w-32 h-32 mx-auto rounded-full bg-surface-container border border-outline-variant/20 flex items-center justify-center overflow-hidden shadow-2xl">
+<img class="w-full h-full object-cover opacity-90" data-alt="Stylized glowing lighthouse in a circular dream emblem" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqkuDR40-hKZCPGqPRegZ_IEp35NAAU60mi4zWh455kYUiYfaRJiD6kf3vF2LOBuI3KTscWdFGdt7s6-wbMjEYcZ7uu-TkMY44tQGHjeseBbXIqQh-b7WopQGamzKaL5zZlT-l7c60EF5IEQCNhxMvREVTLcF5F24yNfEqp2_2kHyoa1v9l315hP1sx2nCDDbfiMnMCcLJptoe5JzVWbEXZaZLtB3KKoT_js3UppKGAY3qN_oQl5PEIvE6YXXMKp8mtzMC00g7hw5V"/>
+</div>
+</div>
+<div class="space-y-2">
+<h1 class="font-headline text-4xl font-bold tracking-tight text-on-surface">DreamNorth</h1>
+<p class="text-on-surface-variant font-light tracking-wide text-sm uppercase">The Ethereal Archive</p>
+</div>
+</div>
+<!-- Login Card -->
+<div class="bg-surface-container/40 backdrop-blur-2xl rounded-xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-outline-variant/10">
+<!-- Toggle Switch -->
+<div class="flex p-1 bg-surface-container-lowest rounded-full mb-8 max-w-[240px] mx-auto">
+<button class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all duration-300 bg-secondary-container/60 text-primary shadow-lg">Login</button>
+<button class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all duration-300 text-on-surface-variant hover:text-on-surface">Signup</button>
+</div>
+<form class="space-y-6">
+<!-- Email Field -->
+<div class="space-y-2 group">
+<label class="block text-xs font-semibold uppercase tracking-widest text-on-surface-variant ml-1" for="email">Email</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary/60 text-xl group-focus-within:text-primary transition-colors">mail</span>
+<input class="w-full bg-surface-container-lowest border-0 rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-dim transition-all text-sm" id="email" placeholder="Enter your email" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2 group">
+<div class="flex justify-between items-center ml-1">
+<label class="block text-xs font-semibold uppercase tracking-widest text-on-surface-variant" for="password">Password</label>
+<a class="text-[11px] text-tertiary hover:text-tertiary-fixed transition-colors" href="#">Forgot password?</a>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary/60 text-xl group-focus-within:text-primary transition-colors">lock</span>
+<input class="w-full bg-surface-container-lowest border-0 rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-dim transition-all text-sm" id="password" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<!-- Primary Login Button -->
+<button class="w-full bg-gradient-to-br from-primary to-primary-container py-4 rounded-xl text-on-primary font-bold tracking-tight shadow-[0_4px_20px_rgba(253,211,77,0.2)] hover:shadow-[0_4px_25px_rgba(253,211,77,0.3)] hover:scale-[1.01] active:scale-95 transition-all duration-300" type="submit">
+                        Login
+                    </button>
+</form>
+<!-- Divider -->
+<div class="relative my-8">
+<div class="absolute inset-0 flex items-center"><div class="w-full border-t border-outline-variant/10"></div></div>
+<div class="relative flex justify-center text-xs uppercase tracking-[0.2em]"><span class="px-4 bg-transparent text-outline">OR</span></div>
+</div>
+<!-- Secondary Actions -->
+<div class="space-y-3">
+<button class="w-full flex items-center justify-center gap-3 bg-surface-bright/30 backdrop-blur-md py-3.5 rounded-xl border border-outline-variant/15 text-sm font-medium hover:bg-surface-bright/50 transition-all active:scale-[0.98]">
+<img alt="Google" class="w-5 h-5 grayscale opacity-70 group-hover:grayscale-0" data-alt="Google logo icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8cb0UmIx3cAeLLFaxd4v07QbPZgFl1bAqJA6RLgVV4I0_dSN662Lb9Wmx_lV55lgtYpYoa-JxFgOw4UMLfKtZX-QVw3krXEk1DyGv3XITgjFOrnMKeSWtHIycrC7JNQ7AU8X74t7pL9uvhxw37HeP6xn58eyW7Rx0vh6zm2JvTBAo-2Qtmgct3aa35ScAoNSyVnS3l6yh_xGbXMM3vna3fKHP7WHzbjcZHrDMMPsTkCqOogoW5SkhjFy8zcIWJBuktxtx79yl56Kk"/>
+                        Sign in with Google
+                    </button>
+<button class="w-full flex items-center justify-center gap-2 text-on-surface-variant hover:text-on-surface text-xs font-medium py-2 transition-colors">
+                        Continue as Guest
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Footer Quote/Instruction -->
+<footer class="text-center space-y-4 pt-4">
+<p class="font-headline italic text-on-surface-variant/60 text-lg leading-relaxed">
+                    "Into the night, where the dreams go to rest."
+                </p>
+<div class="flex justify-center gap-6 text-[11px] uppercase tracking-widest text-outline">
+<a class="hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms</a>
+<a class="hover:text-primary transition-colors" href="#">Support</a>
+</div>
+</footer>
+</div>
+</main>
+<!-- Decorative Floating Elements (The Ethereal touch) -->
+<div class="fixed top-20 right-[15%] w-16 h-16 pointer-events-none opacity-20">
+<span class="material-symbols-outlined text-primary scale-[3] blur-[1px]">auto_awesome</span>
+</div>
+<div class="fixed bottom-32 left-[10%] w-12 h-12 pointer-events-none opacity-10">
+<span class="material-symbols-outlined text-secondary scale-[2] blur-[2px]">bedtime</span>
+</div>
+</body></html>

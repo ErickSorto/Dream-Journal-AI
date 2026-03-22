@@ -13,12 +13,14 @@ import com.revenuecat.purchases.kmp.configure
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import org.ballistic.dreamjournalai.shared.di.initKoin
+import org.ballistic.dreamjournalai.shared.dream_notifications.domain.androidContext
 import org.koin.android.ext.koin.androidContext
 
 class DreamJournalAIApp : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        org.ballistic.dreamjournalai.shared.dream_notifications.domain.androidContext = this
         enableCrashlytics()
 
         createNotificationChannel()

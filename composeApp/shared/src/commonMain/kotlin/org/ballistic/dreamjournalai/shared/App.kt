@@ -17,7 +17,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Preview
 fun App (
     onSplashFinished: () -> Unit = {},
-    context: Any? = null
+    context: Any? = null,
+    requestInAppReview: () -> Unit = {},
 ) {
     Logger.d { "Kermit Testing!" }
     // Initialize Firebase only on the platform that needs it. The Android actual will call
@@ -31,7 +32,8 @@ fun App (
             ) {
                 //  val screen by splashViewModel.state
                 MainGraph(
-                    onDataLoaded = onSplashFinished
+                    onDataLoaded = onSplashFinished,
+                    requestInAppReview = requestInAppReview,
                 )
             }
     }
