@@ -26,6 +26,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,6 +68,10 @@ private val currentDate = nowDateTime.date
 private val sleepTime = LocalTime(23, 0) // 11 PM
 private val wakeTime = LocalTime(7, 0)   // 7 AM
 private val viewModelLogger = Logger.withTag("AddEditViewModel")
+
+private fun isPendingImageGeneration(status: String): Boolean {
+    return status == "queued" || status == "running"
+}
 
 enum class AIType {
     INTERPRETATION,
@@ -125,8 +130,13 @@ class AddEditDreamViewModel(
     // Map a saved Dream into our screen state
     private fun stateFromDream(dream: Dream): AddEditDreamState {
         val aiStates = mutableMapOf<AIType, AIState>()
+        val imageGenerationPending = isPendingImageGeneration(dream.imageGenerationStatus)
+
         aiStates[AIType.INTERPRETATION] = AIState(response = dream.AIResponse)
-        aiStates[AIType.IMAGE] = AIState(response = dream.generatedImage)
+        aiStates[AIType.IMAGE] = AIState(
+            response = dream.generatedImage,
+            isLoading = imageGenerationPending
+        )
         aiStates[AIType.QUESTION_ANSWER] = AIState(response = dream.dreamAIQuestionAnswer, question = dream.dreamQuestion)
         aiStates[AIType.ADVICE] = AIState(response = dream.dreamAIAdvice)
         aiStates[AIType.MOOD] = AIState(response = dream.dreamAIMood)
@@ -712,6 +722,11 @@ class AddEditDreamViewModel(
 
     @OptIn(ExperimentalUuidApi::class)
     private fun requestImage(style: String, cost: Int) = viewModelScope.launch {
+        if (addEditDreamState.value.aiStates[AIType.IMAGE]?.isLoading == true) {
+            showSnack(StringValue.DynamicString("Painting in background"))
+            return@launch
+        }
+
         showSnack(StringValue.DynamicString("Painting in background"))
         _addEditDreamState.update {
             it.copy(
@@ -719,8 +734,10 @@ class AddEditDreamViewModel(
                 isGeneratingAI = false
             )
         }
-        updateAIState(AIType.IMAGE) { copy(isLoading = false) }
+        updateAIState(AIType.IMAGE) { copy(isLoading = true) }
 
+        var enqueuedDreamId: String? = null
+        var enqueuedJobId: String? = null
         withContext(NonCancellable) {
             val saved = performSave(
                 onSaveSuccess = {},
@@ -728,24 +745,80 @@ class AddEditDreamViewModel(
             )
             if (!saved) {
                 _addEditDreamState.update { it.copy(dreamHasChanged = true) }
+                updateAIState(AIType.IMAGE) { copy(isLoading = false) }
                 return@withContext
             }
 
             val dreamId = addEditDreamState.value.dreamInfo.dreamId
             if (dreamId.isNullOrBlank()) {
                 _addEditDreamState.update { it.copy(dreamHasChanged = true) }
+                updateAIState(AIType.IMAGE) { copy(isLoading = false) }
                 showSnack(StringValue.Resource(Res.string.ai_image_error, "Missing dream id"))
                 return@withContext
             }
 
             when (val enqueue = aiService.enqueueDreamImageGeneration(dreamId, style, cost)) {
-                is AIResult.Success -> Unit
+                is AIResult.Success -> {
+                    enqueuedDreamId = dreamId
+                    enqueuedJobId = enqueue.data
+                    updateAIState(AIType.IMAGE) { copy(isLoading = true) }
+                }
                 is AIResult.Error -> {
                     _addEditDreamState.update { it.copy(dreamHasChanged = true) }
+                    updateAIState(AIType.IMAGE) { copy(isLoading = false) }
                     showSnack(StringValue.Resource(Res.string.ai_image_error, enqueue.message))
                 }
             }
         }
+
+        val dreamId = enqueuedDreamId
+        val jobId = enqueuedJobId
+        if (dreamId != null && jobId != null) {
+            watchDreamImageGeneration(dreamId, jobId)
+        }
+    }
+
+    private suspend fun watchDreamImageGeneration(dreamId: String, jobId: String) {
+        repeat(120) {
+            delay(3_000)
+
+            when (val refreshed = dreamUseCases.getDream(dreamId)) {
+                is Resource.Success<*> -> {
+                    val dream = refreshed.data ?: return@repeat
+                    val isCurrentJob = dream.imageGenerationJobId == jobId
+                    val pending = isCurrentJob && isPendingImageGeneration(dream.imageGenerationStatus)
+                    val completedCurrentJob = isCurrentJob &&
+                            dream.imageGenerationStatus == "succeeded" &&
+                            dream.generatedImage.isNotBlank()
+
+                    when {
+                        completedCurrentJob -> {
+                            updateAIState(AIType.IMAGE) {
+                                copy(response = dream.generatedImage, isLoading = false)
+                            }
+                            updateAIState(AIType.DETAILS) { copy(response = dream.generatedDetails) }
+                            _addEditDreamState.update {
+                                it.copy(
+                                    isNewImageGenerated = true,
+                                    newlyGeneratedAIType = AIType.IMAGE
+                                )
+                            }
+                            return
+                        }
+
+                        !isCurrentJob -> Unit
+
+                        !pending -> {
+                            updateAIState(AIType.IMAGE) { copy(isLoading = false) }
+                            return
+                        }
+                    }
+                }
+
+                else -> Unit
+            }
+        }
+        updateAIState(AIType.IMAGE) { copy(isLoading = false) }
     }
 }
 

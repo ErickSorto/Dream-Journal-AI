@@ -156,8 +156,8 @@ fun DreamItem(
                 }
 
                 val chosenBackground = imageResId
-                val imageGenerationPending = dream.generatedImage.isBlank() &&
-                        (dream.imageGenerationStatus == "queued" || dream.imageGenerationStatus == "running")
+                val imageGenerationPending =
+                    dream.imageGenerationStatus == "queued" || dream.imageGenerationStatus == "running"
 
                 if (generatedImage != null) {
                     // Force a fresh subcomposition when the image string changes
@@ -202,19 +202,19 @@ fun DreamItem(
                         contentScale = ContentScale.Crop,
                         contentDescription = stringResource(Res.string.dream_image)
                     )
-                    if (imageGenerationPending) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.Black.copy(alpha = 0.22f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(30.dp),
-                                strokeWidth = 3.dp,
-                                color = OriginalXmlColors.BrighterWhite
-                            )
-                        }
+                }
+                if (imageGenerationPending) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.22f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(30.dp),
+                            strokeWidth = 3.dp,
+                            color = OriginalXmlColors.BrighterWhite
+                        )
                     }
                 }
             }
