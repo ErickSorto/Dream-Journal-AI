@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -155,6 +156,8 @@ fun DreamItem(
                 }
 
                 val chosenBackground = imageResId
+                val imageGenerationPending = dream.generatedImage.isBlank() &&
+                        (dream.imageGenerationStatus == "queued" || dream.imageGenerationStatus == "running")
 
                 if (generatedImage != null) {
                     // Force a fresh subcomposition when the image string changes
@@ -199,6 +202,20 @@ fun DreamItem(
                         contentScale = ContentScale.Crop,
                         contentDescription = stringResource(Res.string.dream_image)
                     )
+                    if (imageGenerationPending) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.22f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(30.dp),
+                                strokeWidth = 3.dp,
+                                color = OriginalXmlColors.BrighterWhite
+                            )
+                        }
+                    }
                 }
             }
             Spacer(modifier = Modifier.width(8.dp))

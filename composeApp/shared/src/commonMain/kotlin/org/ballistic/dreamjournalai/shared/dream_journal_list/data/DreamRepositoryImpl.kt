@@ -19,6 +19,8 @@ import kotlinx.coroutines.withContext
 import org.ballistic.dreamjournalai.shared.core.Constants.USERS
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.Flag
+import org.ballistic.dreamjournalai.shared.core.security.DREAM_TEXT_CIPHER_PREFIX
+import org.ballistic.dreamjournalai.shared.core.security.DreamTextCipher
 import org.ballistic.dreamjournalai.shared.core.util.decodeUrlPart
 import org.ballistic.dreamjournalai.shared.core.util.downloadImageBytes
 import org.ballistic.dreamjournalai.shared.core.util.readFileBytes
@@ -34,7 +36,8 @@ import kotlin.uuid.Uuid
 private val logger = Logger.withTag("DreamRepositoryImpl")
 
 class DreamRepositoryImpl(
-    private val db: FirebaseFirestore
+    private val db: FirebaseFirestore,
+    private val dreamTextCipher: DreamTextCipher
 ) :
     DreamRepository {
 
@@ -59,19 +62,24 @@ class DreamRepositoryImpl(
         return collection
             .snapshots()
             .map { querySnapshot ->
-                querySnapshot.documents.mapNotNull { doc ->
+                val dreams = querySnapshot.documents.mapNotNull { doc ->
                     doc.toDream()
                 }
+                querySnapshot.documents.forEach { doc ->
+                    doc.encryptSensitiveTextIfNeeded()
+                }
+                dreams
             }
     }
 
     private fun DocumentSnapshot.toDream(): Dream? {
         val dream = data<Dream>()
+        val uid = this.reference.parent.parent?.id ?: ""
 
         return dream.copy(
             id = this.id,
-            uid = this.reference.parent.parent?.id ?: ""
-        )
+            uid = uid
+        ).decryptSensitiveText(uid)
     }
 
     override suspend fun getDream(id: String): Resource<Dream> {
@@ -84,6 +92,7 @@ class DreamRepositoryImpl(
             if (snapshot.exists) {
                 // Ensure id/uid are populated on single reads as well
                 val dream = snapshot.getDream()
+                snapshot.encryptSensitiveTextIfNeeded()
                 Resource.Success(dream)
             } else {
                 Resource.Error("Dream not found")
@@ -96,10 +105,11 @@ class DreamRepositoryImpl(
 
     private fun DocumentSnapshot.getDream(): Dream {
         val base = data<Dream>()
+        val uid = this.reference.parent.parent?.id ?: ""
         return base.copy(
             id = this.id,
-            uid = this.reference.parent.parent?.id ?: ""
-        )
+            uid = uid
+        ).decryptSensitiveText(uid)
     }
 
 
@@ -201,6 +211,12 @@ class DreamRepositoryImpl(
                     backgroundImage = dream.backgroundImage,
                     generatedImage = dream.generatedImage,
                     generatedDetails = dream.generatedDetails,
+                    imageGenerationStatus = dream.imageGenerationStatus.ifBlank { base.imageGenerationStatus },
+                    imageGenerationJobId = dream.imageGenerationJobId.ifBlank { base.imageGenerationJobId },
+                    imageGenerationStartedAt = if (dream.imageGenerationStartedAt != 0L) dream.imageGenerationStartedAt else base.imageGenerationStartedAt,
+                    imageGenerationUpdatedAt = if (dream.imageGenerationUpdatedAt != 0L) dream.imageGenerationUpdatedAt else base.imageGenerationUpdatedAt,
+                    imageGenerationCompletedAt = if (dream.imageGenerationCompletedAt != 0L) dream.imageGenerationCompletedAt else base.imageGenerationCompletedAt,
+                    imageGenerationErrorCode = dream.imageGenerationErrorCode.ifBlank { base.imageGenerationErrorCode },
                     dreamQuestion = dream.dreamQuestion,
                     dreamAIQuestionAnswer = dream.dreamAIQuestionAnswer,
                     dreamAIStory = dream.dreamAIStory,
@@ -216,12 +232,16 @@ class DreamRepositoryImpl(
                 )
                 val updatedWithImage = uploadImageIfNeeded(updated)
                 val updatedWithAudio = uploadAudioIfNeeded(updatedWithImage)
-                getCollectionReferenceForDreams()?.document(ensuredId)?.set(updatedWithAudio)
+                getCollectionReferenceForDreams()
+                    ?.document(ensuredId)
+                    ?.set(updatedWithAudio.encryptSensitiveText(ensuredUid))
             } else {
                 val newDream = dream.copy(id = ensuredId, uid = ensuredUid)
                 val newWithImage = uploadImageIfNeeded(newDream)
                 val newWithAudio = uploadAudioIfNeeded(newWithImage)
-                getCollectionReferenceForDreams()?.document(ensuredId)?.set(newWithAudio)
+                getCollectionReferenceForDreams()
+                    ?.document(ensuredId)
+                    ?.set(newWithAudio.encryptSensitiveText(ensuredUid))
             }
 
             logger.d { "insertDream: success id=$ensuredId" }
@@ -315,5 +335,50 @@ class DreamRepositoryImpl(
                 .document(uid)   // user's document
                 .collection("my_dreams")  // the "my_dreams" subcollection
         }
+    }
+
+    private fun Dream.encryptSensitiveText(uid: String): Dream {
+        return copy(
+            title = dreamTextCipher.encrypt(title, uid),
+            content = dreamTextCipher.encrypt(content, uid),
+            audioTranscription = dreamTextCipher.encrypt(audioTranscription, uid)
+        )
+    }
+
+    private fun Dream.decryptSensitiveText(uid: String): Dream {
+        return copy(
+            title = dreamTextCipher.decrypt(title, uid),
+            content = dreamTextCipher.decrypt(content, uid),
+            audioTranscription = dreamTextCipher.decrypt(audioTranscription, uid)
+        )
+    }
+
+    private suspend fun DocumentSnapshot.encryptSensitiveTextIfNeeded() {
+        val uid = reference.parent.parent?.id ?: return
+        if (uid.isBlank()) return
+
+        runCatching {
+            val rawDream = data<Dream>()
+            val updates = mutableMapOf<String, String>()
+            if (rawDream.title.needsEncryption()) {
+                updates["title"] = dreamTextCipher.encrypt(rawDream.title, uid)
+            }
+            if (rawDream.content.needsEncryption()) {
+                updates["content"] = dreamTextCipher.encrypt(rawDream.content, uid)
+            }
+            if (rawDream.audioTranscription.needsEncryption()) {
+                updates["audioTranscription"] = dreamTextCipher.encrypt(rawDream.audioTranscription, uid)
+            }
+
+            if (updates.isNotEmpty()) {
+                reference.update(updates)
+            }
+        }.onFailure { error ->
+            logger.w(error) { "encryptSensitiveTextIfNeeded: failed for dream $id" }
+        }
+    }
+
+    private fun String.needsEncryption(): Boolean {
+        return isNotBlank() && !startsWith(DREAM_TEXT_CIPHER_PREFIX)
     }
 }

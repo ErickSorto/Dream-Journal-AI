@@ -8,10 +8,8 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
-import dev.gitlive.firebase.storage.storage
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.ai_image_error
-import dreamjournalai.composeapp.shared.generated.resources.ai_image_save_error
 import dreamjournalai.composeapp.shared.generated.resources.ai_response_error
 import dreamjournalai.composeapp.shared.generated.resources.audio_permanent_success
 import dreamjournalai.composeapp.shared.generated.resources.dismiss
@@ -21,7 +19,6 @@ import dreamjournalai.composeapp.shared.generated.resources.get_dream_error
 import dreamjournalai.composeapp.shared.generated.resources.get_unlocked_words_error
 import dreamjournalai.composeapp.shared.generated.resources.not_enough_dream_tokens
 import dreamjournalai.composeapp.shared.generated.resources.transcription_failed
-import io.ktor.util.decodeBase64Bytes
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
@@ -44,7 +41,6 @@ import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.DictionaryRepository
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.core.util.StringValue
-import org.ballistic.dreamjournalai.shared.core.util.createTempFile
 import org.ballistic.dreamjournalai.shared.core.util.formatLocalDate
 import org.ballistic.dreamjournalai.shared.core.util.formatLocalTime
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AIResult
@@ -55,6 +51,7 @@ import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.ImageStyle
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.DreamUseCases
+import org.ballistic.dreamjournalai.shared.dream_notifications.domain.GeneratedArtNotificationSender
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.DictionaryWord
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -96,6 +93,7 @@ class AddEditDreamViewModel(
     private val dictionaryRepository: DictionaryRepository,
     private val vibratorUtil: VibratorUtil,
     private val aiService: DreamAIService, // injected
+    private val generatedArtNotificationSender: GeneratedArtNotificationSender,
 ) : ViewModel() {
 
     private val _addEditDreamState = MutableStateFlow(AddEditDreamState())
@@ -224,7 +222,10 @@ class AddEditDreamViewModel(
 
     // Consolidated save logic. Returns true if successful, false otherwise.
     @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
-    private suspend fun performSave(onSaveSuccess: () -> Unit = {}): Boolean {
+    private suspend fun performSave(
+        onSaveSuccess: () -> Unit = {},
+        shouldRunCategorization: Boolean = true
+    ): Boolean {
         val saveStart = kotlin.time.Clock.System.now()
         viewModelLogger.d { "performSave: STARTED at ${saveStart.toEpochMilliseconds()}" }
 
@@ -239,7 +240,7 @@ class AddEditDreamViewModel(
             if (textToGenerateFrom.isNotBlank()) {
                 val titleStart = kotlin.time.Clock.System.now()
                 viewModelLogger.d { "performSave: Title generation STARTED" }
-                when (val titleRes = aiService.generateText(AITextType.TITLE, textToGenerateFrom, cost = 0)) {
+                when (val titleRes = aiService.generateDreamTitle(textToGenerateFrom)) {
                     is AIResult.Success -> {
                         val titleEnd = kotlin.time.Clock.System.now()
                         viewModelLogger.d { "performSave: Title generation SUCCESS in ${(titleEnd - titleStart).inWholeMilliseconds}ms. Title: ${titleRes.data}" }
@@ -264,7 +265,8 @@ class AddEditDreamViewModel(
         var vividnessRating = addEditDreamState.value.dreamInfo.dreamVividness
         var moodRating = addEditDreamState.value.dreamInfo.dreamEmotion
 
-        val shouldCategorize = !isLucid && !isNightmare && !isRecurring && !isFalseAwakening &&
+        val shouldCategorize = shouldRunCategorization &&
+                !isLucid && !isNightmare && !isRecurring && !isFalseAwakening &&
                 lucidityRating == 0 && vividnessRating == 0 && moodRating == 0
 
         viewModelLogger.d { "performSave: shouldCategorize check: $shouldCategorize" }
@@ -570,7 +572,20 @@ class AddEditDreamViewModel(
 
                                         // Trigger Title generation implicitly via performSave check
                                         viewModelLogger.d { "OnVoiceRecordingSaved: Calling final save (includes title gen)" }
-                                        performSave(onSaveSuccess = {})
+                                        val finalSaveSucceeded = performSave(onSaveSuccess = {})
+                                        if (finalSaveSucceeded && result.data.isNotBlank()) {
+                                            _addEditDreamState.update {
+                                                it.copy(
+                                                    isTranscribing = false,
+                                                    transcriptionBottomSheetState = false
+                                                )
+                                            }
+                                            kotlinx.coroutines.delay(1100)
+                                            _addEditDreamState.update {
+                                                it.copy(transcriptionBottomSheetState = true)
+                                            }
+                                            return@launch
+                                        }
                                     }
                                     is AIResult.Error -> {
                                         viewModelLogger.e { "OnVoiceRecordingSaved: Transcription FAILED: ${result.message}" }
@@ -698,51 +713,35 @@ class AddEditDreamViewModel(
     private fun requestImage(style: String, cost: Int) = viewModelScope.launch {
         _addEditDreamState.update { it.copy(isGeneratingAI = true) }
         updateAIState(AIType.IMAGE) { copy(isLoading = true) }
-        updateAIState(AIType.DETAILS) { copy(isLoading = true) }
-        val dreamContent = _contentTextFieldState.value.text.toString()
-        val transcription = addEditDreamState.value.dreamInfo.dreamAudioTranscription
-        val fullContent = if (transcription.isNotBlank()) {
-            if (dreamContent.isNotBlank()) "$dreamContent\n\nAudio Transcription:\n$transcription" else "Audio Transcription:\n$transcription"
-        } else {
-            dreamContent
+
+        val saved = performSave(
+            onSaveSuccess = {},
+            shouldRunCategorization = false
+        )
+        if (!saved) {
+            updateAIState(AIType.IMAGE) { copy(isLoading = false) }
+            _addEditDreamState.update { it.copy(isGeneratingAI = false) }
+            return@launch
         }
 
-        val details = when (val d = aiService.generateDetails(fullContent, cost)) {
-            is AIResult.Success -> d.data
-            is AIResult.Error -> {
-                showSnack(StringValue.Resource(Res.string.ai_response_error))
-                updateAIState(AIType.DETAILS) { copy(isLoading = false) }
-                _addEditDreamState.update { it.copy(isGeneratingAI = false) }
-                return@launch
-            }
+        val dreamId = addEditDreamState.value.dreamInfo.dreamId
+        if (dreamId.isNullOrBlank()) {
+            showSnack(StringValue.Resource(Res.string.ai_image_error, "Missing dream id"))
+            updateAIState(AIType.IMAGE) { copy(isLoading = false) }
+            _addEditDreamState.update { it.copy(isGeneratingAI = false) }
+            return@launch
         }
-        updateAIState(AIType.DETAILS) { copy(response = details, isLoading = false) }
 
-        when (val img = aiService.generateImageFromDetails(details, cost, style)) {
+        when (val enqueue = aiService.enqueueDreamImageGeneration(dreamId, style, cost)) {
             is AIResult.Success -> {
-                val imageBytes = if (img.data.startsWith("data:image")) {
-                    img.data.substringAfter("base64,").decodeBase64Bytes()
-                } else {
-                    return@launch
-                }
-
-                val dreamId = addEditDreamState.value.dreamInfo.dreamId ?: Uuid.random().toString()
-                val uid = Firebase.auth.currentUser?.uid
-                if (uid != null) {
-                    val tempFile = createTempFile(imageBytes)
-                    val storageRef = Firebase.storage.reference.child("images/$uid/$dreamId.jpg")
-                    storageRef.putFile(tempFile)
-                    val downloadUrl = storageRef.getDownloadUrl()
-                    updateAIState(AIType.IMAGE) { copy(response = downloadUrl) }
-                    _addEditDreamState.update { it.copy(isNewImageGenerated = true) }
-                } else {
-                    showSnack(StringValue.Resource(Res.string.ai_image_save_error))
-                }
+                updateAIState(AIType.IMAGE) { copy(isLoading = false) }
+                showSnack(StringValue.DynamicString("Your dream image is being painted in the background."))
             }
-            is AIResult.Error -> showSnack(StringValue.Resource(Res.string.ai_image_error, img.message ?: ""))
+            is AIResult.Error -> {
+                showSnack(StringValue.Resource(Res.string.ai_image_error, enqueue.message))
+                updateAIState(AIType.IMAGE) { copy(isLoading = false) }
+            }
         }
-        updateAIState(AIType.IMAGE) { copy(isLoading = false) }
-        if (cost > 0) authRepository.consumeDreamTokens(cost)
         _addEditDreamState.update { it.copy(isGeneratingAI = false) }
     }
 }
