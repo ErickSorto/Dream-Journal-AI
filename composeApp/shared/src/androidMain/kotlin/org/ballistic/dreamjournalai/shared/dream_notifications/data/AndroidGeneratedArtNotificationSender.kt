@@ -19,7 +19,6 @@ import kotlinx.coroutines.withContext
 import org.ballistic.dreamjournalai.shared.DreamJournalAIApp
 import org.ballistic.dreamjournalai.shared.R
 import org.ballistic.dreamjournalai.shared.dream_notifications.domain.GeneratedArtNotificationSender
-import org.ballistic.dreamjournalai.shared.dream_notifications.domain.NotificationNavigationController
 import java.net.URL
 
 class AndroidGeneratedArtNotificationSender(
@@ -54,8 +53,6 @@ class AndroidGeneratedArtNotificationSender(
         message: String,
         imageUrl: String,
         previewImageBytes: ByteArray?,
-        destination: String? = null,
-        dreamId: String? = null,
     ) {
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -77,7 +74,7 @@ class AndroidGeneratedArtNotificationSender(
             .setDefaults(Notification.DEFAULT_ALL)
             .setAutoCancel(true)
 
-        createContentIntent(notificationId, destination, dreamId)?.let { pendingIntent ->
+        createContentIntent(notificationId)?.let { pendingIntent ->
             builder.setContentIntent(pendingIntent)
         }
 
@@ -98,8 +95,6 @@ class AndroidGeneratedArtNotificationSender(
         title: String,
         message: String,
         imageUrl: String,
-        destination: String?,
-        dreamId: String?,
         isWorld: Boolean,
     ) {
         showNotification(
@@ -107,22 +102,13 @@ class AndroidGeneratedArtNotificationSender(
             title = title,
             message = message,
             imageUrl = imageUrl,
-            previewImageBytes = null,
-            destination = destination,
-            dreamId = dreamId
+            previewImageBytes = null
         )
     }
 
-    private fun createContentIntent(
-        notificationId: Int,
-        destination: String?,
-        dreamId: String?,
-    ): PendingIntent? {
+    private fun createContentIntent(notificationId: Int): PendingIntent? {
         val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return null
-        launchIntent
-            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            .putExtra(NotificationNavigationController.EXTRA_DESTINATION, destination)
-            .putExtra(NotificationNavigationController.EXTRA_DREAM_ID, dreamId)
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
         return PendingIntent.getActivity(
             context,

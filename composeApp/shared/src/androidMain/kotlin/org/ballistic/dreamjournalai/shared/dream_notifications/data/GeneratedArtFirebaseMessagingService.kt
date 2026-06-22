@@ -6,7 +6,6 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.runBlocking
-import org.ballistic.dreamjournalai.shared.dream_notifications.domain.NotificationNavigationController
 import kotlin.time.ExperimentalTime
 
 class GeneratedArtFirebaseMessagingService : FirebaseMessagingService() {
@@ -53,16 +52,12 @@ class GeneratedArtFirebaseMessagingService : FirebaseMessagingService() {
         val body = data[KEY_BODY]
             ?: message.notification?.body
             ?: if (isWorld) "Your new world painting has been saved." else "Your generated dream image has been saved."
-        val destination = data[NotificationNavigationController.EXTRA_DESTINATION]
-        val dreamId = data[NotificationNavigationController.EXTRA_DREAM_ID]
 
         runBlocking {
             AndroidGeneratedArtNotificationSender(applicationContext).showGeneratedArtPush(
                 title = title,
                 message = body,
                 imageUrl = imageUrl,
-                destination = destination,
-                dreamId = dreamId,
                 isWorld = isWorld
             )
         }
@@ -78,8 +73,6 @@ class GeneratedArtFirebaseMessagingService : FirebaseMessagingService() {
                 title = title,
                 message = body,
                 imageUrl = "",
-                destination = message.data[NotificationNavigationController.EXTRA_DESTINATION],
-                dreamId = message.data[NotificationNavigationController.EXTRA_DREAM_ID],
                 isWorld = false
             )
         }
