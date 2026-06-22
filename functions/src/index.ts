@@ -402,18 +402,19 @@ async function uploadGeneratedImage(
 ): Promise<string> {
     const bucket = admin.storage().bucket();
     const file = bucket.file(storagePath);
+    const downloadToken = crypto.randomUUID();
     await file.save(payload.imageBytes, {
         metadata: {
             contentType: payload.contentType,
             cacheControl: "public,max-age=31536000",
+            metadata: {
+                firebaseStorageDownloadTokens: downloadToken,
+            },
         },
     });
-    const [url] = await file.getSignedUrl({
-        action: "read",
-        expires: "03-01-2500",
-    });
-    const separator = url.includes("?") ? "&" : "?";
-    return `${url}${separator}v=${Date.now()}&uid=${encodeURIComponent(uid)}`;
+    const encodedPath = encodeURIComponent(storagePath);
+    return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}` +
+        `?alt=media&token=${downloadToken}&v=${Date.now()}&uid=${encodeURIComponent(uid)}`;
 }
 
 async function refundReservedTokensIfNeeded(
