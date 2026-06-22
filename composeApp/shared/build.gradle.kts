@@ -166,6 +166,7 @@ kotlin {
             implementation(libs.credentialsPlayServicesAuth)
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.crashlytics)
+            implementation("com.google.firebase:firebase-messaging")
             implementation(libs.kmpnotifier.push.firebase)
         }
 

@@ -476,6 +476,8 @@ async function notifyGeneratedImageReady(
         const body = isWorld ? "Your new world painting has been saved." : "Your generated dream image has been saved.";
         const data: Record<string, string> = {
             [NOTIFICATION_DESTINATION_KEY]: destination,
+            title,
+            body,
             imageUrl,
             targetId,
             type,
@@ -486,17 +488,17 @@ async function notifyGeneratedImageReady(
 
         await admin.messaging().sendEachForMulticast({
             tokens,
-            notification: { title, body },
             data,
             android: {
-                notification: {
-                    channelId: "dream_journal_channel",
-                    imageUrl,
-                },
+                priority: "high",
             },
             apns: {
                 payload: {
                     aps: {
+                        alert: {
+                            title,
+                            body,
+                        },
                         sound: "default",
                         mutableContent: true,
                     },
