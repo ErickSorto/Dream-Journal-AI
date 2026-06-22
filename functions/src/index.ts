@@ -311,13 +311,15 @@ async function generateDreamTitleText(dreamText: string): Promise<string> {
 async function generateDreamImageDetails(dreamText: string, cost: number): Promise<string> {
     const content = sanitizePromptText(dreamText, "A peaceful remembered dream");
     const prompt = cost <= 1 ?
-        `In one concise, third-person sentence (12-24 words), describe the dream's setting, mood, and any standout objects or figures. Focus on creating a clear, neutral visual foundation.\n\n${content}` :
-        `Analyze the dream content. Your goal is to create a single, surreal, yet beautiful and coherent image prompt.\n\n` +
+        `In one concise, third-person sentence (12-24 words), describe the dream's setting, mood, and standout objects or figures as a beautiful, luminous image prompt. Keep the dream's meaning intact, but prefer clear readable scenery, graceful composition, gentle atmosphere, and balanced light. Avoid making the scene dark, muddy, gloomy, or underexposed unless the dream clearly requires it. Respond only with the sentence, no labels or markdown.\n\n${content}` :
+        `Analyze the dream content. Your goal is to create a single, surreal, beautiful, and coherent image prompt that preserves the dream's core symbols and emotional interpretation.\n\n` +
         `1. Identify key visual symbols from the dream.\n` +
         `2. Choose a dominant, unifying scene.\n` +
-        `3. Compose one vivid sentence (12-24 words) that describes a blended scene.\n\n` +
+        `3. Compose one vivid sentence (16-32 words) that describes a blended scene with graceful composition, luminous atmosphere, balanced exposure, and vivid but tasteful color.\n` +
+        `4. Avoid dull, muddy, overly dark, underexposed, or murky output unless darkness is essential to the dream. Even night scenes should have readable moonlight, lantern glow, stars, reflections, or soft rim light.\n\n` +
         `Crucially, ensure the final sentence is safe for image generation. Avoid sensitive terms.\n\n` +
-        `Dream Content:\n${content}`;
+        `Dream Content:\n${content}\n\n` +
+        `Respond only with the final image prompt sentence. Do not include analysis, bullets, labels, quotes, or markdown.`;
 
     return openAIChat(prompt, 2000, cost <= 1 ? "gpt-5.4-mini" : "gpt-5.5", cost <= 1 ? "low" : "high");
 }
@@ -331,20 +333,22 @@ async function generateDreamWorldSummary(dreams: FirebaseFirestore.DocumentData[
     }).join("\n\n");
 
     const prompt = `Analyze the recurring themes and objects in the following dream entries. ` +
-        `Your goal is to create a single, surreal, yet beautiful and coherent image prompt.\n\n` +
+        `Your goal is to create a single, surreal, beautiful, and coherent image prompt that preserves the dream pattern while making the world feel inviting, luminous, and visually rich.\n\n` +
         `1. Identify 4-5 key visual symbols from the dreams.\n` +
         `2. Choose ONE or TWO dominant, unifying scenes from the dreams.\n` +
-        `3. Compose one vivid sentence that describes a blended scene. Place the key symbols logically within this combined environment.\n\n` +
+        `3. Compose one vivid sentence that describes a blended scene. Place the key symbols logically within this combined environment.\n` +
+        `4. Prefer balanced exposure, clear readable details, atmospheric glow, layered depth, vivid natural accents, and elegant composition. Avoid dull, muddy, overly dark, or underexposed worlds unless darkness is essential to the dreams.\n\n` +
         `Crucially, ensure the final sentence is safe for image generation. Avoid sensitive terms.\n\n` +
         `Dream Entries:\n${sanitizePromptText(dreamContent, "A collection of remembered dreams")}\n\n` +
-        `Respond only with the single, safe, and coherent sentence.`;
+        `Respond only with the single, safe, coherent image prompt sentence. Do not include analysis, bullets, labels, quotes, or markdown.`;
 
     return openAIChat(prompt, 5000, cost <= 1 ? "gpt-5.4-mini" : "gpt-5.5", "high");
 }
 
 async function generateOpenAIImage(details: string, style: string, cost: number): Promise<OpenAIImagePayload> {
     const apiKey = await getOpenAISecretKey();
-    const finalPrompt = `${sanitizePromptText(details, "A beautiful, peaceful dream scene")}, ${style || "dreamlike cinematic illustration"}`;
+    const beautyDirection = "beautiful dream artwork, luminous balanced exposure, clear readable details, elegant composition, layered depth, soft atmospheric glow, vivid natural color accents, gentle highlights, avoid dull muddy palettes, avoid crushed blacks, avoid overly dark or underexposed lighting unless explicitly required by the dream";
+    const finalPrompt = `${sanitizePromptText(details, "A beautiful, peaceful dream scene")}, ${style || "dreamlike cinematic illustration"}, ${beautyDirection}`;
     const primaryModel = cost <= 1 ? "gpt-image-1-mini" : "gpt-image-2";
     const fallbackModel = cost <= 1 ? "gpt-image-1-mini" : "gpt-image-1";
 
