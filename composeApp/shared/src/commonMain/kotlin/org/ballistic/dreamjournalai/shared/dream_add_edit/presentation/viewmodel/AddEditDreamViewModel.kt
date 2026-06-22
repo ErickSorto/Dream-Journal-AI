@@ -25,6 +25,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -711,38 +712,40 @@ class AddEditDreamViewModel(
 
     @OptIn(ExperimentalUuidApi::class)
     private fun requestImage(style: String, cost: Int) = viewModelScope.launch {
-        _addEditDreamState.update { it.copy(isGeneratingAI = true) }
-        updateAIState(AIType.IMAGE) { copy(isLoading = true) }
-
-        val saved = performSave(
-            onSaveSuccess = {},
-            shouldRunCategorization = false
-        )
-        if (!saved) {
-            updateAIState(AIType.IMAGE) { copy(isLoading = false) }
-            _addEditDreamState.update { it.copy(isGeneratingAI = false) }
-            return@launch
+        showSnack(StringValue.DynamicString("Painting in background"))
+        _addEditDreamState.update {
+            it.copy(
+                dreamHasChanged = false,
+                isGeneratingAI = false
+            )
         }
+        updateAIState(AIType.IMAGE) { copy(isLoading = false) }
 
-        val dreamId = addEditDreamState.value.dreamInfo.dreamId
-        if (dreamId.isNullOrBlank()) {
-            showSnack(StringValue.Resource(Res.string.ai_image_error, "Missing dream id"))
-            updateAIState(AIType.IMAGE) { copy(isLoading = false) }
-            _addEditDreamState.update { it.copy(isGeneratingAI = false) }
-            return@launch
-        }
-
-        when (val enqueue = aiService.enqueueDreamImageGeneration(dreamId, style, cost)) {
-            is AIResult.Success -> {
-                updateAIState(AIType.IMAGE) { copy(isLoading = false) }
-                showSnack(StringValue.DynamicString("Your dream image is being painted in the background."))
+        withContext(NonCancellable) {
+            val saved = performSave(
+                onSaveSuccess = {},
+                shouldRunCategorization = false
+            )
+            if (!saved) {
+                _addEditDreamState.update { it.copy(dreamHasChanged = true) }
+                return@withContext
             }
-            is AIResult.Error -> {
-                showSnack(StringValue.Resource(Res.string.ai_image_error, enqueue.message))
-                updateAIState(AIType.IMAGE) { copy(isLoading = false) }
+
+            val dreamId = addEditDreamState.value.dreamInfo.dreamId
+            if (dreamId.isNullOrBlank()) {
+                _addEditDreamState.update { it.copy(dreamHasChanged = true) }
+                showSnack(StringValue.Resource(Res.string.ai_image_error, "Missing dream id"))
+                return@withContext
+            }
+
+            when (val enqueue = aiService.enqueueDreamImageGeneration(dreamId, style, cost)) {
+                is AIResult.Success -> Unit
+                is AIResult.Error -> {
+                    _addEditDreamState.update { it.copy(dreamHasChanged = true) }
+                    showSnack(StringValue.Resource(Res.string.ai_image_error, enqueue.message))
+                }
             }
         }
-        _addEditDreamState.update { it.copy(isGeneratingAI = false) }
     }
 }
 
