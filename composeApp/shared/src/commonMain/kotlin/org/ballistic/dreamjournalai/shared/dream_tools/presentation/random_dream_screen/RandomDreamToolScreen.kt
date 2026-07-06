@@ -78,6 +78,7 @@ fun SharedTransitionScope.RandomDreamToolScreen(
 
     var isAnimationFinished by remember { mutableStateOf(false) }
     var isGlowVisible by remember { mutableStateOf(false) }
+    var hasNavigatedToDream by remember { mutableStateOf(false) }
 
     LaunchedEffect(isAnimationFinished) {
         if (isAnimationFinished) {
@@ -95,7 +96,10 @@ fun SharedTransitionScope.RandomDreamToolScreen(
         snapshotFlow { randomDreamToolScreenState.randomDream }
             .collect { randomDream ->
                 randomDream?.let { dream ->
-                    onNavigateToDream(dream.id, dream.backgroundImage)
+                    if (!hasNavigatedToDream) {
+                        hasNavigatedToDream = true
+                        onNavigateToDream(dream.id, dream.backgroundImage)
+                    }
                 }
             }
     }

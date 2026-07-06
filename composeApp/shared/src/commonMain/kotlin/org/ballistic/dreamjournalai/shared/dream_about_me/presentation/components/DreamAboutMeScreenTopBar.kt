@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import co.touchlab.kermit.Logger
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
+import org.ballistic.dreamjournalai.shared.dream_main.presentation.components.NotificationPermissionMenuIcon
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 
@@ -53,8 +54,7 @@ fun DreamAboutMeScreenTopBar(
                     DrawerController.send(DrawerCommand.Open)
                 }
             }) {
-                Icon(
-                    Icons.Filled.Menu,
+                NotificationPermissionMenuIcon(
                     contentDescription = "Menu",
                     tint = White
                 )

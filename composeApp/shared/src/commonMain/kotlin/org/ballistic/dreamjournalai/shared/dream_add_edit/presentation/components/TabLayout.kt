@@ -52,6 +52,7 @@ import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.Dre
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.InfoPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.aipage.AIPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.dictionary_page.WordPage
+import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIType
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
@@ -68,6 +69,7 @@ fun SharedTransitionScope.TabLayout(
     onAddEditDreamEvent: (AddEditDreamEvent) -> Unit,
     keyboardController: SoftwareKeyboardController?,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    isExistingDream: Boolean = false,
     onImageClick: (String) -> Unit,
 ) {
     val pages = AddEditPages.entries.map { it }
@@ -188,6 +190,8 @@ fun SharedTransitionScope.TabLayout(
                     isTranscribing = addEditDreamState.isTranscribing,
                     isUserAnonymous = addEditDreamState.isUserAnonymous,
                     audioTranscription = addEditDreamState.dreamInfo.dreamAudioTranscription,
+                    isExistingDream = isExistingDream,
+                    isImageGenerationPending = addEditDreamState.aiStates[AIType.IMAGE]?.isLoading == true,
                     snackBarState = {
                         scope.launch {
                             SnackbarController.sendEvent(
@@ -202,10 +206,8 @@ fun SharedTransitionScope.TabLayout(
                         }
                     },
                     animateToPage = { index ->
-                        scope.launch {
-                            pagerState.animateScrollToPage(1)
-                            pagerState2.animateScrollToPage(index)
-                        }
+                        pagerState.animateScrollToPage(1)
+                        pagerState2.animateScrollToPage(index)
                     },
                     onAddEditDreamEvent = onAddEditDreamEvent,
                 )

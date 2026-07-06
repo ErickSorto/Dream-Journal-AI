@@ -1,6 +1,6 @@
-platform :ios, '13.0'
+platform :ios, '16.0'
 
-# Use dynamic frameworks to avoid missing symbol issues with certain pods like RevenueCat
+# Use dynamic frameworks to keep CocoaPods linkage compatible with the shared KMP module.
 use_frameworks! :linkage => :dynamic
 
 inhibit_all_warnings!
@@ -9,16 +9,17 @@ target 'iosApp' do
   # Local Compose shared module
   pod 'ComposeApp', :path => '../composeApp/shared'
 
-  # RevenueCat SDK
-  pod 'RevenueCat'
   # Firebase
-#  pod 'FirebaseAnalytics'
-#  pod 'FirebaseAuth'
-#  pod 'FirebaseFirestore'
-#  pod 'FirebaseFunctions'
-#  pod 'FirebaseStorage'
-#  pod 'Google-Mobile-Ads-SDK'
+  pod 'FirebaseCore', '11.15.0'
+  pod 'FirebaseAuth', '11.15.0'
+  pod 'FirebaseFirestore', '11.15.0'
+  pod 'FirebaseFunctions', '11.15.0'
+  pod 'FirebaseMessaging', '11.15.0'
+  pod 'FirebaseStorage', '11.15.0'
+  pod 'FirebaseCrashlytics', '11.15.0'
+  pod 'FirebaseAnalytics', '11.15.0'
   pod 'GoogleSignIn'
+  pod 'Google-Mobile-Ads-SDK'
 
 end
 
@@ -27,12 +28,78 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
       config.build_settings['SWIFT_VERSION'] = '5.9'
-    end
-
-    if target.name == 'ComposeApp'
-      target.build_configurations.each do |config|
+      if target.name == 'ComposeApp'
         config.build_settings.delete('ASSETCATALOG_COMPILER_APPICON_NAME')
       end
     end
+
+  end
+
+  google_utilities_modulemap = File.join(
+    installer.sandbox.root.to_s,
+    'Target Support Files',
+    'GoogleUtilities',
+    'GoogleUtilities.modulemap'
+  )
+  if File.exist?(google_utilities_modulemap)
+    google_utilities_modules = {
+      'GoogleUtilities_AppDelegateSwizzler' => [
+        'GULAppDelegateSwizzler.h',
+        'GULApplication.h',
+        'GULSceneDelegateSwizzler.h'
+      ],
+      'GoogleUtilities_Environment' => [
+        'GULAppEnvironmentUtil.h',
+        'GULKeychainStorage.h',
+        'GULKeychainUtils.h',
+        'GULNetworkInfo.h'
+      ],
+      'GoogleUtilities_Logger' => [
+        'GULLogger.h',
+        'GULLoggerLevel.h'
+      ],
+      'GoogleUtilities_MethodSwizzler' => [
+        'GULOriginalIMPConvenienceMacros.h',
+        'GULSwizzler.h'
+      ],
+      'GoogleUtilities_Network' => [
+        'GULMutableDictionary.h',
+        'GULNetwork.h',
+        'GULNetworkConstants.h',
+        'GULNetworkLoggerProtocol.h',
+        'GULNetworkMessageCode.h',
+        'GULNetworkURLSession.h'
+      ],
+      'GoogleUtilities_NSData' => [
+        'GULNSData+zlib.h'
+      ],
+      'GoogleUtilities_Reachability' => [
+        'GULReachabilityChecker.h'
+      ],
+      'GoogleUtilities_UserDefaults' => [
+        'GULUserDefaults.h'
+      ]
+    }
+    google_utilities_base_module = <<~MODULEMAP
+      framework module GoogleUtilities {
+        umbrella header "GoogleUtilities-umbrella.h"
+
+        export *
+        module * { export * }
+      }
+    MODULEMAP
+    google_utilities_subspec_modules = google_utilities_modules.map { |module_name, headers|
+        header_lines = headers.map { |header| "  header \"#{header}\"" }.join("\n")
+        <<~MODULE
+          module #{module_name} {
+          #{header_lines}
+            export *
+          }
+        MODULE
+    }.join("\n")
+    File.write(
+      google_utilities_modulemap,
+      google_utilities_base_module + "\n" + google_utilities_subspec_modules
+    )
   end
 end

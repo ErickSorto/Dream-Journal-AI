@@ -1,12 +1,14 @@
 package org.ballistic.dreamjournalai.shared
 
+import androidx.compose.material3.SnackbarDuration
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import org.ballistic.dreamjournalai.shared.core.util.StringValue
 
 data class SnackbarEvent(
     val message: StringValue,
-    val action: SnackbarAction? = null
+    val action: SnackbarAction? = null,
+    val duration: SnackbarDuration = SnackbarDuration.Short,
 )
 
 data class SnackbarAction (

@@ -1,9 +1,14 @@
+@file:OptIn(org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCacheApi::class)
+
+import org.jetbrains.kotlin.gradle.plugin.mpp.DisableCacheInKotlinVersion
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.googleServices)
+    alias(libs.plugins.firebaseCrashlytics)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.stability.analyzer)
@@ -19,6 +24,7 @@ kotlin {
     iosArm64 {
         compilerOptions {
             freeCompilerArgs.add("-Xexpect-actual-classes")
+            freeCompilerArgs.add("-Xdisable-phases=RemoveRedundantCallsToStaticInitializersPhase")
         }
     }
     iosSimulatorArm64 {
@@ -26,14 +32,13 @@ kotlin {
             freeCompilerArgs.add("-Xexpect-actual-classes")
         }
     }
-    // (optional if you test on Intel Mac)
-    // iosX64()
+    // iosX64 is intentionally not enabled: several UI dependencies publish iOS ARM slices only.
 
     cocoapods {
         version = "1.0"
         summary = "Shared Kotlin code for the app"
         homepage = "https.example.com"
-        ios.deploymentTarget = "13.0"
+        ios.deploymentTarget = "16.0"
         // Point to the top-level iOS app Podfile
         podfile = project.file("../../iosApp/Podfile")
 
@@ -49,6 +54,10 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
             linkerOpts.add("-lsqlite3")
+            disableNativeCache(
+                version = DisableCacheInKotlinVersion.`2_4_0`,
+                reason = "Temporary workaround for mpfilepicker Kotlin/Native cache failure on iOS simulator."
+            )
         }
     }
 
@@ -82,9 +91,6 @@ kotlin {
             implementation(libs.mpfilepicker)
 
 
-            //Image
-            implementation(libs.landscapist.coil3)
-
             implementation(libs.kotlinx.serialization.json.v180rc)
 
             //firebase functions
@@ -92,6 +98,7 @@ kotlin {
             implementation(libs.firebaseFunctions)
             implementation(libs.firebaseStorage)
             implementation(libs.firebaseAuth)
+            implementation(libs.firebaseAnalytics)
 
             // koin
             api(libs.koin.core)
@@ -102,13 +109,10 @@ kotlin {
 //            implementation(libs.kmpauth.firebase) //Integrated Authentications with Firebase
 //            implementation(libs.kmpauth.uihelper) //UiHelper SignIn buttons (AppleSignIn, GoogleSignInButton)
 
-            //openai
-            implementation(project.dependencies.platform(libs.openaiClientBom))
-            implementation(libs.openaiClient)
-
             implementation(compose.materialIconsExtended)
 
-            implementation("io.coil-kt.coil3:coil-compose:3.3.0")
+            implementation("io.coil-kt.coil3:coil-compose:3.5.0")
+            implementation("io.coil-kt.coil3:coil-network-ktor3:3.5.0")
 
             implementation(libs.in1.app.review.kmp.google.play)
 
@@ -121,11 +125,10 @@ kotlin {
             implementation(libs.multiplatform.settings.datastore)
             implementation(libs.datastorePreferences)
             implementation(libs.ktor.client.core)
-            implementation(libs.vico.multiplatform)
-            implementation(libs.vico.multiplatform.m3)
+            implementation(libs.vico.compose)
+            implementation(libs.vico.compose.m3)
 
             implementation("co.touchlab:kermit:2.0.8")
-            implementation("network.chaintech:cmpcharts:2.0.6")
         }
 
         commonTest {
@@ -138,6 +141,8 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.accompanistPermissions)
+            implementation(libs.coreKtx)
+            implementation(libs.workRuntimeKtx)
 
 
             //koin
@@ -151,14 +156,14 @@ kotlin {
             implementation(libs.ktor.client.android)
             implementation(libs.ktor.serialization.kotlinx.json)
 
-            implementation("io.coil-kt.coil3:coil-network-ktor3:3.3.0")
-
-
             implementation(libs.playServicesAds)
             implementation(libs.googleid)
             implementation(libs.credentials)
             implementation(libs.credentialsPlayServicesAuth)
-            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.8.0"))
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.crashlytics)
+            implementation("com.google.firebase:firebase-messaging")
+            implementation(libs.kmpnotifier.push.firebase)
         }
 
         iosMain {
@@ -183,7 +188,7 @@ kotlin {
 
 android {
     namespace = "org.ballistic.dreamjournalai.shared"
-    compileSdk = 36
+    compileSdk = 37
 
     sourceSets.getByName("main") {
         manifest.srcFile("src/androidMain/AndroidManifest.xml")
@@ -195,8 +200,8 @@ android {
         applicationId = "org.ballistic.dreamjournalai"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 80
-        versionName = "1.3.4"
+        versionCode = 106
+        versionName = "1.3.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -213,7 +218,7 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
-            isShrinkResources = false
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

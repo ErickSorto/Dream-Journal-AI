@@ -9,5 +9,11 @@ data class DreamWorldPainting(
     val imageUrl: String = "",
     val description: String = "", // The ~30 word summary
     val timestamp: Long = 0L,
-    val date: String = ""
+    val date: String = "",
+    val status: String = "",
+    val jobId: String = "",
+    val errorCode: String = "",
+    val createdAt: Long = 0L,
+    val updatedAt: Long = 0L,
+    val completedAt: Long = 0L
 )

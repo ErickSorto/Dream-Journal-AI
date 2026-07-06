@@ -7,14 +7,19 @@ import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.storage.storage
 import org.ballistic.dreamjournalai.shared.core.data.DictionaryRepositoryImpl
+import org.ballistic.dreamjournalai.shared.core.analytics.AppAnalytics
+import org.ballistic.dreamjournalai.shared.core.analytics.FirebaseAppAnalytics
 import org.ballistic.dreamjournalai.shared.core.domain.DictionaryRepository
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DefaultDreamAIService
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DreamAIService
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamViewModel
+import org.ballistic.dreamjournalai.shared.core.security.DreamTextCipher
+import org.ballistic.dreamjournalai.shared.core.security.PlatformDreamTextCipher
 import org.ballistic.dreamjournalai.shared.dream_authentication.data.repository.AuthRepositoryImpl
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.LoginViewModel
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel.SignupViewModel
+import org.ballistic.dreamjournalai.shared.dream_debug.presentation.viewmodel.DebugToolsViewModel
 import org.ballistic.dreamjournalai.shared.dream_favorites.presentation.viewmodel.DreamFavoriteScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_fullscreen.FullScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_journal_list.data.DreamRepositoryImpl
@@ -27,12 +32,29 @@ import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.Ge
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.GetDream
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.GetDreams
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.viewmodel.DreamJournalListViewModel
+import org.ballistic.dreamjournalai.shared.dream_lessons.data.DailyLessonRepositoryImpl
+import org.ballistic.dreamjournalai.shared.dream_lessons.domain.repository.DailyLessonRepository
+import org.ballistic.dreamjournalai.shared.dream_lessons.presentation.viewmodel.DailyLessonsViewModel
 import org.ballistic.dreamjournalai.shared.dream_main.presentation.viewmodel.MainScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_nightmares.presentation.viewmodel.DreamNightmareScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_notifications.domain.createDataStore
+import org.ballistic.dreamjournalai.shared.dream_notifications.domain.GeneratedArtPushTokenRegistrar
+import org.ballistic.dreamjournalai.shared.dream_notifications.data.repository.NotificationSettingsRepositoryImpl
+import org.ballistic.dreamjournalai.shared.dream_notifications.domain.NotificationSettingsRepository
+import org.ballistic.dreamjournalai.shared.dream_notifications.presentation.viewmodel.NotificationScreenViewModel
+import org.ballistic.dreamjournalai.shared.dream_onboarding.data.DefaultOnboardingPreferencesRepository
+import org.ballistic.dreamjournalai.shared.dream_onboarding.data.OnboardingPreferencesRepository
+import org.ballistic.dreamjournalai.shared.dream_onboarding.domain.FirebaseOnboardingAnalytics
+import org.ballistic.dreamjournalai.shared.dream_onboarding.domain.OnboardingAnalytics
+import org.ballistic.dreamjournalai.shared.dream_premium.data.RevenueCatPremiumPaywallRepository
+import org.ballistic.dreamjournalai.shared.dream_premium.domain.FirebasePremiumAnalytics
+import org.ballistic.dreamjournalai.shared.dream_premium.domain.PremiumAnalytics
+import org.ballistic.dreamjournalai.shared.dream_premium.domain.repository.PremiumPaywallRepository
 import org.ballistic.dreamjournalai.shared.dream_statistics.presentation.viewmodel.DreamStatisticScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_store.data.repository.RevenueCatBillingRepositoryImpl
+import org.ballistic.dreamjournalai.shared.dream_store.domain.FirebaseStoreAnalytics
 import org.ballistic.dreamjournalai.shared.dream_store.domain.repository.BillingRepository
+import org.ballistic.dreamjournalai.shared.dream_store.domain.StoreAnalytics
 import org.ballistic.dreamjournalai.shared.dream_store.presentation.store_screen.viewmodel.StoreScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.DictionaryScreenViewModel
 import org.ballistic.dreamjournalai.shared.dream_tools.data.DreamWorldPaintingRepositoryImpl
@@ -58,8 +80,10 @@ val appModule = module {
     single { Firebase.storage }
 
     single<MassInterpretationRepository> { MassInterpretationRepositoryImpl(get()) }
-    single<DreamRepository> { DreamRepositoryImpl(get()) }
+    single<DreamTextCipher> { PlatformDreamTextCipher() }
+    single<DreamRepository> { DreamRepositoryImpl(get(), get()) }
     single<DreamWorldPaintingRepository> { DreamWorldPaintingRepositoryImpl(get()) }
+    single<DailyLessonRepository> { DailyLessonRepositoryImpl(get()) }
 
     single {
         DreamUseCases(
@@ -73,6 +97,13 @@ val appModule = module {
     }
 
     single<DataStore<Preferences>> { createDataStore() }
+    single<OnboardingPreferencesRepository> { DefaultOnboardingPreferencesRepository(get(), get(), get()) }
+    single<NotificationSettingsRepository> { NotificationSettingsRepositoryImpl(get()) }
+    single { GeneratedArtPushTokenRegistrar() }
+    single<AppAnalytics> { FirebaseAppAnalytics() }
+    single<OnboardingAnalytics> { FirebaseOnboardingAnalytics(get()) }
+    single<PremiumAnalytics> { FirebasePremiumAnalytics(get()) }
+    single<StoreAnalytics> { FirebaseStoreAnalytics(get()) }
 
     // AI service binding
     factory { DefaultDreamAIService(get()) } bind DreamAIService::class
@@ -81,6 +112,9 @@ val appModule = module {
 val billingModule = module {
     single<BillingRepository> {
         RevenueCatBillingRepositoryImpl()
+    }
+    single<PremiumPaywallRepository> {
+        RevenueCatPremiumPaywallRepository()
     }
 }
 
@@ -92,25 +126,33 @@ val viewModelModule = module {
             authRepository = get(),
             dictionaryRepository = get(),
             vibratorUtil = get(),
-            aiService = get()
+            aiService = get(),
+            generatedArtNotificationSender = get()
         )
     }
     viewModelOf(::DreamFavoriteScreenViewModel)
     viewModelOf(::DreamJournalListViewModel)
     viewModelOf(::DreamNightmareScreenViewModel)
-//    viewModelOf(::NotificationScreenViewModel)
+    viewModelOf(::NotificationScreenViewModel)
+    viewModelOf(::DebugToolsViewModel)
     viewModelOf(::StoreScreenViewModel)
     viewModelOf(::DictionaryScreenViewModel)
     viewModelOf(::RandomDreamToolScreenViewModel)
     viewModelOf(::DreamToolsScreenViewModel)
     viewModelOf(::InterpretDreamsViewModel)
     viewModelOf(::PaintDreamWorldViewModel)
+    viewModelOf(::DailyLessonsViewModel)
     viewModel {
         MainScreenViewModel(
             repo = get(),
             vibratorUtil = get(),
             storeLinkOpener = get(),
-            dreamUseCases = get()
+            dreamUseCases = get(),
+            preferences = get(),
+            notificationSettingsRepository = get(),
+            dailyTokenReminderScheduler = get(),
+            dreamReminderScheduler = get(),
+            generatedArtPushTokenRegistrar = get()
         )
     }
     viewModelOf(::LoginViewModel)
@@ -127,5 +169,5 @@ val viewModelModule = module {
 //}
 
 val signInModule = module {
-    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
+    single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
 }

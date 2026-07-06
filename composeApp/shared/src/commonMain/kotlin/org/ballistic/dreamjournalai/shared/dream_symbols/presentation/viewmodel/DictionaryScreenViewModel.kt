@@ -15,6 +15,7 @@ import dreamjournalai.composeapp.shared.generated.resources.dismiss_action
 import dreamjournalai.composeapp.shared.generated.resources.error_message_template
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,6 +46,8 @@ class DictionaryScreenViewModel(
 
     @OptIn(ExperimentalFoundationApi::class)
     val searchTextFieldState: StateFlow<TextFieldState> = _searchTextFieldState.asStateFlow()
+
+    private var dreamTokensJob: Job? = null
 
     fun onEvent(event: SymbolEvent) = viewModelScope.launch {
         when (event) {
@@ -114,23 +117,25 @@ class DictionaryScreenViewModel(
                 }
             }
             is SymbolEvent.GetDreamTokens -> {
-                viewModelScope.launch {
-                    authRepository.addDreamTokensFlowListener().collect { resource ->
-                        when (resource) {
-                            is Resource.Success -> {
-                                _symbolScreenState.update {
-                                    it.copy(
-                                        dreamTokens = resource.data?.toInt() ?: 0
-                                    )
+                if (dreamTokensJob?.isActive != true) {
+                    dreamTokensJob = viewModelScope.launch {
+                        authRepository.addDreamTokensFlowListener().collect { resource ->
+                            when (resource) {
+                                is Resource.Success -> {
+                                    _symbolScreenState.update {
+                                        it.copy(
+                                            dreamTokens = resource.data?.toInt() ?: 0
+                                        )
+                                    }
                                 }
-                            }
 
-                            is Resource.Error -> {
-                                // Handle error
-                            }
+                                is Resource.Error -> {
+                                    // Handle error
+                                }
 
-                            is Resource.Loading -> {
-                                // Handle loading state if needed
+                                is Resource.Loading -> {
+                                    // Handle loading state if needed
+                                }
                             }
                         }
                     }

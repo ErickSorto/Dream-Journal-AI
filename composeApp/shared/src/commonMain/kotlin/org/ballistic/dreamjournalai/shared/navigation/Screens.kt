@@ -4,9 +4,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shop
 import androidx.compose.material.icons.filled.Upload
@@ -19,11 +22,16 @@ import dreamjournalai.composeapp.shared.generated.resources.DreamStatisticalAnal
 import dreamjournalai.composeapp.shared.generated.resources.DreamWorldTool
 import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.account_settings
+import dreamjournalai.composeapp.shared.generated.resources.bottom_nav_dreams
+import dreamjournalai.composeapp.shared.generated.resources.bottom_nav_lessons
+import dreamjournalai.composeapp.shared.generated.resources.daily_lessons
 import dreamjournalai.composeapp.shared.generated.resources.dream_tools
+import dreamjournalai.composeapp.shared.generated.resources.developer_tools
 import dreamjournalai.composeapp.shared.generated.resources.export_dreams
 import dreamjournalai.composeapp.shared.generated.resources.favorites
 import dreamjournalai.composeapp.shared.generated.resources.my_dreams
 import dreamjournalai.composeapp.shared.generated.resources.nightmares
+import dreamjournalai.composeapp.shared.generated.resources.notification_settings
 import dreamjournalai.composeapp.shared.generated.resources.rate_this_app
 import dreamjournalai.composeapp.shared.generated.resources.statistics
 import dreamjournalai.composeapp.shared.generated.resources.store
@@ -55,10 +63,29 @@ sealed class Route{
     data object MainScreen : Route()
 
     @Serializable
-    data object OnboardingScreen : Route()
+    data class OnboardingScreen(
+        val forceOnboarding: Boolean = false,
+        val debugStartAtLastPage: Boolean = false,
+        val showAuthImmediately: Boolean = false,
+    ) : Route()
 
     @Serializable
-    data object StoreScreen : Route()
+    data object AuthScreen : Route()
+
+    @Serializable
+    data class StoreScreen(val initialPage: StoreInitialPage = StoreInitialPage.Default) : Route()
+
+    @Serializable
+    data object DailyTokensScreen : Route()
+
+    @Serializable
+    data object DailyLessonsScreen : Route()
+
+    @Serializable
+    data class DailyLessonDetailScreen(
+        val lessonId: String,
+        val initialImageUrl: String = "",
+    ) : Route()
 
     @Serializable
     data object Favorites : Route()
@@ -86,6 +113,9 @@ sealed class Route{
 
     @Serializable
     data object NotificationSettings : Route()
+
+    @Serializable
+    data object DeveloperTools : Route()
 
     @Serializable
     data object Nightmares : Route()
@@ -223,11 +253,13 @@ enum class DreamDrawable {
 
 enum class DrawerNavigation(val title: StringResource?, val icon: ImageVector, val route: Route){
     DreamJournalScreen(Res.string.my_dreams, Icons.Filled.Book, Route.DreamJournalScreen),
-    StoreScreen(Res.string.store, Icons.Default.Shop, Route.StoreScreen),
+    StoreScreen(Res.string.store, Icons.Default.Shop, Route.StoreScreen()),
+    DailyLessons(Res.string.daily_lessons, Icons.Default.Lightbulb, Route.DailyLessonsScreen),
     Favorites(Res.string.favorites, Icons.Default.Favorite, Route.Favorites),
     AccountSettings(Res.string.account_settings, Icons.Default.Settings, Route.AccountSettings),
     Statistics(Res.string.statistics, Icons.Default.BarChart, Route.Statistics),
-  //  NotificationSettings("Notification Settings", Icons.Default.Notifications, Route.NotificationSettings),
+    NotificationSettings(Res.string.notification_settings, Icons.Default.Notifications, Route.NotificationSettings),
+    DeveloperTools(Res.string.developer_tools, Icons.Default.BugReport, Route.DeveloperTools),
     Nightmares(Res.string.nightmares, Icons.Default.ErrorOutline, Route.Nightmares),
     Symbol(Res.string.symbols, Icons.AutoMirrored.Filled.List, Route.Symbol),
     RateMyApp(Res.string.rate_this_app, Icons.Default.Favorite, Route.RateMyApp),
@@ -236,8 +268,121 @@ enum class DrawerNavigation(val title: StringResource?, val icon: ImageVector, v
 }
 
 enum class BottomNavigationRoutes(val title: StringResource?, val icon: ImageVector, val route: Route){
-    DreamJournalScreen(Res.string.my_dreams, Icons.Filled.Book, Route.DreamJournalScreen),
-    StoreScreen(Res.string.store, Icons.Default.Shop, Route.StoreScreen)
+    DreamJournalScreen(Res.string.bottom_nav_dreams, Icons.Filled.Book, Route.DreamJournalScreen),
+    DailyLessons(Res.string.bottom_nav_lessons, Icons.Default.Lightbulb, Route.DailyLessonsScreen),
+    DreamToolGraphScreen(Res.string.dream_tools, Icons.Default.Build, Route.DreamToolGraphScreen),
+    StoreScreen(Res.string.store, Icons.Default.Shop, Route.StoreScreen())
+}
+
+internal fun String?.matchesRoute(route: Route): Boolean {
+    if (this == null) return false
+
+    val qualifiedName = route::class.qualifiedName
+    val simpleName = route::class.simpleName
+    val routeWithoutArgs = substringBefore("?").substringBefore("/")
+    val nestedSimpleName = simpleName?.let { "${'$'}$it" }
+
+    return this == route.toString() ||
+        (qualifiedName != null && (
+            this == qualifiedName ||
+                routeWithoutArgs == qualifiedName ||
+                startsWith("$qualifiedName/") ||
+                startsWith("$qualifiedName?")
+            )) ||
+        (simpleName != null && (
+            this == simpleName ||
+                routeWithoutArgs == simpleName ||
+                endsWith(".$simpleName") ||
+                routeWithoutArgs.endsWith(".$simpleName") ||
+                contains(".$simpleName/") ||
+                contains(".$simpleName?")
+            )) ||
+        (nestedSimpleName != null && (
+            endsWith(nestedSimpleName) ||
+                routeWithoutArgs.endsWith(nestedSimpleName) ||
+                contains("$nestedSimpleName/") ||
+                contains("$nestedSimpleName?")
+            ))
+}
+
+internal fun String?.matchesDrawerRoute(route: Route): Boolean {
+    return when (route) {
+        Route.DailyLessonsScreen -> matchesRoute(Route.DailyLessonsScreen) ||
+            matchesRoute(Route.DailyLessonDetailScreen(lessonId = ""))
+        Route.DreamToolGraphScreen -> matchesRoute(Route.DreamToolGraphScreen) ||
+            matchesRoute(Route.Tools) ||
+            matchesRoute(Route.AnalyzeMultipleDreams) ||
+            matchesRoute(Route.PaintDreamWorldDetails) ||
+            matchesRoute(Route.PaintDreamWorld) ||
+            matchesRoute(Route.DynamicLucidChecker) ||
+            matchesToolRoute()
+        else -> matchesRoute(route)
+    }
+}
+
+private fun String?.matchesToolRoute(): Boolean {
+    if (this == null) return false
+    return contains("ToolRoute.") ||
+        contains("ToolRoute\$") ||
+        contains("ToolRoute/")
+}
+
+internal fun String?.matchesBottomRoute(route: Route): Boolean {
+    return when (route) {
+        Route.DreamJournalScreen -> matchesRoute(Route.DreamJournalScreen)
+        Route.DreamToolGraphScreen -> matchesRoute(Route.DreamToolGraphScreen)
+        Route.DailyLessonsScreen -> matchesRoute(Route.DailyLessonsScreen) ||
+            matchesRoute(Route.DailyLessonDetailScreen(lessonId = ""))
+        is Route.StoreScreen -> matchesRoute(Route.StoreScreen())
+        else -> false
+    }
+}
+
+internal fun Route.toBottomNavigationRoute(): BottomNavigationRoutes? {
+    return when (this) {
+        Route.DreamJournalScreen -> BottomNavigationRoutes.DreamJournalScreen
+        Route.DreamToolGraphScreen -> BottomNavigationRoutes.DreamToolGraphScreen
+        Route.DailyLessonsScreen,
+        is Route.DailyLessonDetailScreen -> BottomNavigationRoutes.DailyLessons
+        is Route.StoreScreen -> BottomNavigationRoutes.StoreScreen
+        else -> null
+    }
+}
+
+internal fun String?.toBottomNavigationRoute(): BottomNavigationRoutes? {
+    return BottomNavigationRoutes.entries.firstOrNull { matchesBottomRoute(it.route) }
+}
+
+internal fun Route.toDrawerNavigationRoute(): DrawerNavigation? {
+    return when (this) {
+        Route.DreamJournalScreen -> DrawerNavigation.DreamJournalScreen
+        Route.DreamToolGraphScreen,
+        Route.Tools,
+        Route.AnalyzeMultipleDreams,
+        Route.PaintDreamWorldDetails,
+        Route.PaintDreamWorld,
+        Route.DynamicLucidChecker -> DrawerNavigation.DreamToolGraphScreen
+        Route.DailyLessonsScreen,
+        is Route.DailyLessonDetailScreen -> DrawerNavigation.DailyLessons
+        is Route.StoreScreen -> DrawerNavigation.StoreScreen
+        Route.Favorites -> DrawerNavigation.Favorites
+        Route.AccountSettings -> DrawerNavigation.AccountSettings
+        Route.Statistics -> DrawerNavigation.Statistics
+        Route.NotificationSettings -> DrawerNavigation.NotificationSettings
+        Route.DeveloperTools -> DrawerNavigation.DeveloperTools
+        Route.Nightmares -> DrawerNavigation.Nightmares
+        Route.Symbol -> DrawerNavigation.Symbol
+        Route.RateMyApp -> DrawerNavigation.RateMyApp
+        Route.ExportDreams -> DrawerNavigation.ExportDreams
+        else -> null
+    }
+}
+
+@Serializable
+enum class StoreInitialPage {
+    Default,
+    Premium,
+    DreamTokens
 }
 
 

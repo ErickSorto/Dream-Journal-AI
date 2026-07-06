@@ -104,6 +104,7 @@ fun ConfirmDeleteAccountDialog(
                         password = password,
                         onValueChange = onPasswordChange,
                         forgotPassword = {},
+                        animate = false,
                     )
                     if (password.isBlank()) {
                         Spacer(Modifier.height(6.dp))

@@ -44,6 +44,18 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <service
+            android:name="com.mmk.kmpnotifier.firebase.MyFirebaseMessagingService"
+            tools:node="remove" />
+
+        <service
+            android:name="org.ballistic.dreamjournalai.shared.dream_notifications.data.GeneratedArtFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

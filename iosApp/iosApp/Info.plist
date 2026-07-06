@@ -4,6 +4,8 @@
 <dict>
 	<key>GIDServerClientID</key>
 	<string>433518106186-hvpaq6sujugct13lifnh6k32pmffoni8.apps.googleusercontent.com</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>GIDClientID</key>
 	<string>433518106186-qv9arc651l0dntrord73ejdkjqeuvkor.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
@@ -17,8 +19,12 @@
 	</array>
 	<key>CFBundleExecutable</key>
 	<string>iosApp</string>
+	<key>CFBundleDisplayName</key>
+	<string>DreamNorth</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon60x60</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.ballistic.dreamjournalai</string>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -26,9 +32,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.2.8</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>71</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
@@ -68,7 +74,7 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-8710979310678386~6624874860</string>
+	<string>ca-app-pub-8710979310678386~6796119425</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

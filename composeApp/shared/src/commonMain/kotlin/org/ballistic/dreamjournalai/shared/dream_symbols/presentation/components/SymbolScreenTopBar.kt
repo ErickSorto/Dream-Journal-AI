@@ -41,6 +41,7 @@ import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.TransparentHintTextField
+import org.ballistic.dreamjournalai.shared.dream_main.presentation.components.NotificationPermissionMenuIcon
 import org.ballistic.dreamjournalai.shared.dream_symbols.domain.SymbolEvent
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.SymbolScreenState
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
@@ -113,8 +114,7 @@ fun SymbolScreenTopBar(
                     DrawerController.send(DrawerCommand.Open)
                 }
             }) {
-                Icon(
-                    Icons.Filled.Menu,
+                NotificationPermissionMenuIcon(
                     contentDescription = stringResource(Res.string.menu),
                     tint = OriginalXmlColors.White
                 )

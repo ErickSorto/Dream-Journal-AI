@@ -45,6 +45,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -95,6 +96,21 @@ fun SharedTransitionScope.AIPage(
     val flagContentBottomSheetState = remember { mutableStateOf(false) }
     val infiniteTransition = rememberInfiniteTransition(label = "")
     val scope = rememberCoroutineScope()
+    val isImageGenerationPending = addEditDreamState.aiStates[AIType.IMAGE]?.isLoading == true
+
+    fun showImageGenerationPendingSnack() {
+        scope.launch {
+            SnackbarController.sendEvent(
+                SnackbarEvent(
+                    message = StringValue.DynamicString("Painting in background"),
+                    action = SnackbarAction(
+                        name = StringValue.Resource(Res.string.dismiss),
+                        action = {}
+                    )
+                )
+            )
+        }
+    }
 
     if (flagContentBottomSheetState.value) {
         ActionBottomSheet(
@@ -118,7 +134,9 @@ fun SharedTransitionScope.AIPage(
                 imageStyle = addEditDreamState.imageStyle,
                 onDreamTokenClick = { amount, style ->
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
-                    if (dreamTokens < amount) {
+                    if (isImageGenerationPending) {
+                        showImageGenerationPendingSnack()
+                    } else if (dreamTokens < amount) {
                         scope.launch {
                             SnackbarController.sendEvent(
                                 SnackbarEvent(
@@ -143,12 +161,16 @@ fun SharedTransitionScope.AIPage(
                 },
                 onAdClick = {
                     onAddEditDreamEvent(AddEditDreamEvent.SetAIPage(null))
-                    scope.launch {
-                        onAddEditDreamEvent(
-                            AddEditDreamEvent.AdAIImageToggle(
-                                true
+                    if (isImageGenerationPending) {
+                        showImageGenerationPendingSnack()
+                    } else {
+                        scope.launch {
+                            onAddEditDreamEvent(
+                                AddEditDreamEvent.AdAIImageToggle(
+                                    true
+                                )
                             )
-                        )
+                        }
                     }
                 },
                 onClickOutside = {
@@ -400,12 +422,16 @@ fun SharedTransitionScope.AIPage(
                 onAddEditDreamEvent(AddEditDreamEvent.AdAIImageToggle(false))
             },
             onAdReward = {
-                onAddEditDreamEvent(
-                    AddEditDreamEvent.ClickGenerateAIImage(
-                        style = addEditDreamState.imageStyle.promptAffix,
-                        cost = 0
+                if (isImageGenerationPending) {
+                    showImageGenerationPendingSnack()
+                } else {
+                    onAddEditDreamEvent(
+                        AddEditDreamEvent.ClickGenerateAIImage(
+                            style = addEditDreamState.imageStyle.promptAffix,
+                            cost = 0
+                        )
                     )
-                )
+                }
                 onAddEditDreamEvent(AddEditDreamEvent.AdAIImageToggle(false))
             }
         )
@@ -520,14 +546,48 @@ fun SharedTransitionScope.AIPage(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
                 .padding(top = 0.dp, bottom = 8.dp)
-                .clip(
-                    RoundedCornerShape(8.dp)
-                ),
+                .clip(RoundedCornerShape(12.dp)),
             selectedTabIndex = pagerState2.currentPage,
             indicator = {
-                TabRowDefaults.SecondaryIndicator(
-                    color = OriginalXmlColors.White,
-                    modifier = Modifier.tabIndicatorOffset(pagerState2.currentPage)
+                val index = pagerState2.currentPage
+                val currentToolColor = if (canGenerateAI) {
+                    AITool.entries[index].color
+                } else OriginalXmlColors.White
+
+                val animatedColor by animateColorAsState(
+                    targetValue = currentToolColor,
+                    animationSpec = tween(durationMillis = 500), label = ""
+                )
+
+                Box(
+                    Modifier
+                        .tabIndicatorOffset(index, matchContentSize = false)
+                        .fillMaxSize()
+                        .shadow(
+                            elevation = 16.dp,
+                            shape = RoundedCornerShape(12.dp),
+                            spotColor = animatedColor,
+                            ambientColor = animatedColor
+                        )
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    animatedColor.copy(alpha = 0.25f),
+                                    animatedColor.copy(alpha = 0f)
+                                )
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .border(
+                            width = 1.dp,
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    animatedColor.copy(alpha = 0.8f),
+                                    animatedColor.copy(alpha = 0.1f)
+                                )
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
                 )
             },
             divider = {},
@@ -556,7 +616,7 @@ fun SharedTransitionScope.AIPage(
                         if (canGenerateAI) {
                             AITool.entries[index].color
                         } else OriginalXmlColors.White
-                    } else Color.LightGray.copy(alpha = 0.6f),
+                    } else OriginalXmlColors.White.copy(alpha = 0.2f),
                     animationSpec = tween(durationMillis = 500), label = ""
                 )
 
@@ -565,28 +625,6 @@ fun SharedTransitionScope.AIPage(
                     scale.animateTo(
                         targetValue = targetScale,
                         animationSpec = tween(durationMillis = 400)
-                    )
-                }
-
-                val gradientBackground = if (isSelected) {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            OriginalXmlColors.BrighterWhite.copy(alpha = 0.12f),
-                            OriginalXmlColors.BrighterWhite.copy(alpha = 0.02f)
-                        ),
-                        start = Offset(0f, 0f),
-                        end = Offset(100f, 100f)
-                    )
-                } else {
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.1f),
-                            Color.Transparent,
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.1f)
-                        ),
-                        startY = 0f,
-                        endY = Float.POSITIVE_INFINITY
                     )
                 }
 
@@ -616,9 +654,6 @@ fun SharedTransitionScope.AIPage(
                         }
                     },
                     modifier = Modifier
-                        .background(
-                            brush = gradientBackground
-                        )
                 )
             }
         }

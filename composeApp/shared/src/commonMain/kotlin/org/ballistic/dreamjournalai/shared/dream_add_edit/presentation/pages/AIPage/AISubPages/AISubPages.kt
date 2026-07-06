@@ -383,6 +383,7 @@ fun AIQuestionPage(
                 textAlign = TextAlign.Start,
                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 16.dp),
                 color = OriginalXmlColors.White,
+                useMarkdown = true,
                 animate = addEditDreamState.newlyGeneratedAIType == AIType.QUESTION_ANSWER,
                 onAnimationComplete = {
                     onAddEditEvent(AddEditDreamEvent.SetNewlyGeneratedAIType(null))

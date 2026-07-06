@@ -6,6 +6,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -43,13 +44,13 @@ import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -60,7 +61,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -92,7 +92,6 @@ import dreamjournalai.composeapp.shared.generated.resources.dream_world_painting
 import dreamjournalai.composeapp.shared.generated.resources.extracting_themes_emotions
 import dreamjournalai.composeapp.shared.generated.resources.finalizing_masterpiece
 import dreamjournalai.composeapp.shared.generated.resources.next
-import dreamjournalai.composeapp.shared.generated.resources.onboarding_long
 import dreamjournalai.composeapp.shared.generated.resources.paint_dream_world_screen_title
 import dreamjournalai.composeapp.shared.generated.resources.paint_my_first_dream
 import dreamjournalai.composeapp.shared.generated.resources.paint_new_world
@@ -104,13 +103,11 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.BottomNavigationController
 import org.ballistic.dreamjournalai.shared.BottomNavigationEvent
-import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.SnackbarAction
 import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.components.ActionBottomSheet
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
-import org.ballistic.dreamjournalai.shared.core.util.BackHandler
 import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ImageGenerationPopUp
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
@@ -125,6 +122,7 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.LightBlack
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.SkyBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.absoluteValue
@@ -134,6 +132,7 @@ import kotlin.math.absoluteValue
 fun SharedTransitionScope.PaintDreamWorldScreen(
     paintDreamWorldScreenState: PaintDreamWorldScreenState,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    backgroundResource: DrawableResource,
     onEvent: (PaintDreamWorldEvent) -> Unit,
     onMainEvent: (MainScreenEvent) -> Unit,
     onImageClick: (String) -> Unit,
@@ -153,12 +152,6 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
     // Loading Animation State
     val progressAnim = remember { Animatable(0f) }
     var currentMessage by remember { mutableStateOf(analyzingDreamsMessage) }
-
-    if (paintDreamWorldScreenState.isLoading) {
-        BackHandler(true) {
-            // Do nothing
-        }
-    }
 
     // Start loading animation when isLoading becomes true
     LaunchedEffect(paintDreamWorldScreenState.isLoading) {
@@ -183,17 +176,6 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
                     delay(100)
                 }
             }
-        }
-    }
-
-    // Lock the drawer when this screen is active
-    LaunchedEffect(Unit) {
-        DrawerController.disable()
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            DrawerController.enable()
         }
     }
 
@@ -250,6 +232,7 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         BackgroundAnimation(
             shouldAnimate = !paintDreamWorldScreenState.isAnimationPlayed,
+            backgroundResource = backgroundResource,
             onAnimationFinished = {
                 isAnimationFinished.value = true
                 onEvent(PaintDreamWorldEvent.AnimationFinished)
@@ -291,11 +274,10 @@ fun SharedTransitionScope.PaintDreamWorldScreen(
                             }
                         },
                         navigateUp = {
-                            DrawerController.enable()
                             navigateUp()
                         },
                         onEvent = { onEvent(PaintDreamWorldEvent.TriggerVibration) },
-                        enabledBack = !paintDreamWorldScreenState.isLoading,
+                        enabledBack = true,
                     )
                 }
             },
@@ -349,56 +331,54 @@ private data class VerticalBiasAlignment(
 @Composable
 fun BackgroundAnimation(
     shouldAnimate: Boolean,
+    backgroundResource: DrawableResource,
     onAnimationFinished: () -> Unit
 ) {
     // If shouldAnimate is false, we start at final values immediately.
-    val startBias = if (shouldAnimate) 1.19f else -1f
-    val startScale = if (shouldAnimate) 1.22f else 1f
-    val startBlur = if (shouldAnimate) 20f else 0f
+    val startBias = if (shouldAnimate) 1f else -1f
 
     val cameraBiasY = remember { Animatable(startBias) }
-    val cameraScale = remember { Animatable(startScale) }
-    val blurAmount = remember { Animatable(startBlur) }
+    val cameraScale = remember { Animatable(1f) }
 
     val shootingStarTrigger = remember { mutableStateOf(0) }
 
     LaunchedEffect(shouldAnimate) {
         if (shouldAnimate) {
-            delay(500)
-            blurAmount.animateTo(0f, animationSpec = tween(1000, easing = LinearEasing))
+            delay(180)
+            cameraScale.animateTo(
+                targetValue = 1.06f,
+                animationSpec = tween(durationMillis = 1050, easing = FastOutSlowInEasing)
+            )
             launch {
                 cameraBiasY.animateTo(
                     targetValue = -1f,
-                    animationSpec = tween(durationMillis = 2500, easing = LinearEasing)
+                    animationSpec = tween(durationMillis = 3200, easing = FastOutSlowInEasing)
                 )
             }
             launch {
                 cameraScale.animateTo(
                     targetValue = 1f,
-                    animationSpec = tween(durationMillis = 2500, easing = LinearEasing)
+                    animationSpec = tween(durationMillis = 3200, easing = LinearEasing)
                 )
             }
-            delay(2500)
-            delay(500)
+            delay(3500)
             shootingStarTrigger.value += 1
             onAnimationFinished()
         } else {
             // Ensure final state if skipping animation
             cameraBiasY.snapTo(-1f)
             cameraScale.snapTo(1f)
-            blurAmount.snapTo(0f)
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
-            painter = painterResource(Res.drawable.onboarding_long),
+            painter = painterResource(backgroundResource),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             alignment = VerticalBiasAlignment(cameraBiasY.value),
             modifier = Modifier
                 .fillMaxSize()
-                .blur(blurAmount.value.dp)
                 .graphicsLayer {
                     scaleX = cameraScale.value
                     scaleY = cameraScale.value
@@ -585,30 +565,51 @@ fun SharedTransitionScope.ContentState(
                                     .fillMaxWidth()
                                     .padding(12.dp)
                             ) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(LocalPlatformContext.current)
-                                        .data(painting.imageUrl)
-                                        .placeholderMemoryCacheKey("image/${painting.imageUrl}")
-                                        .memoryCacheKey("image/${painting.imageUrl}")
-                                        .crossfade(true)
-                                        .build(),
-                                    contentDescription = stringResource(Res.string.dream_world_painting_content_description),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .aspectRatio(1f)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable { onImageClick(painting.imageUrl) }
-                                        .graphicsLayer {
-                                            scaleX = scale
-                                            scaleY = scale
+                                val paintingPending = painting.imageUrl.isBlank() &&
+                                        (painting.status == "queued" || painting.status == "running")
+                                if (painting.imageUrl.isBlank()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .aspectRatio(1f)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(LightBlack.copy(alpha = 0.95f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (paintingPending) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(42.dp),
+                                                color = White,
+                                                strokeWidth = 4.dp
+                                            )
                                         }
-                                        .sharedElement(
-                                            rememberSharedContentState(key = "image/${painting.imageUrl}"),
-                                            animatedVisibilityScope = animatedVisibilityScope,
-                                            boundsTransform = { _, _ -> tween(500) }
-                                        ),
-                                    contentScale = ContentScale.Crop
-                                )
+                                    }
+                                } else {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(LocalPlatformContext.current)
+                                            .data(painting.imageUrl)
+                                            .placeholderMemoryCacheKey("image/${painting.imageUrl}")
+                                            .memoryCacheKey("image/${painting.imageUrl}")
+                                            .crossfade(true)
+                                            .build(),
+                                        contentDescription = stringResource(Res.string.dream_world_painting_content_description),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .aspectRatio(1f)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable { onImageClick(painting.imageUrl) }
+                                            .graphicsLayer {
+                                                scaleX = scale
+                                                scaleY = scale
+                                            }
+                                            .sharedElement(
+                                                rememberSharedContentState(key = "image/${painting.imageUrl}"),
+                                                animatedVisibilityScope = animatedVisibilityScope,
+                                                boundsTransform = { _, _ -> tween(500) }
+                                            ),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
 
                                 IconButton(
                                     onClick = {

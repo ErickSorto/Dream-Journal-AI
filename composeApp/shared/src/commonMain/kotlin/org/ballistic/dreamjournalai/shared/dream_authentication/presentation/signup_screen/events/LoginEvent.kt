@@ -5,8 +5,10 @@ import dev.gitlive.firebase.auth.AuthCredential
 
 sealed class LoginEvent {
     data class SignInWithGoogle(val googleCredential: AuthCredential) : LoginEvent()
+    data class SignInWithApple(val appleCredential: AuthCredential) : LoginEvent()
     data class LoginWithEmailAndPassword(val email: String, val password: String) : LoginEvent()
     data class SendPasswordResetEmail(val email: String) : LoginEvent()
+    data object ResendEmailVerification : LoginEvent()
     data object ReloadUser : LoginEvent()
     data object SignOut : LoginEvent()
     data class RevokeAccess(val password: String?) : LoginEvent()

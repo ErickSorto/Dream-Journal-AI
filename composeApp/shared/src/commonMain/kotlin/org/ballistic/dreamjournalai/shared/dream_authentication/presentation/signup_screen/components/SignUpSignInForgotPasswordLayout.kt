@@ -1,10 +1,16 @@
 package org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -45,7 +51,11 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun SignupLoginTabLayout(loginViewModelState: LoginViewModelState, onLayoutChange: (LoginEvent) -> Unit) {
     if (!loginViewModelState.isForgotPasswordLayout) {
-        Row {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp)
+        ) {
             LoginOrSignupTab(
                 text = stringResource(Res.string.login),
                 isLoginLayout = loginViewModelState.isLoginLayout,
@@ -55,7 +65,7 @@ fun SignupLoginTabLayout(loginViewModelState: LoginViewModelState, onLayoutChang
                 },
                 modifier = Modifier
                     .weight(1f)
-                    .padding(end = 4.dp, bottom = 8.dp, start = 16.dp)
+                    .padding(end = 4.dp)
             )
             LoginOrSignupTab(
                 text = stringResource(Res.string.signup),
@@ -66,7 +76,7 @@ fun SignupLoginTabLayout(loginViewModelState: LoginViewModelState, onLayoutChang
                 },
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 4.dp, bottom = 8.dp, end = 16.dp)
+                    .padding(start = 4.dp)
             )
         }
     }
@@ -94,7 +104,7 @@ fun ForgotPasswordLayout(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         EmailField(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier,
             email = loginViewModelState.forgotPasswordEmail,
             onValueChange = {
                 authEvent(LoginEvent.EnteredForgotPasswordEmail(it))
@@ -111,8 +121,8 @@ fun ForgotPasswordLayout(
                 authEvent(LoginEvent.SendPasswordResetEmail(loginViewModelState.forgotPasswordEmail))
             },
             modifier = Modifier
-                .fillMaxWidth(.5f)
-                .height(40.dp),
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 52.dp),
             shape = RoundedCornerShape(12.dp),
             colors = buttonColors(
                 containerColor = OriginalXmlColors.LighterYellow
@@ -136,8 +146,8 @@ fun ForgotPasswordLayout(
                 authEvent(LoginEvent.ShowLoginLayout)
             },
             modifier = Modifier
-                .fillMaxWidth(.5f)
-                .height(40.dp),
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 52.dp),
             shape = RoundedCornerShape(12.dp),
             colors = buttonColors(
                 containerColor = OriginalXmlColors.SkyBlue
@@ -162,67 +172,156 @@ fun SignupLayout(
     signupViewModelState: SignupViewModelState,
     isLoginLayout: Boolean,
     onSignupEvent: (SignupEvent) -> Unit,
-    onLoginEvent: (LoginEvent) -> Unit = {}
+    onLoginEvent: (LoginEvent) -> Unit = {},
+    shouldAnimate: Boolean = true,
+    staggerMillis: Long = 220L,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
+    val isEnabled = signupViewModelState.signUpEmail.isNotBlank() &&
+        signupViewModelState.signUpPassword.isNotBlank() &&
+        !signupViewModelState.isLoading &&
+        !signupViewModelState.verificationEmailSent
+    val signupButtonText = if (signupViewModelState.isLoading) {
+        stringResource(Res.string.please_wait_for_the_process_to_finish)
+    } else {
+        stringResource(Res.string.sign_up)
+    }
+    val emailVisible = remember { mutableStateOf(false) }
+    val passwordVisible = remember { mutableStateOf(false) }
+    val buttonVisible = remember { mutableStateOf(false) }
+
+    LaunchedEffect(shouldAnimate, staggerMillis) {
+        if (shouldAnimate) {
+            emailVisible.value = false
+            passwordVisible.value = false
+            buttonVisible.value = false
+            emailVisible.value = true
+            delay(staggerMillis)
+            passwordVisible.value = true
+            delay(staggerMillis)
+            buttonVisible.value = true
+        } else {
+            emailVisible.value = true
+            passwordVisible.value = true
+            buttonVisible.value = true
+        }
+    }
 
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         EmailField(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier,
             email = signupViewModelState.signUpEmail,
             onValueChange = {
                 onSignupEvent(SignupEvent.EnteredSignUpEmail(it))
             },
-            isVisible = remember {
-                mutableStateOf(true)
-            }
+            isVisible = emailVisible,
+            animate = shouldAnimate
         )
 
         PasswordField(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier,
             password = signupViewModelState.signUpPassword,
             onValueChange = { newValue ->
                 onSignupEvent(SignupEvent.EnteredSignUpPassword(newValue))
             },
             forgotPassword = { onLoginEvent(LoginEvent.ShowForgotPasswordLayout) },
             isLoginLayout = isLoginLayout,
-            isVisible = remember {
-                mutableStateOf(true)
-            },
+            isVisible = passwordVisible,
+            animate = shouldAnimate,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
-            modifier = Modifier
-                .fillMaxWidth(.5f)
-                .height(40.dp),
-            onClick = {
-                keyboard?.hide()
-                onSignupEvent(
-                    SignupEvent.SignUpWithEmailAndPassword(
-                        signupViewModelState.signUpEmail,
-                        signupViewModelState.signUpPassword
+        if (shouldAnimate) {
+            AnimatedVisibility(
+                visible = buttonVisible.value,
+                enter = slideInHorizontally(animationSpec = tween(300), initialOffsetX = { 1000 }),
+                exit = fadeOut(animationSpec = tween(220))
+            ) {
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 52.dp),
+                    enabled = isEnabled,
+                    onClick = {
+                        keyboard?.hide()
+                        onSignupEvent(
+                            SignupEvent.SignUpWithEmailAndPassword(
+                                signupViewModelState.signUpEmail,
+                                signupViewModelState.signUpPassword
+                            )
+                        )
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = buttonColors(
+                        containerColor = OriginalXmlColors.SkyBlue
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 4.dp,
+                        pressedElevation = 2.dp
                     )
+                ) {
+                    Text(
+                        text = signupButtonText,
+                        fontSize = 15.sp,
+                        color = Color.Black
+                    )
+                }
+            }
+        } else {
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 52.dp),
+                enabled = isEnabled,
+                onClick = {
+                    keyboard?.hide()
+                    onSignupEvent(
+                        SignupEvent.SignUpWithEmailAndPassword(
+                            signupViewModelState.signUpEmail,
+                            signupViewModelState.signUpPassword
+                        )
+                    )
+                },
+                shape = RoundedCornerShape(12.dp),
+                colors = buttonColors(
+                    containerColor = OriginalXmlColors.SkyBlue
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 4.dp,
+                    pressedElevation = 2.dp
                 )
-            },
-            shape = RoundedCornerShape(12.dp),
-            colors = buttonColors(
-                containerColor = OriginalXmlColors.SkyBlue
-            ),
-            elevation = ButtonDefaults.buttonElevation(
-                defaultElevation = 4.dp,
-                pressedElevation = 2.dp
-            )
-        ) {
-            Text(
-                text = stringResource(Res.string.sign_up),
-                fontSize = 15.sp,
-                color = Color.Black
-            )
+            ) {
+                Text(
+                    text = signupButtonText,
+                    fontSize = 15.sp,
+                    color = Color.Black
+                )
+            }
+        }
+
+        AnimatedVisibility(visible = signupViewModelState.verificationEmailSent) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF143A5A).copy(alpha = 0.62f))
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                Text(
+                    text = stringResource(Res.string.email_verification_sent_login_after),
+                    color = Color.White.copy(alpha = 0.92f),
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            }
         }
     }
 }
@@ -302,7 +401,6 @@ fun LoginLayout(
         EmailField(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .padding(horizontal = 16.dp)
                 .focusable(),
             email = loginViewModelState.loginEmail,
             onValueChange = { onLoginEvent(LoginEvent.EnteredLoginEmail(it)) },
@@ -315,7 +413,6 @@ fun LoginLayout(
         PasswordField(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .padding(horizontal = 16.dp)
                 .focusable(),
             password = loginViewModelState.loginPassword,
             onValueChange = { newValue -> onLoginEvent(LoginEvent.EnteredLoginPassword(newValue)) },
@@ -330,7 +427,7 @@ fun LoginLayout(
         Spacer(modifier = Modifier.height(8.dp))
 
         LoginButton(
-            modifier = Modifier.fillMaxWidth(.5f),
+            modifier = Modifier.fillMaxWidth(),
             loginViewModelState = loginViewModelState,
             onLoginEvent = onLoginEvent,
             isVisible = loginButtonState,
@@ -357,7 +454,7 @@ fun LoginOrSignupTab(
                 if (isLoginLayout && text == loginString || isSignUpLayout && text == signupString) {
                     OriginalXmlColors.LightBlack.copy(alpha = 0.7f)
                 } else {
-                    OriginalXmlColors.LightBlack.copy(alpha = 0.1f)
+                    Color.White.copy(alpha = 0.06f)
                 },
                 shape = RoundedCornerShape(8.dp)
             ),
@@ -375,7 +472,7 @@ fun LoginOrSignupTab(
             },
             fontWeight = FontWeight.Bold,
             maxLines = 1,
-            modifier = Modifier.padding(8.dp, 8.dp, 8.dp, 8.dp)
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
         )
     }
 }

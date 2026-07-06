@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.shared.core.util
 
 import android.app.Activity
+import android.os.Build
 import android.view.View
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -19,14 +20,17 @@ actual fun setTranslucentBars(darkTheme: Boolean) {
             (context as Activity).window.run {
                 statusBarColor = Color.Transparent.toArgb()
                 navigationBarColor = Color.Transparent.toArgb()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    isNavigationBarContrastEnforced = false
+                    isStatusBarContrastEnforced = false
+                }
                 decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
                         View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
                         View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
             }
             ViewCompat.getWindowInsetsController(view)?.run {
-                isAppearanceLightStatusBars = darkTheme
-                isAppearanceLightNavigationBars =
-                    !darkTheme  // Set navigation bar icons to contrast with the background
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
             }
         }
     }

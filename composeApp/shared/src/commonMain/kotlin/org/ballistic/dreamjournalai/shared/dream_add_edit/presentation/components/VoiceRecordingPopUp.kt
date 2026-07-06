@@ -17,10 +17,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,6 +62,7 @@ import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.core.platform.AudioRecorder
 import org.ballistic.dreamjournalai.shared.core.platform.rememberAudioRecorder
 import org.ballistic.dreamjournalai.shared.core.platform.rememberRecordAudioPermissionState
+import org.ballistic.dreamjournalai.shared.core.util.darkModalBottomSheetProperties
 import org.ballistic.dreamjournalai.shared.core.util.formatDuration
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.stringResource
@@ -82,6 +86,7 @@ fun VoiceRecordingPopUp(
     var durationSeconds by remember { mutableLongStateOf(0L) }
     val maxDuration = 1200L // 20 minutes
     val warningThreshold = 300L // 5 minutes remaining
+    var hasSubmittedRecording by remember { mutableStateOf(false) }
 
     // Progress Logic
     val progressAnim = remember { Animatable(0f) }
@@ -179,7 +184,10 @@ fun VoiceRecordingPopUp(
             }
         },
         containerColor = OriginalXmlColors.LightBlack,
-        scrimColor = Color.Transparent
+        contentColor = OriginalXmlColors.White,
+        scrimColor = Color.Transparent,
+        contentWindowInsets = { WindowInsets(0.dp) },
+        properties = darkModalBottomSheetProperties()
     ) {
         Column(
             modifier = Modifier
@@ -299,10 +307,14 @@ fun VoiceRecordingPopUp(
                             }
                             Button(
                                 onClick = {
-                                    val path = recorder.stop()
-                                    onRecordingSaved(path, durationSeconds)
-                                    // Do NOT dismiss here, wait for isTranscribing
+                                    if (!hasSubmittedRecording) {
+                                        hasSubmittedRecording = true
+                                        val path = recorder.stop()
+                                        onRecordingSaved(path, durationSeconds)
+                                        // Do NOT dismiss here, wait for isTranscribing
+                                    }
                                 },
+                                enabled = !hasSubmittedRecording,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(50.dp),
@@ -320,9 +332,13 @@ fun VoiceRecordingPopUp(
                     RecorderState.MAX_REACHED -> {
                         Button(
                             onClick = {
-                                val path = recorder.stop()
-                                onRecordingSaved(path, durationSeconds)
+                                if (!hasSubmittedRecording) {
+                                    hasSubmittedRecording = true
+                                    val path = recorder.stop()
+                                    onRecordingSaved(path, durationSeconds)
+                                }
                             },
+                            enabled = !hasSubmittedRecording,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
@@ -339,6 +355,7 @@ fun VoiceRecordingPopUp(
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
         }
     }
 }

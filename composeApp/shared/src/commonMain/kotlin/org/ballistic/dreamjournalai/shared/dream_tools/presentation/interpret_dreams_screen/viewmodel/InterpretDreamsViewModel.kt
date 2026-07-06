@@ -16,6 +16,7 @@ import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AIResult
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AITextType
+import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DreamAIModels
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DreamAIService
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.Dream
@@ -43,6 +44,8 @@ class InterpretDreamsViewModel(
         _interpretDreamsScreenState.asStateFlow()
 
     private var getDreamJob: Job? = null
+    private var dreamTokensJob: Job? = null
+
     @OptIn(ExperimentalTime::class)
     fun onEvent(event: InterpretDreamsToolEvent) {
         when (event) {
@@ -155,21 +158,23 @@ class InterpretDreamsViewModel(
             }
 
             is InterpretDreamsToolEvent.GetDreamTokens -> {
-                viewModelScope.launch {
-                    authRepository.addDreamTokensFlowListener().collect { resource ->
-                        when (resource) {
-                            is Resource.Success -> {
-                                _interpretDreamsScreenState.update {
-                                    it.copy(dreamTokens = resource.data?.toInt() ?: 0)
+                if (dreamTokensJob?.isActive != true) {
+                    dreamTokensJob = viewModelScope.launch {
+                        authRepository.addDreamTokensFlowListener().collect { resource ->
+                            when (resource) {
+                                is Resource.Success -> {
+                                    _interpretDreamsScreenState.update {
+                                        it.copy(dreamTokens = resource.data?.toIntOrNull() ?: it.dreamTokens)
+                                    }
                                 }
-                            }
 
-                            is Resource.Error -> {
-                                //TODO: Handle error
-                            }
+                                is Resource.Error -> {
+                                    //TODO: Handle error
+                                }
 
-                            is Resource.Loading -> {
-                                //TODO: Handle loading
+                                is Resource.Loading -> {
+                                    //TODO: Handle loading
+                                }
                             }
                         }
                     }
@@ -230,7 +235,7 @@ class InterpretDreamsViewModel(
 
 data class InterpretDreamsScreenState(
     val dreams: List<Dream> = emptyList(),
-    val modelChosen: String = "gpt-5.1",
+    val modelChosen: String = DreamAIModels.TextStandard,
     val authRepository: AuthRepository,
     val massMassInterpretations: List<MassInterpretation> = emptyList(),
     val chosenMassInterpretation: MassInterpretation = MassInterpretation(),

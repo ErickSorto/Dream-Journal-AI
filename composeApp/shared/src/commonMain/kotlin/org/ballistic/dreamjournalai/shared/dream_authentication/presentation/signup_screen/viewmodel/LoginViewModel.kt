@@ -1,6 +1,7 @@
 package org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.viewmodel
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
@@ -90,12 +91,20 @@ class LoginViewModel(
                 signInWithGoogle(event.googleCredential)
             }
 
+            is LoginEvent.SignInWithApple -> {
+                signInWithApple(event.appleCredential)
+            }
+
             is LoginEvent.LoginWithEmailAndPassword -> {
                 loginWithEmailAndPassword(event.email, event.password)
             }
 
             is LoginEvent.SendPasswordResetEmail -> {
                 sendPasswordResetEmail(event.email)
+            }
+
+            is LoginEvent.ResendEmailVerification -> {
+                resendEmailVerification()
             }
 
             is LoginEvent.EnteredLoginEmail -> {
@@ -154,7 +163,7 @@ class LoginViewModel(
 
     private fun <T> handleResource(
         resourceFlow: Flow<Resource<T>>,
-        transform: (T) -> LoginViewModelState,
+        transform: suspend (T) -> LoginViewModelState,
         errorTransform: (StringValue) -> LoginViewModelState, // Changed to StringValue
         loadingTransform: () -> LoginViewModelState
     ) = resourceFlow.onEach { resource ->
@@ -173,23 +182,29 @@ class LoginViewModel(
              resourceFlow = repo.firebaseSignInWithGoogle(googleCredential),
              transform = {
                 Logger.d { "LoginViewModel: firebaseSignInWithGoogle emitted success result, starting transfer/updates" }
-                 viewModelScope.launch {
-                     try{
-                         if (it.second != null && it.second != ""){
-                            Logger.d { "Transferring dreams from anon=${it.second} to new user=${it.first.user?.uid}" }
-                             repo.transferDreamsFromAnonymousToPermanent(
-                                 it.first.user?.uid ?: "", it.second ?: ""
-                             )
-                         }
-                     } catch (_: Exception) {
-                        Logger.e("LoginViewModel") { "transferDreamsFromAnonymousToPermanent failed" }
+                 try {
+                     if (it.second != null && it.second != "") {
+                        Logger.d { "Transferring dreams from anon=${it.second} to new user=${it.first.user?.uid}" }
+                         repo.transferDreamsFromAnonymousToPermanent(
+                             it.first.user?.uid ?: "", it.second ?: ""
+                         )
                      }
+                 } catch (_: Exception) {
+                    Logger.e("LoginViewModel") { "transferDreamsFromAnonymousToPermanent failed" }
                  }
-                 // Update the state to reflect the newly-signed in user and stop loading
-                 // Immediately update the state so UI observers react without waiting.
+
+                 try {
+                    Logger.d { "LoginViewModel: reloading firebase user" }
+                     repo.reloadFirebaseUser()
+                 } catch (_: Exception) {
+                    Logger.e("LoginViewModel") { "reloadFirebaseUser failed" }
+                 }
+
+                 val refreshedUser = Firebase.auth.currentUser ?: it.first.user
+                 Logger.d { "LoginViewModel: refreshedUser=${refreshedUser?.uid}, isAnonymous=${refreshedUser?.isAnonymous}" }
                  _state.update { current ->
                      current.copy(
-                         user = it.first.user?.let { u ->
+                         user = refreshedUser?.let { u ->
                              UserUi(
                                  uid = u.uid,
                                  displayName = u.displayName,
@@ -198,53 +213,21 @@ class LoginViewModel(
                                  photoUrl = null
                              )
                          },
-                         isEmailVerified = it.first.user?.isEmailVerified ?: false,
+                         isEmailVerified = refreshedUser?.isEmailVerified ?: false,
                          isLoggedIn = true,
-                         isUserAnonymous = it.first.user?.isAnonymous ?: false,
-                         isUserExist = it.first.user != null,
+                         isUserAnonymous = refreshedUser?.isAnonymous ?: false,
+                         isUserExist = refreshedUser != null,
                          isLoading = false,
                          signInWithGoogleResponse = SignInUiState.Success(
                              SignInResultUi(
-                                 userId = it.first.user?.uid,
+                                 userId = refreshedUser?.uid,
                                  previousAnonymousId = it.second
                              )
                          )
                      )
                  }
 
-                 // Reload user and ensure auth state listener is active. Do this after the immediate update.
-                 viewModelScope.launch {
-                     try {
-                        Logger.d { "LoginViewModel: reloading firebase user" }
-                         repo.reloadFirebaseUser()
-                     } catch (_: Exception) {
-                        Logger.e("LoginViewModel") { "reloadFirebaseUser failed" }
-                     }
-
-                     val refreshedUser = Firebase.auth.currentUser
-                        Logger.d { "LoginViewModel: refreshedUser=${refreshedUser?.uid}, isAnonymous=${refreshedUser?.isAnonymous}" }
-                     _state.update { current ->
-                         current.copy(
-                             user = refreshedUser?.let { u ->
-                                 UserUi(
-                                     uid = u.uid,
-                                     displayName = u.displayName,
-                                     email = u.email,
-                                     isAnonymous = u.isAnonymous,
-                                     photoUrl = null
-                                 )
-                             },
-                             isEmailVerified = refreshedUser?.isEmailVerified ?: false,
-                             isLoggedIn = refreshedUser != null,
-                             isUserAnonymous = refreshedUser?.isAnonymous ?: false,
-                             isUserExist = repo.isUserExist.value,
-                             isLoading = false
-                         )
-                     }
-
-                     // Ensure auth state listener is active so other parts of the app see the change
-                    beginAuthStateListener()
-                 }
+                 beginAuthStateListener()
 
                  // Return the updated state to the handler
                  _state.value
@@ -275,33 +258,177 @@ class LoginViewModel(
          )
      }
 
-
-    private suspend fun loginWithEmailAndPassword(email: String, password: String) {
+    private suspend fun signInWithApple(appleCredential: AuthCredential) {
+        Logger.d { "signInWithApple() called in LoginViewModel with credential=$appleCredential" }
         handleResource(
-            resourceFlow = repo.firebaseSignInWithEmailAndPassword(email, password),
+            resourceFlow = repo.firebaseSignInWithApple(appleCredential),
             transform = {
-                _state.value.copy(
-                    isLoggedIn = true,
-                    isUserExist = true,
-                    isEmailVerified = true
-                )
+                Logger.d { "LoginViewModel: firebaseSignInWithApple emitted success result, starting transfer/updates" }
+                try {
+                    if (it.second != null && it.second != "") {
+                        repo.transferDreamsFromAnonymousToPermanent(
+                            it.first.user?.uid ?: "", it.second ?: ""
+                        )
+                    }
+                } catch (_: Exception) {
+                    Logger.e("LoginViewModel") { "Apple transferDreamsFromAnonymousToPermanent failed" }
+                }
+
+                try {
+                    repo.reloadFirebaseUser()
+                } catch (_: Exception) {
+                    Logger.e("LoginViewModel") { "Apple reloadFirebaseUser failed" }
+                }
+
+                val refreshedUser = Firebase.auth.currentUser ?: it.first.user
+                _state.update { current ->
+                    current.copy(
+                        user = refreshedUser?.let { u ->
+                            UserUi(
+                                uid = u.uid,
+                                displayName = u.displayName,
+                                email = u.email,
+                                isAnonymous = u.isAnonymous,
+                                photoUrl = null
+                            )
+                        },
+                        isEmailVerified = refreshedUser?.isEmailVerified ?: false,
+                        isLoggedIn = true,
+                        isUserAnonymous = refreshedUser?.isAnonymous ?: false,
+                        isUserExist = refreshedUser != null,
+                        isLoading = false,
+                        signInWithGoogleResponse = SignInUiState.Success(
+                            SignInResultUi(
+                                userId = refreshedUser?.uid,
+                                previousAnonymousId = it.second
+                            )
+                        )
+                    )
+                }
+
+                beginAuthStateListener()
+
+                _state.value
             },
             errorTransform = { error ->
+                Logger.e("LoginViewModel") { "signInWithApple error: $error" }
                 viewModelScope.launch {
                     SnackbarController.sendEvent(
                         SnackbarEvent(
                             error,
+                            SnackbarAction(StringValue.Resource(Res.string.dismiss)) { }
+                        )
+                    )
+                }
+                _state.value.copy(
+                    isLoading = false,
+                    error = error,
+                    signInWithGoogleResponse = SignInUiState.Error(error)
+                )
+            },
+            loadingTransform = {
+                _state.value.copy(
+                    isLoading = true,
+                    signInWithGoogleResponse = SignInUiState.Loading
+                )
+            }
+        )
+    }
+
+
+    private suspend fun loginWithEmailAndPassword(email: String, password: String) {
+        if (!checkLoginFields()) return
+        handleResource(
+            resourceFlow = repo.firebaseSignInWithEmailAndPassword(email, password),
+            transform = {
+                _state.value.copy(
+                    isLoading = false,
+                    isLoggedIn = it.user != null,
+                    isUserExist = it.user != null,
+                    isEmailVerified = it.user?.isEmailVerified == true
+                )
+            },
+            errorTransform = { error ->
+                val normalizedError = normalizeAuthError(error)
+                viewModelScope.launch {
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
+                            normalizedError,
                             SnackbarAction(StringValue.Resource(Res.string.dismiss)) { } // Use StringValue.Resource
                         )
                     )
                 }
                 _state.value.copy(
                     isLoading = false,
-                    error = error // Store StringValue
+                    error = normalizedError // Store StringValue
                 )
             },
             loadingTransform = { _state.value.copy(isLoading = true) }
         )
+    }
+
+    private suspend fun checkLoginFields(): Boolean {
+        return when {
+            _state.value.loginEmail.isEmpty() || _state.value.loginPassword.isEmpty() -> {
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = StringValue.Resource(Res.string.email_password_empty),
+                        action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                    )
+                )
+                false
+            }
+
+            !_state.value.loginEmail.contains("@") || !_state.value.loginEmail.contains(".") -> {
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = StringValue.Resource(Res.string.email_incorrect_format),
+                        action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                    )
+                )
+                false
+            }
+
+            _state.value.loginPassword.length < 6 -> {
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = StringValue.Resource(Res.string.password_too_short),
+                        action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                    )
+                )
+                false
+            }
+
+            else -> true
+        }
+    }
+
+    private fun normalizeAuthError(error: StringValue): StringValue {
+        val raw = (error as? StringValue.DynamicString)?.value?.lowercase() ?: return error
+
+        return when {
+            "invalid credential" in raw ||
+                "wrong-password" in raw ||
+                "wrong password" in raw ||
+                "invalid login credentials" in raw ||
+                "user-not-found" in raw -> {
+                StringValue.DynamicString("Incorrect email or password")
+            }
+
+            "email not verified" in raw || "verify your account" in raw -> {
+                StringValue.Resource(Res.string.email_not_verified_login)
+            }
+
+            "invalid-email" in raw || "badly formatted" in raw -> {
+                StringValue.Resource(Res.string.email_incorrect_format)
+            }
+
+            "password should be at least 6 characters" in raw -> {
+                StringValue.Resource(Res.string.password_too_short)
+            }
+
+            else -> error
+        }
     }
 
     private fun sendPasswordResetEmail(email: String) = viewModelScope.launch {
@@ -312,14 +439,70 @@ class LoginViewModel(
     }
 
     private fun reloadUser() = viewModelScope.launch {
-        _state.value = _state.value.copy(reloadUserResponse = Resource.Loading())
-        _state.value =
-            _state.value.copy(reloadUserResponse = Resource.Success(repo.reloadFirebaseUser()))
+        _state.update { it.copy(isLoading = true, reloadUserResponse = Resource.Loading()) }
+        val response = repo.reloadFirebaseUser()
+        val refreshedUser = Firebase.auth.currentUser
+        val verified = refreshedUser?.isEmailVerified == true
+        _state.update {
+            it.copy(
+                reloadUserResponse = response,
+                isLoggedIn = refreshedUser != null,
+                isEmailVerified = verified,
+                isUserAnonymous = refreshedUser?.isAnonymous == true,
+                isUserExist = refreshedUser != null,
+                isLoading = false
+            )
+        }
+
+        val message = when {
+            response is Resource.Error -> StringValue.DynamicString(response.message ?: "Unable to check verification right now.")
+            verified -> StringValue.Resource(Res.string.email_verified_snackbar)
+            else -> StringValue.Resource(Res.string.email_verification_still_pending)
+        }
+        SnackbarController.sendEvent(
+            SnackbarEvent(
+                message = message,
+                action = SnackbarAction(StringValue.Resource(Res.string.dismiss)) { }
+            )
+        )
+    }
+
+    private fun resendEmailVerification() = viewModelScope.launch {
+        repo.sendEmailVerification().onEach { resource ->
+            when (resource) {
+                is Resource.Loading -> _state.update { it.copy(isLoading = true) }
+                is Resource.Success -> {
+                    _state.update { it.copy(isLoading = false) }
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
+                            message = StringValue.Resource(Res.string.email_verification_resent_snackbar),
+                            action = SnackbarAction(StringValue.Resource(Res.string.dismiss)) { },
+                            duration = SnackbarDuration.Indefinite
+                        )
+                    )
+                }
+                is Resource.Error -> {
+                    _state.update { it.copy(isLoading = false) }
+                    SnackbarController.sendEvent(
+                        SnackbarEvent(
+                            message = StringValue.DynamicString(resource.message ?: "Unable to resend verification email."),
+                            action = SnackbarAction(StringValue.Resource(Res.string.dismiss)) { }
+                        )
+                    )
+                }
+            }
+        }.launchIn(viewModelScope)
     }
 
     private fun signOut() = viewModelScope.launch {
         repo.signOut()
-        _state.value = _state.value.copy(isLoggedIn = false)
+        _state.value = _state.value.copy(
+            isLoggedIn = false,
+            isEmailVerified = false,
+            isUserAnonymous = false,
+            isLoading = false,
+            signInWithGoogleResponse = SignInUiState.Idle
+        )
     }
 
     private suspend fun revokeAccess(password: String?) {
@@ -411,14 +594,14 @@ data class LoginViewModelState(
      val loginEmail: String = "",
      val loginPassword: String = "",
      val forgotPasswordEmail: String = "",
-     val signInWithGoogleResponse: SignInUiState = SignInUiState.Loading,
+     val signInWithGoogleResponse: SignInUiState = SignInUiState.Idle,
     // Layout flags replaced with stable booleans
     val isLoginLayout: Boolean = true,
     val isSignUpLayout: Boolean = false,
     val isForgotPasswordLayout: Boolean = false,
     val signInResponse: Resource<SignInResponse> = Resource.Success(),
     val sendPasswordResetEmailResponse: SendPasswordResetEmailResponse = Resource.Success(),
-    val reloadUserResponse: Resource<ReloadUserResponse> = Resource.Success(),
+    val reloadUserResponse: ReloadUserResponse = Resource.Success(),
     val revokeAccess: RevokeAccessState = RevokeAccessState(),
     val user: UserUi? = null,
     val isUserExist: Boolean = false,
@@ -454,6 +637,9 @@ data class SignInResultUi(
 // Using a concrete sealed type avoids Compose runtime stability checks that happen for generic type parameters.
 @Immutable
 sealed class SignInUiState {
+    @Immutable
+    object Idle : SignInUiState()
+
     @Immutable
     object Loading : SignInUiState()
 

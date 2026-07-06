@@ -17,6 +17,12 @@ import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material.RichText
 import kotlinx.coroutines.delay
 
+fun String.normalizeMarkdownText(): String {
+    return trim()
+        .replace("\\r\\n", "\n")
+        .replace("\\n", "\n")
+        .replace("\\t", "\t")
+}
 
 @Composable
 fun TypewriterText(
@@ -34,11 +40,12 @@ fun TypewriterText(
     if (useMarkdown) {
         // RichTextEditor with markdown support and animation
         val richTextState = rememberRichTextState()
+        val markdownText = remember(text) { text.normalizeMarkdownText() }
         val animatedText = remember { mutableStateOf("") }
         val animatedIndex = remember { Animatable(0f) }
         val hasDelayed = remember { mutableStateOf(false) }
 
-        LaunchedEffect(text, animate) {
+        LaunchedEffect(markdownText, animate) {
             if (animate) {
                 if (!hasDelayed.value) {
                     delay(delay.toLong())
@@ -47,17 +54,17 @@ fun TypewriterText(
                 animatedIndex.snapTo(0f)
                 animatedText.value = ""
                 animatedIndex.animateTo(
-                    targetValue = text.length.toFloat(),
+                    targetValue = markdownText.length.toFloat(),
                     animationSpec = tween(animationDuration),
                     block = {
-                        animatedText.value = text.take(animatedIndex.value.toInt())
+                        animatedText.value = markdownText.take(animatedIndex.value.toInt())
                         // Update the markdown progressively
                         richTextState.setMarkdown(animatedText.value)
                     }
                 )
                 onAnimationComplete()
             } else {
-                richTextState.setMarkdown(text)
+                richTextState.setMarkdown(markdownText)
             }
         }
 

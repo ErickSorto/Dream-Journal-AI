@@ -14,6 +14,9 @@ actual fun initFirebaseIfRequired(context: Any?) {
     }
 
     try {
+        Firebase.initialize(ctx)
+        Logger.d { "[DJAI/FirebaseInit] Firebase.initialize(context) called on Android" }
+
         //check if user exists\
         val user = Firebase.auth.currentUser
         if (user != null) {
@@ -21,9 +24,6 @@ actual fun initFirebaseIfRequired(context: Any?) {
         } else {
             Logger.d { "[DJAI/FirebaseInit] User does not exist - initializing" }
         }
-
-        Firebase.initialize(ctx)
-        Logger.d { "[DJAI/FirebaseInit] Firebase.initialize(context) called on Android" }
     } catch (e: Exception) {
         Logger.e("DJAI/FirebaseInit") { "Firebase.initialize failed on Android: ${e.message}" }
     }

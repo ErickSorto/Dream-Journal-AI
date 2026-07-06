@@ -28,8 +28,8 @@ enum class ImageStyle(
 
     REALISTIC(
         "Realistic",
-        ", semi-photorealistic, cinematic lighting, ultra-detailed textures, 8k clarity, breathtaking natural realism",
-        ", unified photorealistic cinematic nature landscape",
+        ", semi-photorealistic, bright natural ambient lighting, balanced exposure, visible midtones, clear readable details, ultra-detailed textures, 8k clarity, breathtaking natural realism, avoid underexposed shadows and moon-only nighttime lighting unless the dream explicitly requires night",
+        ", unified photorealistic nature landscape, bright natural ambient lighting, balanced exposure, clear readable details, avoid underexposed moon-only nighttime lighting",
         "https://firebasestorage.googleapis.com/v0/b/dream-journal-ai.appspot.com/o/DreamStyleImages%2FWormwholeWhale.png?alt=media&token=529c054c-c5b7-4b31-941c-b7bfcb8314ac",
         "https://firebasestorage.googleapis.com/v0/b/dream-journal-ai.appspot.com/o/DreamStyleImages%2FRealisticDreamWorld.png?alt=media&token=87c89065-72f8-42b5-bf98-819dca311f3b"
     ),

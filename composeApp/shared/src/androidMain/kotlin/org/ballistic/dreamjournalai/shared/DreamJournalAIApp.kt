@@ -7,25 +7,37 @@ import android.content.Context
 import androidx.work.Configuration
 import androidx.work.WorkManager
 import co.touchlab.crashkios.crashlytics.enableCrashlytics
+import com.mmk.kmpnotifier.KMPNotifier
+import com.mmk.kmpnotifier.extensions.initialize
+import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfiguration
+import com.mmk.kmpnotifier.push.firebase.FirebasePush
 import com.revenuecat.purchases.kmp.LogLevel
 import com.revenuecat.purchases.kmp.Purchases
 import com.revenuecat.purchases.kmp.configure
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
+import dev.gitlive.firebase.initialize
 import org.ballistic.dreamjournalai.shared.di.initKoin
+import org.ballistic.dreamjournalai.shared.dream_notifications.domain.androidContext
 import org.koin.android.ext.koin.androidContext
 
 class DreamJournalAIApp : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        org.ballistic.dreamjournalai.shared.dream_notifications.domain.androidContext = this
         enableCrashlytics()
 
         createNotificationChannel()
+        initializePushNotifications()
         initializeWorkManager()
 
         initKoin {
             androidContext(this@DreamJournalAIApp)
+        }
+
+        runCatching {
+            Firebase.initialize(this)
         }
 
         Purchases.logLevel = LogLevel.DEBUG
@@ -34,7 +46,7 @@ class DreamJournalAIApp : Application() {
         ) {
             // If you have an authenticated user, set this to their ID
             // or leave it null to let RevenueCat create an anonymous ID
-            appUserId = Firebase.auth.currentUser?.uid
+            appUserId = runCatching { Firebase.auth.currentUser?.uid }.getOrNull()
         }
     }
 
@@ -52,6 +64,23 @@ class DreamJournalAIApp : Application() {
             .setMinimumLoggingLevel(android.util.Log.INFO)
             .build()
         WorkManager.initialize(this, configuration)
+    }
+
+    private fun initializePushNotifications() {
+        runCatching {
+            KMPNotifier.initialize(
+                context = this,
+                configuration = NotificationPlatformConfiguration.Android(
+                    notificationIconResId = R.drawable.ic_dream_journal_notification,
+                    showPushNotification = true,
+                    notificationChannelData = NotificationPlatformConfiguration.Android.NotificationChannelData(
+                        id = CHANNEL_ID,
+                        name = getString(R.string.app_name)
+                    )
+                ),
+                FirebasePush
+            )
+        }
     }
 
     companion object {

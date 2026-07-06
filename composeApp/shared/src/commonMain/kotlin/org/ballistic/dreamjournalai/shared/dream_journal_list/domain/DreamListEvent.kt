@@ -13,5 +13,5 @@ sealed class DreamListEvent {
     data class SetSearchingState(val state: Boolean): DreamListEvent()
     data object FetchDreams: DreamListEvent()
     data object TriggerVibration: DreamListEvent()
-    data object TriggerReview: DreamListEvent()
+    data class TriggerReview(val requestInAppReview: () -> Unit): DreamListEvent()
 }

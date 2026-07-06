@@ -5,10 +5,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -31,6 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
+import org.ballistic.dreamjournalai.shared.core.util.darkModalBottomSheetProperties
+import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DreamAIModels
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.AdTokenLayout
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.InterpretDreamsToolEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.interpret_dreams_screen.viewmodel.InterpretDreamsScreenState
@@ -116,11 +121,11 @@ fun BottomModalSheetMassInterpretation(
                                 selectedIndex = index
                                 if (index == 0) {
                                     // Standard AI
-                                    onEvent(InterpretDreamsToolEvent.UpdateModel("gpt-4o-mini"))
+                                    onEvent(InterpretDreamsToolEvent.UpdateModel(DreamAIModels.TextStandard))
                                     amount = interpretDreamsScreenState.chosenDreams.size
                                 } else {
                                     // Advanced AI
-                                    onEvent(InterpretDreamsToolEvent.UpdateModel("gpt-4o"))
+                                    onEvent(InterpretDreamsToolEvent.UpdateModel(DreamAIModels.TextAdvanced))
                                     amount = interpretDreamsScreenState.chosenDreams.size * 2
                                 }
                             },
@@ -147,9 +152,13 @@ fun BottomModalSheetMassInterpretation(
                     },
                     amount = amount
                 )
+                Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
             }
         },
         containerColor = LightBlack,
-        scrimColor = Color.Transparent
+        contentColor = White,
+        scrimColor = Color.Transparent,
+        contentWindowInsets = { WindowInsets(0.dp) },
+        properties = darkModalBottomSheetProperties()
     )
 }

@@ -37,6 +37,7 @@ class DreamFavoriteScreenViewModel(
 
             is FavoriteEvent.DeleteDream -> {
                 viewModelScope.launch {
+                    vibratorUtil.triggerVibration()
                     dreamUseCases.deleteDream(event.dream)
                     recentlyDeletedDream = event.dream
                 }

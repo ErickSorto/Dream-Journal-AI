@@ -12,22 +12,18 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.ballistic.dreamjournalai.shared.core.Resource
 import org.ballistic.dreamjournalai.shared.core.domain.VibratorUtil
-import org.ballistic.dreamjournalai.shared.core.util.formatLocalDate
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AIResult
-import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AITextType
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DreamAIService
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.ImageStyle
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.use_case.DreamUseCases
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.util.OrderType
+import org.ballistic.dreamjournalai.shared.dream_notifications.domain.GeneratedArtNotificationSender
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.DreamWorldPaintingRepository
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.PaintDreamWorldEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.model.DreamWorldPainting
-import kotlin.random.Random
 import kotlin.time.ExperimentalTime
 
 class PaintDreamWorldViewModel(
@@ -35,7 +31,8 @@ class PaintDreamWorldViewModel(
     private val authRepository: AuthRepository,
     private val dreamWorldPaintingRepository: DreamWorldPaintingRepository,
     private val aiService: DreamAIService,
-    private val vibratorUtil: VibratorUtil
+    private val vibratorUtil: VibratorUtil,
+    private val generatedArtNotificationSender: GeneratedArtNotificationSender
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PaintDreamWorldScreenState())
@@ -125,66 +122,15 @@ class PaintDreamWorldViewModel(
                      return@launch
                 }
                 
-                val dreamsToProcess = if (allDreams.size > 15) {
-                    allDreams.shuffled().take(15)
-                } else {
-                    allDreams
+                when (val enqueue = aiService.enqueueDreamWorldPaintingGeneration(style = style, cost = cost)) {
+                    is AIResult.Success -> {
+                        vibratorUtil.triggerVibration()
+                        _state.update { it.copy(isLoading = false) }
+                    }
+                    is AIResult.Error -> {
+                        _state.update { it.copy(isLoading = false, error = enqueue.message) }
+                    }
                 }
-
-                val content = dreamsToProcess.joinToString("\n\n") { dream ->
-                    val transcription = if (dream.audioTranscription.isNotBlank()) "\nTranscription: ${dream.audioTranscription}" else ""
-                    "Date: ${dream.date}\nContent: ${dream.content}$transcription"
-                }
-
-                val summaryResult = aiService.generateText(AITextType.DREAM_WORLD_SUMMARY, content, cost = 0)
-                if (summaryResult is AIResult.Error) {
-                    _state.update { it.copy(isLoading = false, error = "Failed to summarize: ${summaryResult.message}") }
-                    return@launch
-                }
-                
-                val summary = (summaryResult as AIResult.Success).data
-                
-                // Generate Image
-                // Using gpt-image-1 as requested
-                // Style is now passed directly (it contains the worldPromptAffix from ImageStyle)
-                val imageResult = aiService.generateImageFromDetails(summary, cost = cost, style = style, model = "gpt-image-1")
-                
-                if (imageResult is AIResult.Error) {
-                     _state.update { it.copy(isLoading = false, error = "Failed to paint: ${imageResult.message}") }
-                     return@launch
-                }
-                
-                val imageUrl = (imageResult as AIResult.Success).data
-                
-                // Success - Consume tokens & Save
-                if (cost > 0) {
-                    authRepository.consumeDreamTokens(cost)
-                }
-                
-                // Mark as generated if it wasn't already
-                if (!_state.value.hasGeneratedDreamWorld) {
-                    authRepository.setHasGeneratedDreamWorld(true)
-                }
-                
-                val now = kotlin.time.Clock.System.now()
-                val today = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
-                
-                // Generate a random ID if not provided by repo (assuming client-side ID gen is ok or placeholder)
-                // Since we need to select it immediately, we generate a unique ID here.
-                val id = now.toEpochMilliseconds().toString() + Random.nextInt()
-
-                val painting = DreamWorldPainting(
-                    id = id,
-                    imageUrl = imageUrl,
-                    description = summary,
-                    timestamp = now.toEpochMilliseconds(),
-                    date = formatLocalDate(today)
-                )
-
-                dreamWorldPaintingRepository.savePainting(painting)
-                vibratorUtil.triggerVibration()
-                
-                _state.update { it.copy(isLoading = false, selectedPainting = painting) }
                 
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false, error = e.message) }

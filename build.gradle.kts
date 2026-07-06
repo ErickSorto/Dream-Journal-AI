@@ -7,9 +7,9 @@ buildscript {
 }
 
 plugins {
-    id("com.android.library") version "8.13.1" apply false
-    id("org.jetbrains.kotlin.android") version "2.2.21" apply false
-    id("com.android.test") version "8.13.1" apply false
+    id("com.android.library") version "9.2.1" apply false
+    id("org.jetbrains.kotlin.android") version "2.4.0" apply false
+    id("com.android.test") version "9.2.1" apply false
     id("androidx.baselineprofile") version "1.4.1" apply false
 
     alias(libs.plugins.androidApplication) apply false
@@ -18,6 +18,7 @@ plugins {
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinSerialization) apply false
     alias(libs.plugins.googleServices) apply false
+    alias(libs.plugins.firebaseCrashlytics) apply false
     alias(libs.plugins.kotlinCocoapods) apply false
     alias(libs.plugins.stability.analyzer) apply false
 

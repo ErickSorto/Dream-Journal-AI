@@ -40,6 +40,7 @@ import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigati
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.TransparentHintTextField
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.DreamListEvent
 import org.ballistic.dreamjournalai.shared.dream_journal_list.presentation.viewmodel.DreamJournalListState
+import org.ballistic.dreamjournalai.shared.dream_main.presentation.components.NotificationPermissionMenuIcon
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.stringResource
 
@@ -111,7 +112,10 @@ fun DreamListScreenTopBar(
                 Logger.d("TopBar") { "DreamList: Menu icon clicked -> request open drawer" }
                 scope.launch { DrawerController.send(DrawerCommand.Open) }
             }) {
-                Icon(Icons.Filled.Menu, contentDescription = stringResource(Res.string.menu), tint = OriginalXmlColors.White)
+                NotificationPermissionMenuIcon(
+                    contentDescription = stringResource(Res.string.menu),
+                    tint = OriginalXmlColors.White
+                )
             }
         },
         actions = {

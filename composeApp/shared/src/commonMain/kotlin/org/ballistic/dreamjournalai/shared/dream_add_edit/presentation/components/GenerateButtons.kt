@@ -2,8 +2,11 @@ package org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.componen
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.border
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
@@ -37,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -62,16 +67,45 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun GenerateButtonsLayout(
     onAddEditEvent: (AddEditDreamEvent) -> Unit,
-    animateToPage: (Int) -> Unit,
+    animateToPage: suspend (Int) -> Unit,
     snackBarState: () -> Unit,
     isUserAnonymous: Boolean = false,
     canGenerateAI: Boolean,
     audioUrl: String,
     onShowDeleteDialog: () -> Unit,
-    isTranscribing: Boolean
+    isTranscribing: Boolean,
+    isImageGenerationPending: Boolean = false,
+    showPrimaryRecordingButton: Boolean = false
 ) {
     var showVoicePopup by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    fun openVoiceRecorder() {
+        onAddEditEvent(AddEditDreamEvent.TriggerVibration)
+        if (isUserAnonymous) {
+            scope.launch {
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = StringValue.Resource(Res.string.sign_in_to_use_feature),
+                        action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
+                    )
+                )
+            }
+        } else if (audioUrl.isNotBlank()) {
+            scope.launch {
+                SnackbarController.sendEvent(
+                    SnackbarEvent(
+                        message = StringValue.Resource(Res.string.delete_recording_to_continue),
+                        action = SnackbarAction(StringValue.Resource(Res.string.delete), {
+                            onShowDeleteDialog()
+                        })
+                    )
+                )
+            }
+        } else {
+            showVoicePopup = true
+        }
+    }
 
     if (showVoicePopup) {
         VoiceRecordingPopUp(
@@ -87,6 +121,21 @@ fun GenerateButtonsLayout(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        AnimatedVisibility(
+            visible = showPrimaryRecordingButton,
+            enter = fadeIn(animationSpec = tween(durationMillis = 220)) +
+                expandVertically(animationSpec = tween(durationMillis = 260)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 150)) +
+                shrinkVertically(animationSpec = tween(durationMillis = 220))
+        ) {
+            PrimaryVoiceRecordingButton(
+                onClick = ::openVoiceRecorder,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+        }
+
         Text(
             text = stringResource(Res.string.ai_tools_selection),
             style = MaterialTheme.typography.labelMedium,
@@ -112,15 +161,30 @@ fun GenerateButtonsLayout(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     ButtonType.entries.forEach { item ->
+                        val isPendingPaintButton = isImageGenerationPending && item == ButtonType.PAINT
                         UniversalButton(
                             buttonType = item,
-                            canGenerateAI = canGenerateAI,
+                            canGenerateAI = canGenerateAI && !isPendingPaintButton,
                             animateToPage = { index ->
                                 animateToPage(index)
                             },
                             onAddEditEvent = onAddEditEvent,
                             snackBarState = {
-                                snackBarState()
+                                if (isPendingPaintButton) {
+                                    scope.launch {
+                                        SnackbarController.sendEvent(
+                                            SnackbarEvent(
+                                                message = StringValue.DynamicString("Painting in background"),
+                                                action = SnackbarAction(
+                                                    name = StringValue.Resource(Res.string.dismiss),
+                                                    action = {}
+                                                )
+                                            )
+                                        )
+                                    }
+                                } else {
+                                    snackBarState()
+                                }
                             },
                             modifier = Modifier
                                 .padding(vertical = 2.dp)
@@ -130,48 +194,112 @@ fun GenerateButtonsLayout(
                     }
                 }
             }
-            Spacer(modifier = Modifier.width(8.dp))
+            AnimatedVisibility(
+                visible = !showPrimaryRecordingButton,
+                enter = fadeIn(animationSpec = tween(durationMillis = 180)),
+                exit = fadeOut(animationSpec = tween(durationMillis = 120))
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    CompactVoiceRecordingButton(onClick = ::openVoiceRecorder)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PrimaryVoiceRecordingButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .height(104.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(
+                        Color(0xFF3B195C).copy(alpha = 0.92f),
+                        Color(0xFF9A2B87).copy(alpha = 0.86f),
+                        Color(0xFF2B1A59).copy(alpha = 0.92f)
+                    )
+                )
+            )
+            .border(
+                width = 1.dp,
+                color = Color.White.copy(alpha = 0.18f),
+                shape = RoundedCornerShape(18.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(color = OriginalXmlColors.White.copy(alpha = 0.1f))
-                    .clickable {
-                        onAddEditEvent(AddEditDreamEvent.TriggerVibration)
-                        if (isUserAnonymous) {
-                            scope.launch {
-                                SnackbarController.sendEvent(
-                                    SnackbarEvent(
-                                        message = StringValue.Resource(Res.string.sign_in_to_use_feature),
-                                        action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {})
-                                    )
-                                )
-                            }
-                        } else if (audioUrl.isNotBlank()) {
-                            scope.launch {
-                                SnackbarController.sendEvent(
-                                    SnackbarEvent(
-                                        message = StringValue.Resource(Res.string.delete_recording_to_continue),
-                                        action = SnackbarAction(StringValue.Resource(Res.string.delete), {
-                                            onShowDeleteDialog()
-                                        })
-                                    )
-                                )
-                            }
-                        } else {
-                            showVoicePopup = true
-                        }
-                    },
+                    .size(62.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            listOf(
+                                Color(0xFFFF7FD6),
+                                Color(0xFFBC4AF4),
+                                Color(0xFF42206E)
+                            )
+                        )
+                    )
+                    .border(1.dp, Color.White.copy(alpha = 0.26f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Filled.Mic,
-                    contentDescription = stringResource(Res.string.voice_recording),
-                    tint = OriginalXmlColors.White,
-                    modifier = Modifier.size(24.dp)
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = stringResource(Res.string.start_recording),
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = stringResource(Res.string.voice_recorder),
+                    color = Color.White.copy(alpha = 0.68f),
+                    fontSize = 13.sp
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun CompactVoiceRecordingButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(48.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(color = OriginalXmlColors.White.copy(alpha = 0.1f))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Mic,
+            contentDescription = stringResource(Res.string.voice_recording),
+            tint = OriginalXmlColors.White,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
 
@@ -181,7 +309,7 @@ fun UniversalButton(
     modifier: Modifier = Modifier,
     buttonType: ButtonType,
     canGenerateAI: Boolean,
-    animateToPage: (Int) -> Unit = {},
+    animateToPage: suspend (Int) -> Unit = {},
     onAddEditEvent: (AddEditDreamEvent) -> Unit,
     snackBarState: () -> Unit = {},
     size: Dp = 32.dp,
@@ -215,8 +343,8 @@ fun UniversalButton(
                     focusManager.clearFocus()
                     scope.launch {
                         animateToPage(buttonType.pageIndex)
+                        onAddEditEvent(AddEditDreamEvent.SetAIPage(buttonType.aiPage))
                     }
-                    onAddEditEvent(AddEditDreamEvent.SetAIPage(buttonType.aiPage))
                 } else {
                     snackBarState()
                 }

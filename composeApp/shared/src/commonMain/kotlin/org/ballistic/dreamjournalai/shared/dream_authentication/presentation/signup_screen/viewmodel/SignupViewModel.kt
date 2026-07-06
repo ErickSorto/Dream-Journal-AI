@@ -4,6 +4,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.compose.material3.SnackbarDuration
 import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -51,6 +52,10 @@ class SignupViewModel(
                     signUpPassword = event.password
                 )
             }
+
+            is SignupEvent.ResetSignupState -> {
+                _state.value = SignupViewModelState()
+            }
         }
     }
 
@@ -68,30 +73,41 @@ class SignupViewModel(
     }.launchIn(viewModelScope)
 
     private suspend fun signUpWithEmailAndPassword(email: String, password: String) {
+        if (_state.value.isLoading || _state.value.verificationEmailSent) return
         if (!checkSignUpFields()) return
         handleResource(
             resourceFlow = repo.firebaseSignUpWithEmailAndPassword(email, password),
-            transform = { result ->
+            transform = {
                 viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            verificationEmailSent = true,
+                            error = StringValue.Empty
+                        )
+                    }
                     SnackbarController.sendEvent(
                         SnackbarEvent(
-                            message = StringValue.DynamicString(result), // Wrapped result
-                            action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {}) // Use StringValue.Resource
+                            message = StringValue.Resource(Res.string.email_verification_sent_snackbar),
+                            action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {}),
+                            duration = SnackbarDuration.Indefinite
                         )
                     )
                 }
             },
             errorTransform = { error ->
+                val normalizedError = normalizeSignupError(error)
                 viewModelScope.launch {
                     SnackbarController.sendEvent(
                         SnackbarEvent(
-                            message = error, // Already StringValue
+                            message = normalizedError,
                             action = SnackbarAction(StringValue.Resource(Res.string.dismiss), {}) // Use StringValue.Resource
                         )
                     )
                 }
                 _state.value.copy(
-                    error = error,
+                    isLoading = false,
+                    error = normalizedError,
                 )
             },
             loadingTransform = { _state.value.copy(isLoading = true) }
@@ -108,6 +124,8 @@ class SignupViewModel(
                             isUserAnonymous = authResult.user?.isAnonymous == true,
                             isLoggedIn = authResult.user != null,
                             isUserExist = authResult.user != null,
+                            isLoading = false,
+                            error = StringValue.Empty
                         )
                     }
                 }
@@ -121,7 +139,7 @@ class SignupViewModel(
                         )
                     )
                 }
-                _state.value.copy(error = error)
+                _state.value.copy(isLoading = false, error = error)
             },
             loadingTransform = { _state.value.copy(isLoading = true) }
         )
@@ -165,6 +183,26 @@ class SignupViewModel(
             }
         }
     }
+
+    private fun normalizeSignupError(error: StringValue): StringValue {
+        val raw = (error as? StringValue.DynamicString)?.value?.lowercase() ?: return error
+
+        return when {
+            "invalid-email" in raw || "badly formatted" in raw -> {
+                StringValue.Resource(Res.string.email_incorrect_format)
+            }
+
+            "weak-password" in raw || "at least 6 characters" in raw -> {
+                StringValue.Resource(Res.string.password_too_short)
+            }
+
+            "email-already-in-use" in raw || "already in use" in raw -> {
+                StringValue.DynamicString("That email is already in use")
+            }
+
+            else -> error
+        }
+    }
 }
 
 
@@ -185,6 +223,7 @@ data class SignupViewModelState(
     val isLoading: Boolean = false,
     val error: StringValue = StringValue.Empty,
     val isUserAnonymous: Boolean = false,
+    val verificationEmailSent: Boolean = false,
 )
 
 data class VerifyEmailState(

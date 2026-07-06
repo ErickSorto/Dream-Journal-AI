@@ -2,6 +2,7 @@ package org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,10 +28,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.*
+import org.ballistic.dreamjournalai.shared.core.components.EmotionRadarCard
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.DateAndTimeButtonsLayout
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.DreamImageSelectionRow
@@ -111,6 +116,7 @@ fun InfoPage(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(bottom = 16.dp, start = 14.dp, end = 14.dp, top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -142,6 +148,10 @@ fun InfoPage(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        DreamInfoAiNote(modifier = Modifier.fillMaxWidth())
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
@@ -150,9 +160,8 @@ fun InfoPage(
             //row for isLucid
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(12.dp, 12.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .fillMaxWidth()
+                    .padding(12.dp, 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 LucidFavoriteLayout(
@@ -189,19 +198,56 @@ fun InfoPage(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                 )
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Slider for mood
-                SliderWithLabel(
-                    label = stringResource(Res.string.mood),
-                    value = addEditDreamState.dreamInfo.dreamEmotion,
-                    onValueChange = { onAddEditDreamEvent(AddEditDreamEvent.ChangeMood(it)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                )
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        EmotionRadarCard(
+            title = stringResource(Res.string.emotional_radar_title),
+            radar = addEditDreamState.dreamInfo.dreamEmotionalRadar,
+            editable = true,
+            onRadarChange = { radar ->
+                onAddEditDreamEvent(AddEditDreamEvent.ChangeEmotionalRadar(radar))
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+private fun DreamInfoAiNote(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        Color(0xFF160B24).copy(alpha = 0.92f),
+                        Color(0xFF231034).copy(alpha = 0.88f),
+                        Color(0xFF12091C).copy(alpha = 0.92f),
+                    )
+                )
+            )
+            .border(
+                width = 1.dp,
+                color = Color(0xFFFFC46A).copy(alpha = 0.18f),
+                shape = RoundedCornerShape(14.dp)
+            )
+            .padding(horizontal = 14.dp, vertical = 9.dp)
+    ) {
+        Text(
+            text = stringResource(Res.string.dream_info_ai_note),
+            color = Color.White.copy(alpha = 0.82f),
+            style = typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

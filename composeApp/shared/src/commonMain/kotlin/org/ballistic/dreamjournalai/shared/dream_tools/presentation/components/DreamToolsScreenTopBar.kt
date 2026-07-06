@@ -24,6 +24,7 @@ import dreamjournalai.composeapp.shared.generated.resources.menu
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
+import org.ballistic.dreamjournalai.shared.dream_main.presentation.components.NotificationPermissionMenuIcon
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.ToolsEvent
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.DarkBlue
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
@@ -60,8 +61,7 @@ fun DreamToolsScreenTopBar(
                     DrawerController.send(DrawerCommand.Open)
                 }
             }) {
-                Icon(
-                    Icons.Filled.Menu,
+                NotificationPermissionMenuIcon(
                     contentDescription = stringResource(Res.string.menu),
                     tint = White
                 )

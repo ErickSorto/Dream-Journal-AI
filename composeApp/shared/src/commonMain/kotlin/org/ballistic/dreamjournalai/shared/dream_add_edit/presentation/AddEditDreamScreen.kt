@@ -64,6 +64,8 @@ import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.SnackbarAction
 import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.SnackbarEvent
+import org.ballistic.dreamjournalai.shared.core.analytics.AnalyticsParam
+import org.ballistic.dreamjournalai.shared.core.analytics.AppAnalytics
 import org.ballistic.dreamjournalai.shared.core.util.BackHandler
 import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.core.util.formatLocalDate
@@ -78,6 +80,7 @@ import org.ballistic.dreamjournalai.shared.platform.isIos
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import kotlin.time.ExperimentalTime
 
 @OptIn(
@@ -94,10 +97,37 @@ fun SharedTransitionScope.AddEditDreamScreen(
     onMainEvent: (MainScreenEvent) -> Unit = {},
     onAddEditDreamEvent: (AddEditDreamEvent) -> Unit = {},
     onNavigateToDreamJournalScreen: () -> Unit = {},
+    pendingExitRequested: Boolean = false,
+    onPendingExitCancelled: () -> Unit = {},
+    onNavigateAfterPendingExit: () -> Unit = {},
+    onDreamSavedBeforeNavigate: () -> Unit = {},
+    isExistingDream: Boolean = false,
     onImageClick: (String) -> Unit = {}
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
+    val appAnalytics = koinInject<AppAnalytics>()
+
+    fun trackDreamSaved(source: String) {
+        val contentLength = dreamContentState.text.length
+        appAnalytics.track(
+            eventName = "dream_save_success",
+            params = mapOf(
+                AnalyticsParam.Source to source,
+                "is_new_dream" to addEditDreamState.dreamInfo.dreamId.isNullOrBlank(),
+                "has_audio" to (addEditDreamState.dreamInfo.dreamAudioDuration > 0),
+                "has_transcript" to addEditDreamState.dreamInfo.dreamAudioTranscription.isNotBlank(),
+                "is_lucid" to addEditDreamState.dreamInfo.dreamIsLucid,
+                "is_nightmare" to addEditDreamState.dreamInfo.dreamIsNightmare,
+                "is_recurring" to addEditDreamState.dreamInfo.dreamIsRecurring,
+                "content_length_bucket" to when {
+                    contentLength < 80 -> "short"
+                    contentLength < 400 -> "medium"
+                    else -> "long"
+                }
+            )
+        )
+    }
 
     LaunchedEffect(addEditDreamState.dialogState) {
         if (addEditDreamState.dialogState) {
@@ -119,14 +149,58 @@ fun SharedTransitionScope.AddEditDreamScreen(
         }
     }
 
-    listOf(
-        MainScreenEvent.SetBottomBarVisibilityState(false),
-        MainScreenEvent.SetFloatingActionButtonState(false),
-        MainScreenEvent.SetSearchingState(false),
-        MainScreenEvent.SetDrawerState(false)
-    ).forEach(onMainEvent)
+    LaunchedEffect(Unit) {
+        listOf(
+            MainScreenEvent.SetBottomBarVisibilityState(false),
+            MainScreenEvent.SetFloatingActionButtonState(false),
+            MainScreenEvent.SetSearchingState(false),
+            MainScreenEvent.SetDrawerState(false)
+        ).forEach(onMainEvent)
+    }
 
     val scope = rememberCoroutineScope()
+
+    fun navigateAfterConfirmedExit() {
+        if (pendingExitRequested) {
+            onPendingExitCancelled()
+            onNavigateAfterPendingExit()
+        } else {
+            onNavigateToDreamJournalScreen()
+        }
+    }
+
+    LaunchedEffect(
+        pendingExitRequested,
+        addEditDreamState.dreamHasChanged,
+        addEditDreamState.isGeneratingAI,
+        addEditDreamState.dreamIsSavingLoading
+    ) {
+        if (!pendingExitRequested) return@LaunchedEffect
+
+        focusManager.clearFocus()
+        keyboardController?.hide()
+
+        if (addEditDreamState.isGeneratingAI || addEditDreamState.dreamIsSavingLoading) {
+            onPendingExitCancelled()
+            SnackbarController.sendEvent(
+                SnackbarEvent(
+                    message = StringValue.Resource(Res.string.please_wait_for_the_process_to_finish),
+                    action = SnackbarAction(
+                        name = StringValue.Resource(Res.string.dismiss),
+                        action = {}
+                    )
+                )
+            )
+            return@LaunchedEffect
+        }
+
+        if (addEditDreamState.dreamHasChanged) {
+            onAddEditDreamEvent(AddEditDreamEvent.TriggerVibration)
+            onAddEditDreamEvent(AddEditDreamEvent.ToggleDialogState(true))
+        } else {
+            navigateAfterConfirmedExit()
+        }
+    }
 
     BackHandler(true) {
         if (!addEditDreamState.isGeneratingAI && !addEditDreamState.dreamIsSavingLoading) {
@@ -194,7 +268,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
                 onAddEditDreamEvent(AddEditDreamEvent.TriggerVibration)
                 onAddEditDreamEvent(AddEditDreamEvent.ToggleDialogState(false))
                 scope.launch {
-                    onNavigateToDreamJournalScreen()
+                    navigateAfterConfirmedExit()
                 }
             },
             onConfirm = {
@@ -202,8 +276,10 @@ fun SharedTransitionScope.AddEditDreamScreen(
                 onAddEditDreamEvent(AddEditDreamEvent.ToggleDialogState(false))
 
                 onAddEditDreamEvent(AddEditDreamEvent.SaveDream(onSaveSuccess = {
+                    trackDreamSaved(source = "exit_dialog")
                     onMainEvent(MainScreenEvent.SetDreamRecentlySaved(true))
-                    onNavigateToDreamJournalScreen()
+                    onDreamSavedBeforeNavigate()
+                    navigateAfterConfirmedExit()
                     scope.launch {
                         SnackbarController.sendEvent(
                             SnackbarEvent(
@@ -220,6 +296,9 @@ fun SharedTransitionScope.AddEditDreamScreen(
             },
             onClickOutside = {
                 onAddEditDreamEvent(AddEditDreamEvent.ToggleDialogState(false))
+                if (pendingExitRequested) {
+                    onPendingExitCancelled()
+                }
             }
         )
     }
@@ -237,6 +316,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
         }
 
         TranscriptionBottomSheet(
+            audioUrl = addEditDreamState.dreamInfo.dreamAudioUrl,
             transcription = addEditDreamState.dreamInfo.dreamAudioTranscription,
             date = formattedDate,
             duration = addEditDreamState.dreamInfo.dreamAudioDuration,
@@ -271,7 +351,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
         val recomputed = (observedInset + 32.dp).coerceIn(minTopBar, maxTopBar)
         topBarHeight = recomputed
         layoutReady = true
-        Logger.d { "[DJAI/AddEdit] observedInset=$observedInset topBarHeight=$recomputed" }
+        Logger.withTag("AddEditDreamScreen").d { "[DJAI/AddEdit] observedInset=$observedInset topBarHeight=$recomputed" }
     }
 
     // Draw a small background box at the top (height = cappedStatusBarTop) behind the Scaffold so the app bar background extends into the status area without increasing the topBar measured height. Then set the Scaffold.topBar to a CenterAlignedTopAppBar with a fixed 72.dp height and the same background color. This prevents the topBar from growing too tall and avoids wrapping TabLayout in a Box that broke its layout.
@@ -336,6 +416,8 @@ fun SharedTransitionScope.AddEditDreamScreen(
                                     onMainEvent(MainScreenEvent.SetDreamRecentlySaved(true))
                                     onAddEditDreamEvent(AddEditDreamEvent.TriggerVibration)
                                     onAddEditDreamEvent(AddEditDreamEvent.SaveDream(onSaveSuccess = {
+                                        trackDreamSaved(source = "top_bar")
+                                        onDreamSavedBeforeNavigate()
                                         scope.launch {
                                             SnackbarController.sendEvent(
                                                 SnackbarEvent(
@@ -386,6 +468,7 @@ fun SharedTransitionScope.AddEditDreamScreen(
                         onAddEditDreamEvent = onAddEditDreamEvent,
                         keyboardController = keyboardController,
                         animatedVisibilityScope = animateVisibilityScope,
+                        isExistingDream = isExistingDream,
                         onImageClick = onImageClick,
                     )
                 }

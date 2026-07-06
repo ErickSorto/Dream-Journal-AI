@@ -20,9 +20,16 @@ interface AuthRepository {
     val isLoggedIn: StateFlow<Boolean>
     val isUserAnonymous: StateFlow<Boolean>
     val dreamTokens: StateFlow<Int>
+    val dailyTokenStreak: StateFlow<Int>
+    val dailyTokenCompletedWeeks: StateFlow<Int>
+    val hasClaimedDailyToken: StateFlow<Boolean>
+    val dailyTokensClaimedToday: StateFlow<Int>
+    val lastDailyTokenClaimDay: StateFlow<String?>
     val hasGeneratedDreamWorld: StateFlow<Boolean>
 
     suspend fun firebaseSignInWithGoogle(googleCredential: AuthCredential): Flow<Resource<Pair<AuthResult, String?>>>
+
+    suspend fun firebaseSignInWithApple(appleCredential: AuthCredential): Flow<Resource<Pair<AuthResult, String?>>>
 
     suspend fun firebaseSignUpWithEmailAndPassword(email: String, password: String): Flow<Resource<String>>
 
@@ -48,6 +55,8 @@ interface AuthRepository {
 
     suspend fun consumeDreamTokens(tokensToConsume: Int): Resource<Boolean>
 
+    suspend fun claimDailyDreamTokens(): Resource<DailyDreamTokenClaim>
+
     suspend fun unlockWord(word: String, tokenCost: Int): Resource<Boolean>
 
     suspend fun getUnlockedWords(): Flow<Resource<List<String>>>
@@ -56,3 +65,14 @@ interface AuthRepository {
 
     suspend fun setHasGeneratedDreamWorld(hasGenerated: Boolean)
 }
+
+data class DailyDreamTokenClaim(
+    val tokensAwarded: Int,
+    val totalTokens: Int,
+    val streak: Int,
+    val claimDay: String,
+    val tokensAwardedToday: Int,
+    val dailyTokenAllowance: Int,
+    val bonusTokensAwarded: Int = 0,
+    val completedWeeks: Int = 0,
+)

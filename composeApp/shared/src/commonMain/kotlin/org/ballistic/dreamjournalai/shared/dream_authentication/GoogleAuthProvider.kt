@@ -4,6 +4,14 @@ expect object GoogleAuthProvider {
     suspend fun provideGoogleAuth(context: Any?): Result
 }
 
+expect object AppleAuthProvider {
+    suspend fun provideAppleAuth(context: Any?): Result
+}
+
+expect object PlatformAuthCapabilities {
+    val supportsAppleSignIn: Boolean
+}
+
 sealed class Result {
     data class Success(val account: Account) : Result()
     data class Error(val message: String) : Result()

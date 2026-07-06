@@ -9,6 +9,12 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
+node_modules/
+.firebase/
+tmp/
+output/
+functions@
+er.email
 
 # Build outputs
 /build
@@ -23,15 +29,23 @@ local.properties
 # Android-specific
 /captures
 /composeApp/release/
+/composeApp/shared/release/
 /composeApp/google-services.json
+/composeApp/shared/google-services.json
+/composeApp/shared/src/google-services.json
 /composeApp/src/main/assets
 
 # iOS-specific
 /iosApp/GoogleService-Info.plist
 /iosApp/Pods/
 /iosApp/build/
+/iosApp/iosApp.xcodeproj/xcuserdata/
+/iosApp/iosApp.xcodeproj/project.xcworkspace/xcuserdata/
 /iosApp/iosApp.xcworkspace/xcuserdata/
 /iosApp/Pods/Pods.xcodeproj/xcuserdata/
+*.xcuserstate
+*.xcarchive/
+*.dSYM/
 
 # KMM shared outputs
 composeApp/shared/build/

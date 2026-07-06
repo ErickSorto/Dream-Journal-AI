@@ -5,7 +5,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
 import org.ballistic.dreamjournalai.shared.firebase.initFirebaseIfRequired
 import org.ballistic.dreamjournalai.shared.navigation.MainGraph
@@ -17,7 +16,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Preview
 fun App (
     onSplashFinished: () -> Unit = {},
-    context: Any? = null
+    context: Any? = null,
+    requestInAppReview: () -> Unit = {},
 ) {
     Logger.d { "Kermit Testing!" }
     // Initialize Firebase only on the platform that needs it. The Android actual will call
@@ -25,14 +25,15 @@ fun App (
     // initialization here because the native AppDelegate already configures Firebase.
     initFirebaseIfRequired(context)
     DreamJournalAITheme {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = Color.Transparent
-            ) {
-                //  val screen by splashViewModel.state
-                MainGraph(
-                    onDataLoaded = onSplashFinished
-                )
-            }
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color(0xFF020716)
+        ) {
+            //  val screen by splashViewModel.state
+            MainGraph(
+                onDataLoaded = onSplashFinished,
+                requestInAppReview = requestInAppReview,
+            )
+        }
     }
 }

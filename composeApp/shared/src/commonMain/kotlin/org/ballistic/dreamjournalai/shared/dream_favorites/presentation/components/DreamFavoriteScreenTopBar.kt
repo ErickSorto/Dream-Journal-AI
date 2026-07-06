@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
 import org.ballistic.dreamjournalai.shared.core.components.dynamicBottomNavigationPadding
+import org.ballistic.dreamjournalai.shared.dream_main.presentation.components.NotificationPermissionMenuIcon
 import org.ballistic.dreamjournalai.shared.dream_favorites.domain.FavoriteEvent
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.stringResource
@@ -60,8 +61,7 @@ fun DreamFavoriteScreenTopBar(
                     DrawerController.send(DrawerCommand.Open)
                 }
             }) {
-                Icon(
-                    Icons.Filled.Menu,
+                NotificationPermissionMenuIcon(
                     contentDescription = stringResource(Res.string.menu),
                     tint = OriginalXmlColors.White
                 )

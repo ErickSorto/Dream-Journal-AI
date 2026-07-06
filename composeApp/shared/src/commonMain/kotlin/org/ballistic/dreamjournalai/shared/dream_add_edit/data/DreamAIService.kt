@@ -4,6 +4,8 @@ package org.ballistic.dreamjournalai.shared.dream_add_edit.data
 import androidx.compose.ui.text.intl.Locale
 import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.functions.FirebaseFunctionsException
+import dev.gitlive.firebase.functions.code
 import dev.gitlive.firebase.functions.functions
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpRequestRetry
@@ -24,6 +26,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.ballistic.dreamjournalai.shared.core.util.OpenAIApiKeyUtil
+import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.DreamEmotionRadar
 import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.repository.DreamRepository
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -33,9 +36,13 @@ import kotlin.uuid.ExperimentalUuidApi
  */
 interface DreamAIService {
     suspend fun generateText(type: AITextType, dreamContent: String, cost: Int, extra: String? = null): AIResult<String>
+    suspend fun generateDreamTitle(dreamContent: String): AIResult<String>
     suspend fun generateDetails(dreamContent: String, cost: Int): AIResult<String>
     suspend fun generateImageFromDetails(details: String, cost: Int, style: String, model: String? = null): AIResult<String>
+    suspend fun enqueueDreamImageGeneration(dreamId: String, style: String, cost: Int): AIResult<String>
+    suspend fun enqueueDreamWorldPaintingGeneration(style: String, cost: Int): AIResult<EnqueueImageGenerationResponse>
     suspend fun transcribeAudio(storagePath: String): AIResult<String>
+    suspend fun categorizeDream(dreamContent: String): AIResult<DreamCategorization>
 }
 
 sealed class AIResult<out T> {
@@ -45,14 +52,56 @@ sealed class AIResult<out T> {
 
 enum class AITextType { TITLE, INTERPRETATION, ADVICE, MOOD, STORY, QUESTION_ANSWER, DREAM_WORLD_SUMMARY, MASS_INTERPRETATION }
 
+object DreamAIModels {
+    const val TextAdvanced = "gpt-5.5"
+    const val TextStandard = "gpt-5.4-mini"
+    const val TextTiny = "gpt-5.4-nano"
+    const val ImageAdvanced = "gpt-image-2"
+    const val ImageAdvancedFallback = "gpt-image-1"
+    const val ImageStandard = "gpt-image-1-mini"
+}
+
 @Serializable
 data class TranscriptionResponse(val text: String)
+
+@Serializable
+data class DreamTitleResponse(val title: String = "")
+
+@Serializable
+data class EnqueueImageGenerationResponse(
+    val jobId: String = "",
+    val paintingId: String = ""
+)
+
+@Serializable
+data class DreamCategorization(
+    val isLucid: Boolean = false,
+    val isNightmare: Boolean = false,
+    val isRecurring: Boolean = false,
+    val isFalseAwakening: Boolean = false,
+    val lucidity: Int = 0,
+    val vividness: Int = 0,
+    val mood: Int = 0,
+    val emotionalRadar: DreamEmotionRadar = DreamEmotionRadar()
+)
 
 class DefaultDreamAIService(
     private val dreamRepository: DreamRepository
 ) : DreamAIService {
 
     private val logger = Logger.withTag("DreamAIService")
+
+    private fun cloudFunctionMessage(error: Exception, fallback: String): String {
+        if (error is FirebaseFunctionsException) {
+            return when (error.code.name.lowercase()) {
+                "not-found", "not_found" -> "Cloud image generation is still being updated. Please try again in a moment."
+                "failed-precondition" -> error.message ?: fallback
+                "unauthenticated" -> "Please sign in again before generating dream art."
+                else -> error.message ?: fallback
+            }
+        }
+        return error.message ?: fallback
+    }
 
     private val httpClient by lazy {
         HttpClient {
@@ -75,7 +124,7 @@ class DefaultDreamAIService(
         maxTokens: Int = 1500, 
         reasoningEffort: String = "low",
         verbosity: String = "low",
-        model: String = "gpt-5.1"
+        model: String = DreamAIModels.TextStandard
     ): AIResult<String> {
         try {
             logger.d { "Sending chat request to $model. MaxTokens: $maxTokens, Reasoning: $reasoningEffort, Verbosity: $verbosity" }
@@ -96,7 +145,7 @@ class DefaultDreamAIService(
                 // Based on recent API updates for reasoning models (like o1), reasoning_effort is often standard.
                 // However, if the error persists, it means the model does not support reasoning at all or the field name is incorrect.
                 // Given the error "Unknown parameter: 'reasoning'", it likely expects `reasoning_effort` or nothing if not supported.
-                if (model == "gpt-5.1") {
+                if (model.startsWith("gpt-5")) {
                    put("reasoning_effort", reasoningEffort)
                 }
             }.toString()
@@ -138,19 +187,22 @@ class DefaultDreamAIService(
         // Default settings
         var reasoningEffort = if (cost <= 0) "low" else "high"
         var verbosity = if (cost <= 0) "low" else "medium"
-        var model = "gpt-5.1"
+        var model = if (cost <= 0) DreamAIModels.TextStandard else DreamAIModels.TextAdvanced
         var maxTokens = 1500 
 
         if (type == AITextType.TITLE) {
-            model = "gpt-5-nano"
-            // reasoningEffort and verbosity are ignored for nano in chat()
+            model = DreamAIModels.TextTiny
+            reasoningEffort = "none"
+            verbosity = "low"
         } else if (type == AITextType.DREAM_WORLD_SUMMARY) {
             reasoningEffort = "high"
             verbosity = "medium"
+            model = if (cost <= 1) DreamAIModels.TextStandard else DreamAIModels.TextAdvanced
             maxTokens = 5000
         } else if (type == AITextType.MASS_INTERPRETATION) {
             // For mass interpretation, we likely want more tokens to handle multiple dreams
             maxTokens = 3000
+            model = if (cost <= 0) DreamAIModels.TextStandard else DreamAIModels.TextAdvanced
             // reasoningEffort/verbosity already set by cost above
         }
 
@@ -222,10 +274,28 @@ Respond in language: $locale""".trimIndent()
         return chat(prompt, maxTokens = maxTokens, reasoningEffort = reasoningEffort, verbosity = verbosity, model = model)
     }
 
+    override suspend fun generateDreamTitle(dreamContent: String): AIResult<String> {
+        return try {
+            val result = Firebase.functions
+                .httpsCallable("generateDreamTitle")
+                .invoke(mapOf("dreamContent" to dreamContent))
+            val response = result.data<DreamTitleResponse>()
+            if (response.title.isBlank()) {
+                AIResult.Error("Empty title response")
+            } else {
+                AIResult.Success(response.title)
+            }
+        } catch (e: Exception) {
+            logger.e { "generateDreamTitle error: ${e.message}" }
+            AIResult.Error(cloudFunctionMessage(e, "Unknown title error"))
+        }
+    }
+
 
     override suspend fun generateDetails(dreamContent: String, cost: Int): AIResult<String> {
         val reasoningEffort = if (cost <= 1) "low" else "high"
         val verbosity = if (cost <= 1) "low" else "medium"
+        val model = if (cost <= 1) DreamAIModels.TextStandard else DreamAIModels.TextAdvanced
         
         val basePrompt = if (cost <= 1) {
             """In one concise, third-person sentence (12-24 words), describe the dream's setting, mood, and any standout objects or figures. Focus on creating a clear, neutral visual foundation.
@@ -243,26 +313,32 @@ $dreamContent""".trimIndent()
 Dream Content:
 $dreamContent""".trimIndent()
         }
-        return chat(basePrompt, maxTokens = 2000, reasoningEffort = reasoningEffort, verbosity = verbosity)
+        return chat(
+            basePrompt,
+            maxTokens = 2000,
+            reasoningEffort = reasoningEffort,
+            verbosity = verbosity,
+            model = model
+        )
     }
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun generateImageFromDetails(details: String, cost: Int, style: String, model: String?): AIResult<String> {
         logger.d { "generateImageFromDetails called. Details length: ${details.length}, Cost: $cost, Style: $style, Model: $model" }
         val apiKey = OpenAIApiKeyUtil.getOpenAISecretKey()
-        val primaryModel = model ?: if (cost <= 1) "mini" else "gpt-image-1"
-        val fallbackModel = if (cost <= 1) "mini" else "gpt-image-1" 
+        val primaryModel = model ?: if (cost <= 1) DreamAIModels.ImageStandard else DreamAIModels.ImageAdvanced
+        val fallbackModel = if (cost <= 1) DreamAIModels.ImageStandard else DreamAIModels.ImageAdvancedFallback
 
-        val gptSizeString = "1024x1024"
-        val fallbackSizeString = "512x512"
+        val imageSize = "1024x1024"
 
-        suspend fun generateWithKtor(model: String, prompt: String, size: String): AIResult<String> {
-            logger.d { "Generating image with Ktor. Model: $model, Size: $size" }
+        suspend fun generateWithKtor(model: String, prompt: String, size: String, quality: String): AIResult<String> {
+            logger.d { "Generating image with Ktor. Model: $model, Size: $size, Quality: $quality" }
             return try {
                 val bodyJson = buildJsonObject {
                     put("model", model)
                     put("prompt", prompt)
                     put("size", size)
+                    put("quality", quality)
                     put("n", 1)
                 }.toString()
                 val response = httpClient.post("https://api.openai.com/v1/images/generations") {
@@ -296,10 +372,9 @@ $dreamContent""".trimIndent()
 
         suspend fun generate(model: String): AIResult<String> {
             val normalizedModel = model.lowercase()
-            // Determine size based on model
-            val size = if (normalizedModel.contains("mini") || cost <= 1) fallbackSizeString else gptSizeString
+            val quality = if (normalizedModel == DreamAIModels.ImageStandard || cost <= 1) "low" else "high"
             
-            return generateWithKtor(normalizedModel, finalPrompt, size)
+            return generateWithKtor(normalizedModel, finalPrompt, imageSize, quality)
         }
 
         return when (val primaryResult = generate(primaryModel)) {
@@ -308,6 +383,51 @@ $dreamContent""".trimIndent()
                 logger.w { "Primary model ($primaryModel) failed with error: ${primaryResult.message}. Trying fallback ($fallbackModel)." }
                 generate(fallbackModel)
             }
+        }
+    }
+
+    override suspend fun enqueueDreamImageGeneration(dreamId: String, style: String, cost: Int): AIResult<String> {
+        return try {
+            val result = Firebase.functions
+                .httpsCallable("enqueueDreamImageGeneration")
+                .invoke(
+                    mapOf(
+                        "dreamId" to dreamId,
+                        "style" to style,
+                        "cost" to cost
+                    )
+                )
+            val response = result.data<EnqueueImageGenerationResponse>()
+            if (response.jobId.isBlank()) {
+                AIResult.Error("Image generation job was not created")
+            } else {
+                AIResult.Success(response.jobId)
+            }
+        } catch (e: Exception) {
+            logger.e { "enqueueDreamImageGeneration error: ${e.message}" }
+            AIResult.Error(cloudFunctionMessage(e, "Unknown image enqueue error"))
+        }
+    }
+
+    override suspend fun enqueueDreamWorldPaintingGeneration(style: String, cost: Int): AIResult<EnqueueImageGenerationResponse> {
+        return try {
+            val result = Firebase.functions
+                .httpsCallable("enqueueDreamWorldPaintingGeneration")
+                .invoke(
+                    mapOf(
+                        "style" to style,
+                        "cost" to cost
+                    )
+                )
+            val response = result.data<EnqueueImageGenerationResponse>()
+            if (response.jobId.isBlank() || response.paintingId.isBlank()) {
+                AIResult.Error("Dream world job was not created")
+            } else {
+                AIResult.Success(response)
+            }
+        } catch (e: Exception) {
+            logger.e { "enqueueDreamWorldPaintingGeneration error: ${e.message}" }
+            AIResult.Error(cloudFunctionMessage(e, "Unknown dream world enqueue error"))
         }
     }
 
@@ -329,6 +449,25 @@ $dreamContent""".trimIndent()
         } catch (e: Exception) {
             logger.e { "transcription error: ${e.message}" }
             AIResult.Error(e.message ?: "Unknown transcription error")
+        }
+    }
+
+    override suspend fun categorizeDream(dreamContent: String): AIResult<DreamCategorization> {
+        logger.d { "categorizeDream called with content: ${dreamContent.take(50)}..." }
+        return try {
+            val functions = Firebase.functions
+            val result = functions
+                .httpsCallable("categorizeDream")
+                .invoke(mapOf("dreamContent" to dreamContent))
+
+            val response = result.data<DreamCategorization>()
+            logger.i { "Parsed categorization data: $response" }
+
+            AIResult.Success(response)
+
+        } catch (e: Exception) {
+            logger.e(e) { "categorization error" }
+            AIResult.Error(e.message ?: "Unknown categorization error")
         }
     }
 }

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dreamjournalai.composeapp.shared.generated.resources.*
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
+import org.ballistic.dreamjournalai.shared.core.util.darkModalBottomSheetProperties
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.ImageStyle
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.displayString
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
@@ -262,10 +263,14 @@ fun ImageGenerationPopUp(
                     customText = if (fixedCost == 0) stringResource(Res.string.paint_first_dream_free) else null
                 )
                 Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
             }
         },
         containerColor = OriginalXmlColors.LightBlack,
-        scrimColor = Color.Transparent
+        contentColor = OriginalXmlColors.White,
+        scrimColor = Color.Transparent,
+        contentWindowInsets = { WindowInsets(0.dp) },
+        properties = darkModalBottomSheetProperties()
     )
 }
 

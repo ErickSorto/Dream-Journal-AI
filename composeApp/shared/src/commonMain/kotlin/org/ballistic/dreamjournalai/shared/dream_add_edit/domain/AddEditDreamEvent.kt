@@ -4,6 +4,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIPage
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AIType
+import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.model.DreamEmotionRadar
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.viewmodel.DictionaryWord
 
 sealed class AddEditDreamEvent {
@@ -14,6 +15,7 @@ sealed class AddEditDreamEvent {
     data class ChangeNightmare(val boolean: Boolean) : AddEditDreamEvent()
     data class ChangeIsLucid(val boolean: Boolean) : AddEditDreamEvent()
     data class ChangeMood(val mood: Int) : AddEditDreamEvent()
+    data class ChangeEmotionalRadar(val radar: DreamEmotionRadar) : AddEditDreamEvent()
     data class ChangeFalseAwakening(val boolean: Boolean) : AddEditDreamEvent()
     data class ChangeTimeOfDay(val timeOfDay: String) : AddEditDreamEvent()
     data class ChangeFavorite(val boolean: Boolean) : AddEditDreamEvent()

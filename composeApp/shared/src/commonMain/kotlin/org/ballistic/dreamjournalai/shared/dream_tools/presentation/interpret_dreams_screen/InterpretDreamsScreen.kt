@@ -113,6 +113,7 @@ fun MassInterpretDreamToolScreen(
     LaunchedEffect(Unit) {
         BottomNavigationController.sendEvent(BottomNavigationEvent.SetVisibility(false))
         onEvent(InterpretDreamsToolEvent.GetDreams)
+        onEvent(InterpretDreamsToolEvent.GetDreamTokens)
         onEvent(InterpretDreamsToolEvent.GetMassInterpretations)
         delay(1000)
         isGlowVisible = true

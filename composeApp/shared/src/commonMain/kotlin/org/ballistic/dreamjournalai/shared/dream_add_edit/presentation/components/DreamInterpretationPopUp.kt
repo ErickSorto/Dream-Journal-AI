@@ -16,6 +16,7 @@ import dreamjournalai.composeapp.shared.generated.resources.Res
 import dreamjournalai.composeapp.shared.generated.resources.advanced_ai
 import dreamjournalai.composeapp.shared.generated.resources.standard_ai
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
+import org.ballistic.dreamjournalai.shared.core.util.darkModalBottomSheetProperties
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.stringResource
 
@@ -113,9 +114,13 @@ fun DreamInterpretationPopUp(
                     },
                     amount = amount
                 )
+                Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
             }
         },
         containerColor = OriginalXmlColors.LightBlack,
-        scrimColor = Color.Transparent
+        contentColor = OriginalXmlColors.White,
+        scrimColor = Color.Transparent,
+        contentWindowInsets = { WindowInsets(0.dp) },
+        properties = darkModalBottomSheetProperties()
     )
 }

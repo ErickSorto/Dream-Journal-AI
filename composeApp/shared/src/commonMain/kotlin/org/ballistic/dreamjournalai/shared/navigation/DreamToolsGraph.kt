@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import org.ballistic.dreamjournalai.shared.core.util.BackHandler
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.InterpretDreamsToolEvent
 import org.ballistic.dreamjournalai.shared.dream_tools.domain.event.PaintDreamWorldEvent
@@ -34,20 +36,38 @@ import org.ballistic.dreamjournalai.shared.dream_tools.presentation.paint_dreams
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.paint_dreams_screen.viewmodel.PaintDreamWorldViewModel
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.random_dream_screen.RandomDreamToolScreen
 import org.ballistic.dreamjournalai.shared.dream_tools.presentation.random_dream_screen.RandomDreamToolScreenViewModel
+import org.jetbrains.compose.resources.DrawableResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun DreamToolsGraph(
     bottomPaddingValue: Dp,
+    toolBackgroundResource: DrawableResource,
     onNavigate: (dreamID: String?, backgroundID: Int) -> Unit,
     onMainEvent: (MainScreenEvent) -> Unit,
-    onToolsEvent: (ToolsEvent) -> Unit
+    onToolsEvent: (ToolsEvent) -> Unit,
+    onNavigateBackToDreamJournal: () -> Unit = {},
+    onToolsRootSelected: () -> Unit = {},
 ) {
     val navController = rememberNavController()
     
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    BackHandler(isEnabled = currentRoute.matchesRoute(Route.Tools)) {
+        onNavigateBackToDreamJournal()
+    }
+
+    LaunchedEffect(currentRoute) {
+        if (currentRoute.matchesRoute(Route.Tools)) {
+            onToolsRootSelected()
+            onMainEvent(MainScreenEvent.SetBottomBarVisibilityState(true))
+            onMainEvent(MainScreenEvent.SetFloatingActionButtonState(true))
+            onMainEvent(MainScreenEvent.SetSearchingState(false))
+            onMainEvent(MainScreenEvent.SetDrawerState(true))
+        }
+    }
 
     // Check if we are in a route that requires a black background to mask the MainScreen background
     // We exclude "ToolRoute" for PaintDreamWorld because that corresponds to the Detail screen, which should show the blue lighthouse.
@@ -185,6 +205,7 @@ fun DreamToolsGraph(
                     PaintDreamWorldScreen(
                         paintDreamWorldScreenState = state.value,
                         animatedVisibilityScope = this,
+                        backgroundResource = toolBackgroundResource,
                         onEvent = viewModel::onEvent,
                         onImageClick = { imageUrl ->
                             navController.navigate(ToolRoute.FullScreenImage(imageUrl))
@@ -202,6 +223,7 @@ fun DreamToolsGraph(
                     ToolFullScreenImageScreen(
                         imageID = route.imageURL,
                         animatedVisibilityScope = this,
+                        backgroundResource = toolBackgroundResource,
                         onBackPress = {
                             navController.navigateUp()
                         }

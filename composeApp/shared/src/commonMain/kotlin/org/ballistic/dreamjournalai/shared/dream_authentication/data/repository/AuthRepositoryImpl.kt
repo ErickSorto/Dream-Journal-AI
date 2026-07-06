@@ -11,6 +11,7 @@ import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FieldValue.Companion.serverTimestamp
+import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.functions.FirebaseFunctionsException
@@ -31,8 +32,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.todayIn
 import kotlinx.serialization.Serializable
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthRepository
+import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.DailyDreamTokenClaim
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.AuthStateResponse
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.ReloadUserResponse
 import org.ballistic.dreamjournalai.shared.dream_authentication.domain.repository.SendPasswordResetEmailResponse
@@ -41,16 +47,33 @@ import org.ballistic.dreamjournalai.shared.core.Constants.DISPLAY_NAME
 import org.ballistic.dreamjournalai.shared.core.Constants.EMAIL
 import org.ballistic.dreamjournalai.shared.core.Constants.USERS
 import org.ballistic.dreamjournalai.shared.core.Resource
+import org.ballistic.dreamjournalai.shared.dream_premium.domain.repository.PremiumPaywallRepository
 import kotlin.time.ExperimentalTime
 
 class AuthRepositoryImpl (
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
+    private val premiumPaywallRepository: PremiumPaywallRepository,
 ) : AuthRepository {
     private var anonymousUserId: String? = null
 
     private val _dreamTokens = MutableStateFlow(0)
     override val dreamTokens: StateFlow<Int> = _dreamTokens
+
+    private val _dailyTokenStreak = MutableStateFlow(0)
+    override val dailyTokenStreak: StateFlow<Int> = _dailyTokenStreak
+
+    private val _dailyTokenCompletedWeeks = MutableStateFlow(0)
+    override val dailyTokenCompletedWeeks: StateFlow<Int> = _dailyTokenCompletedWeeks
+
+    private val _hasClaimedDailyToken = MutableStateFlow(false)
+    override val hasClaimedDailyToken: StateFlow<Boolean> = _hasClaimedDailyToken
+
+    private val _dailyTokensClaimedToday = MutableStateFlow(0)
+    override val dailyTokensClaimedToday: StateFlow<Int> = _dailyTokensClaimedToday
+
+    private val _lastDailyTokenClaimDay = MutableStateFlow<String?>(null)
+    override val lastDailyTokenClaimDay: StateFlow<String?> = _lastDailyTokenClaimDay
 
     private val _hasGeneratedDreamWorld = MutableStateFlow(false)
     override val hasGeneratedDreamWorld: StateFlow<Boolean> = _hasGeneratedDreamWorld
@@ -77,6 +100,7 @@ class AuthRepositoryImpl (
             auth.authStateChanged.collect { user ->
                 _isUserAnonymous.value = user?.isAnonymous == true
                 validateUser() // Re-validate other flags
+                premiumPaywallRepository.syncAppUser(user?.uid)
             }
         }
     }
@@ -85,8 +109,28 @@ class AuthRepositoryImpl (
     override suspend fun firebaseSignInWithGoogle(
         googleCredential: AuthCredential
     ): Flow<Resource<Pair<AuthResult, String?>>> {
+        return firebaseSignInWithCredential(
+            credential = googleCredential,
+            providerName = "Google"
+        )
+    }
+
+    override suspend fun firebaseSignInWithApple(
+        appleCredential: AuthCredential
+    ): Flow<Resource<Pair<AuthResult, String?>>> {
+        return firebaseSignInWithCredential(
+            credential = appleCredential,
+            providerName = "Apple"
+        )
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun firebaseSignInWithCredential(
+        credential: AuthCredential,
+        providerName: String
+    ): Flow<Resource<Pair<AuthResult, String?>>> {
         return flow {
-            Logger.d { "AuthRepositoryImpl: firebaseSignInWithGoogle called with credential=$googleCredential" }
+            Logger.d { "AuthRepositoryImpl: firebaseSignInWith$providerName called with credential=$credential" }
              emit(Resource.Loading())
              try {
                  val anonymousUserId = if (auth.currentUser?.isAnonymous == true) {
@@ -95,12 +139,12 @@ class AuthRepositoryImpl (
                      null
                  }
 
-                 val result = auth.signInWithCredential(googleCredential)
+                 val result = auth.signInWithCredential(credential)
 
-                Logger.d { "AuthRepositoryImpl: signInWithCredential succeeded user=${result.user?.uid}, isNew=${result.additionalUserInfo?.isNewUser}" }
+                Logger.d { "AuthRepositoryImpl: $providerName signInWithCredential succeeded user=${result.user?.uid}, isNew=${result.additionalUserInfo?.isNewUser}" }
                  val isNewUser = result.additionalUserInfo?.isNewUser == true
 
-                // For brand-new Google users, create the Firestore doc with safe defaults.
+                // For brand-new federated users, create the Firestore doc with safe defaults.
                 if (isNewUser) {
                     addUserToFirestore(registrationTimestamp = kotlin.time.Clock.System.now().toEpochMilliseconds())
                 }
@@ -110,8 +154,8 @@ class AuthRepositoryImpl (
                 Logger.e("AuthRepositoryImpl") { "FirebaseAuthUserCollisionException: ${e.message}" }
                  emit(Resource.Error("An existing user account was found with the same credentials: ${e.message}"))
              } catch (e: Exception) {
-                Logger.e("AuthRepositoryImpl") { "firebaseSignInWithGoogle failed: ${e.message}" }
-                 emit(Resource.Error("Failed to sign in with Google: ${e.message}"))
+                Logger.e("AuthRepositoryImpl") { "firebaseSignInWith$providerName failed: ${e.message}" }
+                 emit(Resource.Error("Failed to sign in with $providerName: ${e.message}"))
              }
 
          }
@@ -120,29 +164,227 @@ class AuthRepositoryImpl (
     override suspend fun consumeDreamTokens(tokensToConsume: Int): Resource<Boolean> {
         return withContext(Dispatchers.IO) {
             try {
-                // 1) Get the currently signed-in user from dev.gitlive.firebase.auth
-                val user = Firebase.auth.currentUser
+                if (tokensToConsume <= 0) return@withContext Resource.Success(true)
+                Firebase.auth.currentUser
                     ?: return@withContext Resource.Error("User is not logged in.")
 
-                // 2) Get a reference to the "USERS/{userId}" document in Firestore
-                val userDocRef = Firebase.firestore.collection(USERS).document(user.uid)
-
-                // 3) Fetch the snapshot (this is already a suspend call with dev.gitlive)
-                val snapshot = userDocRef.get()
-                val data = snapshot.get<String>("dreamTokens")
-                val tokens = data.toLong()
-
-
-                // 4) Check if user has enough tokens, then update
-                if (tokens >= tokensToConsume) {
-                    userDocRef.update(mapOf("dreamTokens" to tokens - tokensToConsume))
-                    Resource.Success(true)
-                } else {
-                    Resource.Error("Not enough dream tokens available.")
+                val result = Firebase.functions
+                    .httpsCallable("spendDreamTokens")
+                    .invoke(
+                        mapOf(
+                            "tokensToSpend" to tokensToConsume,
+                            "reason" to "client_action"
+                        )
+                    )
+                val response = result.data<SpendDreamTokensResponse>()
+                _dreamTokens.value = response.totalTokens
+                Resource.Success(response.success)
+            } catch (e: FirebaseFunctionsException) {
+                val message = when (e.code.name.lowercase()) {
+                    "failed-precondition" -> "Not enough dream tokens available."
+                    "unauthenticated" -> "User is not logged in."
+                    else -> e.message ?: "Failed to use dream tokens."
                 }
+                Resource.Error(message)
             } catch (e: Exception) {
                 Resource.Error("Failed to consume dream tokens: ${e.message}")
             }
+        }
+    }
+
+    @Serializable
+    private data class SpendDreamTokensResponse(
+        val success: Boolean = false,
+        val tokensSpent: Int = 0,
+        val totalTokens: Int = 0,
+    )
+
+    @Serializable
+    private data class ClaimDailyDreamTokensResponse(
+        val tokensAwarded: Int = 0,
+        val totalTokens: Int = 0,
+        val streak: Int = 0,
+        val claimDay: String = "",
+        val tokensAwardedToday: Int = 0,
+        val dailyTokenAllowance: Int = 1,
+        val bonusTokensAwarded: Int = 0,
+        val completedWeeks: Int = 0,
+    )
+
+    override suspend fun claimDailyDreamTokens(): Resource<DailyDreamTokenClaim> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val user = Firebase.auth.currentUser
+                    ?: return@withContext Resource.Error("User is not logged in.")
+                if (user.isAnonymous) {
+                    return@withContext Resource.Error("Must sign in.")
+                }
+
+                val result = Firebase.functions
+                    .httpsCallable("claimDailyDreamTokens")
+                    .invoke()
+
+                val response = result.data<ClaimDailyDreamTokensResponse>()
+                _dreamTokens.value = response.totalTokens
+                _dailyTokenStreak.value = response.streak
+                _dailyTokenCompletedWeeks.value = response.completedWeeks
+                _dailyTokensClaimedToday.value = response.tokensAwardedToday
+                _hasClaimedDailyToken.value = response.tokensAwardedToday >= response.dailyTokenAllowance
+                _lastDailyTokenClaimDay.value = response.claimDay.takeIf { it.isNotBlank() }
+                Resource.Success(
+                    DailyDreamTokenClaim(
+                        tokensAwarded = response.tokensAwarded,
+                        totalTokens = response.totalTokens,
+                        streak = response.streak,
+                        claimDay = response.claimDay,
+                        tokensAwardedToday = response.tokensAwardedToday,
+                        dailyTokenAllowance = response.dailyTokenAllowance,
+                        bonusTokensAwarded = response.bonusTokensAwarded,
+                        completedWeeks = response.completedWeeks
+                    )
+                )
+            } catch (e: FirebaseFunctionsException) {
+                val normalizedCode = e.code.name.lowercase()
+                if (normalizedCode == "not-found" || normalizedCode == "not_found") {
+                    Logger.w("AuthRepositoryImpl") {
+                        "claimDailyDreamTokens callable was not found; falling back to Firestore claim."
+                    }
+                    return@withContext claimDailyDreamTokensFromFirestore()
+                }
+
+                val message = when (normalizedCode) {
+                    "failed-precondition" -> "Daily token already claimed."
+                    "unauthenticated" -> "User is not logged in."
+                    else -> e.message ?: "Failed to claim daily token."
+                }
+                Resource.Error(message)
+            } catch (e: Exception) {
+                Resource.Error("Failed to claim daily token: ${e.message}")
+            }
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private suspend fun claimDailyDreamTokensFromFirestore(): Resource<DailyDreamTokenClaim> {
+        return try {
+            val user = Firebase.auth.currentUser
+                ?: return Resource.Error("User is not logged in.")
+            if (user.isAnonymous) {
+                return Resource.Error("Must sign in.")
+            }
+
+            val todayDate = kotlin.time.Clock.System.todayIn(TimeZone.UTC)
+            val today = todayDate.toString()
+            val yesterday = todayDate.minus(DatePeriod(days = 1)).toString()
+            val userDocRef = Firebase.firestore.collection(USERS).document(user.uid)
+            val snapshot = userDocRef.get()
+            val lastClaimDay = snapshot.getOptionalString("lastDailyDreamTokenClaimDay")
+                ?: snapshot.getOptionalString("lastDailyDreamTokenClaimDate")
+            val tokensAlreadyAwardedToday = if (lastClaimDay == today) {
+                snapshot.getOptionalInt("lastDailyDreamTokensAwarded")
+                    ?: snapshot.getOptionalLong("lastDailyDreamTokensAwarded")?.toInt()
+                    ?: 1
+            } else {
+                0
+            }
+
+            if (tokensAlreadyAwardedToday >= DAILY_TOKEN_FREE_AWARD) {
+                _dailyTokensClaimedToday.value = tokensAlreadyAwardedToday
+                _hasClaimedDailyToken.value = true
+                return Resource.Error("Daily token already claimed.")
+            }
+
+            val tokensAwarded = DAILY_TOKEN_FREE_AWARD - tokensAlreadyAwardedToday
+            val currentTokens = snapshot.getDreamTokenBalance()
+            val previousStreak = snapshot.getOptionalInt("dailyDreamTokenStreak")
+                ?: snapshot.getOptionalLong("dailyDreamTokenStreak")?.toInt()
+                ?: 0
+            val newStreak = when (lastClaimDay) {
+                today -> previousStreak
+                yesterday -> previousStreak + 1
+                else -> 1
+            }
+            val previousCompletedWeeks = maxOf(
+                snapshot.getDailyTokenCompletedWeeks(),
+                previousStreak / DAILY_TOKEN_STREAK_BONUS_INTERVAL
+            )
+            val completedWeeks = maxOf(
+                previousCompletedWeeks,
+                newStreak / DAILY_TOKEN_STREAK_BONUS_INTERVAL
+            )
+            val bonusAlreadyAwardedToday = snapshot.getOptionalString("lastDailyDreamTokenBonusDay") == today
+            val bonusTokensAwarded = if (
+                lastClaimDay != today &&
+                newStreak > 0 &&
+                newStreak % DAILY_TOKEN_STREAK_BONUS_INTERVAL == 0 &&
+                !bonusAlreadyAwardedToday
+            ) {
+                DAILY_TOKEN_STREAK_BONUS_AWARD
+            } else {
+                0
+            }
+            val tokensAwardedToday = tokensAlreadyAwardedToday + tokensAwarded
+            val totalAwarded = tokensAwarded + bonusTokensAwarded
+            val totalTokens = currentTokens + totalAwarded
+            val bonusFields = if (bonusTokensAwarded > 0) {
+                mapOf(
+                    "lastDailyDreamTokenBonusDay" to today,
+                    "lastDailyDreamTokenBonusAwardedAt" to serverTimestamp,
+                    "lastDailyDreamTokenBonusAward" to bonusTokensAwarded.toLong(),
+                )
+            } else {
+                emptyMap()
+            }
+            val claimFields = mapOf(
+                "dreamTokens" to totalTokens.toLong(),
+                "lastDailyDreamTokenClaimDay" to today,
+                "lastDailyDreamTokenClaimDate" to today,
+                "lastDailyDreamTokenClaimedAt" to serverTimestamp,
+                "lastDailyDreamTokensAwarded" to tokensAwardedToday.toLong(),
+                "lastDailyDreamTokenAllowance" to DAILY_TOKEN_FREE_AWARD.toLong(),
+                "dailyDreamTokenStreak" to newStreak.toLong(),
+                "dailyDreamTokenCompletedWeeks" to completedWeeks.toLong(),
+            ) + bonusFields
+
+            if (snapshot.exists) {
+                userDocRef.update(claimFields)
+            } else {
+                userDocRef.set(
+                    mapOf(
+                        "uid" to user.uid,
+                        DISPLAY_NAME to (user.displayName ?: "Dreamer"),
+                        EMAIL to (user.email ?: ""),
+                        "emailVerified" to (user.isEmailVerified == true),
+                        "registrationTimestamp" to serverTimestamp,
+                        "lastActiveTimestamp" to serverTimestamp,
+                        "unlockedWords" to emptyList<String>(),
+                        "hasGeneratedDreamWorld" to false,
+                        "hasCompletedOnboarding" to false,
+                    ) + claimFields
+                )
+            }
+
+            _dreamTokens.value = totalTokens
+            _dailyTokenStreak.value = newStreak
+            _dailyTokenCompletedWeeks.value = completedWeeks
+            _dailyTokensClaimedToday.value = tokensAwardedToday
+            _hasClaimedDailyToken.value = tokensAwardedToday >= DAILY_TOKEN_FREE_AWARD
+            _lastDailyTokenClaimDay.value = today
+            Resource.Success(
+                DailyDreamTokenClaim(
+                    tokensAwarded = totalAwarded,
+                    totalTokens = totalTokens,
+                    streak = newStreak,
+                    claimDay = today,
+                    tokensAwardedToday = tokensAwardedToday,
+                    dailyTokenAllowance = DAILY_TOKEN_FREE_AWARD,
+                    bonusTokensAwarded = bonusTokensAwarded,
+                    completedWeeks = completedWeeks
+                )
+            )
+        } catch (e: Exception) {
+            Logger.e("AuthRepositoryImpl") { "Firestore daily token fallback failed: ${e.message}" }
+            Resource.Error("Failed to claim daily token: ${e.message}")
         }
     }
 
@@ -150,48 +392,42 @@ class AuthRepositoryImpl (
     override suspend fun unlockWord(word: String, tokenCost: Int): Resource<Boolean> {
         return withContext(Dispatchers.IO) {
             try {
-                // 1) Get the current user from dev.gitlive.auth
-                val user = Firebase.auth.currentUser
+                Firebase.auth.currentUser
                     ?: return@withContext Resource.Error("User is not logged in.")
 
-                // 2) Reference the user document: "USERS/{uid}"
-                val userDocRef = Firebase.firestore.collection(USERS).document(user.uid)
-
-                // 3) Fetch the snapshot (suspend call in dev.gitlive)
-                val snapshot = userDocRef.get()
-
-                // 4) Decode the snapshot's data into a Map
-                val unlockedWords = snapshot.get<List<String>>("unlockedWords").toMutableList()
-                val userTokens = snapshot.get<String>("dreamTokens").toLong()
-
-                // 6) If the word is already unlocked, just return success
-                if (unlockedWords.contains(word)) {
-                    return@withContext Resource.Success(true)
+                val result = Firebase.functions
+                    .httpsCallable("unlockDreamSymbol")
+                    .invoke(
+                        mapOf(
+                            "word" to word,
+                            "tokenCost" to tokenCost
+                        )
+                    )
+                val response = result.data<UnlockDreamSymbolResponse>()
+                _dreamTokens.value = response.totalTokens
+                Resource.Success(response.success)
+            } catch (e: FirebaseFunctionsException) {
+                val message = when (e.code.name.lowercase()) {
+                    "failed-precondition" -> "Not enough dream tokens"
+                    "unauthenticated" -> "User is not logged in."
+                    else -> e.message ?: "Failed to unlock word."
                 }
-
-                // 7) Check user has enough tokens (if cost > 0)
-                if (tokenCost > 0 && userTokens < tokenCost) {
-                    return@withContext Resource.Error("Not enough dream tokens")
-                }
-
-                // 8) Deduct tokens if needed (presumably calls another method in your repo)
-                if (tokenCost > 0) {
-                    consumeDreamTokens(tokenCost) // must also be updated to dev.gitlive calls
-                }
-
-                // 9) Add new word to the unlocked list
-                unlockedWords.add(word)
-
-                // 10) Update the doc in Firestore
-                userDocRef.update(mapOf("unlockedWords" to unlockedWords))
-
-                Resource.Success(true)
-
+                Resource.Error(message)
             } catch (e: Exception) {
                 Resource.Error("Failed to unlock word: ${e.message}")
             }
         }
     }
+
+    @Serializable
+    private data class UnlockDreamSymbolResponse(
+        val success: Boolean = false,
+        val word: String = "",
+        val alreadyUnlocked: Boolean = false,
+        val tokensSpent: Int = 0,
+        val totalTokens: Int = 0,
+        val unlockedWords: List<String> = emptyList(),
+    )
 
     override suspend fun getUnlockedWords(): Flow<Resource<List<String>>> = flow {
         emit(Resource.Loading())
@@ -214,8 +450,7 @@ class AuthRepositoryImpl (
 
             // Check if the document exists
             if (snapshot.exists) {
-                // Retrieve the 'unlockedWords' field as a List<String>
-                val unlockedWords = snapshot.get("unlockedWords") as? List<String> ?: emptyList()
+                val unlockedWords = snapshot.getStringList("unlockedWords")
 
                 Logger.d("Unlocked words: $unlockedWords")
                 emit(Resource.Success(unlockedWords))
@@ -295,18 +530,18 @@ class AuthRepositoryImpl (
             val snapshot = try { docRef.get() } catch (_: Exception) { null }
 
             val hasDoc = snapshot?.exists == true
-            val hasTokens = try { snapshot?.get<Any>("dreamTokens") != null } catch (_: Exception) { false }
+            val hasTokens = snapshot?.hasDreamTokenField() == true
 
             if (!hasDoc) {
                 // Create brand-new user doc with safe defaults (includes starting tokens)
                 val user = toUser(registrationTimestamp)
                 docRef.set(user)
             } else if (!hasTokens) {
-                // Doc exists but tokens missing: set only missing fields without touching existing values
+                // Doc exists but tokens are truly missing: set only the token field.
+                // Do not reset unlockedWords here; existing users may already own symbols.
                 docRef.update(
                     mapOf(
-                        "dreamTokens" to 25L,
-                        "unlockedWords" to emptyList<String>()
+                        "dreamTokens" to 25L
                     )
                 )
             }
@@ -344,8 +579,7 @@ class AuthRepositoryImpl (
 
                 val response = result.data<CreateAccountResponse>()
                 val message = response.message
-
-                addUserToFirestore(registrationTimestamp = kotlin.time.Clock.System.now().toEpochMilliseconds())
+                auth.signInWithEmailAndPassword(email, password)
 
                 emit(Resource.Success(message))
 
@@ -363,7 +597,16 @@ class AuthRepositoryImpl (
         return flow {
             emit(Resource.Loading())
             try {
-                auth.currentUser?.sendEmailVerification()
+                val currentEmail = auth.currentUser?.email
+                    ?: throw IllegalStateException("No email is available for the current user.")
+                Firebase.functions
+                    .httpsCallable("createAccountAndSendEmailVerification")
+                    .invoke(
+                        mapOf(
+                            "email" to currentEmail,
+                            "password" to ""
+                        )
+                    )
                 emit(Resource.Success(true))
             } catch (e: Exception) {
                 emit(Resource.Error(e.toString()))
@@ -388,19 +631,37 @@ class AuthRepositoryImpl (
 
                 if (currentUser != null && anonymousUserId != null && anonymousUserId != "") {
                     val result = auth.signInWithEmailAndPassword(email, password)
+                    if (result.user?.isEmailVerified != true) {
+                        auth.signOut()
+                        emit(Resource.Error("Email not verified. Verify your account, then log in."))
+                        return@flow
+                    }
 
                     result.user?.let {
                         transferDreamsFromAnonymousToPermanent(
                             it.uid, anonymousUserId ?: ""
                         )
                     }
+                    addUserToFirestore(registrationTimestamp = kotlin.time.Clock.System.now().toEpochMilliseconds())
                     emit(Resource.Success(result))
                 } else {
                     val result = auth.signInWithEmailAndPassword(email, password)
+                    if (result.user?.isEmailVerified != true) {
+                        auth.signOut()
+                        emit(Resource.Error("Email not verified. Verify your account, then log in."))
+                        return@flow
+                    }
+                    addUserToFirestore(registrationTimestamp = kotlin.time.Clock.System.now().toEpochMilliseconds())
                     emit(Resource.Success(result))
                 }
             } catch (e: FirebaseAuthUserCollisionException) {
                  val result = auth.signInWithEmailAndPassword(email, password)
+                if (result.user?.isEmailVerified != true) {
+                    auth.signOut()
+                    emit(Resource.Error("Email not verified. Verify your account, then log in."))
+                    return@flow
+                }
+                addUserToFirestore(registrationTimestamp = kotlin.time.Clock.System.now().toEpochMilliseconds())
                  emit(Resource.Success(result))
              } catch (e: Exception) {
                  emit(Resource.Error(e.toString()))
@@ -410,9 +671,19 @@ class AuthRepositoryImpl (
     }
 
 
+    @OptIn(ExperimentalTime::class)
     override suspend fun reloadFirebaseUser(): ReloadUserResponse {
         return try {
             auth.currentUser?.reload()
+            val user = auth.currentUser
+            if (user?.isEmailVerified == true) {
+                if (!anonymousUserId.isNullOrBlank()) {
+                    transferDreamsFromAnonymousToPermanent(user.uid, anonymousUserId ?: "")
+                    anonymousUserId = null
+                }
+                addUserToFirestore(registrationTimestamp = kotlin.time.Clock.System.now().toEpochMilliseconds())
+            }
+            validateUser()
             Resource.Success(true)
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Unknown error")
@@ -428,7 +699,10 @@ class AuthRepositoryImpl (
         }
     }
 
-    override suspend fun signOut() = auth.signOut()
+    override suspend fun signOut() {
+        auth.signOut()
+        premiumPaywallRepository.syncAppUser(null)
+    }
 
     override suspend fun revokeAccess(
         password: String?
@@ -452,6 +726,7 @@ class AuthRepositoryImpl (
                 }
 
                 user.delete()
+                premiumPaywallRepository.syncAppUser(null)
                 Logger.withTag("AuthRepo").d { "user.delete() success" }
 
                 emit(Resource.Success(true))
@@ -516,6 +791,7 @@ class AuthRepositoryImpl (
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     override suspend fun addDreamTokensFlowListener(): Flow<Resource<String>> {
         val user = Firebase.auth.currentUser
         if (user == null) {
@@ -532,9 +808,31 @@ class AuthRepositoryImpl (
 
             // 2) Collect snapshots in this same flow builder
             docRef.snapshots().collect { snapshot ->
-                val data = snapshot.get<String>("dreamTokens")
-                val dreamTokens = data
-                 _dreamTokens.value = dreamTokens.toInt()
+                val dreamTokens = snapshot.getDreamTokenBalance()
+                _dreamTokens.value = dreamTokens
+                _dailyTokenStreak.value = snapshot.getOptionalInt("dailyDreamTokenStreak")
+                    ?: snapshot.getOptionalLong("dailyDreamTokenStreak")?.toInt()
+                    ?: 0
+                _dailyTokenCompletedWeeks.value = maxOf(
+                    snapshot.getDailyTokenCompletedWeeks(),
+                    _dailyTokenStreak.value / DAILY_TOKEN_STREAK_BONUS_INTERVAL
+                )
+                val today = kotlin.time.Clock.System.todayIn(TimeZone.UTC).toString()
+                val lastClaimDay = snapshot.getOptionalString("lastDailyDreamTokenClaimDay")
+                    ?: snapshot.getOptionalString("lastDailyDreamTokenClaimDate")
+                _lastDailyTokenClaimDay.value = lastClaimDay
+                val claimedToday = if (lastClaimDay == today) {
+                    snapshot.getOptionalInt("lastDailyDreamTokensAwarded")
+                        ?: snapshot.getOptionalLong("lastDailyDreamTokensAwarded")?.toInt()
+                        ?: 1
+                } else {
+                    0
+                }
+                _dailyTokensClaimedToday.value = claimedToday
+                val dailyTokenAllowance = snapshot.getOptionalInt("lastDailyDreamTokenAllowance")
+                    ?: snapshot.getOptionalLong("lastDailyDreamTokenAllowance")?.toInt()
+                    ?: 1
+                _hasClaimedDailyToken.value = claimedToday >= dailyTokenAllowance
 
                 // Read hasGeneratedDreamWorld, default to false if not present
                 val hasGenerated = try {
@@ -546,7 +844,7 @@ class AuthRepositoryImpl (
                 _hasGeneratedDreamWorld.value = hasGenerated
 
                  // 3) Emit a success each time we get new data
-                 emit(Resource.Success(dreamTokens))
+                 emit(Resource.Success(dreamTokens.toString()))
              }
         }.catch { e ->
             // 4) Catch any exceptions thrown in the flow
@@ -565,6 +863,72 @@ class AuthRepositoryImpl (
     }
 }
 
+private const val DAILY_TOKEN_FREE_AWARD = 1
+private const val DAILY_TOKEN_STREAK_BONUS_AWARD = 5
+private const val DAILY_TOKEN_STREAK_BONUS_INTERVAL = 7
+
+private fun DocumentSnapshot.getDreamTokenBalance(): Int {
+    return getOptionalInt("dreamTokens")
+        ?: getOptionalLong("dreamTokens")?.toInt()
+        ?: getOptionalDouble("dreamTokens")?.toInt()
+        ?: getOptionalString("dreamTokens")?.toIntOrNull()
+        ?: 0
+}
+
+private fun DocumentSnapshot.hasDreamTokenField(): Boolean {
+    return getOptionalInt("dreamTokens") != null ||
+            getOptionalLong("dreamTokens") != null ||
+            getOptionalDouble("dreamTokens") != null ||
+            getOptionalString("dreamTokens") != null
+}
+
+private fun DocumentSnapshot.getDailyTokenCompletedWeeks(): Int {
+    return getOptionalInt("dailyDreamTokenCompletedWeeks")
+        ?: getOptionalLong("dailyDreamTokenCompletedWeeks")?.toInt()
+        ?: getOptionalString("dailyDreamTokenCompletedWeeks")?.toIntOrNull()
+        ?: 0
+}
+
+private fun DocumentSnapshot.getStringList(field: String): List<String> {
+    return try {
+        get<List<String>>(field).filter { it.isNotBlank() }
+    } catch (_: Exception) {
+        emptyList()
+    }
+}
+
+private fun DocumentSnapshot.getOptionalString(field: String): String? {
+    return try {
+        get<String>(field)
+    } catch (_: Exception) {
+        null
+    }
+}
+
+private fun DocumentSnapshot.getOptionalInt(field: String): Int? {
+    return try {
+        get<Int>(field)
+    } catch (_: Exception) {
+        null
+    }
+}
+
+private fun DocumentSnapshot.getOptionalLong(field: String): Long? {
+    return try {
+        get<Long>(field)
+    } catch (_: Exception) {
+        null
+    }
+}
+
+private fun DocumentSnapshot.getOptionalDouble(field: String): Double? {
+    return try {
+        get<Double>(field)
+    } catch (_: Exception) {
+        null
+    }
+}
+
 fun FirebaseUser.toUser(registrationTimestamp: Long) = mapOf(
      DISPLAY_NAME to displayName,
      EMAIL to email,
@@ -574,5 +938,6 @@ fun FirebaseUser.toUser(registrationTimestamp: Long) = mapOf(
     // Defaults for a brand new account (only applied on first doc creation)
     "dreamTokens" to 25L,
     "unlockedWords" to emptyList<String>(),
-    "hasGeneratedDreamWorld" to false
+    "hasGeneratedDreamWorld" to false,
+    "hasCompletedOnboarding" to false
  )

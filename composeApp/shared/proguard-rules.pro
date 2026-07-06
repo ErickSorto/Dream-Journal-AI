@@ -21,6 +21,19 @@
 #-renamesourcefileattribute SourceFile
 
 -dontwarn org.slf4j.impl.StaticLoggerBinder
+
+# Credential Manager Google auth uses Parcelable/reflection-heavy boundaries.
+# Keep these surfaces stable so ID-token parsing and provider dispatch survive R8.
+-keep class com.google.android.libraries.identity.googleid.** { *; }
+-keep class androidx.credentials.** { *; }
+-keep class androidx.credentials.playservices.** { *; }
+-keep class com.google.android.gms.auth.api.identity.** { *; }
+-keep class com.google.android.gms.common.api.** { *; }
+-keep class com.google.android.gms.common.internal.safeparcel.** { *; }
+-keepclassmembers class * extends com.google.android.gms.common.internal.safeparcel.AbstractSafeParcelable {
+    public static final android.os.Parcelable$Creator CREATOR;
+}
+
 -if class androidx.credentials.CredentialManager
 -keep class androidx.credentials.playservices.** {
   *;

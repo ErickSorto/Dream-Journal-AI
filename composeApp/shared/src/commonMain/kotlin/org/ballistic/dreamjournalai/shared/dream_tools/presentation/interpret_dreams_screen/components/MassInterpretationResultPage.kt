@@ -50,6 +50,7 @@ import org.ballistic.dreamjournalai.shared.SnackbarController
 import org.ballistic.dreamjournalai.shared.SnackbarEvent
 import org.ballistic.dreamjournalai.shared.core.components.DreamTokenLayout
 import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
+import org.ballistic.dreamjournalai.shared.core.components.normalizeMarkdownText
 import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ArcRotationAnimation
 import org.ballistic.dreamjournalai.shared.dream_main.domain.MainScreenEvent
@@ -175,7 +176,7 @@ fun MassInterpretationResultPage(
                 )
             } else if (interpretDreamsScreenState.chosenMassInterpretation.interpretation.isNotEmpty()) {
                 TypewriterText(
-                    text = interpretDreamsScreenState.chosenMassInterpretation.interpretation.replace("\\\\", ""),
+                    text = interpretDreamsScreenState.chosenMassInterpretation.interpretation.normalizeMarkdownText(),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Start,
                     color = Color.White,

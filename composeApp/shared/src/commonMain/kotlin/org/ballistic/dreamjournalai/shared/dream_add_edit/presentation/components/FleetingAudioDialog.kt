@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -33,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.*
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Instant
+import org.ballistic.dreamjournalai.shared.core.util.darkModalBottomSheetProperties
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -79,7 +83,10 @@ fun FleetingAudioDialog(
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
         onDismissRequest = { onDismiss() },
         containerColor = OriginalXmlColors.LightBlack,
-        scrimColor = Color.Transparent
+        contentColor = OriginalXmlColors.White,
+        scrimColor = Color.Transparent,
+        contentWindowInsets = { WindowInsets(0.dp) },
+        properties = darkModalBottomSheetProperties()
     ) {
         Column(
             modifier = Modifier
@@ -177,6 +184,7 @@ fun FleetingAudioDialog(
             }
             
             Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
         }
     }
 }

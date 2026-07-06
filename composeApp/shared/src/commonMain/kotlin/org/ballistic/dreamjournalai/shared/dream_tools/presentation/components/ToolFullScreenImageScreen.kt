@@ -57,7 +57,6 @@ import dreamjournalai.composeapp.shared.generated.resources.flag_content_message
 import dreamjournalai.composeapp.shared.generated.resources.full_screen_image
 import dreamjournalai.composeapp.shared.generated.resources.ic_baseline_arrow_left_alt_24
 import dreamjournalai.composeapp.shared.generated.resources.image_flagged_successfully
-import dreamjournalai.composeapp.shared.generated.resources.onboarding_long
 import dreamjournalai.composeapp.shared.generated.resources.report
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -73,6 +72,7 @@ import org.ballistic.dreamjournalai.shared.core.util.BackHandler
 import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.dream_fullscreen.FullScreenEvent
 import org.ballistic.dreamjournalai.shared.dream_onboarding.presentation.TwinklesLayer
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -81,6 +81,7 @@ import org.jetbrains.compose.resources.stringResource
 fun SharedTransitionScope.ToolFullScreenImageScreen(
     imageID: String,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    backgroundResource: DrawableResource,
     onFullScreenEvent: (FullScreenEvent) -> Unit = {},
     onBackPress: () -> Unit
 ) {
@@ -132,7 +133,7 @@ fun SharedTransitionScope.ToolFullScreenImageScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         // Galaxy Background (matches PaintDreamWorldScreen)
         Image(
-            painter = painterResource(Res.drawable.onboarding_long),
+            painter = painterResource(backgroundResource),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             alignment = VerticalBiasAlignment(cameraBiasY),

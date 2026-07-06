@@ -1,7 +1,5 @@
 package org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.pages.dictionary_page
 
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
@@ -11,26 +9,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.no_words_found
+import dreamjournalai.composeapp.shared.generated.resources.symbols_empty_hero
+import org.ballistic.dreamjournalai.shared.core.components.PremiumIllustratedEmptyState
 import kotlinx.coroutines.launch
-import org.ballistic.dreamjournalai.shared.core.components.TypewriterText
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.components.ArcRotationAnimation
 import org.ballistic.dreamjournalai.shared.dream_add_edit.presentation.viewmodel.AddEditDreamState
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components.BuySymbolBottomSheet
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components.DictionaryWordDrawer
 import org.ballistic.dreamjournalai.shared.dream_symbols.presentation.components.DictionaryWordItem
-import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
-import org.jetbrains.compose.resources.stringResource
 
 
 @Composable
@@ -39,7 +33,6 @@ fun WordPage(
     onAddEditDreamEvent: (AddEditDreamEvent) -> Unit
 ) {
     val dreamTokens = addEditDreamState.dreamTokens
-    val infiniteTransition = rememberInfiniteTransition(label = "")
     val scope = rememberCoroutineScope()
 
     val listState = rememberLazyListState()
@@ -52,24 +45,17 @@ fun WordPage(
 
     if (addEditDreamState.dreamFilteredDictionaryWords.isEmpty() && !addEditDreamState.isDreamFilterLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Box(
-                contentAlignment = Alignment.Center,
+            PremiumIllustratedEmptyState(
+                image = Res.drawable.symbols_empty_hero,
+                eyebrow = "Dream symbols",
+                title = "Write a little more to discover symbols.",
+                body = "Once your dream has a few more details, symbols, themes, and hidden meanings will start showing up here for you to explore.",
                 modifier = Modifier
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
-                    .background(
-                        color = OriginalXmlColors.DarkBlue.copy(alpha = 0.7f),
-                        shape = RoundedCornerShape(16.dp)
-                    ),
-            ) {
-                TypewriterText(
-                    text = stringResource(Res.string.no_words_found),
-                    modifier = Modifier.padding(16.dp),
-                    textAlign = TextAlign.Center,
-                    animationDuration = 2000,
-                )
-            }
+            )
         }
+        return
     }
 
     if (addEditDreamState.isDreamFilterLoading) {

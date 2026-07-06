@@ -10,6 +10,8 @@ import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUUID
 import platform.Foundation.NSUserDomainMask
+import platform.Foundation.create
+import platform.Foundation.writeToFile
 import platform.posix.memcpy
 
 @OptIn(ExperimentalForeignApi::class)
@@ -20,7 +22,7 @@ actual suspend fun saveBytesToImageFile(bytes: ByteArray): String? {
         val filePath = "$documentsPath/$fileName"
 
         val data = bytes.usePinned {
-            NSData.create(bytes = it.addressOf(0), length = bytes.size.toULong())
+            NSData.create(bytesNoCopy = it.addressOf(0), length = bytes.size.toULong())
         }
 
         data.writeToFile(filePath, true)

@@ -5,8 +5,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dreamjournalai.composeapp.shared.generated.resources.Res
-import dreamjournalai.composeapp.shared.generated.resources.dismiss
 import dreamjournalai.composeapp.shared.generated.resources.dream_deleted
+import dreamjournalai.composeapp.shared.generated.resources.restore_dream_action
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -37,7 +37,6 @@ import org.ballistic.dreamjournalai.shared.dream_journal_list.domain.util.OrderT
 class DreamJournalListViewModel(
     private val dreamUseCases: DreamUseCases,
     private val vibratorUtil: VibratorUtil,
- //   private val reviewComponent: ReviewComponent
 ) : ViewModel() {
 
     companion object {
@@ -60,6 +59,7 @@ class DreamJournalListViewModel(
     private val pendingDeletes = mutableMapOf<String, Job>()
 
     private var getDreamJob: Job? = null
+    private var reviewPromptRequestedAfterSave = false
 
     init {
         onEvent(DreamListEvent.FetchDreams)
@@ -69,6 +69,7 @@ class DreamJournalListViewModel(
         when (event) {
             is DreamListEvent.DeleteDream -> {
                 viewModelScope.launch {
+                    vibratorUtil.triggerVibration()
                     val id = event.dream.id
                     if (id == null) {
                         // Fallback: if no id, perform immediate delete (cannot defer reliably)
@@ -92,21 +93,16 @@ class DreamJournalListViewModel(
                     SnackbarController.sendEvent(
                         SnackbarEvent(
                             message = StringValue.Resource(Res.string.dream_deleted),
-                            action = SnackbarAction(StringValue.Resource(Res.string.dismiss)) { viewModelScope.launch { onEvent(DreamListEvent.RestoreDream) } }
+                            action = SnackbarAction(StringValue.Resource(Res.string.restore_dream_action)) { viewModelScope.launch { onEvent(DreamListEvent.RestoreDream) } }
                         )
                     )
                 }
             }
             is DreamListEvent.TriggerReview -> {
-                // For example, check conditions before prompting
                 val dreamCount = dreamJournalListState.value.dreams.size
-                if (dreamCount >= 2) {
-                    // reserved for future in-app review prompt
-                    // viewModelScope.launch {
-                    //     reviewComponent.requestInAppReview().collect { resultCode ->
-                    //         // TODO: Handle result code
-                    //     }
-                    // }
+                if (!reviewPromptRequestedAfterSave && dreamCount >= 2) {
+                    reviewPromptRequestedAfterSave = true
+                    event.requestInAppReview()
                 }
             }
             is DreamListEvent.TriggerVibration -> {
@@ -169,20 +165,28 @@ class DreamJournalListViewModel(
                         dreamUseCases.getDreams(orderType)
                     }
                     .combine(
+                        filteredOutIds
+                    ) { dreams, filteredIds ->
+                        dreams.filter { it.id == null || it.id !in filteredIds }
+                    }
+                    .combine(
                         snapshotFlow { searchTextFieldState.value.text }
                     ) { dreams, searchText ->
-                        if (searchText.isBlank()) dreams
-                        else dreams.filter { it.doesMatchSearchQuery(searchText.toString()) }
-                    }
-                    .combine(filteredOutIds) { dreams, filteredIds ->
-                        dreams.filter { it.id == null || it.id !in filteredIds }
+                        val filteredDreams = if (searchText.isBlank()) {
+                            dreams
+                        } else {
+                            dreams.filter { it.doesMatchSearchQuery(searchText.toString()) }
+                        }
+                        filteredDreams to dreams.isNotEmpty()
                     }
                     .onStart {
                         _dreamJournalListState.value = _dreamJournalListState.value.copy(isLoading = true)
                     }
-                    .onEach { filteredDreams ->
+                    .onEach { (filteredDreams, hasAnyDreams) ->
                         _dreamJournalListState.value = _dreamJournalListState.value.copy(
                             dreams = filteredDreams.toImmutableList(),
+                            hasAnyDreams = hasAnyDreams,
+                            hasLoadedDreams = true,
                             orderType = orderTypeFlow.value,
                             isLoading = false,
                         )
@@ -196,6 +200,8 @@ class DreamJournalListViewModel(
 
 data class DreamJournalListState(
     val dreams: ImmutableList<Dream> = persistentListOf(),
+    val hasAnyDreams: Boolean = false,
+    val hasLoadedDreams: Boolean = false,
     val bottomDeleteCancelSheetState: Boolean = false,
     val chosenDreamToDelete: Dream? = null,
     val orderType: OrderType = OrderType.Date,

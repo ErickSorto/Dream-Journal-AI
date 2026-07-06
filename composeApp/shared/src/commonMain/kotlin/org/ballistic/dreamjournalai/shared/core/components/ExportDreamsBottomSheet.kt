@@ -3,9 +3,12 @@ package org.ballistic.dreamjournalai.shared.core.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -26,6 +29,7 @@ import dreamjournalai.composeapp.shared.generated.resources.export_dreams_descri
 import dreamjournalai.composeapp.shared.generated.resources.export_dreams_title
 import dreamjournalai.composeapp.shared.generated.resources.pdf_format
 import dreamjournalai.composeapp.shared.generated.resources.txt_format
+import org.ballistic.dreamjournalai.shared.core.util.darkModalBottomSheetProperties
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.stringResource
 
@@ -95,9 +99,13 @@ fun ExportDreamsBottomSheet(
                         color = OriginalXmlColors.White
                     )
                 }
+                Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
             }
         },
         containerColor = OriginalXmlColors.LightBlack,
-        scrimColor = Color.Transparent
+        contentColor = OriginalXmlColors.White,
+        scrimColor = Color.Transparent,
+        contentWindowInsets = { WindowInsets(0.dp) },
+        properties = darkModalBottomSheetProperties()
     )
 }

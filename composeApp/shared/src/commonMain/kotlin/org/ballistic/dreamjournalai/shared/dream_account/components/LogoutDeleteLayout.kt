@@ -15,8 +15,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +33,7 @@ import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dreamjournalai.composeapp.shared.generated.resources.Res
+import dreamjournalai.composeapp.shared.generated.resources.*
 import dreamjournalai.composeapp.shared.generated.resources.delete_account
 import dreamjournalai.composeapp.shared.generated.resources.logout
 import org.ballistic.dreamjournalai.shared.dream_authentication.presentation.signup_screen.components.PasswordField
@@ -42,6 +45,9 @@ import org.jetbrains.compose.resources.stringResource
 fun LogoutDeleteLayout(
     onLoginEvent: (LoginEvent) -> Unit = {},
     onLogoutClick: () -> Unit = {},
+    actionsEnabled: Boolean = true,
+    isRestorePurchasesInProgress: Boolean = false,
+    onRestorePurchasesClick: () -> Unit = {},
 ) {
     val userPassword = remember { mutableStateOf("") }
     val showDialog = remember { mutableStateOf(false) }
@@ -65,13 +71,56 @@ fun LogoutDeleteLayout(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Button(
+                onClick = onRestorePurchasesClick,
+                enabled = actionsEnabled && !isRestorePurchasesInProgress,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF6657F2),
+                    contentColor = OriginalXmlColors.White,
+                    disabledContainerColor = Color(0xFF6657F2).copy(alpha = 0.54f),
+                    disabledContentColor = OriginalXmlColors.White.copy(alpha = 0.78f)
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 6.dp,
+                    pressedElevation = 2.dp
+                )
+            ) {
+                if (isRestorePurchasesInProgress) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        color = OriginalXmlColors.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.WorkspacePremium,
+                        contentDescription = stringResource(Res.string.restore_purchases_content_description),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = if (isRestorePurchasesInProgress) {
+                        stringResource(Res.string.restoring_purchases)
+                    } else {
+                        stringResource(Res.string.restore_purchases)
+                    },
+                    fontSize = 16.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Logout Button - Strong SkyBlue
             Button(
                 onClick = {
                     onLogoutClick()
-                    onLoginEvent(LoginEvent.SignOut)
                 },
+                enabled = actionsEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -105,6 +154,7 @@ fun LogoutDeleteLayout(
                     Logger.withTag("LogoutDelete").d { "Delete button clicked, opening confirm dialog" }
                     showDialog.value = true
                 },
+                enabled = actionsEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

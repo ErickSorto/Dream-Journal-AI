@@ -64,6 +64,7 @@ fun SymbolScreen(
     LaunchedEffect(Unit) {
         onEvent(SymbolEvent.LoadWords)
         onEvent(SymbolEvent.GetUnlockedWords)
+        onEvent(SymbolEvent.GetDreamTokens)
         onEvent(SymbolEvent.FilterByLetter('A'))
         onMainEvent(MainScreenEvent.SetSearchingState(false))
     }

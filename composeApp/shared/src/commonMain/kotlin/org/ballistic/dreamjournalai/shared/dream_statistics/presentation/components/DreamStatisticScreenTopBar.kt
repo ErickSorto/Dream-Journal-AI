@@ -24,6 +24,7 @@ import dreamjournalai.composeapp.shared.generated.resources.statistics_title
 import kotlinx.coroutines.launch
 import org.ballistic.dreamjournalai.shared.DrawerCommand
 import org.ballistic.dreamjournalai.shared.DrawerController
+import org.ballistic.dreamjournalai.shared.dream_main.presentation.components.NotificationPermissionMenuIcon
 import org.ballistic.dreamjournalai.shared.dream_statistics.StatisticEvent
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors
 import org.jetbrains.compose.resources.stringResource
@@ -59,8 +60,7 @@ fun DreamStatisticScreenTopBar(
                     DrawerController.send(DrawerCommand.Open)
                 }
             }) {
-                Icon(
-                    Icons.Filled.Menu,
+                NotificationPermissionMenuIcon(
                     contentDescription = stringResource(Res.string.menu),
                     tint = OriginalXmlColors.White
                 )

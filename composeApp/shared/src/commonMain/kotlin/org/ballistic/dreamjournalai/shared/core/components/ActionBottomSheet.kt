@@ -6,16 +6,21 @@ import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.RedOrange
 import org.ballistic.dreamjournalai.shared.theme.OriginalXmlColors.White
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -25,7 +30,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import org.ballistic.dreamjournalai.shared.core.util.darkModalBottomSheetProperties
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,6 +42,10 @@ fun ActionBottomSheet(
     title: String,
     message: String,
     buttonText: String,
+    buttonContainerColor: Color = RedOrange,
+    buttonContentColor: Color = White,
+    icon: ImageVector? = null,
+    iconTint: Color = buttonContainerColor,
     onClick: () -> Unit,
     onClickOutside: () -> Unit,
 ) {
@@ -54,6 +65,15 @@ fun ActionBottomSheet(
                     .padding(bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                if (icon != null) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconTint,
+                        modifier = Modifier.size(30.dp)
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                }
                 Text(
                     text = title,
                     style = Typography().titleLarge,
@@ -70,20 +90,36 @@ fun ActionBottomSheet(
                 Button(
                     onClick = onClick,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = RedOrange
+                        containerColor = buttonContainerColor,
+                        contentColor = buttonContentColor
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text(
-                        text = buttonText,
-                        style = typography.headlineLarge,
-                        color = White
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (icon != null) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = buttonContentColor,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.size(8.dp))
+                        }
+                        Text(
+                            text = buttonText,
+                            style = typography.headlineLarge,
+                            color = buttonContentColor
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
             }
         },
         containerColor = LightBlack,
-        scrimColor = Color.Transparent
+        contentColor = White,
+        scrimColor = Color.Transparent,
+        contentWindowInsets = { WindowInsets(0.dp) },
+        properties = darkModalBottomSheetProperties()
     )
 }

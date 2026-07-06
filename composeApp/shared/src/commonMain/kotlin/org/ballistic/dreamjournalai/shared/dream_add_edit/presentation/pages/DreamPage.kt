@@ -49,13 +49,18 @@ fun DreamPage(
     isTranscribing: Boolean,
     isUserAnonymous: Boolean,
     audioTranscription: String,
+    isExistingDream: Boolean = false,
+    isImageGenerationPending: Boolean = false,
     onAddEditDreamEvent: (AddEditDreamEvent) -> Unit,
-    animateToPage: (Int) -> Unit,
+    animateToPage: suspend (Int) -> Unit,
     snackBarState: () -> Unit
 ) {
     val isKeyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val fullContentLength = contentTextFieldState.text.length + audioTranscription.length
     val canGenerateAI = fullContentLength >= 20
+    val showPrimaryRecordingButton = !isExistingDream &&
+        contentTextFieldState.text.isBlank() &&
+        audioUrl.isBlank()
 
     var showDeleteAudioDialog by remember { mutableStateOf(false) }
     var showFleetingDialog by remember { mutableStateOf(false) }
@@ -148,7 +153,9 @@ fun DreamPage(
                 canGenerateAI = canGenerateAI,
                 audioUrl = audioUrl,
                 onShowDeleteDialog = { showDeleteAudioDialog = true },
-                isTranscribing = isTranscribing
+                isTranscribing = isTranscribing,
+                isImageGenerationPending = isImageGenerationPending,
+                showPrimaryRecordingButton = showPrimaryRecordingButton
             )
 
             // Recording playback UI
