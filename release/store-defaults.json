@@ -1,0 +1,27 @@
+{
+  "ios": {
+    "review_details_mode": "reuse",
+    "review_contact": {
+      "first_name": null,
+      "last_name": null,
+      "email": null,
+      "phone": null
+    },
+    "demo_account_required": null,
+    "demo_user_env": "APP_REVIEW_DEMO_USER",
+    "demo_password_env": "APP_REVIEW_DEMO_PASSWORD",
+    "review_notes": null,
+    "uses_non_exempt_encryption": null
+  },
+  "android": {
+    "managed_publishing_confirmed": null
+  },
+  "checks": {
+    "privacy_current": null,
+    "age_rating_current": null,
+    "content_rights_current": null,
+    "app_access_current": null,
+    "ads_declaration_current": null,
+    "export_compliance_current": null
+  }
+}

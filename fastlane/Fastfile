@@ -1,0 +1,316 @@
+require "json"
+require "fileutils"
+require "digest"
+require "shellwords"
+require_relative "StoreRelease"
+
+# Credentials and provisioning remain external. Store actions have separate
+# reviewed plans and explicit action-time gates in StoreRelease.rb.
+module ::ReleasePipeline
+  module_function
+
+  def root
+    File.expand_path("..", __dir__)
+  end
+
+  def config
+    JSON.parse(File.read(File.join(root, "release", "config.json")))
+  end
+
+  def version(options)
+    value = options[:version].to_s
+    unless value.match?(/\A(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\z/)
+      FastlaneCore::UI.user_error!("Pass version:X.Y.Z matching a reviewed release manifest.")
+    end
+    value
+  end
+
+  def output_dir(version)
+    File.join(root, "build", "release", version)
+  end
+
+  def require_env(*names)
+    missing = names.select { |name| ENV[name].to_s.strip.empty? }
+    FastlaneCore::UI.user_error!("Missing environment variables: #{missing.join(', ')}") unless missing.empty?
+  end
+
+  def require_file(path, description)
+    FastlaneCore::UI.user_error!("Missing #{description}; see fastlane/README.md.") unless File.file?(path.to_s)
+    path
+  end
+
+  def with_env(values)
+    previous = values.keys.to_h { |key| [key, ENV[key]] }
+    values.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value.to_s }
+    yield
+  ensure
+    previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+  end
+
+  def prepare(context, version)
+    context.sh("python3", File.join(root, "scripts", "release.py"), "export", version, "--reviewed")
+    manifest = JSON.parse(File.read(File.join(output_dir(version), "manifest.json")))
+    FastlaneCore::UI.user_error!("Exported manifest version mismatch.") unless manifest.fetch("version") == version
+    manifest
+  end
+
+  def artifact_path(version, platform)
+    File.join(output_dir(version), platform == "android" ? "app.aab" : "app.ipa")
+  end
+
+  def receipt_path(version, platform)
+    File.join(output_dir(version), "#{platform}-build.json")
+  end
+
+  def write_receipt(version, platform, app_id)
+    artifact = require_file(artifact_path(version, platform), "#{platform} build artifact")
+    receipt = {
+      "platform" => platform,
+      "app_id" => app_id,
+      "version" => version,
+      "artifact_sha256" => Digest::SHA256.file(artifact).hexdigest,
+      "manifest_sha256" => Digest::SHA256.file(File.join(output_dir(version), "manifest.json")).hexdigest,
+      "config_sha256" => Digest::SHA256.file(File.join(root, "release", "config.json")).hexdigest
+    }
+    File.write(receipt_path(version, platform), JSON.pretty_generate(receipt) + "\n")
+  end
+
+  def require_built_artifact(version, platform, app_id)
+    artifact = require_file(artifact_path(version, platform), "#{platform} build artifact")
+    receipt_file = require_file(receipt_path(version, platform), "#{platform} build receipt")
+    receipt = JSON.parse(File.read(receipt_file))
+    expected = {
+      "platform" => platform, "app_id" => app_id, "version" => version,
+      "artifact_sha256" => Digest::SHA256.file(artifact).hexdigest,
+      "manifest_sha256" => Digest::SHA256.file(File.join(output_dir(version), "manifest.json")).hexdigest,
+      "config_sha256" => Digest::SHA256.file(File.join(root, "release", "config.json")).hexdigest
+    }
+    FastlaneCore::UI.user_error!("Artifact, release manifest, or release configuration changed. Build this reviewed release again.") unless receipt == expected
+    artifact
+  end
+
+  def require_upload_confirmation
+    unless ENV["RELEASE_UPLOAD_CONFIRMED"] == "internal"
+      FastlaneCore::UI.user_error!("Test upload requires RELEASE_UPLOAD_CONFIRMED=internal after explicit authorization.")
+    end
+  end
+end
+
+platform :android do
+  desc "Build a signed release AAB from a reviewed manifest; never upload"
+  lane :build_test do |options|
+    version = ReleasePipeline.version(options)
+    config = ReleasePipeline.config
+    manifest = ReleasePipeline.prepare(self, version)
+    ReleasePipeline.require_env(
+      "ANDROID_KEYSTORE_PATH", "ANDROID_KEYSTORE_STORE_PASSWORD",
+      "ANDROID_KEYSTORE_KEY_ALIAS", "ANDROID_KEYSTORE_KEY_PASSWORD"
+    )
+    ReleasePipeline.require_file(ENV["ANDROID_KEYSTORE_PATH"], "Android upload keystore")
+    ReleasePipeline.require_file(
+      File.join(ReleasePipeline.root, config.fetch("android_firebase_path")), "Android Firebase configuration"
+    )
+    # Remove the previous receipt before starting: a failed rebuild cannot leave
+    # an old artifact looking like the newly requested build.
+    FileUtils.rm_f(ReleasePipeline.receipt_path(version, "android"))
+    ReleasePipeline.with_env(
+      "RELEASE_VERSION_NAME" => manifest.fetch("version"),
+      "RELEASE_VERSION_CODE" => manifest.fetch("android_version_code"),
+      "RELEASE_SIGNING_REQUIRED" => "true"
+    ) do
+      gradle(
+        task: "#{config.fetch('android_module')}:exportStoreReleaseBundle",
+        project_dir: ReleasePipeline.root,
+        flags: "--no-daemon --console=plain",
+        print_command: false
+      )
+    end
+    # The Gradle task consumes SingleArtifact.BUNDLE after existing project
+    # verification/transforms. Do not glob for the newest, possibly stale AAB.
+    module_path = config.fetch("android_module").split(":").reject(&:empty?)
+    mapping = File.join(ReleasePipeline.root, *module_path, "build", "outputs", "mapping", "release", "mapping.txt")
+    exported_mapping = File.join(ReleasePipeline.output_dir(version), "mapping.txt")
+    FileUtils.rm_f(exported_mapping)
+    FileUtils.cp(mapping, exported_mapping) if File.file?(mapping)
+    ReleasePipeline.write_receipt(version, "android", config.fetch("android_package"))
+  end
+
+  desc "Upload the built AAB and reviewed notes to Google Play internal only"
+  lane :upload_test do |options|
+    ReleasePipeline.require_upload_confirmation
+    version = ReleasePipeline.version(options)
+    config = ReleasePipeline.config
+    manifest = ReleasePipeline.prepare(self, version)
+    ReleasePipeline.require_env("PLAY_SERVICE_ACCOUNT_JSON")
+    credential = ReleasePipeline.require_file(ENV["PLAY_SERVICE_ACCOUNT_JSON"], "Play service account JSON")
+    artifact = ReleasePipeline.require_built_artifact(version, "android", config.fetch("android_package"))
+    # An inherited supply environment must never turn an internal upload into
+    # a track promotion. Other publishing controls are explicit below.
+    ReleasePipeline.with_env("SUPPLY_TRACK_PROMOTE_TO" => nil) do
+      StoreRelease.with_internal_upload_guard do
+        upload_to_play_store(
+          json_key: credential,
+          package_name: config.fetch("android_package"),
+          aab: artifact,
+          track: "internal",
+          release_status: "completed",
+          version_code: manifest.fetch("android_version_code"),
+          version_name: manifest.fetch("version"),
+          metadata_path: File.join(ReleasePipeline.output_dir(version), "metadata", "android"),
+          skip_upload_apk: true,
+          skip_upload_aab: false,
+          skip_upload_metadata: true,
+          skip_upload_images: true,
+          skip_upload_screenshots: true,
+          skip_upload_changelogs: false,
+          changes_not_sent_for_review: true,
+          rescue_changes_not_sent_for_review: false
+        )
+      end
+    end
+  end
+end
+
+[:android, :ios].each do |store_platform|
+  platform store_platform do
+    desc "Prepare the reviewed store version (Play validates and discards a temporary edit)"
+    lane :prepare_store do |options|
+      StoreRelease.run(self, platform: store_platform.to_s, stage: "prepare", version: ReleasePipeline.version(options))
+    end
+    desc "Submit the exact reviewed version; require a separate explicit authorization"
+    lane :submit_store do |options|
+      StoreRelease.run(self, platform: store_platform.to_s, stage: "submit", version: ReleasePipeline.version(options))
+    end
+    desc "Request Apple public release; Google directs to the Console publishing gate"
+    lane :release_store do |options|
+      StoreRelease.run(self, platform: store_platform.to_s, stage: "publish", version: ReleasePipeline.version(options))
+    end
+  end
+end
+
+platform :ios do
+  desc "Archive and export a signed IPA using existing distribution credentials"
+  lane :build_test do |options|
+    version = ReleasePipeline.version(options)
+    config = ReleasePipeline.config
+    manifest = ReleasePipeline.prepare(self, version)
+    ReleasePipeline.require_env("IOS_PROFILE_NAME", "IOS_TEAM_ID")
+    unless ENV["IOS_TEAM_ID"] == config.fetch("ios_team_id")
+      FastlaneCore::UI.user_error!("IOS_TEAM_ID does not match this app's release/config.json.")
+    end
+    ReleasePipeline.require_file(
+      File.join(ReleasePipeline.root, config.fetch("ios_firebase_path")), "iOS Firebase configuration"
+    )
+    ReleasePipeline.require_file(File.join(ReleasePipeline.root, "iosApp", "Podfile.lock"), "Podfile.lock")
+    project = File.join(ReleasePipeline.root, config.fetch("ios_project"))
+    project_file = ReleasePipeline.require_file(File.join(project, "project.pbxproj"), "iOS project")
+    output = ReleasePipeline.output_dir(version)
+    FileUtils.mkdir_p(output)
+    FileUtils.rm_f(ReleasePipeline.receipt_path(version, "ios"))
+    # Podfile hooks and the signing action can rewrite this file. Keep the
+    # caller's exact bytes, including existing uncommitted edits, even on error.
+    File.open(File.join(ReleasePipeline.root, "build", "release", ".ios-project.lock"), "w") do |lock|
+      unless lock.flock(File::LOCK_EX | File::LOCK_NB)
+        FastlaneCore::UI.user_error!("Another iOS release build is using this checkout.")
+      end
+      original = File.binread(project_file)
+      begin
+        if config["ios_cocoapods_module"]
+          gradle(
+            task: "#{config.fetch('ios_cocoapods_module')}:generateDummyFramework",
+            project_dir: ReleasePipeline.root,
+            flags: "--no-daemon --console=plain"
+          )
+        end
+        cocoapods(
+          podfile: File.join(ReleasePipeline.root, "iosApp", "Podfile"),
+          deployment: true,
+          repo_update: false,
+          try_repo_update_on_error: false
+        )
+        update_code_signing_settings(
+          path: project,
+          targets: [config.fetch("ios_target")],
+          build_configurations: ["Release"],
+          use_automatic_signing: false,
+          team_id: ENV.fetch("IOS_TEAM_ID"),
+          code_sign_identity: "Apple Distribution",
+          sdk: "iphoneos*",
+          profile_name: ENV.fetch("IOS_PROFILE_NAME")
+        )
+        build_app(
+          workspace: File.join(ReleasePipeline.root, config.fetch("ios_workspace")),
+          scheme: config.fetch("ios_scheme"),
+          configuration: "Release",
+          destination: "generic/platform=iOS",
+          output_directory: output,
+          output_name: "app.ipa",
+          archive_path: File.join(output, "app.xcarchive"),
+          buildlog_path: File.join(output, "logs"),
+          derived_data_path: File.join(ReleasePipeline.root, "build", "release-derived-data"),
+          export_method: "app-store",
+          export_team_id: ENV.fetch("IOS_TEAM_ID"),
+          skip_profile_detection: true,
+          export_options: {
+            signingStyle: "manual",
+            signingCertificate: "Apple Distribution",
+            teamID: ENV.fetch("IOS_TEAM_ID"),
+            provisioningProfiles: { config.fetch("ios_bundle_id") => ENV.fetch("IOS_PROFILE_NAME") },
+            manageAppVersionAndBuildNumber: false
+          },
+          xcargs: [
+            "MARKETING_VERSION=#{manifest.fetch('version')}",
+            "CURRENT_PROJECT_VERSION=#{manifest.fetch('ios_build_number')}"
+          ].map(&:shellescape).join(" "),
+          disable_package_automatic_updates: true
+        )
+      ensure
+        File.binwrite(project_file, original)
+      end
+    end
+    ReleasePipeline.write_receipt(version, "ios", config.fetch("ios_bundle_id"))
+  end
+
+  desc "Upload the built IPA and localized notes to TestFlight without review submission"
+  lane :upload_test do |options|
+    ReleasePipeline.require_upload_confirmation
+    version = ReleasePipeline.version(options)
+    config = ReleasePipeline.config
+    manifest = ReleasePipeline.prepare(self, version)
+    ReleasePipeline.require_env("ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_PATH")
+    key_path = ReleasePipeline.require_file(ENV["ASC_KEY_PATH"], "App Store Connect API key file")
+    artifact = ReleasePipeline.require_built_artifact(version, "ios", config.fetch("ios_bundle_id"))
+    localized = JSON.parse(File.read(File.join(ReleasePipeline.output_dir(version), "testflight.json")))
+    # Pilot accepts locale strings but reads each note through the :whats_new
+    # symbol; JSON.parse otherwise leaves that key as a string.
+    localized_build_info = localized.fetch("localized_build_info").transform_values do |info|
+      { whats_new: info.fetch("whats_new") }
+    end
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_filepath: key_path,
+      in_house: false,
+      set_spaceship_token: false
+    )
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: config.fetch("ios_bundle_id"),
+      app_platform: "ios",
+      distribute_only: false,
+      ipa: artifact,
+      app_version: manifest.fetch("version"),
+      build_number: manifest.fetch("ios_build_number").to_s,
+      localized_build_info: localized_build_info,
+      skip_waiting_for_build_processing: false,
+      wait_processing_timeout_duration: 1800,
+      skip_submission: true,
+      submit_beta_review: false,
+      distribute_external: false,
+      notify_external_testers: false,
+      groups: [],
+      reject_build_waiting_for_review: false,
+      expire_previous_builds: false
+    )
+  end
+end

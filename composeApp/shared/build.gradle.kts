@@ -186,6 +186,33 @@ kotlin {
 }
 
 
+// Store versions come from release/releases/<version>.json via fastlane.
+// Signing secrets stay in the environment, never Gradle command-line properties.
+val storeVersionName = providers.environmentVariable("RELEASE_VERSION_NAME").orNull
+val storeVersionCode = providers.environmentVariable("RELEASE_VERSION_CODE").orNull
+require((storeVersionName == null) == (storeVersionCode == null)) {
+    "Set both RELEASE_VERSION_NAME and RELEASE_VERSION_CODE for a store build."
+}
+storeVersionName?.let {
+    require(Regex("[0-9]+\\.[0-9]+\\.[0-9]+").matches(it)) { "Invalid release version." }
+}
+storeVersionCode?.let {
+    require((it.toLongOrNull() ?: 0L) in 1L..2100000000L) { "Invalid Android version code." }
+}
+val storeSigningNames = listOf(
+    "ANDROID_KEYSTORE_PATH", "ANDROID_KEYSTORE_STORE_PASSWORD",
+    "ANDROID_KEYSTORE_KEY_ALIAS", "ANDROID_KEYSTORE_KEY_PASSWORD",
+)
+val storeSigning = storeSigningNames.associateWith { providers.environmentVariable(it).orNull }
+val hasStoreSigning = storeSigning.values.all { !it.isNullOrBlank() }
+require(storeSigning.values.all { it.isNullOrBlank() } || hasStoreSigning) {
+    "Incomplete Android store signing environment."
+}
+val requireStoreSigning = providers.environmentVariable("RELEASE_SIGNING_REQUIRED").orNull == "true"
+require(!requireStoreSigning || (hasStoreSigning && storeVersionName != null)) {
+    "Store builds require explicit release versions and all Android signing environment variables."
+}
+
 android {
     namespace = "org.ballistic.dreamjournalai.shared"
     compileSdk = 37
@@ -200,8 +227,8 @@ android {
         applicationId = "org.ballistic.dreamjournalai"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 106
-        versionName = "1.3.3"
+        versionCode = storeVersionCode?.toInt() ?: 106
+        versionName = storeVersionName ?: "1.3.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -215,6 +242,16 @@ android {
             useLegacyPackaging = true
         }
     }
+    signingConfigs {
+        if (hasStoreSigning) {
+            create("storeRelease") {
+                storeFile = file(storeSigning.getValue("ANDROID_KEYSTORE_PATH")!!)
+                storePassword = storeSigning.getValue("ANDROID_KEYSTORE_STORE_PASSWORD")
+                keyAlias = storeSigning.getValue("ANDROID_KEYSTORE_KEY_ALIAS")
+                keyPassword = storeSigning.getValue("ANDROID_KEYSTORE_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
@@ -223,8 +260,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Adjust the signing config as necessary
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasStoreSigning) signingConfigs.getByName("storeRelease") else null
         }
     }
     compileOptions {
@@ -236,4 +272,31 @@ android {
         debugImplementation(libs.compose.ui.tooling)
     }
     buildFeatures.compose = true
+}
+
+
+// Use the final artifact provider, including existing bundle verification transforms.
+// Never choose an older AAB by scanning build directories.
+androidComponents.onVariants(androidComponents.selector().withBuildType("release")) { variant ->
+    val finalBundle = variant.artifacts.get(com.android.build.api.artifact.SingleArtifact.BUNDLE)
+    tasks.register("exportStoreReleaseBundle") {
+        group = "release"
+        description = "Export the final, explicitly signed bundle for the reviewed release."
+        dependsOn("bundleRelease")
+        inputs.file(finalBundle)
+        val exportedBundle = rootProject.layout.buildDirectory.file(
+            "release/${storeVersionName ?: "unconfigured"}/app.aab"
+        )
+        outputs.file(exportedBundle)
+        doFirst {
+            require(requireStoreSigning && hasStoreSigning && storeVersionName != null) {
+                "Use the fastlane build_test lane with reviewed release notes and store signing."
+            }
+        }
+        doLast {
+            val destination = exportedBundle.get().asFile
+            destination.parentFile.mkdirs()
+            finalBundle.get().asFile.copyTo(destination, overwrite = true)
+        }
+    }
 }

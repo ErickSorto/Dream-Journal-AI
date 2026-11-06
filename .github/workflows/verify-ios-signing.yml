@@ -1,0 +1,37 @@
+name: Verify iOS signing setup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-store-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Unlock certificate and validate app profile
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: macos-15
+    timeout-minutes: 10
+    environment: release-testing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify password, distribution identity, profile, and Firebase app
+        env:
+          IOS_DISTRIBUTION_P12_BASE64: ${{ secrets.IOS_DISTRIBUTION_P12_BASE64 }}
+          IOS_DISTRIBUTION_P12_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_P12_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+        # This helper materializes and validates credentials only. It does not build.
+        run: python3 scripts/release-ci.py ios-build
+      - name: Restore keychain state and remove temporary credentials
+        if: always()
+        run: python3 scripts/release-ci.py cleanup
+      - name: Record successful verification
+        run: |
+          echo 'The saved password unlocked a valid distribution identity matching this app profile. Profile expiry, bundle/team IDs, and Firebase app identity passed. Temporary credentials were removed. No app was built or uploaded.' >> "$GITHUB_STEP_SUMMARY"
