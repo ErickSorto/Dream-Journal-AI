@@ -10,6 +10,7 @@ import argparse
 import base64
 import binascii
 import datetime as dt
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -172,6 +173,22 @@ def validate_profile(profile: dict, bundle_id: str, team_id: str) -> None:
         raise SetupError("The provisioning profile name contains a newline.")
 
 
+def validate_profile_identity(profile: dict, identities: str) -> None:
+    certificates = profile.get("DeveloperCertificates", [])
+    if (not isinstance(certificates, list) or not certificates
+            or any(not isinstance(cert, bytes) or not cert for cert in certificates)):
+        raise SetupError("The provisioning profile has no valid signing certificate list.")
+    # SHA-1 is the public certificate identifier printed by macOS, not a
+    # password hash or a new signature algorithm.
+    allowed = {hashlib.sha1(cert).hexdigest().upper() for cert in certificates}
+    imported = set(re.findall(
+        r'^\s*\d+\)\s+([0-9A-Fa-f]{40})\s+"(?:Apple Distribution|iPhone Distribution):[^"\r\n]+"\s*$',
+        identities, re.MULTILINE,
+    ))
+    if not allowed.intersection(value.upper() for value in imported):
+        raise SetupError("The imported distribution identity does not match a certificate in this app's provisioning profile.")
+
+
 def prepare_android_build(directory: Path, state: dict, settings: dict) -> None:
     for name in ("ANDROID_KEYSTORE_STORE_PASSWORD", "ANDROID_KEYSTORE_KEY_ALIAS", "ANDROID_KEYSTORE_KEY_PASSWORD"):
         require(name)
@@ -231,8 +248,7 @@ def prepare_ios_build(directory: Path, state: dict, settings: dict) -> None:
     security("set-key-partition-list", "-S", "apple-tool:,apple:,codesign:", "-s", "-k", password, str(keychain))
     security("list-keychains", "-d", "user", "-s", str(keychain), *original_keychains)
     identities = security("find-identity", "-v", "-p", "codesigning", str(keychain)).decode()
-    if "Apple Distribution" not in identities and "iPhone Distribution" not in identities:
-        raise SetupError("The imported keychain has no valid Apple distribution signing identity.")
+    validate_profile_identity(profile, identities)
     write_new(directory, state, project_path(settings["ios_firebase_path"]), firebase)
     emit_env({"IOS_PROFILE_NAME": profile["Name"], "IOS_TEAM_ID": team_id})
 

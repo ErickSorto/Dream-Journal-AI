@@ -1,6 +1,7 @@
 """Offline tests: fake credentials only; security commands are never executed."""
 import base64
 import datetime as dt
+import hashlib
 import importlib.util
 import json
 import os
@@ -169,6 +170,33 @@ class ReleaseCredentialTests(unittest.TestCase):
         with self.assertRaises(ci.SetupError):
             ci.emit_env({"IOS_PROFILE_NAME": "good\nBAD=yes"})
         self.assertEqual(self.env_file.read_text(), "")
+
+    def test_profile_identity_accepts_matching_valid_distribution_certificate(self):
+        certificate = b"fixture-public-certificate"
+        fingerprint = hashlib.sha1(certificate).hexdigest().upper()
+        for name in ("Apple Distribution", "iPhone Distribution"):
+            ci.validate_profile_identity(
+                {"DeveloperCertificates": [b"another-certificate", certificate]},
+                f'  1) {fingerprint} "{name}: Example (TEAM123456)"\n     1 valid identities found\n',
+            )
+
+    def test_profile_identity_rejects_wrong_certificate_development_and_invalid_identity(self):
+        certificate = b"fixture-public-certificate"
+        fingerprint = hashlib.sha1(certificate).hexdigest().upper()
+        identities = [
+            f'  1) {"0" * 40} "Apple Distribution: Example (TEAM123456)"',
+            f'  1) {fingerprint} "Apple Development: Example (TEAM123456)"',
+            f'  1) {fingerprint} "Apple Distribution: Example (TEAM123456)" (CSSMERR_TP_CERT_EXPIRED)',
+            "0 valid identities found",
+        ]
+        for output in identities:
+            with self.subTest(output=output), self.assertRaises(ci.SetupError):
+                ci.validate_profile_identity({"DeveloperCertificates": [certificate]}, output)
+
+    def test_profile_identity_rejects_missing_or_invalid_certificate_list(self):
+        for certificates in (None, [], [b""], ["not-der-bytes"], "not-a-list"):
+            with self.subTest(certificates=certificates), self.assertRaises(ci.SetupError):
+                ci.validate_profile_identity({"DeveloperCertificates": certificates}, "")
 
     def test_invalid_base64_does_not_echo_material(self):
         os.environ["FAKE_SECRET"] = "not-a-real-secret$"
