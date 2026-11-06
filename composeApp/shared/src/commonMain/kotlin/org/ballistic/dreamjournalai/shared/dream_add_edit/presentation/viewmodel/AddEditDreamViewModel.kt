@@ -61,6 +61,7 @@ import org.ballistic.dreamjournalai.shared.core.util.StringValue
 import org.ballistic.dreamjournalai.shared.core.util.formatLocalDate
 import org.ballistic.dreamjournalai.shared.core.util.formatLocalTime
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AIResult
+import org.ballistic.dreamjournalai.shared.dream_add_edit.data.chargeForGeneratedText
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.AITextType
 import org.ballistic.dreamjournalai.shared.dream_add_edit.data.DreamAIService
 import org.ballistic.dreamjournalai.shared.dream_add_edit.domain.AddEditDreamEvent
@@ -837,14 +838,17 @@ class AddEditDreamViewModel(
             }
             val extra = if (aiType == AIType.QUESTION_ANSWER) addEditDreamState.value.aiStates[AIType.QUESTION_ANSWER]?.question ?: "" else null
 
-            when (val res = aiService.generateText(aiTextType, fullContent, cost, extra)) {
-                is AIResult.Success -> updateAIState(aiType) { copy(response = res.data) }
-                is AIResult.Error -> showSnack(StringValue.Resource(Res.string.ai_response_error))
+            try {
+                val result = aiService.generateText(aiTextType, fullContent, cost, extra)
+                    .chargeForGeneratedText(cost) { authRepository.consumeDreamTokens(it) }
+                when (result) {
+                    is AIResult.Success -> updateAIState(aiType) { copy(response = result.data) }
+                    is AIResult.Error -> showSnack(StringValue.Resource(Res.string.ai_response_error))
+                }
+            } finally {
+                updateAIState(aiType) { copy(isLoading = false) }
+                _addEditDreamState.update { it.copy(isGeneratingAI = false) }
             }
-
-            updateAIState(aiType) { copy(isLoading = false) }
-            if (cost > 0) authRepository.consumeDreamTokens(cost)
-            _addEditDreamState.update { it.copy(isGeneratingAI = false) }
         }
     }
 
