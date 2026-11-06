@@ -61,3 +61,16 @@ composeApp/shared/build/bin/**/pod*Framework/**
 # Xcode derived data
 **/DerivedData/
 iosApp/Pods
+
+# Release automation: generated output and local signing/configuration material
+/release/local/
+/.bundle/
+/vendor/bundle/
+/fastlane/report.xml
+/fastlane/Preview.html
+/fastlane/screenshots/
+*.p8
+*.p12
+*.mobileprovision
+*.jks
+*.keystore

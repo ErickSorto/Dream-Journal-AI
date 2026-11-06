@@ -1,0 +1,44 @@
+{
+  "app_name": "DreamNorth",
+  "android_module": ":composeApp:shared",
+  "android_package": "org.ballistic.dreamjournalai",
+  "android_firebase_path": "composeApp/shared/google-services.json",
+  "ios_bundle_id": "org.ballistic.dreamjournalai",
+  "ios_team_id": "9J5J9J3D9R",
+  "ios_firebase_path": "iosApp/GoogleService-Info.plist",
+  "ios_cocoapods_module": ":composeApp:shared",
+  "ios_workspace": "iosApp/iosApp.xcworkspace",
+  "ios_project": "iosApp/iosApp.xcodeproj",
+  "ios_scheme": "StoreRelease",
+  "ios_target": "iosApp",
+  "source_locale": "en-US",
+  "locales": {
+    "en-US": {
+      "android": "en-US",
+      "ios": "en-US"
+    },
+    "pt-BR": {
+      "android": "pt-BR",
+      "ios": "pt-BR"
+    },
+    "es-ES": {
+      "android": [
+        "es-ES",
+        "es-419",
+        "es-US"
+      ],
+      "ios": [
+        "es-ES",
+        "es-MX"
+      ]
+    },
+    "de-DE": {
+      "android": "de-DE",
+      "ios": "de-DE"
+    },
+    "fr-FR": {
+      "android": "fr-FR",
+      "ios": "fr-FR"
+    }
+  }
+}
